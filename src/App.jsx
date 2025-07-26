@@ -1,80 +1,60 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+// Contenido para: src/App.js
+
+import React, { useState } from 'react';
 import { useAuthContext } from './contexts/AuthContext';
+import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Reservas from './pages/Reservas';
 import Clientes from './pages/Clientes';
-import Layout from './components/Layout';
+import Mesas from './pages/Mesas';
+import Analytics from './pages/Analytics';
+import Configuracion from './pages/Configuracion';
+import Calendario from './pages/Calendario';
 
-// Componente de ruta protegida
-function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuthContext();
+function App() {
+  const { isReady, isAuthenticated } = useAuthContext();
+  const [activeSection, setActiveSection] = useState('dashboard');
 
-  if (loading) {
+  // Muestra un spinner de carga mientras se verifica la sesión del usuario
+  if (!isReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando Son-IA...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-700">Iniciando Son-IA...</h2>
         </div>
       </div>
     );
   }
 
+  // Si no está autenticado, muestra la página de Login
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Login />;
   }
 
-  return children;
-}
-
-export default function App() {
-  const { isAuthenticated } = useAuthContext();
+  // Si está autenticado, muestra la aplicación principal
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'dashboard': return <Dashboard />;
+      case 'reservas': return <Reservas />;
+      case 'clientes': return <Clientes />;
+      case 'mesas': return <Mesas />;
+      case 'calendario': return <Calendario />;
+      case 'analytics': return <Analytics />;
+      case 'configuracion': return <Configuracion />;
+      default: return <Dashboard />;
+    }
+  };
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route 
-          path="/login" 
-          element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-          } 
-        />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Dashboard />
-              </Layout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/reservas" 
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Reservas />
-              </Layout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/clientes" 
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Clientes />
-              </Layout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/" 
-          element={<Navigate to="/dashboard" replace />} 
-        />
-      </Routes>
-    </BrowserRouter>
+    <Layout 
+      activeSection={activeSection} 
+      onSectionChange={setActiveSection}
+    >
+      {renderContent()}
+    </Layout>
   );
 }
+
+export default App;

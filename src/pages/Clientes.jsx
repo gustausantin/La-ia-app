@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../hooks/useAuth'
+import { useAuthContext } from '../contexts/AuthContext'
 
 export default function Clientes() {
-  const { restaurant } = useAuth()
+  const { restaurant } = useAuthContext()
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../hooks/useAuth'
+import { useAuthContext } from '../contexts/AuthContext'
 
 export default function Reservas() {
-  const { restaurant } = useAuth()
+  const { restaurant } = useAuthContext()
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)

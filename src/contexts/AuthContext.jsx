@@ -1,130 +1,105 @@
-import { useState, useEffect, createContext, useContext } from 'react';
-import { supabase } from '../lib/supabase';
+// Contenido para: src/contexts/AuthContext.js
 
-// 1. Creamos el Contexto
+import { useState, useEffect, createContext, useContext } from 'react';
+import { supabase } from '../lib/supabase.js'; // Asegúrate de que la ruta a tu cliente de supabase sea correcta
+
 const AuthContext = createContext();
 
-// 2. Creamos el "Proveedor" del contexto
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [restaurant, setRestaurant] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState(null);
+    const [restaurant, setRestaurant] = useState(null);
+    const [userProfile, setUserProfile] = useState(null); // Esto contendrá el rol y permisos
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    console.log('🔄 Iniciando AuthContext...');
+    // Esta función se ejecuta al cargar la app para ver si ya hay una sesión
+    useEffect(() => {
+        const checkUserSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                await fetchUserData(session.user);
+            }
+            setLoading(false);
+        };
+        checkUserSession();
 
-    // Comprobamos la sesión inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('📋 Sesión inicial:', session?.user?.email || 'No session');
-      setUser(session?.user ?? null);
-      setIsAuthenticated(!!session?.user);
-      if (session?.user) {
-        fetchUserRestaurant(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Escuchamos cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔄 Cambio de auth:', event, session?.user?.email || 'No user');
-        setUser(session?.user ?? null);
-        setIsAuthenticated(!!session?.user);
-        if (session?.user) {
-          await fetchUserRestaurant(session.user.id);
-        } else {
-          setRestaurant(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const fetchUserRestaurant = async (userId) => {
-    try {
-      console.log('🔍 Buscando restaurante para:', userId);
-
-      // Usar datos conocidos para gustausantin@gmail.com
-      if (userId === 'd1d283da-2327-4093-91df-69648c9053ac') {
-        console.log('✅ Usuario conocido - usando datos directos');
-        setRestaurant({
-          id: '3723c0e8-4401-4fb2-8707-bd14031e5313',
-          name: 'Restaurante Son-IA',
-          email: 'gustausantin@gmail.com',
-          phone: '+34671126148',
-          city: 'Barcelona',
-          plan: 'free',
-          active: true,
-          user_role: 'owner'
+        // Esto escucha los cambios de sesión (login, logout) en tiempo real
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN') {
+                await fetchUserData(session.user);
+            } else if (event === 'SIGNED_OUT') {
+                setUser(null);
+                setRestaurant(null);
+                setUserProfile(null);
+            }
+            setLoading(false);
         });
-      } else {
-        // Para otros usuarios, intentar consulta normal
-        const { data, error } = await supabase
-          .from('user_restaurant_mapping')
-          .select('*, restaurants(*)')
-          .eq('auth_user_id', userId)
-          .single();
 
-        if (error) {
-          console.error('❌ Error fetching restaurant:', error.message);
-          setRestaurant(null);
-        } else {
-          console.log('✅ Restaurante encontrado:', data.restaurants.name);
-          setRestaurant({
-            ...data.restaurants,
-            user_role: data.role,
-          });
+        return () => subscription.unsubscribe();
+    }, []);
+
+    // Función que busca los datos del usuario y su restaurante
+    const fetchUserData = async (authUser) => {
+        try {
+            // Buscamos en la tabla correcta: 'user_restaurant_mapping'
+            const { data: mappingData, error } = await supabase
+                .from('user_restaurant_mapping')
+                .select(`
+                    role,
+                    permissions,
+                    restaurants (*)
+                `)
+                .eq('auth_user_id', authUser.id)
+                .limit(1)
+                .single();
+
+            if (error) throw error;
+
+            if (mappingData && mappingData.restaurants) {
+                setUser(authUser);
+                setUserProfile({
+                    role: mappingData.role,
+                    permissions: mappingData.permissions
+                });
+                setRestaurant(mappingData.restaurants);
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            // Si hay un error, cerramos sesión para evitar problemas
+            await supabase.auth.signOut();
         }
-      }
-    } catch (error) {
-      console.error('❌ Error general:', error);
-      setRestaurant(null);
-    } finally {
-      console.log('✅ AuthContext completado');
-      setLoading(false);
-    }
-  };
+    };
 
-  const signOut = async () => {
-    console.log('🚪 Cerrando sesión...');
-    await supabase.auth.signOut();
-    setRestaurant(null);
-  };
+    const signIn = async (email, password) => {
+        return await supabase.auth.signInWithPassword({ email, password });
+    };
 
-  const signIn = async (email, password) => {
-    console.log('🔐 Iniciando sesión para:', email);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    return { data, error };
-  };
+    const signOut = async () => {
+        await supabase.auth.signOut();
+    };
 
-  const value = {
-    user,
-    restaurant,
-    loading,
-    isAuthenticated,
-    signOut,
-    signIn
-  };
+    const value = {
+        user,
+        restaurant,
+        userProfile,
+        loading,
+        isReady: !loading && user && restaurant, // La app está lista cuando todo ha cargado
+        isAuthenticated: !!user,
+        signIn,
+        signOut,
+        userRole: userProfile?.role,
+    };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
-// 3. Hook personalizado para usar el contexto
 export function useAuthContext() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuthContext must be used within an AuthProvider');
-  }
-  return context;
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuthContext must be used within an AuthProvider');
+    }
+    return context;
 }
