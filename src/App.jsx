@@ -1,8 +1,5 @@
-// Contenido para: src/App.js
-
-import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthContext } from './contexts/AuthContext';
-import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Reservas from './pages/Reservas';
@@ -10,51 +7,81 @@ import Clientes from './pages/Clientes';
 import Mesas from './pages/Mesas';
 import Analytics from './pages/Analytics';
 import Configuracion from './pages/Configuracion';
-import Calendario from './pages/Calendario';
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 
-function App() {
-  const { isReady, isAuthenticated } = useAuthContext();
-  const [activeSection, setActiveSection] = useState('dashboard');
-
-  // Muestra un spinner de carga mientras se verifica la sesión del usuario
-  if (!isReady) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-700">Iniciando Son-IA...</h2>
-        </div>
-      </div>
-    );
-  }
-
-  // Si no está autenticado, muestra la página de Login
-  if (!isAuthenticated) {
-    return <Login />;
-  }
-
-  // Si está autenticado, muestra la aplicación principal
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'dashboard': return <Dashboard />;
-      case 'reservas': return <Reservas />;
-      case 'clientes': return <Clientes />;
-      case 'mesas': return <Mesas />;
-      case 'calendario': return <Calendario />;
-      case 'analytics': return <Analytics />;
-      case 'configuracion': return <Configuracion />;
-      default: return <Dashboard />;
-    }
-  };
+export default function App() {
+  const { isAuthenticated } = useAuthContext();
 
   return (
-    <Layout 
-      activeSection={activeSection} 
-      onSectionChange={setActiveSection}
-    >
-      {renderContent()}
-    </Layout>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/login"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Dashboard />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reservas"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Reservas />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/clientes"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Clientes />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mesas"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Mesas />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Analytics />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/configuracion"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Configuracion />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;
