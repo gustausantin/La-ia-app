@@ -4,8 +4,13 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import registerHandler from './src/api/register.js';
 
-// Cargar variables de entorno
+// Cargar variables de entorno ANTES de importar supabase
 dotenv.config();
+
+// Verificar que las variables están cargadas
+console.log('🔍 Verificando variables de entorno...');
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? '✅ Configurada' : '❌ Falta');
+console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? '✅ Configurada' : '❌ Falta');
 
 const app = express();
 const PORT = 3001;
