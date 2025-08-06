@@ -1,5 +1,11 @@
-
 import { supabase } from '../lib/supabase.js';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase with Service Role Key for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 export default async function handler(req, res) {
   // Solo permitir POST
@@ -26,24 +32,24 @@ export default async function handler(req, res) {
   try {
     // 1. VALIDACIÓN COMPLETA DE DATOS
     console.log('Step 1: Validating input data...');
-    
-    if (!email || !password || !firstName || !lastName || !restaurantName || 
+
+    if (!email || !password || !firstName || !lastName || !restaurantName ||
         !phone || !cuisineType || !address || !city || !postalCode) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Faltan campos obligatorios',
         details: 'Todos los campos marcados como requeridos deben estar completos'
       });
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Contraseña muy corta',
         details: 'La contraseña debe tener al menos 6 caracteres'
       });
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Email inválido',
         details: 'El formato del email no es válido'
       });
@@ -51,8 +57,8 @@ export default async function handler(req, res) {
 
     // 2. CREAR USUARIO SIN EMAIL DE CONFIRMACIÓN
     console.log('Step 2: Creating user account...');
-    
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: false, // ← Importante: no confirmar email aún
@@ -65,16 +71,16 @@ export default async function handler(req, res) {
 
     if (authError) {
       console.error('Auth error:', authError);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Error creando usuario',
-        details: authError.message 
+        details: authError.message
       });
     }
 
     if (!authData.user) {
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Error interno',
-        details: 'No se pudo crear el usuario' 
+        details: 'No se pudo crear el usuario'
       });
     }
 
@@ -83,7 +89,7 @@ export default async function handler(req, res) {
 
     // 3. CREAR RESTAURANTE
     console.log('Step 3: Creating restaurant...');
-    
+
     const restaurantData = {
       name: restaurantName,
       cuisine_type: cuisineType,
@@ -105,7 +111,7 @@ export default async function handler(req, res) {
       }
     };
 
-    const { data: restaurant, error: restaurantError } = await supabase
+    const { data: restaurant, error: restaurantError } = await supabaseAdmin
       .from('restaurants')
       .insert(restaurantData)
       .select()
@@ -113,13 +119,13 @@ export default async function handler(req, res) {
 
     if (restaurantError) {
       console.error('Restaurant error:', restaurantError);
-      
+
       // Si falla, eliminar el usuario creado
-      await supabase.auth.admin.deleteUser(userId);
-      
-      return res.status(400).json({ 
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+
+      return res.status(400).json({
         error: 'Error creando restaurante',
-        details: restaurantError.message 
+        details: restaurantError.message
       });
     }
 
@@ -128,7 +134,7 @@ export default async function handler(req, res) {
 
     // 4. CREAR PERFIL DE USUARIO
     console.log('Step 4: Creating user profile...');
-    
+
     const userProfileData = {
       id: userId,
       full_name: `${firstName} ${lastName}`.trim(),
@@ -137,28 +143,28 @@ export default async function handler(req, res) {
       updated_at: new Date().toISOString()
     };
 
-    const { error: profileError } = await supabase
+    const { error: profileError } = await supabaseAdmin
       .from('user_profiles')
       .insert(userProfileData);
 
     if (profileError) {
       console.error('Profile error:', profileError);
-      
+
       // Si falla, eliminar usuario y restaurante
       await Promise.all([
-        supabase.auth.admin.deleteUser(userId),
-        supabase.from('restaurants').delete().eq('id', restaurantId)
+        supabaseAdmin.auth.admin.deleteUser(userId),
+        supabaseAdmin.from('restaurants').delete().eq('id', restaurantId)
       ]);
-      
-      return res.status(400).json({ 
+
+      return res.status(400).json({
         error: 'Error creando perfil',
-        details: profileError.message 
+        details: profileError.message
       });
     }
 
     // 5. CREAR MAPEO USUARIO-RESTAURANTE
     console.log('Step 5: Creating user-restaurant mapping...');
-    
+
     const mappingData = {
       auth_user_id: userId,
       restaurant_id: restaurantId,
@@ -174,29 +180,29 @@ export default async function handler(req, res) {
       created_at: new Date().toISOString()
     };
 
-    const { error: mappingError } = await supabase
+    const { error: mappingError } = await supabaseAdmin
       .from('user_restaurant_mapping')
       .insert(mappingData);
 
     if (mappingError) {
       console.error('Mapping error:', mappingError);
-      
+
       // Si falla, limpiar todo
       await Promise.all([
-        supabase.auth.admin.deleteUser(userId),
-        supabase.from('restaurants').delete().eq('id', restaurantId),
-        supabase.from('user_profiles').delete().eq('id', userId)
+        supabaseAdmin.auth.admin.deleteUser(userId),
+        supabaseAdmin.from('restaurants').delete().eq('id', restaurantId),
+        supabaseAdmin.from('user_profiles').delete().eq('id', userId)
       ]);
-      
-      return res.status(400).json({ 
+
+      return res.status(400).json({
         error: 'Error creando mapeo usuario-restaurante',
-        details: mappingError.message 
+        details: mappingError.message
       });
     }
 
     // 6. INICIALIZAR ESTADO DEL AGENTE (OPCIONAL)
     console.log('Step 6: Initializing agent status...');
-    
+
     try {
       const agentStatusData = {
         restaurant_id: restaurantId,
@@ -211,7 +217,7 @@ export default async function handler(req, res) {
         created_at: new Date().toISOString()
       };
 
-      await supabase.from('agent_status').insert(agentStatusData);
+      await supabaseAdmin.from('agent_status').insert(agentStatusData);
       console.log('Agent status initialized');
     } catch (agentError) {
       console.warn('Agent status initialization failed (non-critical):', agentError);
@@ -219,8 +225,8 @@ export default async function handler(req, res) {
 
     // 7. AHORA SÍ, ENVIAR EMAIL DE CONFIRMACIÓN
     console.log('Step 7: Sending confirmation email...');
-    
-    const { error: emailError } = await supabase.auth.admin.inviteUserByEmail(email, {
+
+    const { error: emailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       redirectTo: `${req.headers.origin}/login`,
       data: {
         restaurant_id: restaurantId,
@@ -236,7 +242,7 @@ export default async function handler(req, res) {
 
     // 8. RESPUESTA DE ÉXITO
     console.log('Registration completed successfully');
-    
+
     return res.status(200).json({
       success: true,
       message: 'Cuenta creada exitosamente',
@@ -250,7 +256,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Unexpected error during registration:', error);
-    
+
     return res.status(500).json({
       error: 'Error interno del servidor',
       details: error.message
