@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
-import { Bot, Mail, Lock, Eye, EyeOff, AlertCircle, User, Building, Phone } from 'lucide-react';
+import { Bot, Mail, Lock, Eye, EyeOff, AlertCircle, User, Building, Phone, Utensils, MapPin, Globe, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Register() {
@@ -13,7 +13,14 @@ export default function Register() {
     confirmPassword: '',
     fullName: '',
     restaurantName: '',
-    phone: ''
+    phone: '',
+    cuisineType: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: 'ES',
+    website: '',
+    description: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -40,6 +47,26 @@ export default function Register() {
       newErrors.phone = 'El teléfono es requerido';
     } else if (!/^[+]?[\d\s-()]+$/.test(formData.phone)) {
       newErrors.phone = 'Formato de teléfono no válido';
+    }
+
+    if (!formData.cuisineType) {
+      newErrors.cuisineType = 'Selecciona el tipo de cocina';
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = 'La dirección es requerida';
+    }
+
+    if (!formData.city.trim()) {
+      newErrors.city = 'La ciudad es requerida';
+    }
+
+    if (!formData.postalCode.trim()) {
+      newErrors.postalCode = 'El código postal es requerido';
+    }
+
+    if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
+      newErrors.website = 'La URL debe comenzar con http:// o https://';
     }
     
     if (!formData.email) {
@@ -74,8 +101,42 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      // Aquí implementarías la lógica de registro
-      // Por ahora mostramos un mensaje de éxito simulado
+      // Preparar los datos del restaurante
+      const restaurantData = {
+        name: formData.restaurantName,
+        cuisine_type: formData.cuisineType,
+        phone: formData.phone,
+        email: formData.email,
+        address: formData.address,
+        city: formData.city,
+        postal_code: formData.postalCode,
+        country: formData.country,
+        website: formData.website || null,
+        description: formData.description || null,
+        timezone: 'Europe/Madrid',
+        currency: 'EUR',
+        language: 'es'
+      };
+
+      // Preparar los datos del perfil del usuario
+      const userProfileData = {
+        full_name: formData.fullName,
+        role: 'owner'
+      };
+
+      // TODO: Implementar la lógica real de registro con Supabase
+      // 1. Crear usuario en auth.users
+      // 2. Crear restaurante en tabla restaurants
+      // 3. Crear perfil en tabla user_profiles
+      // 4. Crear mapeo en tabla user_restaurant_mapping
+
+      console.log('Datos de registro:', {
+        email: formData.email,
+        password: '[OCULTA]',
+        restaurantData,
+        userProfileData
+      });
+      
       toast.success('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.');
       
       // Simular delay
@@ -135,6 +196,7 @@ export default function Register() {
         {/* Form */}
         <div className="bg-white py-8 px-6 shadow-xl rounded-xl">
           <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Full Name */}
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -223,6 +285,176 @@ export default function Register() {
                   {errors.phone}
                 </div>
               )}
+            </div>
+
+            {/* Cuisine Type */}
+            <div>
+              <label htmlFor="cuisineType" className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de cocina
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Utensils className="h-5 w-5 text-gray-400" />
+                </div>
+                <select
+                  id="cuisineType"
+                  name="cuisineType"
+                  required
+                  value={formData.cuisineType}
+                  onChange={handleChange}
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${
+                    errors.cuisineType ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">Seleccionar tipo...</option>
+                  <option value="mediterranea">Mediterránea</option>
+                  <option value="italiana">Italiana</option>
+                  <option value="japonesa">Japonesa</option>
+                  <option value="mexicana">Mexicana</option>
+                  <option value="china">China</option>
+                  <option value="india">India</option>
+                  <option value="fusion">Fusión</option>
+                  <option value="tradicional">Tradicional</option>
+                  <option value="vegetariana">Vegetariana</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              {errors.cuisineType && (
+                <div className="mt-1 flex items-center text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.cuisineType}
+                </div>
+              )}
+            </div>
+
+            {/* Address */}
+            <div className="col-span-2">
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                Dirección completa
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MapPin className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="address"
+                  name="address"
+                  type="text"
+                  required
+                  value={formData.address}
+                  onChange={handleChange}
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${
+                    errors.address ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Calle Principal 123"
+                />
+              </div>
+              {errors.address && (
+                <div className="mt-1 flex items-center text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.address}
+                </div>
+              )}
+            </div>
+
+            {/* City */}
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                Ciudad
+              </label>
+              <input
+                id="city"
+                name="city"
+                type="text"
+                required
+                value={formData.city}
+                onChange={handleChange}
+                className={`block w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${
+                  errors.city ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Madrid"
+              />
+              {errors.city && (
+                <div className="mt-1 flex items-center text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.city}
+                </div>
+              )}
+            </div>
+
+            {/* Postal Code */}
+            <div>
+              <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
+                Código postal
+              </label>
+              <input
+                id="postalCode"
+                name="postalCode"
+                type="text"
+                required
+                value={formData.postalCode}
+                onChange={handleChange}
+                className={`block w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${
+                  errors.postalCode ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="28001"
+              />
+              {errors.postalCode && (
+                <div className="mt-1 flex items-center text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.postalCode}
+                </div>
+              )}
+            </div>
+
+            {/* Website - Optional */}
+            <div className="col-span-2">
+              <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+                Sitio web <span className="text-gray-500 text-sm">(opcional)</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Globe className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="website"
+                  name="website"
+                  type="url"
+                  value={formData.website}
+                  onChange={handleChange}
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${
+                    errors.website ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="https://www.mirestaurante.com"
+                />
+              </div>
+              {errors.website && (
+                <div className="mt-1 flex items-center text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.website}
+                </div>
+              )}
+            </div>
+
+            {/* Description - Optional */}
+            <div className="col-span-2">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                Descripción del restaurante <span className="text-gray-500 text-sm">(opcional)</span>
+              </label>
+              <div className="relative">
+                <div className="absolute top-3 left-0 pl-3 flex items-start pointer-events-none">
+                  <FileText className="h-5 w-5 text-gray-400" />
+                </div>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={3}
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors resize-none"
+                  placeholder="Describe tu restaurante, especialidades, ambiente..."
+                />
+              </div>
             </div>
 
             {/* Email */}
@@ -338,6 +570,7 @@ export default function Register() {
                   {errors.confirmPassword}
                 </div>
               )}
+            </div>
             </div>
 
             {/* Submit Button */}

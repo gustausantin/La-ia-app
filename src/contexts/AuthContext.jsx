@@ -247,16 +247,27 @@ export function AuthProvider({ children }) {
                         `
                         role,
                         permissions,
+                        user_profile:auth_user_id (
+                            full_name,
+                            avatar_url
+                        ),
                         restaurant:restaurant_id (
                             id,
                             name,
+                            cuisine_type,
                             phone,
                             email,
                             address,
+                            city,
+                            postal_code,
+                            country,
+                            website,
+                            description,
                             logo_url,
                             settings,
                             timezone,
-                            currency
+                            currency,
+                            language
                         )
                     `,
                     )
@@ -276,6 +287,8 @@ export function AuthProvider({ children }) {
                 setUserProfile({
                     role: data.role,
                     permissions: data.permissions || {},
+                    fullName: data.user_profile?.full_name || '',
+                    avatarUrl: data.user_profile?.avatar_url || null
                 });
 
                 // Obtener estado del agente y métricas
@@ -624,6 +637,8 @@ export function AuthProvider({ children }) {
             // Datos del usuario
             userRole: userProfile?.role,
             userPermissions: userProfile?.permissions || {},
+            userFullName: userProfile?.fullName,
+            userAvatarUrl: userProfile?.avatarUrl,
             restaurantId: restaurant?.id,
             restaurantName: restaurant?.name,
 
