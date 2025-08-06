@@ -54,11 +54,22 @@ export default function Login() {
       if (result.success) {
         toast.success('¡Bienvenido a La-IA!');
       } else {
-        toast.error(result.error || 'Error al iniciar sesión');
+        // Verificar si es error de email no confirmado
+        if (result.error && result.error.includes('Email not confirmed')) {
+          toast.error('⚠️ Tienes que verificar tu email antes de poder entrar.');
+        } else {
+          toast.error(result.error || 'Error al iniciar sesión');
+        }
       }
     } catch (error) {
       console.error('Error en login:', error);
-      toast.error('Error inesperado al iniciar sesión');
+      
+      // Manejar específicamente el error de email no confirmado
+      if (error.message && error.message.includes('Email not confirmed')) {
+        toast.error('⚠️ Tienes que verificar tu email antes de poder entrar.');
+      } else {
+        toast.error('Error inesperado al iniciar sesión');
+      }
     } finally {
       setIsLoading(false);
     }
