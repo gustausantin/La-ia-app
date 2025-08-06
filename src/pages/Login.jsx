@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Bot, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -202,9 +202,18 @@ export default function Login() {
             </div>
           </form>
 
-          {/* Demo Info */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="text-center">
+          {/* Register Link */}
+          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+            <p className="text-sm text-gray-600">
+              ¿No tienes cuenta?{' '}
+              <Link
+                to="/register"
+                className="font-medium text-purple-600 hover:text-purple-500 transition-colors"
+              >
+                Crear cuenta
+              </Link>
+            </p>
+            <div className="mt-4">
               <p className="text-xs text-gray-500">
                 Demo de La-IA - Recepcionista Virtual
               </p>

@@ -1,4 +1,3 @@
-
 // App.jsx - Aplicación principal mejorada para La-IA
 import {
   BrowserRouter as Router,
@@ -14,7 +13,8 @@ import { Bot, RefreshCw } from "lucide-react";
 
 // Lazy loading para optimización
 const Layout = lazy(() => import("./components/Layout"));
-const Login = lazy(() => import("./pages/Login"));
+const Login = lazy(() => import("./pages/Login.jsx"));
+const Register = lazy(() => import("./pages/Register.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Reservas = lazy(() => import("./pages/Reservas"));
 const Clientes = lazy(() => import("./pages/Clientes"));
@@ -79,8 +79,8 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Ruta de login */}
-      <Route 
-        path="/login" 
+      <Route
+        path="/login"
         element={
           isAuthenticated ? (
             <Navigate to="/dashboard" replace />
@@ -89,12 +89,26 @@ function AppRoutes() {
               <Login />
             </Suspense>
           )
-        } 
+        }
+      />
+
+      {/* Ruta de registro */}
+      <Route
+        path="/register"
+        element={
+          isAuthenticated ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Suspense fallback={<LoadingScreen />}>
+              <Register />
+            </Suspense>
+          )
+        }
       />
 
       {/* Rutas protegidas */}
-      <Route 
-        path="/*" 
+      <Route
+        path="/*"
         element={
           <ProtectedRoute>
             <Suspense fallback={<PageLoading />}>
@@ -105,82 +119,82 @@ function AppRoutes() {
       >
         {/* Rutas anidadas */}
         <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route 
-          path="dashboard" 
+        <Route
+          path="dashboard"
           element={
             <Suspense fallback={<PageLoading />}>
               <Dashboard />
             </Suspense>
-          } 
+          }
         />
-        <Route 
-          path="reservas" 
+        <Route
+          path="reservas"
           element={
             <Suspense fallback={<PageLoading />}>
               <Reservas />
             </Suspense>
-          } 
+          }
         />
-        <Route 
-          path="clientes" 
+        <Route
+          path="clientes"
           element={
             <Suspense fallback={<PageLoading />}>
               <Clientes />
             </Suspense>
-          } 
+          }
         />
-        <Route 
-          path="mesas" 
+        <Route
+          path="mesas"
           element={
             <Suspense fallback={<PageLoading />}>
               <Mesas />
             </Suspense>
-          } 
+          }
         />
-        <Route 
-          path="calendario" 
+        <Route
+          path="calendario"
           element={
             <Suspense fallback={<PageLoading />}>
               <Calendario />
             </Suspense>
-          } 
+          }
         />
-        <Route 
-          path="analytics" 
+        <Route
+          path="analytics"
           element={
             <Suspense fallback={<PageLoading />}>
               <Analytics />
             </Suspense>
-          } 
+          }
         />
-        <Route 
-          path="comunicacion" 
+        <Route
+          path="comunicacion"
           element={
             <Suspense fallback={<PageLoading />}>
               <Comunicacion />
             </Suspense>
-          } 
+          }
         />
-        <Route 
-          path="configuracion" 
+        <Route
+          path="configuracion"
           element={
             <Suspense fallback={<PageLoading />}>
               <Configuracion />
             </Suspense>
-          } 
+          }
         />
       </Route>
 
       {/* Ruta catch-all */}
-      <Route 
-        path="*" 
+      <Route
+        path="*"
         element={
           isAuthenticated ? (
             <Navigate to="/dashboard" replace />
           ) : (
             <Navigate to="/login" replace />
           )
-        } 
+        }
       />
     </Routes>
   );
@@ -190,7 +204,7 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <Router 
+      <Router
         future={{
           v7_startTransition: true,
           v7_relativeSplatPath: true
