@@ -108,7 +108,32 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      // Preparar los datos del restaurante
+      // Importar supabase
+      const { supabase } = await import('../lib/supabase.js');
+
+      // 1. Crear usuario en auth.users con confirmación por email
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+          data: {
+            full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+          }
+        }
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error('No se pudo crear el usuario');
+      }
+
+      // 2. Crear restaurante en tabla restaurants
       const restaurantData = {
         name: formData.restaurantName,
         cuisine_type: formData.cuisineType,
@@ -122,37 +147,119 @@ export default function Register() {
         description: formData.description || null,
         timezone: 'Europe/Madrid',
         currency: 'EUR',
-        language: 'es'
+        language: 'es',
+        settings: {
+          notifications_enabled: true,
+          agent_auto_responses: true,
+          booking_confirmation: true
+        }
       };
 
-      // Preparar los datos del perfil del usuario
+      const { data: restaurantResponse, error: restaurantError } = await supabase
+        .from('restaurants')
+        .insert(restaurantData)
+        .select()
+        .single();
+
+      if (restaurantError) {
+        throw restaurantError;
+      }
+
+      // 3. Crear perfil en tabla user_profiles (si existe esta tabla)
       const userProfileData = {
+        id: authData.user.id,
         full_name: `${formData.firstName} ${formData.lastName}`.trim(),
-        role: 'owner'
+        email: formData.email,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      // TODO: Implementar la lógica real de registro con Supabase
-      // 1. Crear usuario en auth.users con confirmación por email
-      // 2. Crear restaurante en tabla restaurants
-      // 3. Crear perfil en tabla user_profiles  
-      // 4. Crear mapeo en tabla user_restaurant_mapping
+      // Intentar crear perfil (puede que la tabla no exista aún)
+      try {
+        await supabase
+          .from('user_profiles')
+          .insert(userProfileData);
+      } catch (profileError) {
+        console.warn('No se pudo crear perfil de usuario:', profileError);
+        // No es crítico, continúa
+      }
 
-      console.log('Datos de registro:', {
-        email: formData.email,
-        password: '[OCULTA]',
-        restaurantData,
-        userProfileData
+      // 4. Crear mapeo en tabla user_restaurant_mapping
+      const mappingData = {
+        auth_user_id: authData.user.id,
+        restaurant_id: restaurantResponse.id,
+        role: 'owner',
+        permissions: {
+          full_access: true,
+          manage_restaurant: true,
+          manage_users: true,
+          manage_bookings: true,
+          manage_agent: true,
+          view_analytics: true
+        },
+        created_at: new Date().toISOString()
+      };
+
+      const { error: mappingError } = await supabase
+        .from('user_restaurant_mapping')
+        .insert(mappingData);
+
+      if (mappingError) {
+        throw mappingError;
+      }
+
+      // 5. Inicializar configuración del agente (opcional)
+      try {
+        const agentStatusData = {
+          restaurant_id: restaurantResponse.id,
+          is_active: false,
+          channels_status: {
+            whatsapp: false,
+            vapi: false,
+            email: false,
+            instagram: false,
+            facebook: false
+          },
+          created_at: new Date().toISOString()
+        };
+
+        await supabase
+          .from('agent_status')
+          .insert(agentStatusData);
+      } catch (agentError) {
+        console.warn('No se pudo inicializar estado del agente:', agentError);
+        // No es crítico
+      }
+
+      console.log('Registro exitoso:', {
+        userId: authData.user.id,
+        restaurantId: restaurantResponse.id,
+        email: formData.email
       });
       
       // Guardar el email para mostrar en el mensaje de éxito
       setRegisteredEmail(formData.email);
       
-      // Mostrar pantalla de éxito en lugar de toast
+      // Mostrar pantalla de éxito
       setShowSuccess(true);
       
     } catch (error) {
       console.error('Error en registro:', error);
-      toast.error('Error al crear la cuenta');
+      
+      // Manejar errores específicos
+      let errorMessage = 'Error al crear la cuenta';
+      
+      if (error.message?.includes('User already registered')) {
+        errorMessage = 'Este email ya está registrado';
+      } else if (error.message?.includes('Password')) {
+        errorMessage = 'La contraseña no cumple los requisitos';
+      } else if (error.message?.includes('Email')) {
+        errorMessage = 'El email no es válido';
+      } else if (error.message?.includes('duplicate key')) {
+        errorMessage = 'Ya existe un restaurante con estos datos';
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -205,9 +312,26 @@ export default function Register() {
 
               <div className="space-y-3 pt-4">
                 <button
-                  onClick={() => {
-                    // TODO: Implementar reenvío de email
-                    toast.success('Email de verificación reenviado');
+                  onClick={async () => {
+                    try {
+                      const { supabase } = await import('../lib/supabase.js');
+                      const { error } = await supabase.auth.resend({
+                        type: 'signup',
+                        email: registeredEmail,
+                        options: {
+                          emailRedirectTo: `${window.location.origin}/login`
+                        }
+                      });
+                      
+                      if (error) {
+                        throw error;
+                      }
+                      
+                      toast.success('Email de verificación reenviado');
+                    } catch (error) {
+                      console.error('Error reenviando email:', error);
+                      toast.error('Error al reenviar el email');
+                    }
                   }}
                   className="w-full flex justify-center py-2 px-4 border border-purple-300 rounded-lg text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
                 >

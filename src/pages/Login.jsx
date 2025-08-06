@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
@@ -22,26 +21,26 @@ export default function Login() {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.email) {
       newErrors.email = 'El email es requerido';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'El email no es válido';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'La contraseña es requerida';
     } else if (formData.password.length < 6) {
       newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -50,20 +49,21 @@ export default function Login() {
 
     try {
       const result = await signIn(formData.email, formData.password);
-      
+
       if (result.success) {
         toast.success('¡Bienvenido a La-IA!');
       } else {
-        // Verificar si es error de email no confirmado
-        if (result.error && result.error.includes('Email not confirmed')) {
-          toast.error('⚠️ Tienes que verificar tu email antes de poder entrar.');
+        // Manejar error específico de email no confirmado
+        if (result.error === 'Email not confirmed') {
+          toast.error('⚠️ Tienes que verificar tu email antes de poder entrar. Revisa tu bandeja de entrada y haz clic en el enlace de confirmación.');
+          return;
         } else {
           toast.error(result.error || 'Error al iniciar sesión');
         }
       }
     } catch (error) {
       console.error('Error en login:', error);
-      
+
       // Manejar específicamente el error de email no confirmado
       if (error.message && error.message.includes('Email not confirmed')) {
         toast.error('⚠️ Tienes que verificar tu email antes de poder entrar.');
@@ -81,7 +81,7 @@ export default function Login() {
       ...prev,
       [name]: value
     }));
-    
+
     // Limpiar error del campo
     if (errors[name]) {
       setErrors(prev => ({
