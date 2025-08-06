@@ -2,10 +2,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import registerHandler from './src/api/register.js';
 
-// Cargar variables de entorno ANTES de importar supabase
+// Cargar variables de entorno ANTES de importar cualquier módulo que las use
 dotenv.config();
+
+import registerHandler from './src/api/register.js';
 
 // Verificar que las variables están cargadas
 console.log('🔍 Verificando variables de entorno...');
