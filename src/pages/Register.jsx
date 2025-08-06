@@ -131,178 +131,38 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      // Importar supabase
-      const { supabase } = await import('../lib/supabase.js');
-
-      // 1. Crear usuario en auth.users con confirmación por email
-      console.log('Intentando crear usuario con email:', formData.email);
+      console.log('Iniciando registro controlado desde backend...');
       
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/login`,
-          data: {
-            full_name: `${formData.firstName} ${formData.lastName}`.trim(),
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-          }
-        }
-      });
-
-      console.log('Respuesta de signUp:', { authData, authError });
-
-      if (authError) {
-        console.error('Error en signUp:', authError);
-        throw authError;
-      }
-
-      if (!authData.user) {
-        console.error('No se retornó usuario en authData');
-        throw new Error('No se pudo crear el usuario');
-      }
-
-      console.log('Usuario creado exitosamente:', authData.user.id);
-
-      // 2. Crear restaurante en tabla restaurants
-      console.log('Creando restaurante...');
-      
-      const restaurantData = {
-        name: formData.restaurantName,
-        cuisine_type: formData.cuisineType,
-        phone: formData.phone,
-        email: formData.email,
-        address: formData.address,
-        city: formData.city,
-        postal_code: formData.postalCode,
-        country: formData.country,
-        website: formData.website || null,
-        description: formData.description || null,
-        timezone: 'Europe/Madrid',
-        currency: 'EUR',
-        language: 'es',
-        settings: {
-          notifications_enabled: true,
-          agent_auto_responses: true,
-          booking_confirmation: true
-        }
-      };
-
-      console.log('Datos del restaurante:', restaurantData);
-
-      const { data: restaurantResponse, error: restaurantError } = await supabase
-        .from('restaurants')
-        .insert(restaurantData)
-        .select()
-        .single();
-
-      console.log('Respuesta de restaurants:', { restaurantResponse, restaurantError });
-
-      if (restaurantError) {
-        console.error('Error creando restaurante:', restaurantError);
-        throw restaurantError;
-      }
-
-      if (!restaurantResponse) {
-        throw new Error('No se pudo crear el restaurante');
-      }
-
-      console.log('Restaurante creado exitosamente:', restaurantResponse.id);
-
-      // 3. Crear perfil en tabla user_profiles (si existe esta tabla)
-      console.log('Intentando crear perfil de usuario...');
-      
-      const userProfileData = {
-        id: authData.user.id,
-        full_name: `${formData.firstName} ${formData.lastName}`.trim(),
-        email: formData.email,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      // Intentar crear perfil (puede que la tabla no exista aún)
-      try {
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert(userProfileData);
-        
-        if (profileError) {
-          console.warn('Error en user_profiles:', profileError);
-        } else {
-          console.log('Perfil de usuario creado exitosamente');
-        }
-      } catch (profileError) {
-        console.warn('Tabla user_profiles no existe o error:', profileError);
-      }
-
-      // 4. Crear mapeo en tabla user_restaurant_mapping
-      console.log('Creando mapeo usuario-restaurante...');
-      
-      const mappingData = {
-        auth_user_id: authData.user.id,
-        restaurant_id: restaurantResponse.id,
-        role: 'owner',
-        permissions: {
-          full_access: true,
-          manage_restaurant: true,
-          manage_users: true,
-          manage_bookings: true,
-          manage_agent: true,
-          view_analytics: true
+      // Llamar al endpoint del backend que controla todo el flujo
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        created_at: new Date().toISOString()
-      };
-
-      console.log('Datos del mapeo:', mappingData);
-
-      const { error: mappingError } = await supabase
-        .from('user_restaurant_mapping')
-        .insert(mappingData);
-
-      console.log('Respuesta del mapeo:', { mappingError });
-
-      if (mappingError) {
-        console.error('Error creando mapeo:', mappingError);
-        throw mappingError;
-      }
-
-      console.log('Mapeo creado exitosamente');
-
-      // 5. Inicializar configuración del agente (opcional)
-      try {
-        console.log('Inicializando estado del agente...');
-        
-        const agentStatusData = {
-          restaurant_id: restaurantResponse.id,
-          is_active: false,
-          channels_status: {
-            whatsapp: false,
-            vapi: false,
-            email: false,
-            instagram: false,
-            facebook: false
-          },
-          created_at: new Date().toISOString()
-        };
-
-        const { error: agentError } = await supabase
-          .from('agent_status')
-          .insert(agentStatusData);
-
-        if (agentError) {
-          console.warn('Error inicializando agente:', agentError);
-        } else {
-          console.log('Estado del agente inicializado');
-        }
-      } catch (agentError) {
-        console.warn('Error o tabla agent_status no existe:', agentError);
-      }
-
-      console.log('Registro exitoso:', {
-        userId: authData.user.id,
-        restaurantId: restaurantResponse.id,
-        email: formData.email
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          restaurantName: formData.restaurantName,
+          phone: formData.phone,
+          cuisineType: formData.cuisineType,
+          address: formData.address,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          country: formData.country,
+          website: formData.website,
+          description: formData.description
+        })
       });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.details || result.error || 'Error en el registro');
+      }
+
+      console.log('Registro exitoso:', result);
       
       // Guardar el email para mostrar en el mensaje de éxito
       setRegisteredEmail(formData.email);
@@ -311,43 +171,31 @@ export default function Register() {
       setShowSuccess(true);
       
     } catch (error) {
-      console.error('Error completo en registro:', error);
-      console.error('Error message:', error.message);
-      console.error('Error code:', error.code);
-      console.error('Error details:', error.details);
+      console.error('Error en el registro:', error);
       
       // Manejar errores específicos
       let errorMessage = 'Error al crear la cuenta';
       
-      if (error.message?.includes('For security purposes, you can only request this after')) {
-        errorMessage = 'Por seguridad, espera un momento antes de intentar de nuevo. Intenta con un email diferente o espera 60 segundos.';
-      } else if (error.message?.includes('User already registered')) {
-        errorMessage = 'Este email ya está registrado';
-      } else if (error.message?.includes('Password should be at least')) {
+      if (error.message?.includes('Faltan campos obligatorios')) {
+        errorMessage = 'Por favor, completa todos los campos requeridos';
+      } else if (error.message?.includes('Contraseña muy corta')) {
         errorMessage = 'La contraseña debe tener al menos 6 caracteres';
-      } else if (error.message?.includes('Invalid email')) {
-        errorMessage = 'El email no es válido';
-      } else if (error.message?.includes('duplicate key') || error.code === '23505') {
-        errorMessage = 'Ya existe un registro con estos datos';
-      } else if (error.message?.includes('column') && error.message?.includes('does not exist')) {
-        errorMessage = 'Error en la base de datos: campo no encontrado. Contacta al administrador.';
-      } else if (error.message?.includes('relation') && error.message?.includes('does not exist')) {
-        errorMessage = 'Error de configuración en la base de datos. Contacta al administrador.';
-      } else if (error.message?.includes('permission denied')) {
-        errorMessage = 'No tienes permisos para crear cuentas. Contacta al administrador.';
+      } else if (error.message?.includes('Email inválido')) {
+        errorMessage = 'El formato del email no es válido';
+      } else if (error.message?.includes('Error creando usuario')) {
+        errorMessage = 'No se pudo crear el usuario. Verifica que el email no esté ya registrado.';
+      } else if (error.message?.includes('Error creando restaurante')) {
+        errorMessage = 'Error al crear los datos del restaurante';
+      } else if (error.message?.includes('Error creando perfil')) {
+        errorMessage = 'Error al crear el perfil de usuario';
+      } else if (error.message?.includes('Error creando mapeo')) {
+        errorMessage = 'Error al vincular usuario con restaurante';
       } else if (error.message) {
-        errorMessage = `Error: ${error.message}`;
+        errorMessage = error.message;
       }
       
       toast.error(errorMessage);
       
-      // También mostrar error técnico en consola para debugging
-      console.error('Error técnico completo:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
     } finally {
       setIsLoading(false);
     }
