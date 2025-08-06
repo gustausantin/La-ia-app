@@ -256,3 +256,62 @@
   transform: translate(-50%, -50%);
   animation: bounce-soft 2s ease-in-out infinite;
 }
+/* Agent Loader Styles for Son-IA */
+.agent-loader {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #8B5CF6;
+  border-radius: 50%;
+  animation: agent-spin 1s linear infinite;
+}
+
+@keyframes agent-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Float animation for bot icon */
+@keyframes animate-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: animate-float 3s ease-in-out infinite;
+}
+
+/* Enter/Leave animations for toasts */
+@keyframes animate-enter {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes animate-leave {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+.animate-enter {
+  animation: animate-enter 0.2s ease-out;
+}
+
+.animate-leave {
+  animation: animate-leave 0.15s ease-in;
+}

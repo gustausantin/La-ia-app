@@ -249,3 +249,37 @@ const styles = `
   animation-delay: 200ms;
 }
 `;
+import { Navigate } from 'react-router-dom';
+import { useAuthContext } from '../contexts/AuthContext';
+import { Bot, RefreshCw } from 'lucide-react';
+
+const LoadingScreen = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="text-center">
+      <div className="flex items-center justify-center mb-4">
+        <Bot className="w-12 h-12 text-purple-600 mr-2" />
+        <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+      <h2 className="text-xl font-semibold text-gray-700">
+        Verificando acceso...
+      </h2>
+      <p className="text-sm text-gray-500 mt-2">
+        Son-IA está validando tus permisos
+      </p>
+    </div>
+  </div>
+);
+
+export default function ProtectedRoute({ children }) {
+  const { isReady, isAuthenticated } = useAuthContext();
+
+  if (!isReady) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
