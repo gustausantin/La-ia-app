@@ -626,6 +626,7 @@ export default function Settings() {
     const loadSettings = async () => {
         try {
             setLoading(true);
+            
             // En producción, cargar desde Supabase
             // const { data, error } = await supabase
             //     .from('restaurants')
@@ -633,16 +634,36 @@ export default function Settings() {
             //     .eq('id', restaurantId)
             //     .single();
 
-            // Simular carga de datos
+            // Simular carga de datos usando la información del contexto
             setTimeout(() => {
                 setSettings((prev) => ({
                     ...prev,
-                    name: restaurant?.name || "Mi Restaurante",
-                    email: "contacto@mirestaurante.com",
-                    phone: "+34 666 123 456",
+                    // Datos del restaurante desde el contexto
+                    name: restaurant?.name || "",
+                    cuisine_type: restaurant?.cuisine_type || "",
+                    phone: restaurant?.phone || "",
+                    email: restaurant?.email || "",
+                    address: restaurant?.address || "",
+                    city: restaurant?.city || "",
+                    postal_code: restaurant?.postal_code || "",
+                    country: restaurant?.country || "ES",
+                    website: restaurant?.website || "",
+                    description: restaurant?.description || "",
+                    timezone: restaurant?.timezone || "Europe/Madrid",
+                    currency: restaurant?.currency || "EUR",
+                    language: restaurant?.language || "es",
+                    
+                    // Configurar agente con nombre del restaurante
                     agent: {
                         ...prev.agent,
                         name: "Asistente de " + (restaurant?.name || "Mi Restaurante"),
+                        messages: {
+                            ...prev.agent.messages,
+                            welcome: prev.agent.messages.welcome.replace('{restaurant_name}', restaurant?.name || 'nuestro restaurante'),
+                            menu_inquiry: prev.agent.messages.menu_inquiry.replace('{website}', restaurant?.website || 'nuestra web'),
+                            location: prev.agent.messages.location.replace('{address}', restaurant?.address || 'nuestra dirección'),
+                            error_system: prev.agent.messages.error_system.replace('{phone}', restaurant?.phone || 'nuestro teléfono')
+                        }
                     }
                 }));
                 setLoading(false);
@@ -841,6 +862,28 @@ export default function Settings() {
                                     icon={<Building2 />}
                                 >
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Nombre del usuario/propietario */}
+                                        <div className="col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Propietario / Administrador
+                                            </label>
+                                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                                <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
+                                                    <span className="text-white text-sm font-medium">
+                                                        {userProfile?.fullName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-gray-900">
+                                                        {userProfile?.fullName || 'Usuario'}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">
+                                                        {user?.email}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         {/* Logo */}
                                         <div className="col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
