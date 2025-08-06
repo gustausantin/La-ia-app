@@ -27,6 +27,8 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   // Redirigir si ya está autenticado
   if (isAuthenticated) {
@@ -130,9 +132,9 @@ export default function Register() {
       };
 
       // TODO: Implementar la lógica real de registro con Supabase
-      // 1. Crear usuario en auth.users
+      // 1. Crear usuario en auth.users con confirmación por email
       // 2. Crear restaurante en tabla restaurants
-      // 3. Crear perfil en tabla user_profiles
+      // 3. Crear perfil en tabla user_profiles  
       // 4. Crear mapeo en tabla user_restaurant_mapping
 
       console.log('Datos de registro:', {
@@ -142,10 +144,11 @@ export default function Register() {
         userProfileData
       });
       
-      toast.success('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.');
+      // Guardar el email para mostrar en el mensaje de éxito
+      setRegisteredEmail(formData.email);
       
-      // Simular delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Mostrar pantalla de éxito en lugar de toast
+      setShowSuccess(true);
       
     } catch (error) {
       console.error('Error en registro:', error);
@@ -170,6 +173,66 @@ export default function Register() {
       }));
     }
   };
+
+  // Pantalla de verificación de email
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <div className="mx-auto h-20 w-20 bg-green-100 rounded-full flex items-center justify-center shadow-lg mb-4">
+              <Mail className="h-10 w-10 text-green-600" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900">
+              ✉️ ¡Casi está!
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Verifica tu email para activar tu cuenta
+            </p>
+          </div>
+
+          <div className="bg-white py-8 px-6 shadow-xl rounded-xl">
+            <div className="text-center space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-sm text-green-800">
+                  Hemos enviado un correo a <strong>{registeredEmail}</strong>.
+                </p>
+                <p className="text-sm text-green-700 mt-2">
+                  Abre el email y haz clic en el enlace para activar tu cuenta.
+                  Una vez confirmada, ya podrás iniciar sesión.
+                </p>
+              </div>
+
+              <div className="space-y-3 pt-4">
+                <button
+                  onClick={() => {
+                    // TODO: Implementar reenvío de email
+                    toast.success('Email de verificación reenviado');
+                  }}
+                  className="w-full flex justify-center py-2 px-4 border border-purple-300 rounded-lg text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                >
+                  ¿No has recibido el email? Reenviar
+                </button>
+
+                <Link
+                  to="/login"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200"
+                >
+                  Ya he verificado, ir a login
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <p className="text-xs text-gray-500">
+              Revisa también tu carpeta de spam si no encuentras el email
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

@@ -334,7 +334,16 @@ export function AuthProvider({ children }) {
                     password,
                 });
 
-                if (error) throw error;
+                if (error) {
+                    // Manejar específicamente el error de email no confirmado
+                    if (error.message.includes('Email not confirmed')) {
+                        return { 
+                            success: false, 
+                            error: 'Email not confirmed' 
+                        };
+                    }
+                    throw error;
+                }
 
                 if (data?.user) {
                     await fetchUserData(data.user);
