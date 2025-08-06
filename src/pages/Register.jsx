@@ -112,6 +112,8 @@ export default function Register() {
       const { supabase } = await import('../lib/supabase.js');
 
       // 1. Crear usuario en auth.users con confirmación por email
+      console.log('Intentando crear usuario con email:', formData.email);
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -125,15 +127,23 @@ export default function Register() {
         }
       });
 
+      console.log('Respuesta de signUp:', { authData, authError });
+
       if (authError) {
+        console.error('Error en signUp:', authError);
         throw authError;
       }
 
       if (!authData.user) {
+        console.error('No se retornó usuario en authData');
         throw new Error('No se pudo crear el usuario');
       }
 
+      console.log('Usuario creado exitosamente:', authData.user.id);
+
       // 2. Crear restaurante en tabla restaurants
+      console.log('Creando restaurante...');
+      
       const restaurantData = {
         name: formData.restaurantName,
         cuisine_type: formData.cuisineType,
@@ -155,17 +165,30 @@ export default function Register() {
         }
       };
 
+      console.log('Datos del restaurante:', restaurantData);
+
       const { data: restaurantResponse, error: restaurantError } = await supabase
         .from('restaurants')
         .insert(restaurantData)
         .select()
         .single();
 
+      console.log('Respuesta de restaurants:', { restaurantResponse, restaurantError });
+
       if (restaurantError) {
+        console.error('Error creando restaurante:', restaurantError);
         throw restaurantError;
       }
 
+      if (!restaurantResponse) {
+        throw new Error('No se pudo crear el restaurante');
+      }
+
+      console.log('Restaurante creado exitosamente:', restaurantResponse.id);
+
       // 3. Crear perfil en tabla user_profiles (si existe esta tabla)
+      console.log('Intentando crear perfil de usuario...');
+      
       const userProfileData = {
         id: authData.user.id,
         full_name: `${formData.firstName} ${formData.lastName}`.trim(),
@@ -176,15 +199,22 @@ export default function Register() {
 
       // Intentar crear perfil (puede que la tabla no exista aún)
       try {
-        await supabase
+        const { error: profileError } = await supabase
           .from('user_profiles')
           .insert(userProfileData);
+        
+        if (profileError) {
+          console.warn('Error en user_profiles:', profileError);
+        } else {
+          console.log('Perfil de usuario creado exitosamente');
+        }
       } catch (profileError) {
-        console.warn('No se pudo crear perfil de usuario:', profileError);
-        // No es crítico, continúa
+        console.warn('Tabla user_profiles no existe o error:', profileError);
       }
 
       // 4. Crear mapeo en tabla user_restaurant_mapping
+      console.log('Creando mapeo usuario-restaurante...');
+      
       const mappingData = {
         auth_user_id: authData.user.id,
         restaurant_id: restaurantResponse.id,
@@ -200,16 +230,25 @@ export default function Register() {
         created_at: new Date().toISOString()
       };
 
+      console.log('Datos del mapeo:', mappingData);
+
       const { error: mappingError } = await supabase
         .from('user_restaurant_mapping')
         .insert(mappingData);
 
+      console.log('Respuesta del mapeo:', { mappingError });
+
       if (mappingError) {
+        console.error('Error creando mapeo:', mappingError);
         throw mappingError;
       }
 
+      console.log('Mapeo creado exitosamente');
+
       // 5. Inicializar configuración del agente (opcional)
       try {
+        console.log('Inicializando estado del agente...');
+        
         const agentStatusData = {
           restaurant_id: restaurantResponse.id,
           is_active: false,
@@ -223,12 +262,17 @@ export default function Register() {
           created_at: new Date().toISOString()
         };
 
-        await supabase
+        const { error: agentError } = await supabase
           .from('agent_status')
           .insert(agentStatusData);
+
+        if (agentError) {
+          console.warn('Error inicializando agente:', agentError);
+        } else {
+          console.log('Estado del agente inicializado');
+        }
       } catch (agentError) {
-        console.warn('No se pudo inicializar estado del agente:', agentError);
-        // No es crítico
+        console.warn('Error o tabla agent_status no existe:', agentError);
       }
 
       console.log('Registro exitoso:', {
@@ -244,22 +288,39 @@ export default function Register() {
       setShowSuccess(true);
       
     } catch (error) {
-      console.error('Error en registro:', error);
+      console.error('Error completo en registro:', error);
+      console.error('Error message:', error.message);
+      console.error('Error code:', error.code);
+      console.error('Error details:', error.details);
       
       // Manejar errores específicos
       let errorMessage = 'Error al crear la cuenta';
       
       if (error.message?.includes('User already registered')) {
         errorMessage = 'Este email ya está registrado';
-      } else if (error.message?.includes('Password')) {
-        errorMessage = 'La contraseña no cumple los requisitos';
-      } else if (error.message?.includes('Email')) {
+      } else if (error.message?.includes('Password should be at least')) {
+        errorMessage = 'La contraseña debe tener al menos 6 caracteres';
+      } else if (error.message?.includes('Invalid email')) {
         errorMessage = 'El email no es válido';
-      } else if (error.message?.includes('duplicate key')) {
-        errorMessage = 'Ya existe un restaurante con estos datos';
+      } else if (error.message?.includes('duplicate key') || error.code === '23505') {
+        errorMessage = 'Ya existe un registro con estos datos';
+      } else if (error.message?.includes('relation') && error.message?.includes('does not exist')) {
+        errorMessage = 'Error de configuración en la base de datos. Contacta al administrador.';
+      } else if (error.message?.includes('permission denied')) {
+        errorMessage = 'No tienes permisos para crear cuentas. Contacta al administrador.';
+      } else if (error.message) {
+        errorMessage = `Error: ${error.message}`;
       }
       
       toast.error(errorMessage);
+      
+      // También mostrar error técnico en consola para debugging
+      console.error('Error técnico completo:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
     } finally {
       setIsLoading(false);
     }
