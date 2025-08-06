@@ -493,7 +493,7 @@ export default function Register() {
             </div>
 
             {/* Email */}
-            <div>
+            <div className="col-span-2">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
@@ -524,7 +524,7 @@ export default function Register() {
             </div>
 
             {/* Password */}
-            <div>
+            <div className="col-span-2">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Contraseña
               </label>
