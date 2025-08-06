@@ -1,377 +1,286 @@
-import { useState } from 'react'
-import { useAuth } from '../hooks/useAuth'
-import { supabase } from '../lib/supabase'
+// src/pages/Login.jsx - VERSIÓN CORREGIDA SIN STYLE JSX
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
+import { useAuthContext } from "../contexts/AuthContext";
+import {
+  Bot,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Loader,
+  CheckCircle,
+  Clock,
+  Users,
+  Shield,
+  Sparkles,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function Login() {
-  const [isLogin, setIsLogin] = useState(true)
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+  const navigate = useNavigate();
+  const { signIn } = useAuthContext();
 
-  // Estados para login
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Estados adicionales para registro
-  const [restaurantName, setRestaurantName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [city, setCity] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    restaurantName: "",
+    phone: "",
+  });
 
-  const { signIn } = useAuth()
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-  const handleLogin = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    setMessage('')
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      const { error } = await signIn(email, password)
-
-      if (error) {
-        if (error.message.includes('Email not confirmed')) {
-          setError('Por favor confirma tu email antes de hacer login. Revisa tu bandeja de entrada.')
-        } else if (error.message.includes('Invalid login credentials')) {
-          setError('Email o contraseña incorrectos.')
+      if (isLogin) {
+        const result = await signIn(formData.email, formData.password);
+        if (result.success) {
+          toast.success("¡Bienvenido de vuelta!");
+          navigate("/dashboard");
         } else {
-          setError(error.message)
+          toast.error(result.error || "Error al iniciar sesión");
         }
-      }
-    } catch (err) {
-      setError('Error inesperado. Inténtalo de nuevo.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleRegister = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    setMessage('')
-
-    // Validaciones
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden')
-      setLoading(false)
-      return
-    }
-
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
-      setLoading(false)
-      return
-    }
-
-    if (!restaurantName.trim()) {
-      setError('El nombre del restaurante es obligatorio')
-      setLoading(false)
-      return
-    }
-
-    try {
-      // 1. Crear usuario en Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            restaurant_name: restaurantName,
-            phone: phone,
-            city: city
-          }
-        }
-      })
-
-      if (authError) {
-        throw authError
-      }
-
-      if (authData.user) {
-        // 2. Crear restaurante
-        const { data: restaurantData, error: restaurantError } = await supabase
-          .from('restaurants')
-          .insert([
-            {
-              name: restaurantName.trim(),
-              email: email,
-              phone: phone || null,
-              city: city || null,
-              plan: 'free',
-              active: true,
-              created_at: new Date().toISOString()
-            }
-          ])
-          .select()
-          .single()
-
-        if (restaurantError) {
-          console.error('Error creating restaurant:', restaurantError)
-          throw new Error('Error al crear el restaurante')
-        }
-
-        // 3. Crear mapeo usuario-restaurante
-        const { error: mappingError } = await supabase
-          .from('user_restaurant_mapping')
-          .insert([
-            {
-              auth_user_id: authData.user.id,
-              restaurant_id: restaurantData.id,
-              role: 'owner',
-              permissions: {
-                read: true,
-                write: true,
-                delete: true,
-                admin: true
-              },
-              active: true
-            }
-          ])
-
-        if (mappingError) {
-          console.error('Error creating mapping:', mappingError)
-          throw new Error('Error al configurar permisos')
-        }
-
-        setMessage('¡Registro exitoso! Revisa tu email para confirmar tu cuenta antes de hacer login.')
-        setIsLogin(true)
-
-        // Limpiar formularios
-        setEmail('')
-        setPassword('')
-        setConfirmPassword('')
-        setRestaurantName('')
-        setPhone('')
-        setCity('')
-      }
-    } catch (err) {
-      console.error('Registration error:', err)
-      if (err.message.includes('already registered')) {
-        setError('Este email ya está registrado. Intenta hacer login.')
       } else {
-        setError(err.message || 'Error al crear la cuenta. Inténtalo de nuevo.')
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              restaurant_name: formData.restaurantName,
+              phone: formData.phone,
+            },
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.user) {
+          toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
+        }
       }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(error.message || "Error en el proceso");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            🍽️ Son-IA
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Restaurant Intelligence System
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
+      {/* Elementos decorativos de fondo */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-2000"></div>
+        <div className="absolute top-40 left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-4000"></div>
+      </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          {/* Toggle Login/Registro */}
-          <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
+      {/* Contenedor principal */}
+      <div className="relative z-10 max-w-md w-full">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-gray-100">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl mb-4 shadow-lg transform hover:scale-105 transition-transform">
+              <Bot className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Son-IA</h1>
+            <p className="text-gray-600">
+              Tu recepcionista virtual inteligente 24/7
+            </p>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex mb-8 bg-gray-100 rounded-lg p-1">
             <button
-              type="button"
-              onClick={() => {
-                setIsLogin(true)
-                setError('')
-                setMessage('')
-              }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              onClick={() => setIsLogin(true)}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
                 isLogin
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-900"
               }`}
             >
               Iniciar Sesión
             </button>
             <button
-              type="button"
-              onClick={() => {
-                setIsLogin(false)
-                setError('')
-                setMessage('')
-              }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              onClick={() => setIsLogin(false)}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
                 !isLogin
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-900"
               }`}
             >
               Registrarse
             </button>
           </div>
 
-          {/* Mensajes */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
-
-          {message && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-              <p className="text-green-600 text-sm">{message}</p>
-            </div>
-          )}
-
-          {/* Formulario de Login */}
-          {isLogin ? (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="tu@email.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Contraseña
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-              </button>
-            </form>
-          ) : (
-            /* Formulario de Registro */
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
+          {/* Formulario */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {!isLogin && (
+              <>
                 <div>
-                  <label htmlFor="reg-email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email *
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre del Restaurante
                   </label>
                   <input
-                    id="reg-email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="tu@email.com"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="restaurant-name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre del Restaurante *
-                  </label>
-                  <input
-                    id="restaurant-name"
                     type="text"
-                    required
-                    value={restaurantName}
-                    onChange={(e) => setRestaurantName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Mi Restaurante"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                      Teléfono
-                    </label>
-                    <input
-                      id="phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="+34 600 000 000"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                      Ciudad
-                    </label>
-                    <input
-                      id="city"
-                      type="text"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Madrid"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="reg-password" className="block text-sm font-medium text-gray-700 mb-1">
-                    Contraseña *
-                  </label>
-                  <input
-                    id="reg-password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Mínimo 6 caracteres"
+                    name="restaurantName"
+                    value={formData.restaurantName}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all outline-none"
+                    placeholder="La Terraza Mediterránea"
+                    required={!isLogin}
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
-                    Confirmar Contraseña *
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Teléfono
                   </label>
                   <input
-                    id="confirm-password"
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Repite la contraseña"
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all outline-none"
+                    placeholder="+34 600 123 456"
+                    required={!isLogin}
                   />
                 </div>
+              </>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all outline-none"
+                  placeholder="tu@restaurante.com"
+                  required
+                />
               </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
-              </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contraseña
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all outline-none"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
 
-              <p className="text-xs text-gray-500 text-center">
-                Al registrarte, se creará automáticamente tu restaurante en Son-IA
-              </p>
-            </form>
-          )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg hover:opacity-90 transition-all disabled:opacity-50 font-medium flex items-center justify-center space-x-2 shadow-lg"
+            >
+              {loading ? (
+                <Loader className="w-5 h-5 animate-spin" />
+              ) : (
+                <span>{isLogin ? "Iniciar Sesión" : "Crear Cuenta"}</span>
+              )}
+            </button>
+          </form>
+
+          {/* Beneficios */}
+          <div className="mt-8 pt-8 border-t border-gray-200">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="flex items-center text-gray-600">
+                <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                <span>Sin comisiones</span>
+              </div>
+              <div className="flex items-center text-gray-600">
+                <Clock className="w-4 h-4 text-blue-500 mr-2 flex-shrink-0" />
+                <span>Atención 24/7</span>
+              </div>
+              <div className="flex items-center text-gray-600">
+                <Users className="w-4 h-4 text-purple-500 mr-2 flex-shrink-0" />
+                <span>Multi-canal</span>
+              </div>
+              <div className="flex items-center text-gray-600">
+                <Shield className="w-4 h-4 text-indigo-500 mr-2 flex-shrink-0" />
+                <span>100% seguro</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-500">
+              Al continuar, aceptas nuestros{" "}
+              <a href="#" className="text-purple-600 hover:underline">
+                términos de servicio
+              </a>{" "}
+              y{" "}
+              <a href="#" className="text-purple-600 hover:underline">
+                política de privacidad
+              </a>
+            </p>
+          </div>
         </div>
 
-        <div className="text-center text-sm text-gray-500">
-          <p>© 2024 Son-IA. Sistema de Inteligencia para Restaurantes</p>
+        {/* Testimonial */}
+        <div className="mt-8 text-center">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-lg">
+            <div className="flex items-center justify-center mb-3">
+              {[...Array(5)].map((_, i) => (
+                <Sparkles
+                  key={i}
+                  className="w-4 h-4 text-yellow-400 fill-yellow-400"
+                />
+              ))}
+            </div>
+            <p className="text-gray-700 italic mb-2">
+              "Son-IA ha transformado completamente cómo gestionamos las
+              reservas. Ya no perdemos clientes por no contestar a tiempo."
+            </p>
+            <p className="text-sm text-gray-600 font-medium">
+              María García - La Brasserie
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Ahorro mensual: €450</p>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
