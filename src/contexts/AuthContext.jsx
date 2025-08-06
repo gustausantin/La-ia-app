@@ -371,22 +371,28 @@ export function AuthProvider({ children }) {
 
     // Inicializar autenticación
     useEffect(() => {
+        let mounted = true;
+
         const checkSession = async () => {
             try {
                 const {
                     data: { session },
                 } = await supabase.auth.getSession();
 
+                if (!mounted) return;
+
                 if (session?.user) {
                     await fetchUserData(session.user);
                 } else {
                     console.log("AuthProvider: No hay sesión activa");
+                    setLoading(false);
                 }
             } catch (error) {
                 console.error("AuthProvider: Error verificando sesión:", error);
-                handleError(error, false);
-            } finally {
-                setLoading(false);
+                if (mounted) {
+                    handleError(error, false);
+                    setLoading(false);
+                }
             }
         };
 
@@ -395,17 +401,24 @@ export function AuthProvider({ children }) {
         // Escuchar cambios de autenticación
         const { data: authListener } = supabase.auth.onAuthStateChange(
             async (event, session) => {
+                if (!mounted) return;
+                
                 console.log("AuthProvider: Cambio de auth -", event);
 
                 if (event === "SIGNED_IN" && session?.user) {
                     await fetchUserData(session.user);
                 } else if (event === "SIGNED_OUT") {
                     clearAuthData();
+                    setLoading(false);
+                } else if (event === "INITIAL_SESSION") {
+                    // Ya manejado en checkSession
+                    return;
                 }
             },
         );
 
         return () => {
+            mounted = false;
             authListener.subscription.unsubscribe();
         };
     }, [fetchUserData, clearAuthData, handleError]);
