@@ -3,21 +3,29 @@ import { createClient } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
 
 // Configuración de variables de entorno
-// Detectar si estamos en el servidor (Node.js) o en el cliente (browser)
 let supabaseUrl, supabaseKey;
 
 if (typeof window === 'undefined') {
-  // Estamos en el servidor (Node.js)
+  // Estamos en el servidor (Node.js) - usar variables sin prefijo VITE_
   supabaseUrl = process.env.SUPABASE_URL;
   supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+  console.log('🔍 Variables del servidor:');
+  console.log('SUPABASE_URL:', supabaseUrl ? '✅ Presente' : '❌ Falta');
+  console.log('SUPABASE_ANON_KEY:', supabaseKey ? '✅ Presente' : '❌ Falta');
 } else {
-  // Estamos en el cliente (browser)
+  // Estamos en el cliente (browser) - usar variables con prefijo VITE_
   supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 }
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error("❌ Faltan credenciales de Supabase");
+  console.error("❌ Fallan credenciales de Supabase");
+  if (typeof window === 'undefined') {
+    console.error("Servidor necesita: SUPABASE_URL y SUPABASE_ANON_KEY en .env");
+  } else {
+    console.error("Cliente necesita: VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en .env");
+  }
   throw new Error("Supabase credentials are missing");
 }
 
