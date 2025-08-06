@@ -54,17 +54,18 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. CREAR USUARIO SIN EMAIL DE CONFIRMACIÓN
+    // 2. CREAR USUARIO CON SIGNUP NORMAL
     console.log('Step 2: Creating user account...');
 
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
       email,
       password,
-      email_confirm: true, // Confirmar email automáticamente
-      user_metadata: {
-        full_name: `${firstName} ${lastName}`.trim(),
-        first_name: firstName,
-        last_name: lastName
+      options: {
+        data: {
+          full_name: `${firstName} ${lastName}`.trim(),
+          first_name: firstName,
+          last_name: lastName
+        }
       }
     });
 
@@ -106,8 +107,8 @@ export default async function handler(req, res) {
     if (restaurantError) {
       console.error('Restaurant error:', restaurantError);
 
-      // Si falla, eliminar el usuario creado
-      await supabaseAdmin.auth.admin.deleteUser(userId);
+      // Si falla, el usuario ya existe pero sin datos completos
+      console.log('Usuario creado pero falló el restaurante');
 
       return res.status(400).json({
         error: 'Error creando restaurante',
@@ -136,11 +137,8 @@ export default async function handler(req, res) {
     if (profileError) {
       console.error('Profile error:', profileError);
 
-      // Si falla, eliminar usuario y restaurante
-      await Promise.all([
-        supabaseAdmin.auth.admin.deleteUser(userId),
-        supabaseAdmin.from('restaurants').delete().eq('id', restaurantId)
-      ]);
+      // Si falla, eliminar solo el restaurante
+      await supabaseAdmin.from('restaurants').delete().eq('id', restaurantId);
 
       return res.status(400).json({
         error: 'Error creando perfil',
