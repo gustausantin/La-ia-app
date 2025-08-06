@@ -101,7 +101,30 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validación completa antes de enviar
     if (!validateForm()) {
+      toast.error('Por favor, completa todos los campos requeridos');
+      return;
+    }
+
+    // Validación adicional para evitar requests innecesarios
+    if (!formData.email || !formData.password || !formData.confirmPassword || 
+        !formData.firstName || !formData.lastName || !formData.restaurantName ||
+        !formData.phone || !formData.cuisineType || !formData.address || 
+        !formData.city || !formData.postalCode) {
+      toast.error('Faltan campos obligatorios por completar');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      setErrors({ confirmPassword: 'Las contraseñas no coinciden' });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres');
+      setErrors({ password: 'La contraseña debe tener al menos 6 caracteres' });
       return;
     }
 
@@ -146,7 +169,7 @@ export default function Register() {
       
       const restaurantData = {
         name: formData.restaurantName,
-        cuisine_type: formData.cuisineType,
+        cuisine: formData.cuisineType,
         phone: formData.phone,
         email: formData.email,
         address: formData.address,
@@ -296,7 +319,9 @@ export default function Register() {
       // Manejar errores específicos
       let errorMessage = 'Error al crear la cuenta';
       
-      if (error.message?.includes('User already registered')) {
+      if (error.message?.includes('For security purposes, you can only request this after')) {
+        errorMessage = 'Por seguridad, espera un momento antes de intentar de nuevo. Intenta con un email diferente o espera 60 segundos.';
+      } else if (error.message?.includes('User already registered')) {
         errorMessage = 'Este email ya está registrado';
       } else if (error.message?.includes('Password should be at least')) {
         errorMessage = 'La contraseña debe tener al menos 6 caracteres';
@@ -304,6 +329,8 @@ export default function Register() {
         errorMessage = 'El email no es válido';
       } else if (error.message?.includes('duplicate key') || error.code === '23505') {
         errorMessage = 'Ya existe un registro con estos datos';
+      } else if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        errorMessage = 'Error en la base de datos: campo no encontrado. Contacta al administrador.';
       } else if (error.message?.includes('relation') && error.message?.includes('does not exist')) {
         errorMessage = 'Error de configuración en la base de datos. Contacta al administrador.';
       } else if (error.message?.includes('permission denied')) {
