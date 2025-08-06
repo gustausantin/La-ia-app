@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
@@ -29,6 +28,7 @@ export default function Register() {
   const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [cooldownEnd, setCooldownEnd] = useState(null);
 
   // Redirigir si ya está autenticado
   if (isAuthenticated) {
@@ -37,7 +37,7 @@ export default function Register() {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.firstName.trim()) {
       newErrors.firstName = 'El nombre es requerido';
     }
@@ -75,13 +75,13 @@ export default function Register() {
     if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
       newErrors.website = 'La URL debe comenzar con http:// o https://';
     }
-    
+
     if (!formData.email) {
       newErrors.email = 'El email es requerido';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'El email no es válido';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'La contraseña es requerida';
     } else if (formData.password.length < 6) {
@@ -93,38 +93,25 @@ export default function Register() {
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Las contraseñas no coinciden';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validación completa antes de enviar
+    setErrors({}); // Limpiar errores anteriores
+
+    // Verificar si estamos en cooldown
+    if (cooldownEnd && new Date() < cooldownEnd) {
+      const remainingSeconds = Math.ceil((cooldownEnd - new Date()) / 1000);
+      toast.error(`⏱️ Espera ${remainingSeconds} segundos antes de intentar otra vez.`);
+      return;
+    }
+
+    // Validar el formulario
     if (!validateForm()) {
       toast.error('Por favor, completa todos los campos requeridos');
-      return;
-    }
-
-    // Validación adicional para evitar requests innecesarios
-    if (!formData.email || !formData.password || !formData.confirmPassword || 
-        !formData.firstName || !formData.lastName || !formData.restaurantName ||
-        !formData.phone || !formData.cuisineType || !formData.address || 
-        !formData.city || !formData.postalCode) {
-      toast.error('Faltan campos obligatorios por completar');
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Las contraseñas no coinciden');
-      setErrors({ confirmPassword: 'Las contraseñas no coinciden' });
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast.error('La contraseña debe tener al menos 6 caracteres');
-      setErrors({ password: 'La contraseña debe tener al menos 6 caracteres' });
       return;
     }
 
@@ -132,7 +119,7 @@ export default function Register() {
 
     try {
       console.log('Iniciando registro controlado desde backend...');
-      
+
       // Llamar al endpoint del backend que controla todo el flujo
       const response = await fetch('/api/register', {
         method: 'POST',
@@ -159,43 +146,52 @@ export default function Register() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.details || result.error || 'Error en el registro');
+        // Lanzar error con detalles del servidor si están disponibles
+        const errorDetails = result || { message: 'Error en el registro' };
+        throw new Error(JSON.stringify(errorDetails));
       }
 
       console.log('Registro exitoso:', result);
-      
+
       // Guardar el email para mostrar en el mensaje de éxito
       setRegisteredEmail(formData.email);
-      
+
       // Mostrar pantalla de éxito
       setShowSuccess(true);
-      
+
     } catch (error) {
-      console.error('Error en el registro:', error);
-      
-      // Manejar errores específicos
-      let errorMessage = 'Error al crear la cuenta';
-      
-      if (error.message?.includes('Faltan campos obligatorios')) {
-        errorMessage = 'Por favor, completa todos los campos requeridos';
-      } else if (error.message?.includes('Contraseña muy corta')) {
-        errorMessage = 'La contraseña debe tener al menos 6 caracteres';
-      } else if (error.message?.includes('Email inválido')) {
-        errorMessage = 'El formato del email no es válido';
-      } else if (error.message?.includes('Error creando usuario')) {
-        errorMessage = 'No se pudo crear el usuario. Verifica que el email no esté ya registrado.';
-      } else if (error.message?.includes('Error creando restaurante')) {
-        errorMessage = 'Error al crear los datos del restaurante';
-      } else if (error.message?.includes('Error creando perfil')) {
-        errorMessage = 'Error al crear el perfil de usuario';
-      } else if (error.message?.includes('Error creando mapeo')) {
-        errorMessage = 'Error al vincular usuario con restaurante';
-      } else if (error.message) {
-        errorMessage = error.message;
+      console.error('Registration error:', error);
+
+      let parsedError;
+      try {
+        parsedError = JSON.parse(error.message);
+      } catch (e) {
+        // Si no es un JSON, usa el mensaje de error directamente
+        parsedError = { error: error.message };
       }
-      
-      toast.error(errorMessage);
-      
+
+      // Manejar errores específicos del servidor
+      if (parsedError && parsedError.error) {
+        const { error: errorMsg, details, code } = parsedError;
+
+        switch (code) {
+          case 'RATE_LIMIT':
+            const retryAfter = parsedError.retryAfter || 300; // 5 minutos por defecto
+            setCooldownEnd(new Date(Date.now() + retryAfter * 1000));
+            toast.error(`⏱️ Límite de emails alcanzado. Espera ${Math.ceil(retryAfter / 60)} minutos e inténtalo otra vez.`);
+            break;
+          case 'USER_EXISTS':
+            toast.error('📧 Este email ya está registrado. Ve a la página de login.');
+            break;
+          default:
+            toast.error(details || errorMsg || 'Error al crear la cuenta');
+        }
+      } else if (error.message) {
+        toast.error(error.message);
+      } else {
+        toast.error('Error al crear la cuenta. Por favor, inténtalo de nuevo.');
+      }
+
     } finally {
       setIsLoading(false);
     }
@@ -207,8 +203,8 @@ export default function Register() {
       ...prev,
       [name]: value
     }));
-    
-    // Limpiar error del campo
+
+    // Limpiar error del campo si el usuario empieza a escribir de nuevo
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -258,11 +254,11 @@ export default function Register() {
                           emailRedirectTo: `${window.location.origin}/login`
                         }
                       });
-                      
+
                       if (error) {
                         throw error;
                       }
-                      
+
                       toast.success('Email de verificación reenviado');
                     } catch (error) {
                       console.error('Error reenviando email:', error);
