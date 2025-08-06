@@ -1,11 +1,11 @@
 
-/* Importar Tailwind CSS primero */
+/* Importar estilos del loader del agente PRIMERO */
+@import './styles/agent-loader.css';
+
+/* Importar Tailwind CSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Importar estilos del loader del agente */
-@import './styles/agent-loader.css';
 
 /* Variables CSS personalizadas para el tema Son-IA */
 :root {
