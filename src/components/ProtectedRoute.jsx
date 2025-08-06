@@ -125,7 +125,7 @@ export default function ProtectedRoute({ children }) {
             Acceso Restringido
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Necesitas iniciar sesión para acceder al panel de control de Son-IA
+            Necesitas iniciar sesión para acceder al panel de control de La-IA
           </p>
 
           {/* Características */}

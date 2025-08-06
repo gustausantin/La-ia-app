@@ -1,4 +1,4 @@
-// Configuracion.jsx - Panel de Configuración COMPLETO y MEJORADO para Son-IA
+// Configuracion.jsx - Panel de Configuración COMPLETO y MEJORADO para La-IA
 import React, { useState, useEffect } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -3361,17 +3361,17 @@ export default function Settings() {
                                                         Código de instalación:
                                                     </p>
                                                     <div className="bg-gray-900 text-gray-100 p-3 rounded font-mono text-xs overflow-x-auto">
-                                                    {`<!-- Son-IA Chat Widget -->
+                                                    {`<!-- La-IA Chat Widget -->
                                                     <script>
                                                     (function(w,d,s,o,f,js,fjs){
-                                                    w['son-ia']=o;w[o]=w[o]||function(){
+                                                    w['la-ia']=o;w[o]=w[o]||function(){
                                                     (w[o].q=w[o].q||[]).push(arguments)};
                                                     js=d.createElement(s),fjs=d.getElementsByTagName(s)[0];
                                                     js.id=o;js.src=f;js.async=1;fjs.parentNode.insertBefore(js,fjs);
-                                                    }(window,document,'script','sonia','https://widget.son-ia.com/v1/chat.js'));
+                                                    }(window,document,'script','laia','https://widget.la-ia.com/v1/chat.js'));
 
-                                                    sonia('init', '${restaurantId}');
-                                                    sonia('config', {
+                                                    laia('init', '${restaurantId}');
+                                                    laia('config', {
                                                     color: '${settings.channels.web.widget_color}',
                                                     position: '${settings.channels.web.position}',
                                                     autoOpen: ${settings.channels.web.auto_open_delay}
@@ -4390,7 +4390,7 @@ export default function Settings() {
                                                     </h3>
                                                     </div>
                                                     <p className="text-purple-100 mb-4">
-                                                    Acceso completo a todas las funciones de Son-IA
+                                                    Acceso completo a todas las funciones de La-IA
                                                     </p>
                                                     <div className="flex items-baseline gap-1">
                                                     <span className="text-3xl font-bold">

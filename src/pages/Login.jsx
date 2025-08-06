@@ -52,7 +52,7 @@ export default function Login() {
       const result = await signIn(formData.email, formData.password);
       
       if (result.success) {
-        toast.success('¡Bienvenido a Son-IA!');
+        toast.success('¡Bienvenido a La-IA!');
       } else {
         toast.error(result.error || 'Error al iniciar sesión');
       }
@@ -85,7 +85,7 @@ export default function Login() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="text-center">
           <Bot className="w-16 h-16 text-purple-600 mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-600">Iniciando Son-IA...</p>
+          <p className="text-gray-600">Iniciando La-IA...</p>
         </div>
       </div>
     );
@@ -100,7 +100,7 @@ export default function Login() {
             <Bot className="h-10 w-10 text-purple-600" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900">
-            Bienvenido a Son-IA
+            Bienvenido a La-IA
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Tu recepcionista virtual inteligente
@@ -206,7 +206,7 @@ export default function Login() {
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="text-center">
               <p className="text-xs text-gray-500">
-                Demo de Son-IA - Recepcionista Virtual
+                Demo de La-IA - Recepcionista Virtual
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Gestión inteligente de reservas por WhatsApp

@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.jsx - Versión CORREGIDA con Sistema de Notificaciones
+// src/contexts/AuthContext.jsx - Contexto de autenticación completo y robusto para La-IA
 import React, {
     useState,
     useEffect,
@@ -73,7 +73,7 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Estados específicos de Son-IA
+    // Estados específicos de La-IA
     const [agentStatus, setAgentStatus] = useState({
         active: false,
         lastHeartbeat: null,
@@ -245,8 +245,8 @@ export function AuthProvider({ children }) {
                     .from("user_restaurant_mapping")
                     .select(
                         `
-                        role, 
-                        permissions, 
+                        role,
+                        permissions,
                         restaurant:restaurant_id (
                             id,
                             name,
@@ -402,7 +402,7 @@ export function AuthProvider({ children }) {
         const { data: authListener } = supabase.auth.onAuthStateChange(
             async (event, session) => {
                 if (!mounted) return;
-                
+
                 console.log("AuthProvider: Cambio de auth -", event);
 
                 if (event === "SIGNED_IN" && session?.user) {
@@ -594,7 +594,7 @@ export function AuthProvider({ children }) {
             loading,
             error,
 
-            // Estados de Son-IA
+            // Estados de La-IA
             agentStatus,
             notifications,
             unreadCount,

@@ -1,4 +1,4 @@
-// lib/supabase.js - Configuración avanzada para Son-IA
+// lib/supabase.js - Configuración avanzada para La-IA
 import { createClient } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
 
@@ -8,7 +8,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Validar que las variables de entorno existan
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Son-IA: Faltan variables de entorno de Supabase')
+  console.error('❌ La-IA: Faltan variables de entorno de Supabase')
   console.error('VITE_SUPABASE_URL:', supabaseUrl)
   console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? '[PRESENTE]' : '[FALTANTE]')
   throw new Error("Configuración de Supabase incompleta");
@@ -18,7 +18,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 try {
     new URL(supabaseUrl)
 } catch (error) {
-    console.error('❌ Son-IA: URL de Supabase inválida:', supabaseUrl)
+    console.error('❌ La-IA: URL de Supabase inválida:', supabaseUrl)
     throw new Error('URL de Supabase inválida')
 }
 
@@ -38,7 +38,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      "x-application-name": "Son-IA",
+      "x-application-name": "La-IA",
     },
   },
   db: {
@@ -467,7 +467,7 @@ if (typeof window !== "undefined") {
       setTimeout(() => {
         testConnection().then(({ connected, responseTime }) => {
           if (connected) {
-            console.log(`🚀 Son-IA conectado a Supabase (${responseTime}ms)`);
+            console.log(`🚀 La-IA conectado a Supabase (${responseTime}ms)`);
           }
         });
       }, 1000);
@@ -478,7 +478,7 @@ if (typeof window !== "undefined") {
   });
 
   // Log inicial sin test de conexión
-  console.log('🚀 Son-IA: Cliente Supabase inicializado correctamente');
+  console.log('🚀 La-IA: Cliente Supabase inicializado correctamente');
 }
 
 // Exportar todo como un objeto para fácil acceso

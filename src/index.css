@@ -7,7 +7,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Variables CSS personalizadas para el tema Son-IA */
+/* Variables CSS personalizadas para el tema La-IA */
 :root {
   --primary-gradient: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
   --agent-primary: #8B5CF6;
@@ -155,36 +155,36 @@ body {
     @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 placeholder-gray-400;
   }
 
-  /* Estilos específicos de Son-IA */
-  .sonia-card {
+  /* Estilos específicos de La-IA */
+  .laia-card {
     @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-all duration-200 hover:shadow-md;
   }
 
-  .sonia-header {
+  .laia-header {
     @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white;
   }
 
-  .sonia-sidebar {
+  .laia-sidebar {
     @apply bg-white border-r border-gray-200;
   }
 
-  .sonia-badge {
+  .laia-badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
 
-  .sonia-badge-success {
+  .laia-badge-success {
     @apply bg-green-100 text-green-800;
   }
 
-  .sonia-badge-warning {
+  .laia-badge-warning {
     @apply bg-yellow-100 text-yellow-800;
   }
 
-  .sonia-badge-error {
+  .laia-badge-error {
     @apply bg-red-100 text-red-800;
   }
 
-  .sonia-badge-info {
+  .laia-badge-info {
     @apply bg-blue-100 text-blue-800;
   }
 }
