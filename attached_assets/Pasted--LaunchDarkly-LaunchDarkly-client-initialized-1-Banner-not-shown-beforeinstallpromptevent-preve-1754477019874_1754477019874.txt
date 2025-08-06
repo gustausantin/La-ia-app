@@ -1,0 +1,248 @@
+[LaunchDarkly] LaunchDarkly client initialized
+/~:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+7Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'battery'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'layout-animations'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'navigation-override'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'oversized-images'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'publickey-credentials'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'speaker-selection'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'unoptimized-images'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'unsized-media'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Unrecognized feature: 'pointer-lock'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+framework-6d8af3b1b418571d.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-6d8af3b1b418571d.js:1Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'battery'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.Understand this warning
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+_app-6fb7097b2e71a26e.js:13 WARN: A component changed from uncontrolled to controlled.
+(anonymous) @ _app-6fb7097b2e71a26e.js:13Understand this warning
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+4son-ia-production:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ 7fa71e82-53a4-4e1e-8…da/3.2.3/eruda.js:2Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+VM875 @supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+    at new SupabaseClient (VM875 @supabase_supabase-js.js:7284:21)
+    at createClient (VM875 @supabase_supabase-js.js:7468:10)
+    at VM874 supabase.js:14:25
+SupabaseClient @ VM875 @supabase_supabase-js.js:7284
+createClient @ VM875 @supabase_supabase-js.js:7468
+(anonymous) @ VM874 supabase.js:14Understand this error
+VM10 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM10 eruda.js:2Understand this error
+VM10 eruda.js:2 [vite] server connection lost. polling for restart...
+VM10 eruda.js:2  GET https://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/ 502 (Bad Gateway)
+window.fetch @ VM10 eruda.js:2
+ping @ VM12 client:494
+waitForSuccessfulPing @ VM12 client:507
+(anonymous) @ VM12 client:303Understand this error
+VM923 @supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+    at new SupabaseClient (VM923 @supabase_supabase-js.js:7284:21)
+    at createClient (VM923 @supabase_supabase-js.js:7468:10)
+    at VM922 supabase.js:14:25
+SupabaseClient @ VM923 @supabase_supabase-js.js:7284
+createClient @ VM923 @supabase_supabase-js.js:7468
+(anonymous) @ VM922 supabase.js:14Understand this error
+VM881 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM881 eruda.js:2
+setupWebSocket @ VM901 client:283
+(anonymous) @ VM901 client:277Understand this error
+VM881 eruda.js:2 [vite] server connection lost. polling for restart...
+VM881 eruda.js:2  GET https://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/ 502 (Bad Gateway)
+window.fetch @ VM881 eruda.js:2
+ping @ VM901 client:494
+waitForSuccessfulPing @ VM901 client:507
+(anonymous) @ VM901 client:303Understand this error
+VM967 @supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+    at new SupabaseClient (VM967 @supabase_supabase-js.js:7284:21)
+    at createClient (VM967 @supabase_supabase-js.js:7468:10)
+    at VM965 supabase.js:14:25
+SupabaseClient @ VM967 @supabase_supabase-js.js:7284
+createClient @ VM967 @supabase_supabase-js.js:7468
+(anonymous) @ VM965 supabase.js:14Understand this error
+VM929 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM929 eruda.js:2
+setupWebSocket @ VM949 client:283
+(anonymous) @ VM949 client:277Understand this error
+VM929 eruda.js:2 [vite] server connection lost. polling for restart...
+VM929 eruda.js:2  GET https://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/ 502 (Bad Gateway)
+window.fetch @ VM929 eruda.js:2
+ping @ VM949 client:494
+waitForSuccessfulPing @ VM949 client:507
+(anonymous) @ VM949 client:303Understand this error
+VM1019 @supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+    at new SupabaseClient (VM1019 @supabase_supabase-js.js:7284:21)
+    at createClient (VM1019 @supabase_supabase-js.js:7468:10)
+    at VM1014 supabase.js:14:25
+SupabaseClient @ VM1019 @supabase_supabase-js.js:7284
+createClient @ VM1019 @supabase_supabase-js.js:7468
+(anonymous) @ VM1014 supabase.js:14Understand this error
+VM977 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+t @ VM977 eruda.js:2
+setupWebSocket @ VM997 client:283
+(anonymous) @ VM997 client:277Understand this error
+VM977 eruda.js:2 [vite] server connection lost. polling for restart...
+VM977 eruda.js:2  GET https://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/ 502 (Bad Gateway)
+window.fetch @ VM977 eruda.js:2
+ping @ VM997 client:494
+waitForSuccessfulPing @ VM997 client:507
+(anonymous) @ VM997 client:303Understand this error
+@supabase_supabase-js.js?v=e4f0edf5:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+    at new SupabaseClient (@supabase_supabase-js.js?v=e4f0edf5:7284:21)
+    at createClient (@supabase_supabase-js.js?v=e4f0edf5:7468:10)
+    at supabase.js:14:25
+SupabaseClient @ @supabase_supabase-js.js?v=e4f0edf5:7284
+createClient @ @supabase_supabase-js.js?v=e4f0edf5:7468
+(anonymous) @ supabase.js:14Understand this error

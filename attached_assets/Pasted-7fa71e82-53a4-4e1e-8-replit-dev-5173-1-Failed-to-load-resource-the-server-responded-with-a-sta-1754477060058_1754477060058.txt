@@ -1,0 +1,64 @@
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+@supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+ [vite] server connection lost. polling for restart...
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+@supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+ [vite] server connection lost. polling for restart...
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+@supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+ [vite] server connection lost. polling for restart...
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+@supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+ [vite] server connection lost. polling for restart...
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+@supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+ [vite] server connection lost. polling for restart...
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+@supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+ [vite] server connection lost. polling for restart...
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+@supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+ WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+ [vite] server connection lost. polling for restart...
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+VM1201 @supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+VM1169 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+VM1169 eruda.js:2 [vite] server connection lost. polling for restart...
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+VM1201 @supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+VM1169 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+VM1169 eruda.js:2 [vite] server connection lost. polling for restart...
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+VM1201 @supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+    at new SupabaseClient (VM1201 @supabase_supabase-js.js:7284:21)
+    at createClient (VM1201 @supabase_supabase-js.js:7468:10)
+    at VM1196 supabase.js:14:25
+VM1169 eruda.js:2 WebSocket connection to 'wss://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:5173/' failed: 
+VM1169 eruda.js:2 [vite] server connection lost. polling for restart...
+7fa71e82-53a4-4e1e-8….replit.dev:5173/:1 
+ Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+VM1262 @supabase_supabase-js.js:7284 Uncaught TypeError: Failed to construct 'URL': Invalid URL
+    at new SupabaseClient (VM1262 @supabase_supabase-js.js:7284:21)
+    at createClient (VM1262 @supabase_supabase-js.js:7468:10)
+    at VM1261 supabase.js:14:25
+
