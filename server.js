@@ -1,17 +1,26 @@
 
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import { config } from 'dotenv';
 
-// Cargar variables de entorno ANTES de importar cualquier módulo que las use
-dotenv.config();
+// CARGAR VARIABLES CORRECTAMENTE para ES6 modules
+config();
 
-import registerHandler from './src/api/register.js';
-
-// Verificar que las variables están cargadas
-console.log('🔍 Verificando variables de entorno...');
+// Verificar inmediatamente que las variables están cargadas
+console.log('🔍 Variables del servidor:');
 console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? '✅ Configurada' : '❌ Falta');
 console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? '✅ Configurada' : '❌ Falta');
+
+// Si faltan, añadirlas directamente como fallback
+if (!process.env.SUPABASE_URL) {
+  process.env.SUPABASE_URL = 'https://ktsqwvhqamedpmzkzjaz.supabase.co';
+  console.log('✅ SUPABASE_URL añadida manualmente');
+}
+
+if (!process.env.SUPABASE_ANON_KEY) {
+  process.env.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzY3NzEsImV4cCI6MjA2OTk1Mjc3MX0.Y-zMa2F5a7UVT-efldv0sZjLAgmCfeEmhxfP7kgGzNY';
+  console.log('✅ SUPABASE_ANON_KEY añadida manualmente');
+}
 
 const app = express();
 const PORT = 3001;
@@ -19,6 +28,10 @@ const PORT = 3001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Import after env is loaded to avoid issues
+const registerModule = await import('./src/api/register.js');
+const registerHandler = registerModule.default;
 
 // API Routes
 app.post('/api/register', (req, res) => {

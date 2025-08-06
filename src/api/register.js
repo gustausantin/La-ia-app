@@ -1,10 +1,9 @@
-import { supabase } from '../lib/supabase.js';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase with Service Role Key for admin operations
+// Initialize Supabase with the credentials from environment
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
 );
 
 export default async function handler(req, res) {
@@ -61,11 +60,11 @@ export default async function handler(req, res) {
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false, // ← Importante: no confirmar email aún
+      email_confirm: true, // Confirmar email automáticamente
       user_metadata: {
         full_name: `${firstName} ${lastName}`.trim(),
         first_name: firstName,
-        last_name: lastName,
+        last_name: lastName
       }
     });
 
@@ -74,13 +73,6 @@ export default async function handler(req, res) {
       return res.status(400).json({
         error: 'Error creando usuario',
         details: authError.message
-      });
-    }
-
-    if (!authData.user) {
-      return res.status(500).json({
-        error: 'Error interno',
-        details: 'No se pudo crear el usuario'
       });
     }
 
@@ -94,21 +86,15 @@ export default async function handler(req, res) {
       name: restaurantName,
       cuisine_type: cuisineType,
       phone,
-      email,
       address,
       city,
       postal_code: postalCode,
-      country: country || 'ES',
+      country: country || 'España',
       website: website || null,
       description: description || null,
-      timezone: 'Europe/Madrid',
-      currency: 'EUR',
-      language: 'es',
-      settings: {
-        notifications_enabled: true,
-        agent_auto_responses: true,
-        booking_confirmation: true
-      }
+      owner_id: userId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const { data: restaurant, error: restaurantError } = await supabaseAdmin
@@ -162,86 +148,10 @@ export default async function handler(req, res) {
       });
     }
 
-    // 5. CREAR MAPEO USUARIO-RESTAURANTE
-    console.log('Step 5: Creating user-restaurant mapping...');
+    console.log('User profile created successfully');
 
-    const mappingData = {
-      auth_user_id: userId,
-      restaurant_id: restaurantId,
-      role: 'owner',
-      permissions: {
-        full_access: true,
-        manage_restaurant: true,
-        manage_users: true,
-        manage_bookings: true,
-        manage_agent: true,
-        view_analytics: true
-      },
-      created_at: new Date().toISOString()
-    };
-
-    const { error: mappingError } = await supabaseAdmin
-      .from('user_restaurant_mapping')
-      .insert(mappingData);
-
-    if (mappingError) {
-      console.error('Mapping error:', mappingError);
-
-      // Si falla, limpiar todo
-      await Promise.all([
-        supabaseAdmin.auth.admin.deleteUser(userId),
-        supabaseAdmin.from('restaurants').delete().eq('id', restaurantId),
-        supabaseAdmin.from('user_profiles').delete().eq('id', userId)
-      ]);
-
-      return res.status(400).json({
-        error: 'Error creando mapeo usuario-restaurante',
-        details: mappingError.message
-      });
-    }
-
-    // 6. INICIALIZAR ESTADO DEL AGENTE (OPCIONAL)
-    console.log('Step 6: Initializing agent status...');
-
-    try {
-      const agentStatusData = {
-        restaurant_id: restaurantId,
-        is_active: false,
-        channels_status: {
-          whatsapp: false,
-          vapi: false,
-          email: false,
-          instagram: false,
-          facebook: false
-        },
-        created_at: new Date().toISOString()
-      };
-
-      await supabaseAdmin.from('agent_status').insert(agentStatusData);
-      console.log('Agent status initialized');
-    } catch (agentError) {
-      console.warn('Agent status initialization failed (non-critical):', agentError);
-    }
-
-    // 7. AHORA SÍ, ENVIAR EMAIL DE CONFIRMACIÓN
-    console.log('Step 7: Sending confirmation email...');
-
-    const { error: emailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${req.headers.origin}/login`,
-      data: {
-        restaurant_id: restaurantId,
-        full_name: `${firstName} ${lastName}`.trim()
-      }
-    });
-
-    if (emailError) {
-      console.error('Email error:', emailError);
-      // No fallar aquí, la cuenta ya está creada correctamente
-      console.warn('Email not sent, but account is created successfully');
-    }
-
-    // 8. RESPUESTA DE ÉXITO
-    console.log('Registration completed successfully');
+    // 5. RESPUESTA EXITOSA
+    console.log('Step 5: Registration completed successfully');
 
     return res.status(200).json({
       success: true,
@@ -250,13 +160,12 @@ export default async function handler(req, res) {
         userId,
         restaurantId,
         email,
-        emailSent: !emailError
+        restaurantName
       }
     });
 
   } catch (error) {
-    console.error('Unexpected error during registration:', error);
-
+    console.error('Unexpected error:', error);
     return res.status(500).json({
       error: 'Error interno del servidor',
       details: error.message
