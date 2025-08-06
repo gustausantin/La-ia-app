@@ -57,7 +57,8 @@ export default async function handler(req, res) {
     // 2. CREAR USUARIO CON SIGNUP NORMAL
     console.log('Step 2: Creating user account...');
 
-    const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
+    // Configurar opciones para evitar verificación por email
+    const signUpOptions = {
       email,
       password,
       options: {
@@ -65,15 +66,39 @@ export default async function handler(req, res) {
           full_name: `${firstName} ${lastName}`.trim(),
           first_name: firstName,
           last_name: lastName
-        }
+        },
+        emailRedirectTo: undefined // Desactivar redirect de email
       }
-    });
+    };
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.signUp(signUpOptions);
 
     if (authError) {
       console.error('Auth error:', authError);
+      
+      // Manejar específicamente el rate limit
+      if (authError.code === 'over_email_send_rate_limit') {
+        return res.status(429).json({
+          error: 'Límite de emails excedido',
+          details: 'Por favor espera unos minutos antes de intentar registrarte otra vez. Demasiados emails enviados.',
+          code: 'RATE_LIMIT',
+          retryAfter: 300 // 5 minutos
+        });
+      }
+      
+      // Manejar usuario ya existente
+      if (authError.message.includes('already registered')) {
+        return res.status(409).json({
+          error: 'Usuario ya existe',
+          details: 'Este email ya está registrado. Intenta iniciar sesión.',
+          code: 'USER_EXISTS'
+        });
+      }
+      
       return res.status(400).json({
         error: 'Error creando usuario',
-        details: authError.message
+        details: authError.message,
+        code: authError.code
       });
     }
 
