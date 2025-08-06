@@ -11,7 +11,8 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    fullName: '',
+    firstName: '',
+    lastName: '',
     restaurantName: '',
     phone: '',
     cuisineType: '',
@@ -35,8 +36,12 @@ export default function Register() {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'El nombre completo es requerido';
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'El nombre es requerido';
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Los apellidos son requeridos';
     }
 
     if (!formData.restaurantName.trim()) {
@@ -120,7 +125,7 @@ export default function Register() {
 
       // Preparar los datos del perfil del usuario
       const userProfileData = {
-        full_name: formData.fullName,
+        full_name: `${formData.firstName} ${formData.lastName}`.trim(),
         role: 'owner'
       };
 
@@ -197,38 +202,68 @@ export default function Register() {
         <div className="bg-white py-8 px-6 shadow-xl rounded-xl">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Full Name */}
+            {/* First Name */}
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre completo
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                Nombre
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="fullName"
-                  name="fullName"
+                  id="firstName"
+                  name="firstName"
                   type="text"
                   required
-                  value={formData.fullName}
+                  value={formData.firstName}
                   onChange={handleChange}
                   className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${
-                    errors.fullName ? 'border-red-300' : 'border-gray-300'
+                    errors.firstName ? 'border-red-300' : 'border-gray-300'
                   }`}
-                  placeholder="Tu nombre completo"
+                  placeholder="Gustau"
                 />
               </div>
-              {errors.fullName && (
+              {errors.firstName && (
                 <div className="mt-1 flex items-center text-sm text-red-600">
                   <AlertCircle className="w-4 h-4 mr-1" />
-                  {errors.fullName}
+                  {errors.firstName}
+                </div>
+              )}
+            </div>
+
+            {/* Last Name */}
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                Apellidos
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  required
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${
+                    errors.lastName ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Santin Sanchez"
+                />
+              </div>
+              {errors.lastName && (
+                <div className="mt-1 flex items-center text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.lastName}
                 </div>
               )}
             </div>
 
             {/* Restaurant Name */}
-            <div>
+            <div className="col-span-2">
               <label htmlFor="restaurantName" className="block text-sm font-medium text-gray-700 mb-1">
                 Nombre del restaurante
               </label>
@@ -531,7 +566,7 @@ export default function Register() {
             </div>
 
             {/* Confirm Password */}
-            <div>
+            <div className="col-span-2">
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                 Confirmar contraseña
               </label>
