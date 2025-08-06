@@ -1,80 +1,206 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+
+/* Importar Tailwind CSS primero */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Importar estilos del loader del agente */
 @import './styles/agent-loader.css';
 
 /* Variables CSS personalizadas para el tema Son-IA */
 :root {
-  --primary-color: #8B5CF6;
-  --secondary-color: #3B82F6;
-  --accent-color: #10B981;
+  --primary-gradient: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
+  --agent-primary: #8B5CF6;
+  --agent-secondary: #3B82F6;
+  --success-color: #10B981;
   --warning-color: #F59E0B;
   --error-color: #EF4444;
-  --gray-50: #F9FAFB;
-  --gray-100: #F3F4F6;
-  --gray-900: #111827;
+  --text-primary: #1F2937;
+  --text-secondary: #6B7280;
+  --background-primary: #FFFFFF;
+  --background-secondary: #F9FAFB;
+  --border-color: #E5E7EB;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --border-radius: 0.75rem;
+  --animation-speed: 0.2s;
 }
 
-/* Estilos base */
+/* Estilos base globales */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: var(--background-secondary);
+  color: var(--text-primary);
   line-height: 1.6;
-  color: var(--gray-900);
-  background-color: var(--gray-50);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Estilos para scrollbar personalizado */
+/* Animaciones personalizadas */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Utilidades de animación */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Toast animations para react-hot-toast */
+.animate-enter {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-leave {
+  animation: fadeIn 0.3s ease-out reverse;
+}
+
+/* Estilos para scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--gray-100);
+  background: var(--background-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
+  background: var(--border-color);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--secondary-color);
+  background: var(--text-secondary);
 }
 
-/* Utilidades personalizadas */
+/* Clases de utilidad */
 .gradient-bg {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: var(--primary-gradient);
 }
 
-.shadow-custom {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+.glass-effect {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.transition-custom {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.shadow-soft {
+  box-shadow: 0 2px 20px rgba(139, 92, 246, 0.1);
 }
 
-/* Estilos para notificaciones */
-.notification-enter {
-  opacity: 0;
-  transform: translateX(100%);
+.text-gradient {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.notification-enter-active {
-  opacity: 1;
-  transform: translateX(0);
-  transition: opacity 300ms, transform 300ms;
+/* Estados de hover y focus mejorados */
+.btn-primary {
+  @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2;
 }
 
-.notification-exit {
-  opacity: 1;
-  transform: translateX(0);
+.btn-secondary {
+  @apply bg-white text-gray-700 px-6 py-3 rounded-lg font-medium border border-gray-300 transition-all duration-200 hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
 }
 
-.notification-exit-active {
-  opacity: 0;
-  transform: translateX(100%);
-  transition: opacity 300ms, transform 300ms;
+.input-field {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 placeholder-gray-400;
+}
+
+/* Estilos específicos de Son-IA */
+.sonia-card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-all duration-200 hover:shadow-md;
+}
+
+.sonia-header {
+  @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white;
+}
+
+.sonia-sidebar {
+  @apply bg-white border-r border-gray-200;
+}
+
+.sonia-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.sonia-badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.sonia-badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.sonia-badge-error {
+  @apply bg-red-100 text-red-800;
+}
+
+.sonia-badge-info {
+  @apply bg-blue-100 text-blue-800;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .mobile-hidden {
+    display: none;
+  }
+  
+  .mobile-full {
+    width: 100%;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }
