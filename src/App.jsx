@@ -1,13 +1,10 @@
-// App.jsx - Aplicación principal mejorada para La-IA
 
+// App.jsx - Aplicación principal mejorada para La-IA
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  createBrowserRouter,
-  RouterProvider,
-  useRoutes // Import useRoutes for potential future use if needed
 } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { AuthProvider, useAuthContext } from "./contexts/AuthContext";
@@ -55,20 +52,22 @@ const PageLoading = () => (
   </div>
 );
 
-// Future flags para evitar warnings
-const router = createBrowserRouter(
-  [
-    // Las rutas se definirán después
-  ],
-  {
-    future: {
-      v7_startTransition: true,
-      v7_relativeSplatPath: true,
-    },
-  }
-);
+// Componente de rutas protegidas
+function ProtectedRoute({ children }) {
+  const { isReady, isAuthenticated } = useAuthContext();
 
-// Componente de rutas mejorado para el nuevo router
+  if (!isReady) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+// Componente de rutas principales
 function AppRoutes() {
   const { isReady, isAuthenticated } = useAuthContext();
 
@@ -77,122 +76,139 @@ function AppRoutes() {
     return <LoadingScreen />;
   }
 
-  // Define las rutas que serán pasadas a createBrowserRouter
-  const routeDefinitions = [
-    !isAuthenticated ? {
-      path: "/login",
-      element: <Login />,
-    } : {
-      path: "/", // A root path to redirect to dashboard if authenticated
-      element: <Navigate to="/dashboard" replace />,
-    },
-    !isAuthenticated && {
-      path: "*",
-      element: <Navigate to="/login" replace />,
-    },
-    isAuthenticated && {
-      element: <Layout />,
-      children: [
-        { index: true, element: <Navigate to="/dashboard" replace /> }, // Default to dashboard
-        {
-          path: "/dashboard",
-          element: (
+  return (
+    <Routes>
+      {/* Ruta de login */}
+      <Route 
+        path="/login" 
+        element={
+          isAuthenticated ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Suspense fallback={<LoadingScreen />}>
+              <Login />
+            </Suspense>
+          )
+        } 
+      />
+
+      {/* Rutas protegidas */}
+      <Route 
+        path="/*" 
+        element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoading />}>
+              <Layout />
+            </Suspense>
+          </ProtectedRoute>
+        }
+      >
+        {/* Rutas anidadas */}
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route 
+          path="dashboard" 
+          element={
             <Suspense fallback={<PageLoading />}>
               <Dashboard />
             </Suspense>
-          ),
-        },
-        {
-          path: "/reservas",
-          element: (
+          } 
+        />
+        <Route 
+          path="reservas" 
+          element={
             <Suspense fallback={<PageLoading />}>
               <Reservas />
             </Suspense>
-          ),
-        },
-        {
-          path: "/clientes",
-          element: (
+          } 
+        />
+        <Route 
+          path="clientes" 
+          element={
             <Suspense fallback={<PageLoading />}>
               <Clientes />
             </Suspense>
-          ),
-        },
-        {
-          path: "/mesas",
-          element: (
+          } 
+        />
+        <Route 
+          path="mesas" 
+          element={
             <Suspense fallback={<PageLoading />}>
               <Mesas />
             </Suspense>
-          ),
-        },
-        {
-          path: "/calendario",
-          element: (
+          } 
+        />
+        <Route 
+          path="calendario" 
+          element={
             <Suspense fallback={<PageLoading />}>
               <Calendario />
             </Suspense>
-          ),
-        },
-        {
-          path: "/analytics",
-          element: (
+          } 
+        />
+        <Route 
+          path="analytics" 
+          element={
             <Suspense fallback={<PageLoading />}>
               <Analytics />
             </Suspense>
-          ),
-        },
-        {
-          path: "/comunicacion",
-          element: (
+          } 
+        />
+        <Route 
+          path="comunicacion" 
+          element={
             <Suspense fallback={<PageLoading />}>
               <Comunicacion />
             </Suspense>
-          ),
-        },
-        {
-          path: "/configuracion",
-          element: (
+          } 
+        />
+        <Route 
+          path="configuracion" 
+          element={
             <Suspense fallback={<PageLoading />}>
               <Configuracion />
             </Suspense>
-          ),
-        },
-        {
-          path: "*",
-          element: <Navigate to="/dashboard" replace />,
-        },
-      ],
-    },
-  ].filter(Boolean); // Filter out any null or undefined routes
+          } 
+        />
+      </Route>
 
-  // Note: In a real application, you would update the 'router' definition with these routes.
-  // For this example, we are demonstrating the structure.
-  // The actual implementation requires re-configuring the 'router' constant in the main App component.
-
-  // This component would typically not render anything itself when using createBrowserRouter directly
-  // unless it's part of the fallback or error handling.
-  // TheRouterProvider in the App component handles the actual routing.
-  return null;
+      {/* Ruta catch-all */}
+      <Route 
+        path="*" 
+        element={
+          isAuthenticated ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        } 
+      />
+    </Routes>
+  );
 }
 
 // Componente principal App
 function App() {
   return (
     <AuthProvider>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
+      <Router 
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
         }}
-      />
-      <NotificationCenter />
-      {/* Render the router provided by createBrowserRouter */}
-      <RouterProvider router={router} fallbackElement={<LoadingScreen />} />
+      >
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+          }}
+        />
+        <NotificationCenter />
+        <AppRoutes />
+      </Router>
     </AuthProvider>
   );
 }
