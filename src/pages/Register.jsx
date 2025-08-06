@@ -169,7 +169,7 @@ export default function Register() {
       
       const restaurantData = {
         name: formData.restaurantName,
-        cuisine: formData.cuisineType,
+        cuisine_type: formData.cuisineType,
         phone: formData.phone,
         email: formData.email,
         address: formData.address,
