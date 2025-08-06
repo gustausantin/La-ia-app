@@ -1,7 +1,11 @@
 
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import registerHandler from './src/api/register.js';
+
+// Cargar variables de entorno
+dotenv.config();
 
 const app = express();
 const PORT = 3001;
