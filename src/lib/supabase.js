@@ -6,8 +6,20 @@ import toast from "react-hot-toast";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Validar que las variables de entorno existan
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Missing Supabase environment variables");
+  console.error('❌ Son-IA: Faltan variables de entorno de Supabase')
+  console.error('VITE_SUPABASE_URL:', supabaseUrl)
+  console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? '[PRESENTE]' : '[FALTANTE]')
+  throw new Error("Configuración de Supabase incompleta");
+}
+
+// Validar que la URL sea válida
+try {
+    new URL(supabaseUrl)
+} catch (error) {
+    console.error('❌ Son-IA: URL de Supabase inválida:', supabaseUrl)
+    throw new Error('URL de Supabase inválida')
 }
 
 // Configuración avanzada del cliente
@@ -466,7 +478,7 @@ if (typeof window !== "undefined") {
   });
 
   // Log inicial sin test de conexión
-  console.log("🚀 Son-IA: Cliente Supabase inicializado");
+  console.log('🚀 Son-IA: Cliente Supabase inicializado correctamente');
 }
 
 // Exportar todo como un objeto para fácil acceso
