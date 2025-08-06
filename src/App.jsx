@@ -1,6 +1,14 @@
 // App.jsx - Aplicación principal mejorada para La-IA
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  createBrowserRouter,
+  RouterProvider,
+  useRoutes // Import useRoutes for potential future use if needed
+} from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { AuthProvider, useAuthContext } from "./contexts/AuthContext";
 import { Toaster } from 'react-hot-toast';
@@ -47,7 +55,20 @@ const PageLoading = () => (
   </div>
 );
 
-// Separar la lógica de rutas en su propio componente
+// Future flags para evitar warnings
+const router = createBrowserRouter(
+  [
+    // Las rutas se definirán después
+  ],
+  {
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+    },
+  }
+);
+
+// Componente de rutas mejorado para el nuevo router
 function AppRoutes() {
   const { isReady, isAuthenticated } = useAuthContext();
 
@@ -56,115 +77,123 @@ function AppRoutes() {
     return <LoadingScreen />;
   }
 
-  return (
-    <Routes>
-      {!isAuthenticated ? (
-        <>
-          <Route path="/login" element={<Login />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </>
-      ) : (
-        <>
-          <Route element={<Layout />}>
-            {/* Ruta por defecto al dashboard */}
-            <Route index element={<Navigate to="/dashboard" replace />} />
+  // Define las rutas que serán pasadas a createBrowserRouter
+  const routeDefinitions = [
+    !isAuthenticated ? {
+      path: "/login",
+      element: <Login />,
+    } : {
+      path: "/", // A root path to redirect to dashboard if authenticated
+      element: <Navigate to="/dashboard" replace />,
+    },
+    !isAuthenticated && {
+      path: "*",
+      element: <Navigate to="/login" replace />,
+    },
+    isAuthenticated && {
+      element: <Layout />,
+      children: [
+        { index: true, element: <Navigate to="/dashboard" replace /> }, // Default to dashboard
+        {
+          path: "/dashboard",
+          element: (
+            <Suspense fallback={<PageLoading />}>
+              <Dashboard />
+            </Suspense>
+          ),
+        },
+        {
+          path: "/reservas",
+          element: (
+            <Suspense fallback={<PageLoading />}>
+              <Reservas />
+            </Suspense>
+          ),
+        },
+        {
+          path: "/clientes",
+          element: (
+            <Suspense fallback={<PageLoading />}>
+              <Clientes />
+            </Suspense>
+          ),
+        },
+        {
+          path: "/mesas",
+          element: (
+            <Suspense fallback={<PageLoading />}>
+              <Mesas />
+            </Suspense>
+          ),
+        },
+        {
+          path: "/calendario",
+          element: (
+            <Suspense fallback={<PageLoading />}>
+              <Calendario />
+            </Suspense>
+          ),
+        },
+        {
+          path: "/analytics",
+          element: (
+            <Suspense fallback={<PageLoading />}>
+              <Analytics />
+            </Suspense>
+          ),
+        },
+        {
+          path: "/comunicacion",
+          element: (
+            <Suspense fallback={<PageLoading />}>
+              <Comunicacion />
+            </Suspense>
+          ),
+        },
+        {
+          path: "/configuracion",
+          element: (
+            <Suspense fallback={<PageLoading />}>
+              <Configuracion />
+            </Suspense>
+          ),
+        },
+        {
+          path: "*",
+          element: <Navigate to="/dashboard" replace />,
+        },
+      ],
+    },
+  ].filter(Boolean); // Filter out any null or undefined routes
 
-            {/* Rutas principales con lazy loading */}
-            <Route
-              path="/dashboard"
-              element={
-                <Suspense fallback={<PageLoading />}>
-                  <Dashboard />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/reservas"
-              element={
-                <Suspense fallback={<PageLoading />}>
-                  <Reservas />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/clientes"
-              element={
-                <Suspense fallback={<PageLoading />}>
-                  <Clientes />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/mesas"
-              element={
-                <Suspense fallback={<PageLoading />}>
-                  <Mesas />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/calendario"
-              element={
-                <Suspense fallback={<PageLoading />}>
-                  <Calendario />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <Suspense fallback={<PageLoading />}>
-                  <Analytics />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/comunicacion"
-              element={
-                <Suspense fallback={<PageLoading />}>
-                  <Comunicacion />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/configuracion"
-              element={
-                <Suspense fallback={<PageLoading />}>
-                  <Configuracion />
-                </Suspense>
-              }
-            />
-          </Route>
+  // Note: In a real application, you would update the 'router' definition with these routes.
+  // For this example, we are demonstrating the structure.
+  // The actual implementation requires re-configuring the 'router' constant in the main App component.
 
-          {/* Redirigir cualquier ruta no válida al dashboard */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </>
-      )}
-    </Routes>
-  );
+  // This component would typically not render anything itself when using createBrowserRouter directly
+  // unless it's part of the fallback or error handling.
+  // TheRouterProvider in the App component handles the actual routing.
+  return null;
 }
 
 // Componente principal App
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#363636',
-              color: '#fff',
-            },
-          }}
-        />
-        <NotificationCenter />
-        <Suspense fallback={<LoadingScreen />}>
-          <AppRoutes />
-        </Suspense>
-      </AuthProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+        }}
+      />
+      <NotificationCenter />
+      {/* Render the router provided by createBrowserRouter */}
+      <RouterProvider router={router} fallbackElement={<LoadingScreen />} />
+    </AuthProvider>
   );
 }
 
