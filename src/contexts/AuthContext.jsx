@@ -335,52 +335,8 @@ export function AuthProvider({ children }) {
                 });
 
                 if (error) {
-                    // 🔧 BYPASS PARA DESARROLLO - Auto-confirmar email
+                    // Manejar específicamente el error de email no confirmado
                     if (error.message.includes('Email not confirmed')) {
-                        const isDevelopment = process.env.NODE_ENV !== 'production';
-                        
-                        if (isDevelopment) {
-                            console.log('🔧 DESARROLLO: Intentando bypass de confirmación de email...');
-                            
-                            try {
-                                // En desarrollo, intentar confirmar el email automáticamente
-                                const { data: confirmData, error: confirmError } = await supabase.auth.updateUser({
-                                    email_confirmed_at: new Date().toISOString()
-                                });
-                                
-                                if (confirmError) {
-                                    console.log('❌ Bypass falló, email no confirmado:', confirmError);
-                                    return { 
-                                        success: false, 
-                                        error: 'Email not confirmed' 
-                                    };
-                                }
-                                
-                                console.log('✅ Bypass exitoso - email confirmado automáticamente');
-                                
-                                // Reintentar login después del bypass
-                                const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-                                    email,
-                                    password,
-                                });
-                                
-                                if (retryError) throw retryError;
-                                
-                                if (retryData?.user) {
-                                    await fetchUserData(retryData.user);
-                                    showNotification.success('🔧 Bypass de desarrollo - Login exitoso');
-                                    return { success: true };
-                                }
-                                
-                            } catch (bypassError) {
-                                console.error('Error en bypass de desarrollo:', bypassError);
-                                return { 
-                                    success: false, 
-                                    error: 'Email not confirmed' 
-                                };
-                            }
-                        }
-                        
                         return { 
                             success: false, 
                             error: 'Email not confirmed' 
