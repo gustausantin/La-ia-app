@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     // 2. CREAR USUARIO CON SIGNUP NORMAL
     console.log('Step 2: Creating user account...');
 
-    // Configurar opciones para evitar verificación por email
+    // CONFIGURACIÓN PARA DESARROLLO - Sin verificación de email
     const signUpOptions = {
       email,
       password,
@@ -65,7 +65,9 @@ export default async function handler(req, res) {
           first_name: firstName,
           last_name: lastName
         },
-        emailRedirectTo: undefined // Desactivar redirect de email
+        emailRedirectTo: undefined, // Desactivar redirect de email
+        // IMPORTANTE: Para desarrollo local, confirmar automáticamente
+        emailConfirm: false // Esto evita el email de verificación
       }
     };
 
@@ -78,9 +80,11 @@ export default async function handler(req, res) {
       if (authError.code === 'over_email_send_rate_limit') {
         return res.status(429).json({
           error: 'Límite de emails excedido',
-          details: 'Por favor espera unos minutos antes de intentar registrarte otra vez. Demasiados emails enviados.',
+          details: 'DESARROLLO: El límite es por IP, no por email. Espera 10-15 minutos o usa conexión móvil.',
           code: 'RATE_LIMIT',
-          retryAfter: 300 // 5 minutos
+          retryAfter: 600, // 10 minutos
+          devTip: 'En desarrollo, este límite afecta toda la IP. Considera usar un hotspot móvil.',
+          workaround: 'Esperando configuración sin verificación de email...'
         });
       }
       
