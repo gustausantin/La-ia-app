@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
-import { Bot, Mail, Lock, Eye, EyeOff, AlertCircle, User, Building, Phone, Utensils, MapPin, Globe, FileText } from 'lucide-react';
+import { Bot, Mail, Lock, Eye, EyeOff, AlertCircle, User, Building, Phone, Utensils, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Register() {
@@ -18,9 +18,7 @@ export default function Register() {
     address: '',
     city: '',
     postalCode: '',
-    country: 'ES',
-    website: '',
-    description: ''
+    country: 'ES'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -72,9 +70,7 @@ export default function Register() {
       newErrors.postalCode = 'El código postal es requerido';
     }
 
-    if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
-      newErrors.website = 'La URL debe comenzar con http:// o https://';
-    }
+    
 
     if (!formData.email) {
       newErrors.email = 'El email es requerido';
@@ -137,9 +133,7 @@ export default function Register() {
           address: formData.address,
           city: formData.city,
           postalCode: formData.postalCode,
-          country: formData.country,
-          website: formData.website,
-          description: formData.description
+          country: formData.country
         })
       });
 
@@ -561,55 +555,7 @@ export default function Register() {
               )}
             </div>
 
-            {/* Website - Optional */}
-            <div className="col-span-2">
-              <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
-                Sitio web <span className="text-gray-500 text-sm">(opcional)</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Globe className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="website"
-                  name="website"
-                  type="url"
-                  value={formData.website}
-                  onChange={handleChange}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${
-                    errors.website ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="https://www.mirestaurante.com"
-                />
-              </div>
-              {errors.website && (
-                <div className="mt-1 flex items-center text-sm text-red-600">
-                  <AlertCircle className="w-4 h-4 mr-1" />
-                  {errors.website}
-                </div>
-              )}
-            </div>
-
-            {/* Description - Optional */}
-            <div className="col-span-2">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Descripción del restaurante <span className="text-gray-500 text-sm">(opcional)</span>
-              </label>
-              <div className="relative">
-                <div className="absolute top-3 left-0 pl-3 flex items-start pointer-events-none">
-                  <FileText className="h-5 w-5 text-gray-400" />
-                </div>
-                <textarea
-                  id="description"
-                  name="description"
-                  rows={3}
-                  value={formData.description}
-                  onChange={handleChange}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors resize-none"
-                  placeholder="Describe tu restaurante, especialidades, ambiente..."
-                />
-              </div>
-            </div>
+            
 
             {/* Email */}
             <div className="col-span-2">
