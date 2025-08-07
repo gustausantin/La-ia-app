@@ -23,9 +23,7 @@ export default async function handler(req, res) {
     address,
     city,
     postalCode,
-    country,
-    website,
-    description
+    country
   } = req.body;
 
   try {
@@ -116,8 +114,6 @@ export default async function handler(req, res) {
       city,
       postal_code: postalCode,
       country: country || 'España',
-      website: website || null,
-      description: description || null,
       owner_id: userId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
