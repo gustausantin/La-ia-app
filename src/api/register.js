@@ -114,7 +114,6 @@ export default async function handler(req, res) {
       city,
       postal_code: postalCode,
       country: country || 'España',
-      owner_id: userId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -140,8 +139,38 @@ export default async function handler(req, res) {
     const restaurantId = restaurant.id;
     console.log('Restaurant created successfully:', restaurantId);
 
-    // 4. CREAR PERFIL DE USUARIO
-    console.log('Step 4: Creating user profile...');
+    // 4. CREAR RELACIÓN USUARIO-RESTAURANTE
+    console.log('Step 4: Creating user-restaurant mapping...');
+
+    const mappingData = {
+      auth_user_id: userId,
+      restaurant_id: restaurantId,
+      role: 'owner',
+      permissions: ['all'],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { error: mappingError } = await supabaseAdmin
+      .from('user_restaurant_mapping')
+      .insert(mappingData);
+
+    if (mappingError) {
+      console.error('Mapping error:', mappingError);
+
+      // Si falla, eliminar el restaurante
+      await supabaseAdmin.from('restaurants').delete().eq('id', restaurantId);
+
+      return res.status(400).json({
+        error: 'Error creando relación usuario-restaurante',
+        details: mappingError.message
+      });
+    }
+
+    console.log('User-restaurant mapping created successfully');
+
+    // 5. CREAR PERFIL DE USUARIO
+    console.log('Step 5: Creating user profile...');
 
     const userProfileData = {
       id: userId,
@@ -158,8 +187,11 @@ export default async function handler(req, res) {
     if (profileError) {
       console.error('Profile error:', profileError);
 
-      // Si falla, eliminar solo el restaurante
-      await supabaseAdmin.from('restaurants').delete().eq('id', restaurantId);
+      // Si falla, eliminar restaurante y mapping
+      await Promise.all([
+        supabaseAdmin.from('restaurants').delete().eq('id', restaurantId),
+        supabaseAdmin.from('user_restaurant_mapping').delete().eq('restaurant_id', restaurantId)
+      ]);
 
       return res.status(400).json({
         error: 'Error creando perfil',
@@ -169,8 +201,8 @@ export default async function handler(req, res) {
 
     console.log('User profile created successfully');
 
-    // 5. RESPUESTA EXITOSA
-    console.log('Step 5: Registration completed successfully');
+    // 6. RESPUESTA EXITOSA
+    console.log('Step 6: Registration completed successfully');
 
     return res.status(200).json({
       success: true,
