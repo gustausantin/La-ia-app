@@ -239,24 +239,32 @@ export default function Register() {
               <div className="space-y-3 pt-4">
                 <button
                   onClick={async () => {
+                    const toastLoading = toast.loading('Reenviando email...');
                     try {
                       const { supabase } = await import('../lib/supabase.js');
                       const { error } = await supabase.auth.resend({
                         type: 'signup',
                         email: registeredEmail,
                         options: {
-                          emailRedirectTo: `${window.location.origin}/login`
+                          emailRedirectTo: `${window.location.origin}/confirm`
                         }
                       });
 
-                      if (error) {
-                        throw error;
-                      }
+                      toast.dismiss(toastLoading);
 
-                      toast.success('Email de verificación reenviado');
+                      if (error) {
+                        if (error.message.includes('rate_limit') || error.message.includes('too_many_requests')) {
+                          toast.error('⏱️ Espera unos minutos antes de reenviar otro email');
+                        } else {
+                          throw error;
+                        }
+                      } else {
+                        toast.success('✅ Email de verificación reenviado. Revisa tu bandeja de entrada.');
+                      }
                     } catch (error) {
+                      toast.dismiss(toastLoading);
                       console.error('Error reenviando email:', error);
-                      toast.error('Error al reenviar el email');
+                      toast.error(`❌ Error al reenviar: ${error.message || 'Inténtalo más tarde'}`);
                     }
                   }}
                   className="w-full flex justify-center py-2 px-4 border border-purple-300 rounded-lg text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"

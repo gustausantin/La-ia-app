@@ -234,12 +234,11 @@ export function AuthProvider({ children }) {
     // Función mejorada para obtener datos del usuario
     const fetchUserData = useCallback(
         async (authUser, retryCount = 0) => {
-            const loadingToast = showNotification.loading(
-                "Cargando tu restaurante...",
-            );
+            // Solo mostrar loading toast en el primer intento para evitar duplicados
+            const loadingToast = retryCount === 0 ? showNotification.loading("Cargando tu restaurante...") : null;
 
             try {
-                console.log("AuthProvider: Obteniendo datos del usuario...");
+                console.log(`AuthProvider: Obteniendo datos del usuario (intento ${retryCount + 1}/3)...`);
 
                 const { data, error } = await supabase
                     .from("user_restaurant_mapping")
@@ -284,34 +283,40 @@ export function AuthProvider({ children }) {
                 setUserProfile({
                     role: data.role,
                     permissions: data.permissions || {},
-                    fullName: data.user_profile?.full_name || '',
-                    avatarUrl: data.user_profile?.avatar_url || null
+                    fullName: authUser.user_metadata?.first_name && authUser.user_metadata?.last_name 
+                        ? `${authUser.user_metadata.first_name} ${authUser.user_metadata.last_name}`
+                        : authUser.email?.split('@')[0] || 'Usuario',
+                    avatarUrl: authUser.user_metadata?.avatar_url || null
                 });
 
-                // Obtener estado del agente y métricas
-                await Promise.all([
-                    fetchAgentStatus(data.restaurant.id),
-                    fetchRestaurantMetrics(data.restaurant.id),
-                ]);
+                // Obtener estado del agente y métricas (sin bloquear la carga principal)
+                fetchAgentStatus(data.restaurant.id).catch(console.warn);
+                fetchRestaurantMetrics(data.restaurant.id).catch(console.warn);
 
-                toast.dismiss(loadingToast);
+                // Importante: establecer loading como false aquí
+                setLoading(false);
+
+                if (loadingToast) toast.dismiss(loadingToast);
                 showNotification.success(
                     `Bienvenido a ${data.restaurant.name}`,
                     CheckCircle,
                 );
+
+                console.log("✅ AuthProvider: Carga completada exitosamente");
             } catch (error) {
-                toast.dismiss(loadingToast);
+                if (loadingToast) toast.dismiss(loadingToast);
                 console.error("AuthProvider: Error obteniendo datos:", error);
 
                 if (retryCount < 2) {
-                    console.log(
-                        `AuthProvider: Reintentando... (${retryCount + 1}/2)`,
-                    );
+                    console.log(`AuthProvider: Reintentando en 2 segundos... (${retryCount + 1}/3)`);
                     setTimeout(() => {
                         fetchUserData(authUser, retryCount + 1);
                     }, 2000);
                 } else {
-                    handleError(error, true);
+                    // Después de 3 intentos, parar y mostrar error
+                    console.error("❌ AuthProvider: Falló después de 3 intentos");
+                    setLoading(false); // CRÍTICO: parar el loading
+                    handleError(new Error("No se pudo cargar los datos del restaurante. Verifica tu conexión e inténtalo de nuevo."), true);
                     clearAuthData();
                 }
             }
@@ -326,6 +331,7 @@ export function AuthProvider({ children }) {
             setError(null);
 
             try {
+                console.log("🔑 AuthProvider: Iniciando sesión...");
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
@@ -334,6 +340,8 @@ export function AuthProvider({ children }) {
                 if (error) {
                     // Manejar específicamente el error de email no confirmado
                     if (error.message.includes('Email not confirmed')) {
+                        console.log("⚠️ AuthProvider: Email no confirmado");
+                        setLoading(false); // Importante: parar loading aquí
                         return { 
                             success: false, 
                             error: 'Email not confirmed' 
@@ -343,14 +351,18 @@ export function AuthProvider({ children }) {
                 }
 
                 if (data?.user) {
+                    console.log("✅ AuthProvider: Login exitoso, cargando datos...");
+                    // fetchUserData ya maneja setLoading(false)
                     await fetchUserData(data.user);
                     return { success: true };
+                } else {
+                    setLoading(false);
+                    return { success: false, error: 'No se pudo obtener los datos del usuario' };
                 }
             } catch (error) {
+                setLoading(false); // Asegurar que loading se para en caso de error
                 handleError(error, true);
                 return { success: false, error: error.message };
-            } finally {
-                setLoading(false);
             }
         },
         [fetchUserData, handleError],
@@ -394,6 +406,7 @@ export function AuthProvider({ children }) {
 
         const checkSession = async () => {
             try {
+                console.log("🔍 AuthProvider: Verificando sesión inicial...");
                 const {
                     data: { session },
                 } = await supabase.auth.getSession();
@@ -401,13 +414,14 @@ export function AuthProvider({ children }) {
                 if (!mounted) return;
 
                 if (session?.user) {
+                    console.log("✅ AuthProvider: Sesión encontrada, cargando datos...");
                     await fetchUserData(session.user);
                 } else {
-                    console.log("AuthProvider: No hay sesión activa");
+                    console.log("ℹ️ AuthProvider: No hay sesión activa");
                     setLoading(false);
                 }
             } catch (error) {
-                console.error("AuthProvider: Error verificando sesión:", error);
+                console.error("❌ AuthProvider: Error verificando sesión:", error);
                 if (mounted) {
                     handleError(error, false);
                     setLoading(false);
