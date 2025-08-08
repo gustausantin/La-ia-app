@@ -953,7 +953,7 @@ export default function Clientes() {
 
     // Filtrar y ordenar clientes
     const filteredAndSortedCustomers = useMemo(() => {
-        let filtered = customers;
+        let filtered = customers || [];
 
         // Filtro por búsqueda
         if (filters.search) {

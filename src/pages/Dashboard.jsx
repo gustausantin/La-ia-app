@@ -738,7 +738,7 @@ export default function Dashboard() {
                         </div>
                     </div>
                     <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-                        {conversations.length > 0 ? (
+                        {conversations && conversations.length > 0 ? (
                             conversations.map((conv) => (
                                 <div
                                     key={conv.id}
@@ -814,7 +814,7 @@ export default function Dashboard() {
                         </div>
                     </div>
                     <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-                        {reservations.length > 0 ? (
+                        {reservations && reservations.length > 0 ? (
                             <div className="divide-y divide-gray-100">
                                 {reservations.slice(0, 10).map((res) => {
                                     const isPast = isAfter(

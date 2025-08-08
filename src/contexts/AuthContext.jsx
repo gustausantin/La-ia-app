@@ -167,7 +167,7 @@ export const AuthProvider = ({ children }) => {
     initializeAuth().catch((error) => {
       console.error('❌ Error en initializeAuth:', error);
       if (mounted) {
-        setError(error.message);
+        setError(error?.message || 'Error desconocido');
         setIsLoading(false);
         setIsReady(true);
       }
@@ -209,7 +209,7 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
           console.error('❌ Error en onAuthStateChange:', error);
           if (mounted) {
-            setError(error.message);
+            setError(error?.message || 'Error en autenticación');
           }
         }
       }
@@ -255,12 +255,18 @@ export const AuthProvider = ({ children }) => {
     session,
     user,
     restaurant,
+    restaurantId: restaurant?.id || null,
     isLoading,
     isReady,
     error,
     isAuthenticated: !!session,
+    agentStatus: { active: true }, // TODO: Conectar con estado real del agente
     refreshRestaurant,
-    logout
+    logout,
+    addNotification: (notification) => {
+      // TODO: Implementar sistema de notificaciones
+      console.log('📢 Notificación:', notification);
+    }
   };
 
   return (
