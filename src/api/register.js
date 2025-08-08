@@ -118,8 +118,7 @@ export default async function handler(req, res) {
       city,
       postal_code: postalCode,
       country: country || 'España',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      created_at: new Date().toISOString()
     };
 
     const { data: restaurant, error: restaurantError } = await supabaseAdmin
@@ -151,8 +150,7 @@ export default async function handler(req, res) {
       restaurant_id: restaurantId,
       role: 'owner',
       permissions: ['all'],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      created_at: new Date().toISOString()
     };
 
     const { error: mappingError } = await supabaseAdmin
@@ -180,8 +178,7 @@ export default async function handler(req, res) {
       id: userId,
       full_name: `${firstName} ${lastName}`.trim(),
       email,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      created_at: new Date().toISOString()
     };
 
     const { error: profileError } = await supabaseAdmin
