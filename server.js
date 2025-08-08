@@ -29,7 +29,6 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 const app = express();
-const PORT = 5000;
 
 // Middleware
 app.use(cors());
@@ -49,6 +48,36 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`API Server running on http://0.0.0.0:${PORT}`);
-});
+// Función para encontrar puerto disponible
+const findAvailablePort = (startPort) => {
+  return new Promise((resolve) => {
+    const server = app.listen(startPort, '0.0.0.0', () => {
+      const port = server.address().port;
+      server.close();
+      resolve(port);
+    });
+    
+    server.on('error', () => {
+      resolve(findAvailablePort(startPort + 1));
+    });
+  });
+};
+
+// Iniciar servidor con puerto dinámico
+const startServer = async () => {
+  try {
+    const PORT = await findAvailablePort(5000);
+    
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`✅ API Server running on http://0.0.0.0:${PORT}`);
+      if (PORT !== 5000) {
+        console.log(`ℹ️ Puerto 5000 ocupado, usando puerto ${PORT}`);
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error iniciando servidor:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
