@@ -29,18 +29,33 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🔍 Cargando datos del restaurante para user:', userId);
       
-      // Buscar el restaurante del usuario
-      const { data: restaurantData, error: restaurantError } = await supabase
+      // Primero intentar buscar por owner_id
+      let { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
         .select('*')
         .eq('owner_id', userId)
         .single();
 
-      if (restaurantError) {
-        if (restaurantError.code === 'PGRST116') {
-          console.log('ℹ️ Usuario sin restaurante configurado');
-          return null;
+      // Si no encuentra por owner_id, buscar en user_restaurant_mapping
+      if (restaurantError && restaurantError.code === 'PGRST116') {
+        console.log('🔄 Buscando restaurante via mapping...');
+        
+        const { data: mappingData, error: mappingError } = await supabase
+          .from('user_restaurant_mapping')
+          .select('restaurant_id, restaurants(*)')
+          .eq('auth_user_id', userId)
+          .single();
+
+        if (mappingError) {
+          if (mappingError.code === 'PGRST116') {
+            console.log('ℹ️ Usuario sin restaurante configurado');
+            return null;
+          }
+          throw mappingError;
         }
+
+        restaurantData = mappingData.restaurants;
+      } else if (restaurantError) {
         throw restaurantError;
       }
 
@@ -68,6 +83,7 @@ export const AuthProvider = ({ children }) => {
   // Efecto principal para inicializar autenticación
   useEffect(() => {
     let mounted = true;
+    let initPromise = null;
 
     const initializeAuth = async () => {
       try {
@@ -84,9 +100,16 @@ export const AuthProvider = ({ children }) => {
           setUser(initialSession.user);
 
           // Cargar datos del restaurante
-          const restaurantData = await loadRestaurantData(initialSession.user.id);
-          if (mounted) {
-            setRestaurant(restaurantData);
+          try {
+            const restaurantData = await loadRestaurantData(initialSession.user.id);
+            if (mounted) {
+              setRestaurant(restaurantData);
+            }
+          } catch (restaurantError) {
+            console.error('❌ Error cargando restaurante:', restaurantError);
+            if (mounted) {
+              setRestaurant(null);
+            }
           }
         } else {
           console.log('ℹ️ No hay sesión activa');
@@ -111,7 +134,10 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    initializeAuth();
+    // Ejecutar inicialización y capturar la promesa
+    initPromise = initializeAuth().catch(error => {
+      console.error('❌ Error no manejado en inicialización:', error);
+    });
 
     // Configurar listener para cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -127,9 +153,16 @@ export const AuthProvider = ({ children }) => {
 
             // Cargar restaurante solo si no lo tenemos o cambió el usuario
             if (!restaurant || restaurant.owner_id !== newSession.user.id) {
-              const restaurantData = await loadRestaurantData(newSession.user.id);
-              if (mounted) {
-                setRestaurant(restaurantData);
+              try {
+                const restaurantData = await loadRestaurantData(newSession.user.id);
+                if (mounted) {
+                  setRestaurant(restaurantData);
+                }
+              } catch (restaurantError) {
+                console.error('❌ Error cargando restaurante en auth change:', restaurantError);
+                if (mounted) {
+                  setRestaurant(null);
+                }
               }
             }
           } else {
@@ -146,6 +179,12 @@ export const AuthProvider = ({ children }) => {
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      // Asegurar que la promesa de inicialización no cause errores
+      if (initPromise) {
+        initPromise.catch(() => {
+          // Silenciar errores de promesas que no se resolvieron
+        });
+      }
     };
   }, []);
 
