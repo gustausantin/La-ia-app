@@ -2,6 +2,7 @@
 import { useAuthContext } from '../contexts/AuthContext';
 import { Bot, ChefHat, Sparkles, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 
 export default function ProtectedRoute({ children }) {
   const { user, restaurant, isLoading, isReady, isAuthenticated, error, refreshRestaurant } = useAuthContext();
@@ -30,164 +31,96 @@ export default function ProtectedRoute({ children }) {
     }
   };
 
-  // Mostrar pantalla de carga mientras se inicializa
-  if (isLoading || !isReady) {
+  // Si no está listo, mostrar pantalla de carga
+  if (!isReady || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-6">
-            <Bot className="w-12 h-12 text-white animate-pulse" />
+          <div className="relative mb-8">
+            <div className="w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center mx-auto animate-pulse">
+              <Bot className="w-10 h-10 text-purple-600" />
+            </div>
+            <div className="absolute -top-2 -right-2">
+              <Sparkles className="w-8 h-8 text-yellow-500 animate-spin" />
+            </div>
           </div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Cargando La-IA...
           </h2>
-          
           <p className="text-gray-600 mb-6">
-            Preparando tu asistente virtual
+            Preparando tu asistente inteligente
           </p>
 
-          <div className="w-full bg-gray-200 rounded-full h-2 mb-6 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full animate-loading-bar"></div>
-          </div>
+          {user && !restaurant && (
+            <>
+              <div className="flex items-center justify-center space-x-2 mb-4">
+                <ChefHat className="w-5 h-5 text-purple-600" />
+                <span className="text-sm text-gray-600">Cargando tu restaurante...</span>
+              </div>
+
+              {showTip && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700">
+                  <p className="font-medium mb-2">💡 Tip:</p>
+                  <p>Estamos configurando tu restaurante por primera vez. Esto puede tardar unos segundos.</p>
+                </div>
+              )}
+
+              {retryAttempts > 0 && retryAttempts < 3 && (
+                <button
+                  onClick={handleRetry}
+                  disabled={isRetrying}
+                  className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm"
+                >
+                  {isRetrying ? 'Reintentando...' : 'Reintentar'}
+                </button>
+              )}
+
+              {retryAttempts >= 3 && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <AlertCircle className="w-5 h-5 text-red-600 mx-auto mb-2" />
+                  <p className="text-sm text-red-700">
+                    No se pudo cargar el restaurante. Intenta recargar la página.
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
+                  >
+                    Recargar página
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     );
   }
 
-  // Usuario no autenticado
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800">
-        <div className="max-w-md mx-auto text-center p-8">
-          <div className="w-24 h-24 mx-auto bg-white/20 backdrop-blur-lg rounded-full flex items-center justify-center mb-6 border border-white/30">
-            <Bot className="w-12 h-12 text-white" />
-          </div>
-          
-          <h1 className="text-3xl font-bold text-white mb-4">
-            Acceso Restringido
-          </h1>
-          
-          <p className="text-blue-100 mb-8">
-            Necesitas iniciar sesión para acceder al panel de control de La-IA
-          </p>
-
-          <div className="space-y-4">
-            <button 
-              onClick={() => window.location.href = '/login'}
-              className="w-full px-6 py-3 bg-white text-blue-600 font-medium rounded-xl hover:bg-blue-50 transition-all duration-200 shadow-lg"
-            >
-              Iniciar Sesión
-            </button>
-            
-            <button 
-              onClick={() => window.location.href = '/'}
-              className="w-full px-6 py-3 bg-white/10 backdrop-blur-lg text-white font-medium rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-200"
-            >
-              Volver al Inicio
-            </button>
-          </div>
-
-          <p className="text-sm text-blue-200 mt-6">
-            ¿No tienes cuenta? Contacta con nosotros para una demo gratuita
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Mostrar error si existe
+  // Si hay error de autenticación
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-orange-50">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-24 h-24 mx-auto bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center mb-6">
-            <AlertCircle className="w-12 h-12 text-white" />
-          </div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Error de Conexión
-          </h2>
-          
-          <p className="text-gray-600 mb-6">
-            {error}
-          </p>
-
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Error de autenticación</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={() => window.location.reload()}
-            className="w-full px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white font-medium rounded-xl hover:shadow-lg transition-all duration-200"
+            onClick={() => window.location.href = '/login'}
+            className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
           >
-            Recargar Página
+            Ir al login
           </button>
         </div>
       </div>
     );
   }
 
-  // Usuario autenticado pero sin restaurante
-  if (!restaurant) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-red-50">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-24 h-24 mx-auto bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center mb-6">
-            <ChefHat className="w-12 h-12 text-white" />
-          </div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            {isRetrying ? 'Cargando tu restaurante...' : 'Configuración Pendiente'}
-          </h2>
-          
-          <p className="text-gray-600 mb-6">
-            {isRetrying 
-              ? 'Estamos preparando todo para ti...' 
-              : retryAttempts >= 3 
-                ? 'No se pudo cargar los datos del restaurante. Verifica tu configuración.'
-                : 'Necesitas completar la configuración de tu restaurante.'
-            }
-          </p>
-
-          {isRetrying ? (
-            <div className="w-full bg-gray-200 rounded-full h-2 mb-6 overflow-hidden">
-              <div className="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full animate-loading-bar"></div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {retryAttempts < 3 && (
-                <button
-                  onClick={handleRetry}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-medium rounded-xl hover:shadow-lg transition-all duration-200"
-                >
-                  Reintentar Carga
-                </button>
-              )}
-              
-              <button
-                onClick={() => window.location.reload()}
-                className="w-full px-6 py-3 border border-orange-300 text-orange-600 font-medium rounded-xl hover:bg-orange-50 transition-all duration-200"
-              >
-                Recargar Página
-              </button>
-            </div>
-          )}
-
-          {showTip && !isRetrying && (
-            <div className="animate-fade-in bg-orange-50 border border-orange-200 rounded-lg p-4 mt-6">
-              <div className="flex items-start space-x-3">
-                <Sparkles className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-                <div className="text-left">
-                  <p className="text-sm text-orange-900 font-medium">¿Necesitas ayuda?</p>
-                  <p className="text-sm text-orange-700 mt-1">
-                    Contacta con soporte si tienes problemas con la configuración inicial.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  // Si no está autenticado, redirigir
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
-  // Usuario autenticado con restaurante - mostrar contenido
+  // Si está todo bien, mostrar el contenido
   return children;
 }
