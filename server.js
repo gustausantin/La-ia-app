@@ -29,7 +29,7 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 const app = express();
-const PORT = 3001;
+const PORT = 5000;
 
 // Middleware
 app.use(cors());
