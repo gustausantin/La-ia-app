@@ -233,9 +233,9 @@ export function AuthProvider({ children }) {
 
     // Función mejorada para obtener datos del usuario
     const fetchUserData = useCallback(
-        async (authUser, retryCount = 0) => {
-            // Solo mostrar loading toast en el primer intento para evitar duplicados
-            const loadingToast = retryCount === 0 ? showNotification.loading("Cargando tu restaurante...") : null;
+        async (authUser, retryCount = 0, showToast = true) => {
+            // Solo mostrar loading toast en el primer intento y si showToast es true
+            const loadingToast = retryCount === 0 && showToast ? showNotification.loading("Cargando tu restaurante...") : null;
 
             try {
                 console.log(`AuthProvider: Obteniendo datos del usuario (intento ${retryCount + 1}/3)...`);
@@ -297,10 +297,14 @@ export function AuthProvider({ children }) {
                 setLoading(false);
 
                 if (loadingToast) toast.dismiss(loadingToast);
-                showNotification.success(
-                    `Bienvenido a ${data.restaurant.name}`,
-                    CheckCircle,
-                );
+                
+                // Solo mostrar éxito si es el primer intento exitoso
+                if (retryCount === 0) {
+                    showNotification.success(
+                        `Bienvenido a ${data.restaurant.name}`,
+                        CheckCircle,
+                    );
+                }
 
                 console.log("✅ AuthProvider: Carga completada exitosamente");
             } catch (error) {
@@ -310,7 +314,7 @@ export function AuthProvider({ children }) {
                 if (retryCount < 2) {
                     console.log(`AuthProvider: Reintentando en 2 segundos... (${retryCount + 1}/3)`);
                     setTimeout(() => {
-                        fetchUserData(authUser, retryCount + 1);
+                        fetchUserData(authUser, retryCount + 1, false); // No mostrar toast en reintentos
                     }, 2000);
                 } else {
                     // Después de 3 intentos, parar y mostrar error
@@ -415,7 +419,7 @@ export function AuthProvider({ children }) {
 
                 if (session?.user) {
                     console.log("✅ AuthProvider: Sesión encontrada, cargando datos...");
-                    await fetchUserData(session.user);
+                    await fetchUserData(session.user, 0, true);
                 } else {
                     console.log("ℹ️ AuthProvider: No hay sesión activa");
                     setLoading(false);
@@ -439,12 +443,15 @@ export function AuthProvider({ children }) {
                 console.log("AuthProvider: Cambio de auth -", event);
 
                 if (event === "SIGNED_IN" && session?.user) {
-                    await fetchUserData(session.user);
+                    // Solo llamar fetchUserData si no estamos ya procesando una sesión
+                    if (!user) {
+                        await fetchUserData(session.user, 0, true);
+                    }
                 } else if (event === "SIGNED_OUT") {
                     clearAuthData();
                     setLoading(false);
                 } else if (event === "INITIAL_SESSION") {
-                    // Ya manejado en checkSession
+                    // Ya manejado en checkSession, no hacer nada
                     return;
                 }
             },
