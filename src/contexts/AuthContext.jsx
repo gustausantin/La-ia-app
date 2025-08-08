@@ -247,10 +247,7 @@ export function AuthProvider({ children }) {
                         `
                         role,
                         permissions,
-                        user_profile:auth_user_id (
-                            full_name,
-                            avatar_url
-                        ),
+                        auth_user_id,
                         restaurant:restaurant_id (
                             id,
                             name,
