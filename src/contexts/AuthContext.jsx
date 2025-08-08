@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }) => {
   const [restaurant, setRestaurant] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState(null);
 
   // Función para cargar datos del restaurante
   const loadRestaurantData = async (userId) => {
@@ -34,33 +35,38 @@ export const AuthProvider = ({ children }) => {
         .from('restaurants')
         .select('*')
         .eq('owner_id', userId)
-        .single();
+        .maybeSingle();
 
       // Si no encuentra por owner_id, buscar en user_restaurant_mapping
-      if (restaurantError && restaurantError.code === 'PGRST116') {
+      if (!restaurantData && !restaurantError) {
         console.log('🔄 Buscando restaurante via mapping...');
         
         const { data: mappingData, error: mappingError } = await supabase
           .from('user_restaurant_mapping')
           .select('restaurant_id, restaurants(*)')
           .eq('auth_user_id', userId)
-          .single();
+          .maybeSingle();
 
         if (mappingError) {
-          if (mappingError.code === 'PGRST116') {
-            console.log('ℹ️ Usuario sin restaurante configurado');
-            return null;
-          }
-          throw mappingError;
+          console.error('❌ Error en mapping:', mappingError);
+          return null;
         }
 
-        restaurantData = mappingData.restaurants;
+        if (mappingData?.restaurants) {
+          restaurantData = mappingData.restaurants;
+        }
       } else if (restaurantError) {
-        throw restaurantError;
+        console.error('❌ Error buscando por owner_id:', restaurantError);
+        return null;
       }
 
-      console.log('✅ Restaurante cargado:', restaurantData);
-      return restaurantData;
+      if (restaurantData) {
+        console.log('✅ Restaurante cargado:', restaurantData);
+        return restaurantData;
+      } else {
+        console.log('ℹ️ Usuario sin restaurante configurado');
+        return null;
+      }
 
     } catch (error) {
       console.error('❌ Error cargando restaurante:', error);
@@ -68,54 +74,45 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Función para obtener la sesión inicial
-  const getInitialSession = async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      return session;
-    } catch (error) {
-      console.error('❌ Error obteniendo sesión inicial:', error);
-      return null;
-    }
-  };
-
   // Efecto principal para inicializar autenticación
   useEffect(() => {
     let mounted = true;
-    let initPromise = null;
+    let isInitializing = false;
 
     const initializeAuth = async () => {
+      if (isInitializing) return;
+      isInitializing = true;
+
       try {
         console.log('🚀 Inicializando AuthContext...');
         
         // Obtener sesión inicial
-        const initialSession = await getInitialSession();
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
         
+        if (sessionError) {
+          console.error('❌ Error obteniendo sesión:', sessionError);
+          throw sessionError;
+        }
+
         if (!mounted) return;
 
         if (initialSession?.user) {
           console.log('✅ Sesión encontrada:', initialSession.user.email);
           setSession(initialSession);
           setUser(initialSession.user);
+          setError(null);
 
           // Cargar datos del restaurante
-          try {
-            const restaurantData = await loadRestaurantData(initialSession.user.id);
-            if (mounted) {
-              setRestaurant(restaurantData);
-            }
-          } catch (restaurantError) {
-            console.error('❌ Error cargando restaurante:', restaurantError);
-            if (mounted) {
-              setRestaurant(null);
-            }
+          const restaurantData = await loadRestaurantData(initialSession.user.id);
+          if (mounted) {
+            setRestaurant(restaurantData);
           }
         } else {
           console.log('ℹ️ No hay sesión activa');
           setSession(null);
           setUser(null);
           setRestaurant(null);
+          setError(null);
         }
 
       } catch (error) {
@@ -124,6 +121,7 @@ export const AuthProvider = ({ children }) => {
           setSession(null);
           setUser(null);
           setRestaurant(null);
+          setError(error.message);
         }
       } finally {
         if (mounted) {
@@ -131,13 +129,12 @@ export const AuthProvider = ({ children }) => {
           setIsReady(true);
           console.log('✅ AuthContext inicializado');
         }
+        isInitializing = false;
       }
     };
 
-    // Ejecutar inicialización y capturar la promesa
-    initPromise = initializeAuth().catch(error => {
-      console.error('❌ Error no manejado en inicialización:', error);
-    });
+    // Ejecutar inicialización
+    initializeAuth();
 
     // Configurar listener para cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -150,28 +147,26 @@ export const AuthProvider = ({ children }) => {
           if (newSession?.user) {
             setSession(newSession);
             setUser(newSession.user);
+            setError(null);
 
-            // Cargar restaurante solo si no lo tenemos o cambió el usuario
-            if (!restaurant || restaurant.owner_id !== newSession.user.id) {
-              try {
-                const restaurantData = await loadRestaurantData(newSession.user.id);
-                if (mounted) {
-                  setRestaurant(restaurantData);
-                }
-              } catch (restaurantError) {
-                console.error('❌ Error cargando restaurante en auth change:', restaurantError);
-                if (mounted) {
-                  setRestaurant(null);
-                }
+            // Solo cargar restaurante si cambió el usuario
+            if (!user || user.id !== newSession.user.id) {
+              const restaurantData = await loadRestaurantData(newSession.user.id);
+              if (mounted) {
+                setRestaurant(restaurantData);
               }
             }
           } else {
             setSession(null);
             setUser(null);
             setRestaurant(null);
+            setError(null);
           }
         } catch (error) {
           console.error('❌ Error en onAuthStateChange:', error);
+          if (mounted) {
+            setError(error.message);
+          }
         }
       }
     );
@@ -179,12 +174,6 @@ export const AuthProvider = ({ children }) => {
     return () => {
       mounted = false;
       subscription.unsubscribe();
-      // Asegurar que la promesa de inicialización no cause errores
-      if (initPromise) {
-        initPromise.catch(() => {
-          // Silenciar errores de promesas que no se resolvieron
-        });
-      }
     };
   }, []);
 
@@ -193,11 +182,13 @@ export const AuthProvider = ({ children }) => {
     if (!user?.id) return null;
     
     try {
+      setError(null);
       const restaurantData = await loadRestaurantData(user.id);
       setRestaurant(restaurantData);
       return restaurantData;
     } catch (error) {
       console.error('❌ Error refrescando restaurante:', error);
+      setError(error.message);
       return null;
     }
   };
@@ -209,8 +200,10 @@ export const AuthProvider = ({ children }) => {
       setSession(null);
       setUser(null);
       setRestaurant(null);
+      setError(null);
     } catch (error) {
       console.error('❌ Error en logout:', error);
+      setError(error.message);
     }
   };
 
@@ -220,6 +213,7 @@ export const AuthProvider = ({ children }) => {
     restaurant,
     isLoading,
     isReady,
+    error,
     isAuthenticated: !!session,
     refreshRestaurant,
     logout
