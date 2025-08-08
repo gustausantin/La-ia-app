@@ -8,6 +8,17 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { Toaster } from "react-hot-toast";
 import { Bot, AlertCircle, CheckCircle2, XCircle, Info } from "lucide-react";
 
+// Manejar promesas rechazadas globalmente
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('❌ Unhandled promise rejection:', event.reason);
+  event.preventDefault(); // Prevenir que aparezca en consola como error
+});
+
+// Manejar errores globales
+window.addEventListener('error', (event) => {
+  console.error('❌ Global error:', event.error);
+});
+
 // Error Boundary para capturar errores
 class ErrorBoundary extends React.Component {
   constructor(props) {

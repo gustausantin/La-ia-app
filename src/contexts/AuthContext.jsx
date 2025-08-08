@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -19,8 +20,8 @@ export const AuthProvider = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState(null);
 
-  // Función para cargar datos del restaurante
-  const loadRestaurantData = async (userId) => {
+  // Función para cargar datos del restaurante con manejo de errores
+  const loadRestaurantData = useCallback(async (userId) => {
     if (!userId) {
       console.log('❌ No hay userId para cargar restaurante');
       return null;
@@ -30,16 +31,16 @@ export const AuthProvider = ({ children }) => {
       console.log('🔍 Cargando datos del restaurante para user:', userId);
 
       // Primero intentar buscar por owner_id
-      let { data: restaurantData, error: restaurantError } = await supabase
+      const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
         .select('*')
         .eq('owner_id', userId)
         .maybeSingle();
 
-      // Si no encuentra por owner_id, buscar en user_restaurant_mapping
-      if (!restaurantData && !restaurantError) {
-        console.log('🔄 Buscando restaurante via mapping...');
-
+      if (restaurantError) {
+        console.error('❌ Error buscando por owner_id:', restaurantError);
+        
+        // Si hay error, intentar buscar en user_restaurant_mapping
         const { data: mappingData, error: mappingError } = await supabase
           .from('user_restaurant_mapping')
           .select('restaurant_id, restaurants(*)')
@@ -52,71 +53,43 @@ export const AuthProvider = ({ children }) => {
         }
 
         if (mappingData?.restaurants) {
-          restaurantData = mappingData.restaurants;
+          console.log('✅ Restaurante encontrado via mapping:', mappingData.restaurants);
+          return mappingData.restaurants;
         }
-      } else if (restaurantError) {
-        console.error('❌ Error buscando por owner_id:', restaurantError);
+        
         return null;
       }
 
       if (restaurantData) {
-        console.log('✅ Restaurante cargado:', restaurantData);
+        console.log('✅ Restaurante cargado por owner_id:', restaurantData);
         return restaurantData;
-      } else {
-        console.log('ℹ️ Usuario sin restaurante configurado');
-        return null;
       }
 
-    } catch (error) {
-      console.error('❌ Error cargando restaurante:', error);
-      return null;
-    }
-  };
-
-  // Función para verificar si el usuario tiene un restaurante asignado
-  const checkRestaurant = useCallback(async (userId) => {
-    if (!userId) {
-      console.log('❌ No userId provided to checkRestaurant');
-      return null;
-    }
-
-    try {
-      console.log('🔍 Checking restaurant for user:', userId);
-
-      const { data: mapping, error: mappingError } = await supabase
+      // Si no encuentra por owner_id, buscar en user_restaurant_mapping
+      const { data: mappingData, error: mappingError } = await supabase
         .from('user_restaurant_mapping')
-        .select(`
-          restaurant_id,
-          restaurants (
-            id,
-            name,
-            phone,
-            email,
-            address,
-            created_at
-          )
-        `)
-        .eq('user_id', userId)
-        .single();
+        .select('restaurant_id, restaurants(*)')
+        .eq('auth_user_id', userId)
+        .maybeSingle();
 
       if (mappingError) {
-        console.error('❌ Error fetching restaurant mapping:', mappingError);
+        console.error('❌ Error en mapping:', mappingError);
         return null;
       }
 
-      if (!mapping || !mapping.restaurants) {
-        console.log('❌ No restaurant found for user');
-        return null;
+      if (mappingData?.restaurants) {
+        console.log('✅ Restaurante encontrado via mapping:', mappingData.restaurants);
+        return mappingData.restaurants;
       }
 
-      console.log('✅ Restaurant found:', mapping.restaurants);
-      return mapping.restaurants;
+      console.log('ℹ️ Usuario sin restaurante configurado');
+      return null;
+
     } catch (error) {
-      console.error('❌ Unexpected error in checkRestaurant:', error);
+      console.error('❌ Error inesperado cargando restaurante:', error);
       return null;
     }
   }, []);
-
 
   // Efecto principal para inicializar autenticación
   useEffect(() => {
@@ -135,7 +108,13 @@ export const AuthProvider = ({ children }) => {
 
         if (sessionError) {
           console.error('❌ Error obteniendo sesión:', sessionError);
-          throw sessionError;
+          if (mounted) {
+            setError(sessionError.message);
+            setSession(null);
+            setUser(null);
+            setRestaurant(null);
+          }
+          return;
         }
 
         if (!mounted) return;
@@ -147,9 +126,16 @@ export const AuthProvider = ({ children }) => {
           setError(null);
 
           // Cargar datos del restaurante
-          const restaurantData = await loadRestaurantData(initialSession.user.id);
-          if (mounted) {
-            setRestaurant(restaurantData);
+          try {
+            const restaurantData = await loadRestaurantData(initialSession.user.id);
+            if (mounted) {
+              setRestaurant(restaurantData);
+            }
+          } catch (restaurantError) {
+            console.error('❌ Error cargando restaurante:', restaurantError);
+            if (mounted) {
+              setRestaurant(null);
+            }
           }
         } else {
           console.log('ℹ️ No hay sesión activa');
@@ -178,7 +164,14 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Ejecutar inicialización
-    initializeAuth();
+    initializeAuth().catch((error) => {
+      console.error('❌ Error en initializeAuth:', error);
+      if (mounted) {
+        setError(error.message);
+        setIsLoading(false);
+        setIsReady(true);
+      }
+    });
 
     // Configurar listener para cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -195,9 +188,16 @@ export const AuthProvider = ({ children }) => {
 
             // Solo cargar restaurante si cambió el usuario
             if (!user || user.id !== newSession.user.id) {
-              const restaurantData = await loadRestaurantData(newSession.user.id);
-              if (mounted) {
-                setRestaurant(restaurantData);
+              try {
+                const restaurantData = await loadRestaurantData(newSession.user.id);
+                if (mounted) {
+                  setRestaurant(restaurantData);
+                }
+              } catch (restaurantError) {
+                console.error('❌ Error cargando restaurante en auth change:', restaurantError);
+                if (mounted) {
+                  setRestaurant(null);
+                }
               }
             }
           } else {
@@ -219,10 +219,10 @@ export const AuthProvider = ({ children }) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // Removed dependencies to prevent infinite loops
 
   // Función para refrescar datos del restaurante
-  const refreshRestaurant = async () => {
+  const refreshRestaurant = useCallback(async () => {
     if (!user?.id) return null;
 
     try {
@@ -235,10 +235,10 @@ export const AuthProvider = ({ children }) => {
       setError(error.message);
       return null;
     }
-  };
+  }, [user?.id, loadRestaurantData]);
 
   // Función de logout
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await supabase.auth.signOut();
       setSession(null);
@@ -249,7 +249,7 @@ export const AuthProvider = ({ children }) => {
       console.error('❌ Error en logout:', error);
       setError(error.message);
     }
-  };
+  }, []);
 
   const value = {
     session,
