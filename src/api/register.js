@@ -172,36 +172,67 @@ export default async function handler(req, res) {
 
     console.log('User-restaurant mapping created successfully');
 
-    // 5. CREAR PERFIL DE USUARIO
-    console.log('Step 5: Creating user profile...');
+    // 5. CREAR PERFIL DE USUARIO (OPCIONAL - si la tabla existe)
+    console.log('Step 5: Checking if profiles table exists and creating user profile...');
 
-    const userProfileData = {
-      id: userId,
-      full_name: `${firstName} ${lastName}`.trim(),
-      email,
-      created_at: new Date().toISOString()
-    };
+    try {
+      const userProfileData = {
+        id: userId,
+        full_name: `${firstName} ${lastName}`.trim(),
+        email,
+        created_at: new Date().toISOString()
+      };
 
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .insert(userProfileData);
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .insert(userProfileData);
 
-    if (profileError) {
-      console.error('Profile error:', profileError);
+      if (profileError) {
+        console.error('Profile error details:', {
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint,
+          code: profileError.code
+        });
 
-      // Si falla, eliminar restaurante y mapping
-      await Promise.all([
-        supabaseAdmin.from('restaurants').delete().eq('id', restaurantId),
-        supabaseAdmin.from('user_restaurant_mapping').delete().eq('restaurant_id', restaurantId)
-      ]);
+        // Si la tabla no existe, continuar sin error
+        if (profileError.code === 'PGRST116' || profileError.message?.includes('does not exist')) {
+          console.log('⚠️ Tabla profiles no existe - continuando sin crear perfil');
+        } else {
+          // Para otros errores, limpiar y fallar
+          await Promise.all([
+            supabaseAdmin.from('restaurants').delete().eq('id', restaurantId),
+            supabaseAdmin.from('user_restaurant_mapping').delete().eq('restaurant_id', restaurantId)
+          ]);
 
-      return res.status(400).json({
-        error: 'Error creando perfil',
-        details: profileError.message
-      });
+          return res.status(400).json({
+            error: 'Error creando perfil de usuario',
+            details: profileError.message || 'Error desconocido en tabla profiles',
+            code: profileError.code
+          });
+        }
+      } else {
+        console.log('✅ User profile created successfully');
+      }
+    } catch (profileException) {
+      console.error('Profile creation exception:', profileException);
+      
+      // Si es un error de tabla no existente, continuar
+      if (profileException.message?.includes('does not exist')) {
+        console.log('⚠️ Tabla profiles no existe - continuando registro sin perfil');
+      } else {
+        // Limpiar y fallar para otros errores
+        await Promise.all([
+          supabaseAdmin.from('restaurants').delete().eq('id', restaurantId),
+          supabaseAdmin.from('user_restaurant_mapping').delete().eq('restaurant_id', restaurantId)
+        ]);
+
+        return res.status(400).json({
+          error: 'Excepción creando perfil',
+          details: profileException.message
+        });
+      }
     }
-
-    console.log('User profile created successfully');
 
     // 6. ENVIAR EMAIL DE CONFIRMACIÓN
     console.log('Step 6: Sending confirmation email...');
