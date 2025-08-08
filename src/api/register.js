@@ -64,18 +64,26 @@ export default async function handler(req, res) {
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false, // Usuario debe confirmar email manualmente
+      email_confirm: false, // Requiere confirmación por email
       user_metadata: {
-        full_name: `${firstName} ${lastName}`.trim(),
         first_name: firstName,
         last_name: lastName,
-        restaurant_name: restaurantName
+        restaurant_name: restaurantName,
+        phone,
+        city,
+        postal_code: postalCode,
+        country: country || 'España',
+        registration_date: new Date().toISOString(),
+        source: 'direct_registration'
       }
     });
 
+    // Configurar la URL de confirmación personalizada
+    const confirmationUrl = `${process.env.SITE_URL || 'https://7fa71e82-53a4-4e1e-8-replit.dev'}/confirm`;
+
     if (authError) {
       console.error('Auth error:', authError);
-      
+
       // Manejar específicamente el rate limit
       if (authError.code === 'over_email_send_rate_limit') {
         return res.status(429).json({
@@ -87,7 +95,7 @@ export default async function handler(req, res) {
           workaround: 'Esperando configuración sin verificación de email...'
         });
       }
-      
+
       // Manejar usuario ya existente
       if (authError.message.includes('already registered')) {
         return res.status(409).json({
@@ -96,7 +104,7 @@ export default async function handler(req, res) {
           code: 'USER_EXISTS'
         });
       }
-      
+
       return res.status(400).json({
         error: 'Error creando usuario',
         details: authError.message,
@@ -177,16 +185,16 @@ export default async function handler(req, res) {
 
     // 6. ENVIAR EMAIL DE CONFIRMACIÓN
     console.log('Step 6: Sending confirmation email...');
-    
+
     try {
-      const { error: emailError } = await supabaseAdmin.auth.admin.generateLink({
+      const { data: linkData, error: emailError } = await supabaseAdmin.auth.admin.generateLink({
         type: 'signup',
         email,
         options: {
-          redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/login?confirmed=true`
+          redirectTo: confirmationUrl
         }
       });
-      
+
       if (emailError) {
         console.warn('Warning: Email confirmation could not be sent:', emailError.message);
       } else {
