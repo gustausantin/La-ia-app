@@ -22,6 +22,12 @@ if (!process.env.SUPABASE_ANON_KEY) {
   console.log('✅ SUPABASE_ANON_KEY añadida manualmente');
 }
 
+// Service Role Key para operaciones administrativas (bypass RLS)
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDM3Njc3MSwiZXhwIjoyMDY5OTUyNzcxfQ.ckmlr_TAFJ9iFtLztRhrRPnagZiNLm6XYeo1faVx-BU';
+  console.log('✅ SUPABASE_SERVICE_ROLE_KEY añadida manualmente');
+}
+
 const app = express();
 const PORT = 3001;
 

@@ -1,9 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase with the credentials from environment
+// Initialize Supabase Admin client with service role key (bypasses RLS)
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
 );
 
 export default async function handler(req, res) {
@@ -52,26 +58,20 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. CREAR USUARIO CON SIGNUP NORMAL
-    console.log('Step 2: Creating user account...');
+    // 2. CREAR USUARIO CON ADMIN API (FLUJO PROFESIONAL)
+    console.log('Step 2: Creating user account with admin API...');
 
-    // CONFIGURACIÓN PARA DESARROLLO - Sin verificación de email
-    const signUpOptions = {
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: {
-          full_name: `${firstName} ${lastName}`.trim(),
-          first_name: firstName,
-          last_name: lastName
-        },
-        emailRedirectTo: undefined, // Desactivar redirect de email
-        // IMPORTANTE: Para desarrollo local, confirmar automáticamente
-        emailConfirm: false // Esto evita el email de verificación
+      email_confirm: false, // Usuario debe confirmar email manualmente
+      user_metadata: {
+        full_name: `${firstName} ${lastName}`.trim(),
+        first_name: firstName,
+        last_name: lastName,
+        restaurant_name: restaurantName
       }
-    };
-
-    const { data: authData, error: authError } = await supabaseAdmin.auth.signUp(signUpOptions);
+    });
 
     if (authError) {
       console.error('Auth error:', authError);
@@ -205,18 +205,40 @@ export default async function handler(req, res) {
 
     console.log('User profile created successfully');
 
-    // 6. RESPUESTA EXITOSA
-    console.log('Step 6: Registration completed successfully');
+    // 6. ENVIAR EMAIL DE CONFIRMACIÓN
+    console.log('Step 6: Sending confirmation email...');
+    
+    try {
+      const { error: emailError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'signup',
+        email,
+        options: {
+          redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/login?confirmed=true`
+        }
+      });
+      
+      if (emailError) {
+        console.warn('Warning: Email confirmation could not be sent:', emailError.message);
+      } else {
+        console.log('✅ Confirmation email sent successfully');
+      }
+    } catch (emailErr) {
+      console.warn('Warning: Email sending failed:', emailErr.message);
+    }
+
+    // 7. RESPUESTA EXITOSA
+    console.log('Step 7: Registration completed successfully');
 
     return res.status(200).json({
       success: true,
-      message: 'Cuenta creada exitosamente',
+      message: 'Cuenta creada exitosamente. Revisa tu email para confirmar tu cuenta.',
       data: {
         userId,
         restaurantId,
         email,
         restaurantName
-      }
+      },
+      requiresEmailConfirmation: true
     });
 
   } catch (error) {
