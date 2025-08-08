@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -20,6 +19,11 @@ export const AuthProvider = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState(null);
 
+  // Flag para controlar si el efecto está en curso
+  let isInitializing = false;
+  // Flag para manejar desmontaje del componente
+  let mounted = false;
+
   // Función para cargar datos del restaurante con manejo de errores
   const loadRestaurantData = useCallback(async (userId) => {
     if (!userId) {
@@ -39,7 +43,7 @@ export const AuthProvider = ({ children }) => {
 
       if (restaurantError) {
         console.error('❌ Error buscando por owner_id:', restaurantError);
-        
+
         // Si hay error, intentar buscar en user_restaurant_mapping
         const { data: mappingData, error: mappingError } = await supabase
           .from('user_restaurant_mapping')
@@ -56,7 +60,7 @@ export const AuthProvider = ({ children }) => {
           console.log('✅ Restaurante encontrado via mapping:', mappingData.restaurants);
           return mappingData.restaurants;
         }
-        
+
         return null;
       }
 
@@ -91,87 +95,79 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Efecto principal para inicializar autenticación
-  useEffect(() => {
-    let mounted = true;
-    let isInitializing = false;
+  // Función para manejar la inicialización de la autenticación
+  const initializeAuth = useCallback(async () => {
+    try {
+      console.log('🚀 Inicializando AuthContext...');
 
-    const initializeAuth = async () => {
-      if (isInitializing) return;
-      isInitializing = true;
+      if (!mounted) return;
 
-      try {
-        console.log('🚀 Inicializando AuthContext...');
+      // Verificar sesión actual
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-        // Obtener sesión inicial
-        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('❌ Error obteniendo sesión:', sessionError);
+        if (mounted) {
+          setError(sessionError.message);
+        }
+        return;
+      }
 
-        if (sessionError) {
-          console.error('❌ Error obteniendo sesión:', sessionError);
+      if (session?.user && mounted) {
+        console.log('✅ Sesión encontrada:', session.user.email);
+        setSession(session);
+        setUser(session.user);
+
+        // Cargar datos del restaurante
+        try {
+          const restaurantData = await loadRestaurantData(session.user.id);
           if (mounted) {
-            setError(sessionError.message);
-            setSession(null);
-            setUser(null);
-            setRestaurant(null);
+            setRestaurant(restaurantData);
           }
-          return;
-        }
-
-        if (!mounted) return;
-
-        if (initialSession?.user) {
-          console.log('✅ Sesión encontrada:', initialSession.user.email);
-          setSession(initialSession);
-          setUser(initialSession.user);
-          setError(null);
-
-          // Cargar datos del restaurante
-          try {
-            const restaurantData = await loadRestaurantData(initialSession.user.id);
-            if (mounted) {
-              setRestaurant(restaurantData);
-            }
-          } catch (restaurantError) {
-            console.error('❌ Error cargando restaurante:', restaurantError);
-            if (mounted) {
-              setRestaurant(null);
-            }
+        } catch (restaurantError) {
+          console.error('❌ Error cargando restaurante:', restaurantError);
+          if (mounted) {
+            setError('Error cargando datos del restaurante');
           }
-        } else {
-          console.log('ℹ️ No hay sesión activa');
-          setSession(null);
-          setUser(null);
-          setRestaurant(null);
-          setError(null);
         }
-
-      } catch (error) {
-        console.error('❌ Error inicializando auth:', error);
+      } else {
+        console.log('ℹ️ No hay sesión activa');
         if (mounted) {
           setSession(null);
           setUser(null);
           setRestaurant(null);
-          setError(error.message);
         }
+      }
+
+    } catch (error) {
+      console.error('❌ Error en initializeAuth:', error);
+      if (mounted) {
+        setError(error?.message || 'Error de autenticación');
+      }
+    }
+  }, [mounted, loadRestaurantData]); // Incluir mounted y loadRestaurantData en dependencias
+
+  // Efecto principal para inicializar autenticación y escuchar cambios
+  useEffect(() => {
+    mounted = true; // Marcar el componente como montado
+
+    console.log('🔄 AuthContext montado, inicializando...');
+
+    // Inicializar autenticación
+    const initialize = async () => {
+      try {
+        await initializeAuth();
+      } catch (error) {
+        console.error('❌ Error en inicialización:', error);
       } finally {
         if (mounted) {
           setIsLoading(false);
           setIsReady(true);
-          console.log('✅ AuthContext inicializado');
         }
-        isInitializing = false;
       }
     };
 
-    // Ejecutar inicialización
-    initializeAuth().catch((error) => {
-      console.error('❌ Error en initializeAuth:', error);
-      if (mounted) {
-        setError(error?.message || 'Error desconocido');
-        setIsLoading(false);
-        setIsReady(true);
-      }
-    });
+    initialize();
 
     // Configurar listener para cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -216,10 +212,11 @@ export const AuthProvider = ({ children }) => {
     );
 
     return () => {
-      mounted = false;
+      mounted = false; // Marcar el componente como desmontado
+      console.log('🧹 AuthContext desmontado, limpiando listener...');
       subscription.unsubscribe();
     };
-  }, []); // Removed dependencies to prevent infinite loops
+  }, [initializeAuth, loadRestaurantData, user]); // Incluir dependencias necesarias
 
   // Función para refrescar datos del restaurante
   const refreshRestaurant = useCallback(async () => {
