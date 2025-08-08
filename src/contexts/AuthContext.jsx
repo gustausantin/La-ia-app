@@ -1,269 +1,200 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext({});
 
 export const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuthContext debe usarse dentro de AuthProvider');
+    throw new Error('useAuthContext must be used within an AuthProvider');
   }
   return context;
 };
 
 export const AuthProvider = ({ children }) => {
-  const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
-  const [restaurant, setRestaurant] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isReady, setIsReady] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [restaurantInfo, setRestaurantInfo] = useState(null);
+  const [loadingRestaurant, setLoadingRestaurant] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Flag para controlar si el efecto está en curso
-  let isInitializing = false;
-  // Flag para manejar desmontaje del componente
-  let mounted = false;
-
-  // Función para cargar datos del restaurante con manejo de errores
-  const loadRestaurantData = useCallback(async (userId) => {
-    if (!userId) {
-      console.log('❌ No hay userId para cargar restaurante');
-      return null;
-    }
+  // Función para cargar información del restaurante
+  const loadRestaurantInfo = async (userId) => {
+    if (!userId) return null;
 
     try {
-      console.log('🔍 Cargando datos del restaurante para user:', userId);
+      setLoadingRestaurant(true);
 
-      // Primero intentar buscar por owner_id
-      const { data: restaurantData, error: restaurantError } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('owner_id', userId)
-        .maybeSingle();
-
-      if (restaurantError) {
-        console.error('❌ Error buscando por owner_id:', restaurantError);
-
-        // Si hay error, intentar buscar en user_restaurant_mapping
-        const { data: mappingData, error: mappingError } = await supabase
-          .from('user_restaurant_mapping')
-          .select('restaurant_id, restaurants(*)')
-          .eq('auth_user_id', userId)
-          .maybeSingle();
-
-        if (mappingError) {
-          console.error('❌ Error en mapping:', mappingError);
-          return null;
-        }
-
-        if (mappingData?.restaurants) {
-          console.log('✅ Restaurante encontrado via mapping:', mappingData.restaurants);
-          return mappingData.restaurants;
-        }
-
-        return null;
-      }
-
-      if (restaurantData) {
-        console.log('✅ Restaurante cargado por owner_id:', restaurantData);
-        return restaurantData;
-      }
-
-      // Si no encuentra por owner_id, buscar en user_restaurant_mapping
-      const { data: mappingData, error: mappingError } = await supabase
+      // Primero buscar el mapeo
+      const { data: mapping, error: mappingError } = await supabase
         .from('user_restaurant_mapping')
-        .select('restaurant_id, restaurants(*)')
-        .eq('auth_user_id', userId)
-        .maybeSingle();
+        .select('restaurant_id')
+        .eq('user_id', userId)
+        .single();
 
       if (mappingError) {
-        console.error('❌ Error en mapping:', mappingError);
+        console.error('Error buscando mapeo:', mappingError);
         return null;
       }
 
-      if (mappingData?.restaurants) {
-        console.log('✅ Restaurante encontrado via mapping:', mappingData.restaurants);
-        return mappingData.restaurants;
+      if (!mapping?.restaurant_id) {
+        console.warn('No se encontró restaurante para el usuario');
+        return null;
       }
 
-      console.log('ℹ️ Usuario sin restaurante configurado');
-      return null;
+      // Obtener información del restaurante
+      const { data: restaurant, error: restaurantError } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('id', mapping.restaurant_id)
+        .single();
+
+      if (restaurantError) {
+        console.error('Error cargando restaurante:', restaurantError);
+        return null;
+      }
+
+      setRestaurantInfo(restaurant);
+      return restaurant;
 
     } catch (error) {
-      console.error('❌ Error inesperado cargando restaurante:', error);
+      console.error('Error en loadRestaurantInfo:', error);
       return null;
+    } finally {
+      setLoadingRestaurant(false);
     }
-  }, []);
+  };
 
-  // Función para manejar la inicialización de la autenticación
-  const initializeAuth = useCallback(async () => {
+  // Función de login
+  const signIn = async (email, password) => {
     try {
-      console.log('🚀 Inicializando AuthContext...');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-      if (!mounted) return;
-
-      // Verificar sesión actual
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error('❌ Error obteniendo sesión:', sessionError);
-        if (mounted) {
-          setError(sessionError.message);
-        }
-        return;
+      if (error) {
+        throw error;
       }
 
-      if (session?.user && mounted) {
-        console.log('✅ Sesión encontrada:', session.user.email);
-        setSession(session);
-        setUser(session.user);
+      if (data.user) {
+        setUser(data.user);
+        setIsAuthenticated(true);
 
-        // Cargar datos del restaurante
-        try {
-          const restaurantData = await loadRestaurantData(session.user.id);
-          if (mounted) {
-            setRestaurant(restaurantData);
-          }
-        } catch (restaurantError) {
-          console.error('❌ Error cargando restaurante:', restaurantError);
-          if (mounted) {
-            setError('Error cargando datos del restaurante');
-          }
-        }
-      } else {
-        console.log('ℹ️ No hay sesión activa');
-        if (mounted) {
-          setSession(null);
-          setUser(null);
-          setRestaurant(null);
-        }
+        // Cargar restaurante
+        await loadRestaurantInfo(data.user.id);
+
+        toast.success('¡Bienvenido!');
+        return { success: true };
       }
 
+      return { success: false, error: 'Error desconocido' };
     } catch (error) {
-      console.error('❌ Error en initializeAuth:', error);
-      if (mounted) {
-        setError(error?.message || 'Error de autenticación');
-      }
+      console.error('Error en signIn:', error);
+      toast.error(error.message || 'Error al iniciar sesión');
+      return { success: false, error: error.message };
     }
-  }, [mounted, loadRestaurantData]); // Incluir mounted y loadRestaurantData en dependencias
+  };
 
-  // Efecto principal para inicializar autenticación y escuchar cambios
+  // Función de logout
+  const signOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setIsAuthenticated(false);
+      setRestaurantInfo(null);
+      toast.success('Sesión cerrada');
+    } catch (error) {
+      console.error('Error en signOut:', error);
+      toast.error('Error al cerrar sesión');
+    }
+  };
+
+  // Inicializar autenticación
   useEffect(() => {
-    mounted = true; // Marcar el componente como montado
+    let mounted = true;
 
-    console.log('🔄 AuthContext montado, inicializando...');
-
-    // Inicializar autenticación
-    const initialize = async () => {
+    const initializeAuth = async () => {
       try {
-        await initializeAuth();
+        // Obtener sesión actual
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('Error obteniendo sesión:', error);
+          return;
+        }
+
+        if (session?.user && mounted) {
+          setUser(session.user);
+          setIsAuthenticated(true);
+
+          // Cargar restaurante para usuarios autenticados
+          await loadRestaurantInfo(session.user.id);
+        }
       } catch (error) {
-        console.error('❌ Error en inicialización:', error);
+        console.error('Error inicializando auth:', error);
       } finally {
         if (mounted) {
-          setIsLoading(false);
-          setIsReady(true);
+          setLoading(false);
         }
       }
     };
 
-    initialize();
+    initializeAuth();
 
-    // Configurar listener para cambios de autenticación
+    // Listener para cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      async (event, session) => {
         if (!mounted) return;
 
-        console.log('🔄 Cambio de auth:', event);
+        console.log('Auth state changed:', event, session?.user?.email);
 
-        try {
-          if (newSession?.user) {
-            setSession(newSession);
-            setUser(newSession.user);
-            setError(null);
-
-            // Solo cargar restaurante si cambió el usuario
-            if (!user || user.id !== newSession.user.id) {
-              try {
-                const restaurantData = await loadRestaurantData(newSession.user.id);
-                if (mounted) {
-                  setRestaurant(restaurantData);
-                }
-              } catch (restaurantError) {
-                console.error('❌ Error cargando restaurante en auth change:', restaurantError);
-                if (mounted) {
-                  setRestaurant(null);
-                }
-              }
+        switch (event) {
+          case 'SIGNED_IN':
+            if (session?.user) {
+              setUser(session.user);
+              setIsAuthenticated(true);
+              await loadRestaurantInfo(session.user.id);
             }
-          } else {
-            setSession(null);
+            break;
+
+          case 'SIGNED_OUT':
             setUser(null);
-            setRestaurant(null);
-            setError(null);
-          }
-        } catch (error) {
-          console.error('❌ Error en onAuthStateChange:', error);
-          if (mounted) {
-            setError(error?.message || 'Error en autenticación');
-          }
+            setIsAuthenticated(false);
+            setRestaurantInfo(null);
+            break;
+
+          case 'TOKEN_REFRESHED':
+            if (session?.user) {
+              setUser(session.user);
+              setIsAuthenticated(true);
+            }
+            break;
+
+          default:
+            break;
         }
+
+        setLoading(false);
       }
     );
 
     return () => {
-      mounted = false; // Marcar el componente como desmontado
-      console.log('🧹 AuthContext desmontado, limpiando listener...');
-      subscription.unsubscribe();
+      mounted = false;
+      subscription?.unsubscribe();
     };
-  }, [initializeAuth, loadRestaurantData, user]); // Incluir dependencias necesarias
-
-  // Función para refrescar datos del restaurante
-  const refreshRestaurant = useCallback(async () => {
-    if (!user?.id) return null;
-
-    try {
-      setError(null);
-      const restaurantData = await loadRestaurantData(user.id);
-      setRestaurant(restaurantData);
-      return restaurantData;
-    } catch (error) {
-      console.error('❌ Error refrescando restaurante:', error);
-      setError(error.message);
-      return null;
-    }
-  }, [user?.id, loadRestaurantData]);
-
-  // Función de logout
-  const logout = useCallback(async () => {
-    try {
-      await supabase.auth.signOut();
-      setSession(null);
-      setUser(null);
-      setRestaurant(null);
-      setError(null);
-    } catch (error) {
-      console.error('❌ Error en logout:', error);
-      setError(error.message);
-    }
   }, []);
 
   const value = {
-    session,
     user,
-    restaurant,
-    restaurantId: restaurant?.id || null,
-    isLoading,
-    isReady,
-    error,
-    isAuthenticated: !!session,
-    agentStatus: { active: true }, // TODO: Conectar con estado real del agente
-    refreshRestaurant,
-    logout,
-    addNotification: (notification) => {
-      // TODO: Implementar sistema de notificaciones
-      console.log('📢 Notificación:', notification);
-    }
+    loading,
+    restaurantInfo,
+    loadingRestaurant,
+    isAuthenticated,
+    signIn,
+    signOut,
+    loadRestaurantInfo
   };
 
   return (
