@@ -1,5 +1,4 @@
-
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext({});
@@ -29,7 +28,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       console.log('🔍 Cargando datos del restaurante para user:', userId);
-      
+
       // Primero intentar buscar por owner_id
       let { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
@@ -40,7 +39,7 @@ export const AuthProvider = ({ children }) => {
       // Si no encuentra por owner_id, buscar en user_restaurant_mapping
       if (!restaurantData && !restaurantError) {
         console.log('🔄 Buscando restaurante via mapping...');
-        
+
         const { data: mappingData, error: mappingError } = await supabase
           .from('user_restaurant_mapping')
           .select('restaurant_id, restaurants(*)')
@@ -74,6 +73,51 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Función para verificar si el usuario tiene un restaurante asignado
+  const checkRestaurant = useCallback(async (userId) => {
+    if (!userId) {
+      console.log('❌ No userId provided to checkRestaurant');
+      return null;
+    }
+
+    try {
+      console.log('🔍 Checking restaurant for user:', userId);
+
+      const { data: mapping, error: mappingError } = await supabase
+        .from('user_restaurant_mapping')
+        .select(`
+          restaurant_id,
+          restaurants (
+            id,
+            name,
+            phone,
+            email,
+            address,
+            created_at
+          )
+        `)
+        .eq('user_id', userId)
+        .single();
+
+      if (mappingError) {
+        console.error('❌ Error fetching restaurant mapping:', mappingError);
+        return null;
+      }
+
+      if (!mapping || !mapping.restaurants) {
+        console.log('❌ No restaurant found for user');
+        return null;
+      }
+
+      console.log('✅ Restaurant found:', mapping.restaurants);
+      return mapping.restaurants;
+    } catch (error) {
+      console.error('❌ Unexpected error in checkRestaurant:', error);
+      return null;
+    }
+  }, []);
+
+
   // Efecto principal para inicializar autenticación
   useEffect(() => {
     let mounted = true;
@@ -85,10 +129,10 @@ export const AuthProvider = ({ children }) => {
 
       try {
         console.log('🚀 Inicializando AuthContext...');
-        
+
         // Obtener sesión inicial
         const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (sessionError) {
           console.error('❌ Error obteniendo sesión:', sessionError);
           throw sessionError;
@@ -180,7 +224,7 @@ export const AuthProvider = ({ children }) => {
   // Función para refrescar datos del restaurante
   const refreshRestaurant = async () => {
     if (!user?.id) return null;
-    
+
     try {
       setError(null);
       const restaurantData = await loadRestaurantData(user.id);
