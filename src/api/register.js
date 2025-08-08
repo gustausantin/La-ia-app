@@ -151,6 +151,7 @@ export default async function handler(req, res) {
       role: 'owner',
       permissions: ['all'],
       created_at: new Date().toISOString()
+      // NO incluir updated_at - no existe en el esquema
     };
 
     const { error: mappingError } = await supabaseAdmin
@@ -182,7 +183,7 @@ export default async function handler(req, res) {
     };
 
     const { error: profileError } = await supabaseAdmin
-      .from('user_profiles')
+      .from('profiles')
       .insert(userProfileData);
 
     if (profileError) {
