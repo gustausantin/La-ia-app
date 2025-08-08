@@ -1,177 +1,189 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import toast from 'react-hot-toast';
 
 const AuthContext = createContext({});
 
-export const useAuth = () => {
+export const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth debe usarse dentro de AuthProvider');
+    throw new Error('useAuthContext debe usarse dentro de AuthProvider');
   }
   return context;
 };
 
 export const AuthProvider = ({ children }) => {
+  const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
-  const [restaurantData, setRestaurantData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [initializing, setInitializing] = useState(true);
+  const [restaurant, setRestaurant] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isReady, setIsReady] = useState(false);
 
-  const obtenerDatosUsuario = async (userId, maxIntentos = 3) => {
-    console.log(`AuthProvider: Obteniendo datos del usuario (intento 1/${maxIntentos})...`);
+  // Función para cargar datos del restaurante
+  const loadRestaurantData = async (userId) => {
+    if (!userId) {
+      console.log('❌ No hay userId para cargar restaurante');
+      return null;
+    }
 
     try {
-      // Intentar obtener el mapping del usuario
-      const { data: mappingData, error: mappingError } = await supabase
-        .from('user_restaurant_mapping')
-        .select('restaurant_id')
-        .eq('user_id', userId)
-        .single();
-
-      if (mappingError) {
-        console.error('Error obteniendo mapping:', mappingError);
-
-        if (mappingError.code === 'PGRST116') {
-          // No hay mapping - usuario recién registrado
-          console.log('Usuario sin restaurante asignado');
-          setRestaurantData(null);
-          return true;
-        }
-        throw mappingError;
-      }
-
-      if (!mappingData?.restaurant_id) {
-        console.log('Usuario sin restaurante asignado');
-        setRestaurantData(null);
-        return true;
-      }
-
-      // Obtener datos del restaurante
+      console.log('🔍 Cargando datos del restaurante para user:', userId);
+      
+      // Buscar el restaurante del usuario
       const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
         .select('*')
-        .eq('id', mappingData.restaurant_id)
+        .eq('owner_id', userId)
         .single();
 
       if (restaurantError) {
-        console.error('Error obteniendo restaurante:', restaurantError);
+        if (restaurantError.code === 'PGRST116') {
+          console.log('ℹ️ Usuario sin restaurante configurado');
+          return null;
+        }
         throw restaurantError;
       }
 
-      console.log('✅ Datos del restaurante obtenidos:', restaurantData);
-      setRestaurantData(restaurantData);
-      return true;
+      console.log('✅ Restaurante cargado:', restaurantData);
+      return restaurantData;
 
     } catch (error) {
-      console.error('Error en obtenerDatosUsuario:', error);
-      return false;
+      console.error('❌ Error cargando restaurante:', error);
+      return null;
     }
   };
 
+  // Función para obtener la sesión inicial
+  const getInitialSession = async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      return session;
+    } catch (error) {
+      console.error('❌ Error obteniendo sesión inicial:', error);
+      return null;
+    }
+  };
+
+  // Efecto principal para inicializar autenticación
   useEffect(() => {
-    const inicializarAuth = async () => {
+    let mounted = true;
+
+    const initializeAuth = async () => {
       try {
-        console.log('🔄 Inicializando AuthProvider...');
+        console.log('🚀 Inicializando AuthContext...');
+        
+        // Obtener sesión inicial
+        const initialSession = await getInitialSession();
+        
+        if (!mounted) return;
 
-        // Obtener sesión actual
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (initialSession?.user) {
+          console.log('✅ Sesión encontrada:', initialSession.user.email);
+          setSession(initialSession);
+          setUser(initialSession.user);
 
-        if (sessionError) {
-          console.error('Error obteniendo sesión:', sessionError);
-          throw sessionError;
-        }
-
-        if (session?.user) {
-          console.log('✅ Usuario autenticado:', session.user.email);
-          setUser(session.user);
-
-          // Solo intentar obtener datos del restaurante si el usuario está confirmado
-          if (session.user.email_confirmed_at) {
-            const exito = await obtenerDatosUsuario(session.user.id);
-            if (!exito) {
-              console.log('⚠️ No se pudieron obtener datos del restaurante');
-              setRestaurantData(null);
-            }
-          } else {
-            console.log('⚠️ Usuario no confirmado, no se obtienen datos del restaurante');
-            setRestaurantData(null);
+          // Cargar datos del restaurante
+          const restaurantData = await loadRestaurantData(initialSession.user.id);
+          if (mounted) {
+            setRestaurant(restaurantData);
           }
         } else {
-          console.log('❌ No hay usuario autenticado');
+          console.log('ℹ️ No hay sesión activa');
+          setSession(null);
           setUser(null);
-          setRestaurantData(null);
+          setRestaurant(null);
         }
 
       } catch (error) {
-        console.error('❌ Error inicializando AuthProvider:', error);
-        setUser(null);
-        setRestaurantData(null);
+        console.error('❌ Error inicializando auth:', error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+          setRestaurant(null);
+        }
       } finally {
-        setLoading(false);
-        setInitializing(false);
-        console.log('✅ AuthProvider inicializado');
+        if (mounted) {
+          setIsLoading(false);
+          setIsReady(true);
+          console.log('✅ AuthContext inicializado');
+        }
       }
     };
 
-    inicializarAuth();
+    initializeAuth();
 
-    // Listener para cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Cambio de estado de auth:', event);
+    // Configurar listener para cambios de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        if (!mounted) return;
 
-      if (event === 'SIGNED_IN' && session?.user) {
-        setUser(session.user);
-        if (session.user.email_confirmed_at) {
-          await obtenerDatosUsuario(session.user.id);
+        console.log('🔄 Cambio de auth:', event);
+
+        try {
+          if (newSession?.user) {
+            setSession(newSession);
+            setUser(newSession.user);
+
+            // Cargar restaurante solo si no lo tenemos o cambió el usuario
+            if (!restaurant || restaurant.owner_id !== newSession.user.id) {
+              const restaurantData = await loadRestaurantData(newSession.user.id);
+              if (mounted) {
+                setRestaurant(restaurantData);
+              }
+            }
+          } else {
+            setSession(null);
+            setUser(null);
+            setRestaurant(null);
+          }
+        } catch (error) {
+          console.error('❌ Error en onAuthStateChange:', error);
         }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setRestaurantData(null);
       }
-    });
+    );
 
     return () => {
-      subscription?.unsubscribe();
+      mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
-  const logout = async () => {
+  // Función para refrescar datos del restaurante
+  const refreshRestaurant = async () => {
+    if (!user?.id) return null;
+    
     try {
-      setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
-      setUser(null);
-      setRestaurantData(null);
-      toast.success('Sesión cerrada');
+      const restaurantData = await loadRestaurantData(user.id);
+      setRestaurant(restaurantData);
+      return restaurantData;
     } catch (error) {
-      console.error('Error cerrando sesión:', error);
-      toast.error('Error cerrando sesión');
-    } finally {
-      setLoading(false);
+      console.error('❌ Error refrescando restaurante:', error);
+      return null;
     }
   };
 
-  const recargarDatosRestaurante = async () => {
-    if (!user) return false;
-
-    setLoading(true);
+  // Función de logout
+  const logout = async () => {
     try {
-      const exito = await obtenerDatosUsuario(user.id);
-      return exito;
-    } finally {
-      setLoading(false);
+      await supabase.auth.signOut();
+      setSession(null);
+      setUser(null);
+      setRestaurant(null);
+    } catch (error) {
+      console.error('❌ Error en logout:', error);
     }
   };
 
   const value = {
+    session,
     user,
-    restaurantData,
-    loading,
-    initializing,
-    logout,
-    recargarDatosRestaurante
+    restaurant,
+    isLoading,
+    isReady,
+    isAuthenticated: !!session,
+    refreshRestaurant,
+    logout
   };
 
   return (
