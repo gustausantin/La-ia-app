@@ -1,0 +1,71 @@
+ FLUJO PROFESIONAL DE REGISTRO CON SUPABASE
+Queremos que el proceso de registro funcione correctamente con Supabase y sea seguro y funcional para cualquier usuario.
+Actualmente falla porque intentamos insertar en tablas protegidas por RLS (restaurants, profiles, etc.) usando la clave pública (anon).
+
+✅ Lo que hay que hacer en Replit:
+1. Crear variables de entorno en Replit:
+En el archivo .env o configuración del entorno:
+
+env
+Copiar
+Editar
+SUPABASE_URL=https://ktsqwvhqamedpmzkzjaz.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzY3NzEsImV4cCI6MjA2OTk1Mjc3MX0.Y-zMa2F5a7UVT-efldv0sZjLAgmCfeEmhxfP7kgGzNY
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDM3Njc3MSwiZXhwIjoyMDY5OTUyNzcxfQ.ckmlr_TAFJ9iFtLztRhrRPnagZiNLm6XYeo1faVx-BU
+⚠️ La SUPABASE_SERVICE_ROLE_KEY solo se debe usar en backend.
+
+2. En el backend (Node.js), crear dos clientes Supabase:
+js
+Copiar
+Editar
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY); // para frontend, si hace falta
+const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY); // para registrar e insertar en tablas protegidas
+3. Crear una función de registro como esta:
+js
+Copiar
+Editar
+async function registerUser({ email, password, restaurant_name }) {
+  // Paso 1: crear usuario
+  const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: false
+  });
+
+  if (userError) throw new Error('Error creando usuario: ' + userError.message);
+
+  const userId = userData.user.id;
+
+  // Paso 2: crear restaurante
+  const { data: restaurantData, error: restaurantError } = await supabaseAdmin
+    .from('restaurants')
+    .insert([{ name: restaurant_name }])
+    .select()
+    .single();
+
+  if (restaurantError) throw new Error('Error creando restaurante: ' + restaurantError.message);
+
+  const restaurantId = restaurantData.id;
+
+  // Paso 3: crear perfil extendido (o user_restaurant_mapping)
+  const { error: profileError } = await supabaseAdmin
+    .from('user_profiles')
+    .insert([{ user_id: userId, restaurant_id: restaurantId, role: 'admin' }]);
+
+  if (profileError) throw new Error('Error creando perfil: ' + profileError.message);
+
+  // Paso 4: enviar email de confirmación
+  await supabaseAdmin.auth.admin.sendInvitationEmail(userId);
+}
+Con esto:
+
+Se registra cualquier usuario de forma robusta.
+
+Se insertan datos en tablas protegidas por RLS.
+
+Se envía el email de confirmación solo cuando todo ha ido bien.
+
+✅ Esto es lo que queremos para producción.
+
