@@ -183,10 +183,11 @@ export default async function handler(req, res) {
     // 5. SALTAMOS LA CREACIÓN DE PERFIL - No es necesaria para el funcionamiento básico
     console.log('Step 5: Skipping profile creation (not required for basic functionality)');
 
-    // 6. ENVIAR EMAIL DE CONFIRMACIÓN
+    // 6. ENVIAR EMAIL DE CONFIRMACIÓN (CRÍTICO)
     console.log('Step 6: Sending confirmation email...');
 
     try {
+      // Intentar enviar email con el método admin.generateLink
       const { data: linkData, error: emailError } = await supabaseAdmin.auth.admin.generateLink({
         type: 'signup',
         email,
@@ -196,12 +197,40 @@ export default async function handler(req, res) {
       });
 
       if (emailError) {
-        console.warn('Warning: Email confirmation could not be sent:', emailError.message);
+        console.error('❌ Error enviando email con generateLink:', emailError.message);
+        
+        // Fallback: Intentar con inviteUserByEmail
+        console.log('🔄 Intentando método alternativo...');
+        
+        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+          redirectTo: confirmationUrl
+        });
+
+        if (inviteError) {
+          console.error('❌ Error con método alternativo:', inviteError.message);
+          throw new Error('No se pudo enviar el email de confirmación');
+        } else {
+          console.log('✅ Email enviado exitosamente con método alternativo');
+        }
       } else {
-        console.log('✅ Confirmation email sent successfully');
+        console.log('✅ Email de confirmación enviado exitosamente');
+        console.log('📧 Link de confirmación generado:', linkData?.properties?.action_link || 'Link generado');
       }
     } catch (emailErr) {
-      console.warn('Warning: Email sending failed:', emailErr.message);
+      console.error('❌ Fallo crítico enviando email:', emailErr.message);
+      
+      // Si es un rate limit, devolver error específico
+      if (emailErr.message.includes('rate_limit') || emailErr.message.includes('over_email_send_rate_limit')) {
+        return res.status(429).json({
+          error: 'Límite de emails excedido',
+          details: 'Se ha alcanzado el límite de emails por hora. Inténtalo más tarde.',
+          code: 'RATE_LIMIT',
+          retryAfter: 3600 // 1 hora
+        });
+      }
+      
+      // Para otros errores, continuar pero avisar
+      console.warn('⚠️ Usuario creado pero email no enviado - usuario debe usar "reenviar"');
     }
 
     // 7. RESPUESTA EXITOSA
