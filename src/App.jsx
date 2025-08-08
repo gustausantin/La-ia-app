@@ -15,6 +15,7 @@ import { Bot, RefreshCw } from "lucide-react";
 const Layout = lazy(() => import("./components/Layout"));
 const Login = lazy(() => import("./pages/Login.jsx"));
 const Register = lazy(() => import("./pages/Register.jsx"));
+const Confirm = lazy(() => import("./pages/Confirm.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Reservas = lazy(() => import("./pages/Reservas"));
 const Clientes = lazy(() => import("./pages/Clientes"));
@@ -103,6 +104,16 @@ function AppRoutes() {
               <Register />
             </Suspense>
           )
+        }
+      />
+
+      {/* Ruta de confirmación de email - PÚBLICA */}
+      <Route
+        path="/confirm"
+        element={
+          <Suspense fallback={<LoadingScreen />}>
+            <Confirm />
+          </Suspense>
         }
       />
 
