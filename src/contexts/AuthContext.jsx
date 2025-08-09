@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -14,102 +15,213 @@ export const useAuthContext = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [restaurantInfo, setRestaurantInfo] = useState(null);
   const [loadingRestaurant, setLoadingRestaurant] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [retryAttempts, setRetryAttempts] = useState(3);
 
-  // Función para cargar información del restaurante
-  const loadRestaurantInfo = async (userId) => {
-    if (!userId) return null;
+  // Función para obtener el perfil del usuario
+  const fetchUserProfile = useCallback(async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+      return null;
+    }
+  }, []);
+
+  // Función para obtener información del restaurante
+  const fetchRestaurantInfo = useCallback(async (userId, attempt = 1) => {
+    if (!userId) {
+      console.log('No userId provided to fetchRestaurantInfo');
+      return null;
+    }
+
+    console.log(`🔍 Fetching restaurant info for user ${userId} (attempt ${attempt}/3)`);
+    setLoadingRestaurant(true);
 
     try {
-      setLoadingRestaurant(true);
-
-      // Primero buscar el mapeo
-      const { data: mapping, error: mappingError } = await supabase
+      // Buscar en user_restaurant_mapping
+      const { data: mappingData, error: mappingError } = await supabase
         .from('user_restaurant_mapping')
-        .select('restaurant_id')
+        .select(`
+          restaurant_id,
+          restaurants (
+            id,
+            name,
+            address,
+            phone,
+            email,
+            website,
+            logo_url,
+            settings,
+            created_at
+          )
+        `)
         .eq('user_id', userId)
         .single();
 
       if (mappingError) {
-        console.error('Error buscando mapeo:', mappingError);
-        return null;
+        console.error('Error fetching restaurant mapping:', mappingError);
+        
+        // Si es el primer intento, intentar crear el restaurante
+        if (attempt === 1) {
+          console.log('🔄 First attempt failed, trying to create restaurant...');
+          const created = await createDefaultRestaurant(userId);
+          if (created) {
+            return fetchRestaurantInfo(userId, attempt + 1);
+          }
+        }
+        
+        throw mappingError;
       }
 
-      if (!mapping?.restaurant_id) {
-        console.warn('No se encontró restaurante para el usuario');
-        return null;
+      const restaurant = mappingData?.restaurants;
+      
+      if (!restaurant) {
+        console.log('No restaurant found in mapping');
+        if (attempt < 3) {
+          console.log('🔄 Retrying restaurant creation...');
+          const created = await createDefaultRestaurant(userId);
+          if (created) {
+            return fetchRestaurantInfo(userId, attempt + 1);
+          }
+        }
+        throw new Error('No restaurant found');
       }
 
-      // Obtener información del restaurante
-      const { data: restaurant, error: restaurantError } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('id', mapping.restaurant_id)
-        .single();
-
-      if (restaurantError) {
-        console.error('Error cargando restaurante:', restaurantError);
-        return null;
-      }
-
+      console.log('✅ Restaurant info fetched successfully:', restaurant.name);
       setRestaurantInfo(restaurant);
+      setRetryAttempts(3); // Reset retry attempts on success
       return restaurant;
 
     } catch (error) {
-      console.error('Error en loadRestaurantInfo:', error);
+      console.error(`❌ Error fetching restaurant (attempt ${attempt}):`, error);
+      
+      if (attempt < 3) {
+        console.log(`🔄 Retrying in 1 second... (${attempt + 1}/3)`);
+        setTimeout(() => {
+          fetchRestaurantInfo(userId, attempt + 1);
+        }, 1000);
+      } else {
+        console.error('❌ All attempts failed to fetch restaurant');
+        setRetryAttempts(0);
+        toast.error('Error cargando el restaurante. Por favor, contacta con soporte.');
+      }
+      
       return null;
     } finally {
       setLoadingRestaurant(false);
     }
-  };
+  }, []);
 
-  // Función de login
-  const signIn = async (email, password) => {
+  // Función para crear restaurante por defecto
+  const createDefaultRestaurant = useCallback(async (userId) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      console.log('🏗️ Creating default restaurant for user:', userId);
 
-      if (error) {
-        throw error;
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('email, first_name, last_name')
+        .eq('id', userId)
+        .single();
+
+      if (userError) {
+        console.error('Error fetching user data:', userError);
+        return false;
       }
 
-      if (data.user) {
-        setUser(data.user);
-        setIsAuthenticated(true);
+      const restaurantName = `Restaurante de ${userData.first_name || 'Usuario'}`;
 
-        // Cargar restaurante
-        await loadRestaurantInfo(data.user.id);
+      // Crear el restaurante
+      const { data: restaurant, error: restaurantError } = await supabase
+        .from('restaurants')
+        .insert([
+          {
+            name: restaurantName,
+            address: 'Por configurar',
+            phone: 'Por configurar',
+            email: userData.email || 'Por configurar',
+            website: 'Por configurar',
+            settings: {
+              timezone: 'Europe/Madrid',
+              currency: 'EUR',
+              language: 'es'
+            }
+          }
+        ])
+        .select()
+        .single();
 
-        toast.success('¡Bienvenido!');
-        return { success: true };
+      if (restaurantError) {
+        console.error('Error creating restaurant:', restaurantError);
+        return false;
       }
 
-      return { success: false, error: 'Error desconocido' };
+      // Crear el mapping
+      const { error: mappingError } = await supabase
+        .from('user_restaurant_mapping')
+        .insert([
+          {
+            user_id: userId,
+            restaurant_id: restaurant.id,
+            role: 'owner'
+          }
+        ]);
+
+      if (mappingError) {
+        console.error('Error creating user-restaurant mapping:', mappingError);
+        return false;
+      }
+
+      console.log('✅ Default restaurant created successfully:', restaurant.name);
+      return true;
+
     } catch (error) {
-      console.error('Error en signIn:', error);
-      toast.error(error.message || 'Error al iniciar sesión');
-      return { success: false, error: error.message };
+      console.error('❌ Error in createDefaultRestaurant:', error);
+      return false;
     }
-  };
+  }, []);
 
-  // Función de logout
-  const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
+  // Función para manejar cambios de sesión
+  const handleAuthStateChange = useCallback(async (event, session) => {
+    console.log('🔐 Auth state changed:', event, session?.user?.id);
+
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if (session?.user) {
+        const profile = await fetchUserProfile(session.user.id);
+        const userData = {
+          ...session.user,
+          profile
+        };
+        
+        setUser(userData);
+        setIsAuthenticated(true);
+        
+        // Cargar información del restaurante
+        await fetchRestaurantInfo(session.user.id);
+      }
+    } else if (event === 'SIGNED_OUT') {
       setUser(null);
       setIsAuthenticated(false);
       setRestaurantInfo(null);
-      toast.success('Sesión cerrada');
-    } catch (error) {
-      console.error('Error en signOut:', error);
-      toast.error('Error al cerrar sesión');
+      setRetryAttempts(3);
     }
-  };
+
+    setIsReady(true);
+  }, [fetchUserProfile, fetchRestaurantInfo]);
 
   // Inicializar autenticación
   useEffect(() => {
@@ -117,84 +229,130 @@ export const AuthProvider = ({ children }) => {
 
     const initializeAuth = async () => {
       try {
-        // Obtener sesión actual
         const { data: { session }, error } = await supabase.auth.getSession();
-
+        
         if (error) {
-          console.error('Error obteniendo sesión:', error);
-          return;
+          console.error('Error getting session:', error);
         }
 
-        if (session?.user && mounted) {
-          setUser(session.user);
-          setIsAuthenticated(true);
-
-          // Cargar restaurante para usuarios autenticados
-          await loadRestaurantInfo(session.user.id);
+        if (mounted) {
+          if (session?.user) {
+            await handleAuthStateChange('SIGNED_IN', session);
+          } else {
+            setIsReady(true);
+          }
         }
       } catch (error) {
-        console.error('Error inicializando auth:', error);
-      } finally {
+        console.error('Error initializing auth:', error);
         if (mounted) {
-          setLoading(false);
+          setIsReady(true);
         }
       }
     };
 
     initializeAuth();
 
-    // Listener para cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-
-        console.log('Auth state changed:', event, session?.user?.email);
-
-        switch (event) {
-          case 'SIGNED_IN':
-            if (session?.user) {
-              setUser(session.user);
-              setIsAuthenticated(true);
-              await loadRestaurantInfo(session.user.id);
-            }
-            break;
-
-          case 'SIGNED_OUT':
-            setUser(null);
-            setIsAuthenticated(false);
-            setRestaurantInfo(null);
-            break;
-
-          case 'TOKEN_REFRESHED':
-            if (session?.user) {
-              setUser(session.user);
-              setIsAuthenticated(true);
-            }
-            break;
-
-          default:
-            break;
-        }
-
-        setLoading(false);
-      }
-    );
+    // Suscribirse a cambios de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     return () => {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [handleAuthStateChange]);
+
+  // Función de login
+  const signIn = async (email, password) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        toast.error(error.message);
+        return { success: false, error };
+      }
+
+      toast.success('¡Bienvenido de vuelta!');
+      return { success: true, data };
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Error de conexión');
+      return { success: false, error };
+    }
+  };
+
+  // Función de registro
+  const signUp = async (email, password, userData) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: userData,
+          emailRedirectTo: `${window.location.origin}/confirm`
+        }
+      });
+
+      if (error) {
+        console.error('Registration error:', error);
+        return { success: false, error };
+      }
+
+      if (data?.user && !data?.user?.email_confirmed_at) {
+        toast.success('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.');
+        return { 
+          success: true, 
+          data,
+          needsConfirmation: true 
+        };
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Registration error:', error);
+      return { success: false, error };
+    }
+  };
+
+  // Función de logout
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error);
+        toast.error('Error al cerrar sesión');
+      } else {
+        toast.success('¡Hasta pronto!');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Error de conexión');
+    }
+  };
+
+  // Función para reintentar carga del restaurante
+  const handleRetry = useCallback(() => {
+    if (user?.id && retryAttempts > 0) {
+      setRetryAttempts(prev => prev - 1);
+      fetchRestaurantInfo(user.id);
+    }
+  }, [user?.id, retryAttempts, fetchRestaurantInfo]);
 
   const value = {
     user,
-    loading,
+    isAuthenticated,
+    isReady,
     restaurantInfo,
     loadingRestaurant,
-    isAuthenticated,
+    retryAttempts,
     signIn,
+    signUp,
     signOut,
-    loadRestaurantInfo
+    handleRetry,
+    restaurantId: restaurantInfo?.id
   };
 
   return (
