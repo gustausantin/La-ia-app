@@ -72,4 +72,4 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "PORT=5001 npm run server & VITE_PORT=5173 npm run client"
