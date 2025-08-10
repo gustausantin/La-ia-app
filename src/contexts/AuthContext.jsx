@@ -101,7 +101,28 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Función para obtener información del restaurante
+  // Función limpia para cargar restaurante del usuario
+  const loadUserRestaurant = useCallback(async (authUser) => {
+    if (!authUser?.id) return null;
+
+    const { data, error } = await supabase
+      .from("user_restaurant_mapping")
+      .select(`
+        role,
+        permissions,
+        restaurant:restaurant_id (*)
+      `)
+      .eq("auth_user_id", authUser.id) // <- OBLIGATORIO: auth_user_id
+      .single();
+
+    if (error) {
+      console.error("loadUserRestaurant error:", error);
+      return null;
+    }
+    return data?.restaurant || null;
+  }, []);
+
+  // Función para obtener información del restaurante con reintentos
   const fetchRestaurantInfo = useCallback(async (userId, attempt = 1) => {
     if (!userId) {
       console.log('No userId provided to fetchRestaurantInfo');
@@ -112,11 +133,8 @@ export const AuthProvider = ({ children }) => {
     setLoadingRestaurant(true);
 
     try {
-      // Usar el servicio centralizado con auth_user_id correcto
-      const { getMiRestaurante } = await import('../lib/restaurantService');
-      const mappingData = await getMiRestaurante({ id: userId });
-
-      const restaurant = mappingData?.restaurant;
+      // Usar la función limpia
+      const restaurant = await loadUserRestaurant({ id: userId });
       
       if (!restaurant) {
         console.log('No restaurant found in mapping');
@@ -153,7 +171,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoadingRestaurant(false);
     }
-  }, []);
+  }, [loadUserRestaurant]);
 
   // Función para crear restaurante por defecto
   const createDefaultRestaurant = useCallback(async (userId) => {
@@ -358,6 +376,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Función para inicialización externa (útil para testing o SSR)
+  const initSession = useCallback(async () => {
+    const { data: authData } = await supabase.auth.getUser();
+    const user = authData?.user || null;
+    const restaurant = await loadUserRestaurant(user);
+    return { user, restaurant };
+  }, [loadUserRestaurant]);
+
   // Función para reintentar carga del restaurante
   const handleRetry = useCallback(() => {
     if (user?.id && retryAttempts > 0) {
@@ -378,9 +404,10 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signOut,
     handleRetry,
+    initSession,
     restaurantId: restaurantInfo?.id,
     // Sistema de notificaciones
-    notifications,
+    notifications: notifications || [], // Fix para el error de filter
     unreadCount,
     addNotification,
     markNotificationAsRead,
