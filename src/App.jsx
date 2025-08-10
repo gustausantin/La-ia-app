@@ -5,11 +5,12 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { AuthProvider, useAuthContext } from "./contexts/AuthContext";
 import { Toaster } from 'react-hot-toast';
 import NotificationCenter from './components/NotificationCenter';
 import { Bot, RefreshCw } from "lucide-react";
+import { supabase } from "./lib/supabase";
 
 // Lazy loading para optimización
 const Layout = lazy(() => import("./components/Layout"));
@@ -71,6 +72,42 @@ function ProtectedRoute({ children }) {
 // Componente de rutas principales
 function AppRoutes() {
   const { isReady, isAuthenticated } = useAuthContext();
+
+  // Test de verificación de auth_user_id
+  useEffect(() => {
+    if (isReady && isAuthenticated) {
+      (async () => {
+        const { data: userRes } = await supabase.auth.getUser();
+        console.log("AUTH USER →", userRes?.user?.id);
+
+        // 1) Probar mapping con auth_user_id
+        const { data: mapping, error: mapErr } = await supabase
+          .from("user_restaurant_mapping")
+          .select(`
+            role,
+            permissions,
+            restaurant:restaurant_id (*)
+          `)
+          .eq("auth_user_id", userRes?.user?.id)
+          .single();
+
+        console.log("MAPPING →", { mapping, mapErr });
+
+        // 2) Probar notificaciones del restaurante (si hay restaurante)
+        const restId = mapping?.restaurant?.id;
+        if (restId) {
+          const { data: notifs, error: notifErr } = await supabase
+            .from("notifications")
+            .select("*")
+            .eq("restaurant_id", restId)
+            .order("created_at", { ascending: false })
+            .limit(5);
+
+          console.log("NOTIFS →", { count: notifs?.length || 0, notifErr });
+        }
+      })();
+    }
+  }, [isReady, isAuthenticated]);
 
   // Mostrar pantalla de carga mientras se verifica la autenticación
   if (!isReady) {
