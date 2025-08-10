@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }) => {
             created_at
           )
         `)
-        .eq('user_id', userId)
+        .eq('auth_user_id', userId)
         .single();
 
       if (mappingError) {
@@ -234,7 +234,7 @@ export const AuthProvider = ({ children }) => {
         .from('user_restaurant_mapping')
         .insert([
           {
-            user_id: userId,
+            auth_user_id: userId,
             restaurant_id: restaurant.id,
             role: 'owner'
           }

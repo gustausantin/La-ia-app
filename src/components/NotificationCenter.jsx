@@ -86,11 +86,13 @@ export default function NotificationCenter({ isOpen, onClose }) {
     const [filter, setFilter] = useState('all'); // all, unread, agent, system
     const [selectedNotification, setSelectedNotification] = useState(null);
 
-    // Filtrar notificaciones según el filtro activo
-    const filteredNotifications = notifications.filter(notification => {
+    // Filtrar notificaciones según el filtro activo - con validación robusta
+    const notificationsList = Array.isArray(notifications) ? notifications : [];
+    const filteredNotifications = notificationsList.filter(notification => {
+        if (!notification) return false; // Validar que notification existe
         if (filter === 'all') return true;
         if (filter === 'unread') return !notification.read;
-        if (filter === 'agent') return notification.type.includes('agent');
+        if (filter === 'agent') return notification.type && notification.type.includes('agent');
         if (filter === 'system') return notification.type === 'system';
         return true;
     });
@@ -316,13 +318,13 @@ export default function NotificationCenter({ isOpen, onClose }) {
                             <span className="flex items-center gap-1">
                                 <Bot className="w-4 h-4 text-purple-600" />
                                 <span className="text-gray-600">
-                                    {notifications.filter(n => n.type.includes('agent')).length} del agente
+                                    {notificationsList.filter(n => n.type && n.type.includes('agent')).length} del agente
                                 </span>
                             </span>
                             <span className="flex items-center gap-1">
                                 <TrendingUp className="w-4 h-4 text-green-600" />
                                 <span className="text-gray-600">
-                                    {notifications.filter(n => n.priority === 'high').length} importantes
+                                    {notificationsList.filter(n => n.priority === 'high').length} importantes
                                 </span>
                             </span>
                         </div>
