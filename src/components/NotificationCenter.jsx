@@ -41,9 +41,10 @@ export default function NotificationCenter({ restaurant }) {
   if (loading) return <div>Cargando notificaciones…</div>;
 
   const list = Array.isArray(notifications) ? notifications : [];
+  
   // Separar leídas y no leídas con fallbacks seguros
-  const unread = (list || []).filter(n => !n.read);
-  const read = (list || []).filter(n => n.read);
+  const unread = list.filter(n => n && !n.read);
+  const read = list.filter(n => n && n.read);
 
   return (
     <div>
