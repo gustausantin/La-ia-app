@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }) => {
     return data?.restaurant ?? null;
   }, []);
 
-  /** Inicializa sesión + restaurante con fallback y reintentos */
+  /** Inicializa sesión + restaurante con fallback y reintentos (versión mejorada) */
   const initSession = useCallback(async () => {
     try {
       // 1) Usuario autenticado
@@ -339,14 +339,6 @@ export const AuthProvider = ({ children }) => {
       toast.error('Error de conexión');
     }
   };
-
-  // Función para inicialización externa (útil para testing o SSR)
-  const initSession = useCallback(async () => {
-    const { data: authData } = await supabase.auth.getUser();
-    const user = authData?.user || null;
-    const restaurant = await loadUserRestaurant(user?.id); // Asegurarse de pasar el id del usuario
-    return { user, restaurant };
-  }, [loadUserRestaurant]);
 
   // Función para reintentar carga del restaurante
   const handleRetry = useCallback(() => {
