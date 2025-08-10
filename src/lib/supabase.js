@@ -29,37 +29,21 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error("Supabase credentials are missing");
 }
 
-// Crear cliente Supabase con configuración optimizada
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    flowType: "pkce", // PKCE flow para mayor seguridad
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
-    },
-  },
-  global: {
-    headers: {
-      "X-Client-Info": "la-ia@1.0.0",
-    },
-  },
-});
+// Cliente simple
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Verificar conexión al inicializar
+// Verificación silenciosa de conexión
 supabase
-  .from("restaurants")
-  .select("count", { count: "exact", head: true })
+  .from('restaurants')
+  .select('count', { count: 'exact', head: true })
   .then(() => {
-    console.log("🚀 La-IA: Cliente Supabase inicializado correctamente");
+    if (typeof window !== 'undefined') {
+      console.log('🚀 Supabase conectado correctamente');
+    }
   })
   .catch((error) => {
-    console.error("❌ Error al conectar con Supabase:", error);
     if (typeof window !== 'undefined') {
-      toast.error("Error de conexión con la base de datos");
+      console.error('❌ Error conectando Supabase:', error.message);
     }
   });
 
