@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -11,6 +12,60 @@ export const useAuthContext = () => {
   }
   return context;
 };
+
+/** Reintentos simples */
+async function withRetry(fn, { tries = 3, baseMs = 300 } = {}) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try { return await fn(); } catch (err) {
+      lastErr = err;
+      await new Promise(r => setTimeout(r, baseMs * (2 ** i)));
+    }
+  }
+  throw lastErr;
+}
+
+/** Lee mapping por auth_user_id y devuelve restaurante o null */
+async function loadUserRestaurant(authUserId) {
+  if (!authUserId) return null;
+  const { data, error } = await supabase
+    .from("user_restaurant_mapping")
+    .select(`
+      role,
+      permissions,
+      restaurant:restaurant_id (*)
+    `)
+    .eq("auth_user_id", authUserId)
+    .single();
+
+  // PGRST116 = sin filas
+  if (error && error.code === "PGRST116") return null;
+  if (error) throw error;
+  return data?.restaurant ?? null;
+}
+
+/** Crea restaurante por defecto en el servidor (RPC) */
+async function ensureRestaurantForCurrentUser(name = "Mi Restaurante") {
+  const { data, error } = await supabase.rpc("create_restaurant_for_current_user", {
+    p_name: name,
+  });
+  if (error) throw error;
+  return data?.restaurant ?? null;
+}
+
+/** ÚNICA función pública de inicialización */
+export async function initSession() {
+  const { data: authData, error: authErr } = await supabase.auth.getUser();
+  if (authErr) throw authErr;
+  const user = authData?.user ?? null;
+  if (!user?.id) return { user: null, restaurant: null };
+
+  let restaurant = await withRetry(() => loadUserRestaurant(user.id));
+  if (!restaurant) {
+    restaurant = await withRetry(() => ensureRestaurantForCurrentUser("Mi Restaurante"));
+  }
+  return { user, restaurant };
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -100,75 +155,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  /** Intenta algo con reintentos exponenciales (red/latencia) */
-  const withRetry = useCallback(async (fn, { tries = 3, baseMs = 300 } = {}) => {
-    let lastErr;
-    for (let i = 0; i < tries; i++) {
-      try {
-        return await fn();
-      } catch (err) {
-        lastErr = err;
-        await new Promise(r => setTimeout(r, baseMs * Math.pow(2, i)));
-      }
-    }
-    throw lastErr;
-  }, []);
-
-  /** Lee el mapping (usa auth_user_id) y devuelve el restaurante o null */
-  const loadUserRestaurant = useCallback(async (authUserId) => {
-    if (!authUserId) return null;
-
-    const { data, error } = await supabase
-      .from("user_restaurant_mapping")
-      .select(`
-        role,
-        permissions,
-        restaurant:restaurant_id (*)
-      `)
-      .eq("auth_user_id", authUserId)
-      .single();
-
-    // PGRST116 = no rows (PostgREST)
-    if (error && error.code === "PGRST116") return null;
-    if (error) throw error;
-
-    return data?.restaurant || null;
-  }, []);
-
-  /** Crea (en el servidor) un restaurante por defecto para el usuario actual */
-  const ensureRestaurantForCurrentUser = useCallback(async (name = "Mi Restaurante") => {
-    const { data, error } = await supabase.rpc("create_restaurant_for_current_user", {
-      p_name: name,
-    });
-    if (error) throw error;
-    // data = { status: 'created'|'exists', restaurant: {...} }
-    return data?.restaurant ?? null;
-  }, []);
-
-  /** Inicializa sesión + restaurante con fallback y reintentos (versión mejorada) */
-  const initSession = useCallback(async () => {
-    try {
-      // 1) Usuario autenticado
-      const { data: authData, error: authErr } = await supabase.auth.getUser();
-      if (authErr) throw authErr;
-      const user = authData?.user ?? null;
-      if (!user?.id) return { user: null, restaurant: null };
-
-      // 2) Intentar leer restaurante existente
-      let restaurant = await withRetry(() => loadUserRestaurant(user.id));
-
-      // 3) Si no existe, crearlo vía RPC (transacción segura en DB)
-      if (!restaurant) {
-        restaurant = await withRetry(() => ensureRestaurantForCurrentUser("Mi Restaurante"));
-      }
-
-      return { user, restaurant };
-    } catch (error) {
-      console.error('❌ Error in initSession:', error);
-      throw error;
-    }
-  }, [withRetry, loadUserRestaurant, ensureRestaurantForCurrentUser]);
-
   // Función para obtener información del restaurante con la nueva lógica robusta
   const fetchRestaurantInfo = useCallback(async (userId) => {
     if (!userId) {
@@ -200,7 +186,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoadingRestaurant(false);
     }
-  }, [initSession]);
+  }, []);
 
   // Función para manejar cambios de sesión
   const handleAuthStateChange = useCallback(async (event, session) => {
