@@ -63,21 +63,15 @@ const findAvailablePort = (startPort) => {
   });
 };
 
-// Iniciar servidor con puerto dinámico
-const startServer = async () => {
-  try {
-    const PORT = await findAvailablePort(5000);
-    
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`✅ API Server running on http://0.0.0.0:${PORT}`);
-      if (PORT !== 5000) {
-        console.log(`ℹ️ Puerto 5000 ocupado, usando puerto ${PORT}`);
-      }
-    });
-  } catch (error) {
-    console.error('❌ Error iniciando servidor:', error);
-    process.exit(1);
-  }
-};
+// Iniciar servidor en puerto fijo
+const PORT = 5001;
 
-startServer();
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ API Server running on http://0.0.0.0:${PORT}`);
+});
+
+// Manejar errores de puerto
+app.on('error', (error) => {
+  console.error('❌ Error iniciando servidor:', error);
+  process.exit(1);
+});
