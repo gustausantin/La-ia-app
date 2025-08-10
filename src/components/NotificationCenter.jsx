@@ -1,4 +1,3 @@
-
 // src/components/NotificationCenter.jsx
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
@@ -42,7 +41,9 @@ export default function NotificationCenter({ restaurant }) {
   if (loading) return <div>Cargando notificaciones…</div>;
 
   const list = Array.isArray(notifications) ? notifications : [];
-  const unread = list.filter(n => n && n.read === false); // ← seguro
+  // Separar leídas y no leídas con fallbacks seguros
+  const unread = (list || []).filter(n => !n.read);
+  const read = (list || []).filter(n => n.read);
 
   return (
     <div>
