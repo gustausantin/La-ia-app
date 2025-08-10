@@ -1,4 +1,5 @@
 
+// src/lib/restaurantService.js
 import { supabase } from './supabase';
 
 /**
@@ -46,6 +47,35 @@ export async function getMiRestaurante(authUser) {
     console.error('Error in getMiRestaurante:', error);
     throw error;
   }
+}
+
+/** Devuelve el mapping y el restaurante por defecto del usuario */
+export async function getUserRestaurant(authUserId) {
+  const { data, error } = await supabase
+    .from('user_restaurant_mapping')
+    .select(`
+      role,
+      permissions,
+      restaurant:restaurant_id (*)
+    `)
+    .eq('auth_user_id', authUserId)  // ← clave correcta
+    .single();
+
+  if (error) throw error;
+  return data; // { role, permissions, restaurant: {...} }
+}
+
+/** Inserta el vínculo usuario⇄restaurante (si creas uno por defecto) */
+export async function linkUserToRestaurant({ authUserId, restaurantId, role = 'owner' }) {
+  const { error } = await supabase
+    .from('user_restaurant_mapping')
+    .insert({
+      auth_user_id: authUserId,      // ← clave correcta
+      restaurant_id: restaurantId,
+      role,
+      permissions: {}
+    });
+  if (error) throw error;
 }
 
 /**
