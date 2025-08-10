@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -20,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   const [restaurantInfo, setRestaurantInfo] = useState(null);
   const [loadingRestaurant, setLoadingRestaurant] = useState(false);
   const [retryAttempts, setRetryAttempts] = useState(3);
-  
+
   // Estados para notificaciones
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -45,9 +44,9 @@ export const AuthProvider = ({ children }) => {
 
   // Función para marcar notificación como leída
   const markNotificationAsRead = useCallback((notificationId) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === notificationId 
+    setNotifications(prev =>
+      prev.map(notification =>
+        notification.id === notificationId
           ? { ...notification, read: true }
           : notification
       )
@@ -57,7 +56,7 @@ export const AuthProvider = ({ children }) => {
 
   // Función para marcar todas como leídas
   const markAllNotificationsAsRead = useCallback(() => {
-    setNotifications(prev => 
+    setNotifications(prev =>
       prev.map(notification => ({ ...notification, read: true }))
     );
     setUnreadCount(0);
@@ -101,9 +100,23 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Función limpia para cargar restaurante del usuario
-  const loadUserRestaurant = useCallback(async (authUser) => {
-    if (!authUser?.id) return null;
+  /** Intenta algo con reintentos exponenciales (red/latencia) */
+  const withRetry = useCallback(async (fn, { tries = 3, baseMs = 300 } = {}) => {
+    let lastErr;
+    for (let i = 0; i < tries; i++) {
+      try {
+        return await fn();
+      } catch (err) {
+        lastErr = err;
+        await new Promise(r => setTimeout(r, baseMs * Math.pow(2, i)));
+      }
+    }
+    throw lastErr;
+  }, []);
+
+  /** Lee el mapping (usa auth_user_id) y devuelve el restaurante o null */
+  const loadUserRestaurant = useCallback(async (authUserId) => {
+    if (!authUserId) return null;
 
     const { data, error } = await supabase
       .from("user_restaurant_mapping")
@@ -112,131 +125,82 @@ export const AuthProvider = ({ children }) => {
         permissions,
         restaurant:restaurant_id (*)
       `)
-      .eq("auth_user_id", authUser.id) // <- OBLIGATORIO: auth_user_id
+      .eq("auth_user_id", authUserId)
       .single();
 
-    if (error) {
-      console.error("loadUserRestaurant error:", error);
-      return null;
-    }
+    // PGRST116 = no rows (PostgREST)
+    if (error && error.code === "PGRST116") return null;
+    if (error) throw error;
+
     return data?.restaurant || null;
   }, []);
 
-  // Función para obtener información del restaurante con reintentos
-  const fetchRestaurantInfo = useCallback(async (userId, attempt = 1) => {
+  /** Crea (en el servidor) un restaurante por defecto para el usuario actual */
+  const ensureRestaurantForCurrentUser = useCallback(async (name = "Mi Restaurante") => {
+    const { data, error } = await supabase.rpc("create_restaurant_for_current_user", {
+      p_name: name,
+    });
+    if (error) throw error;
+    // data = { status: 'created'|'exists', restaurant: {...} }
+    return data?.restaurant ?? null;
+  }, []);
+
+  /** Inicializa sesión + restaurante con fallback y reintentos */
+  const initSession = useCallback(async () => {
+    try {
+      // 1) Usuario autenticado
+      const { data: authData, error: authErr } = await supabase.auth.getUser();
+      if (authErr) throw authErr;
+      const user = authData?.user ?? null;
+      if (!user?.id) return { user: null, restaurant: null };
+
+      // 2) Intentar leer restaurante existente
+      let restaurant = await withRetry(() => loadUserRestaurant(user.id));
+
+      // 3) Si no existe, crearlo vía RPC (transacción segura en DB)
+      if (!restaurant) {
+        restaurant = await withRetry(() => ensureRestaurantForCurrentUser("Mi Restaurante"));
+      }
+
+      return { user, restaurant };
+    } catch (error) {
+      console.error('❌ Error in initSession:', error);
+      throw error;
+    }
+  }, [withRetry, loadUserRestaurant, ensureRestaurantForCurrentUser]);
+
+  // Función para obtener información del restaurante con la nueva lógica robusta
+  const fetchRestaurantInfo = useCallback(async (userId) => {
     if (!userId) {
       console.log('No userId provided to fetchRestaurantInfo');
       return null;
     }
 
-    console.log(`🔍 Fetching restaurant info for user ${userId} (attempt ${attempt}/3)`);
+    console.log(`🔍 Fetching restaurant info for user ${userId}`);
     setLoadingRestaurant(true);
 
     try {
-      // Usar la función limpia
-      const restaurant = await loadUserRestaurant({ id: userId });
-      
-      if (!restaurant) {
-        console.log('No restaurant found in mapping');
-        if (attempt < 3) {
-          console.log('🔄 Retrying restaurant creation...');
-          const created = await createDefaultRestaurant(userId);
-          if (created) {
-            return fetchRestaurantInfo(userId, attempt + 1);
-          }
-        }
-        throw new Error('No restaurant found');
-      }
+      // Usar la nueva función robusta
+      const result = await initSession();
 
-      console.log('✅ Restaurant info fetched successfully:', restaurant.name);
-      setRestaurantInfo(restaurant);
-      setRetryAttempts(3); // Reset retry attempts on success
-      return restaurant;
+      if (result.restaurant) {
+        console.log('✅ Restaurant info fetched successfully:', result.restaurant.name);
+        setRestaurantInfo(result.restaurant);
+        setRetryAttempts(3); // Reset retry attempts on success
+        return result.restaurant;
+      } else {
+        throw new Error('No restaurant found after all attempts');
+      }
 
     } catch (error) {
-      console.error(`❌ Error fetching restaurant (attempt ${attempt}):`, error);
-      
-      if (attempt < 3) {
-        console.log(`🔄 Retrying in 1 second... (${attempt + 1}/3)`);
-        setTimeout(() => {
-          fetchRestaurantInfo(userId, attempt + 1);
-        }, 1000);
-      } else {
-        console.error('❌ All attempts failed to fetch restaurant');
-        setRetryAttempts(0);
-        toast.error('Error cargando el restaurante. Por favor, contacta con soporte.');
-      }
-      
+      console.error(`❌ Error fetching restaurant:`, error);
+      setRetryAttempts(0);
+      toast.error('Error cargando el restaurante. Por favor, contacta con soporte.');
       return null;
     } finally {
       setLoadingRestaurant(false);
     }
-  }, [loadUserRestaurant]);
-
-  // Función para crear restaurante por defecto
-  const createDefaultRestaurant = useCallback(async (userId) => {
-    try {
-      console.log('🏗️ Creating default restaurant for user:', userId);
-
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('email, first_name, last_name')
-        .eq('id', userId)
-        .single();
-
-      if (userError) {
-        console.error('Error fetching user data:', userError);
-        return false;
-      }
-
-      const restaurantName = `Restaurante de ${userData.first_name || 'Usuario'}`;
-
-      // Crear el restaurante
-      const { data: restaurant, error: restaurantError } = await supabase
-        .from('restaurants')
-        .insert([
-          {
-            name: restaurantName,
-            address: 'Por configurar',
-            phone: 'Por configurar',
-            email: userData.email || 'Por configurar',
-            website: 'Por configurar',
-            settings: {
-              timezone: 'Europe/Madrid',
-              currency: 'EUR',
-              language: 'es'
-            }
-          }
-        ])
-        .select()
-        .single();
-
-      if (restaurantError) {
-        console.error('Error creating restaurant:', restaurantError);
-        return false;
-      }
-
-      // Crear el mapping usando el servicio centralizado
-      try {
-        const { linkUserToRestaurant } = await import('../lib/restaurantService');
-        await linkUserToRestaurant({
-          authUserId: userId,
-          restaurantId: restaurant.id,
-          role: 'owner'
-        });
-      } catch (mappingError) {
-        console.error('Error creating user-restaurant mapping:', mappingError);
-        return false;
-      }
-
-      console.log('✅ Default restaurant created successfully:', restaurant.name);
-      return true;
-
-    } catch (error) {
-      console.error('❌ Error in createDefaultRestaurant:', error);
-      return false;
-    }
-  }, []);
+  }, [initSession]);
 
   // Función para manejar cambios de sesión
   const handleAuthStateChange = useCallback(async (event, session) => {
@@ -249,11 +213,11 @@ export const AuthProvider = ({ children }) => {
           ...session.user,
           profile
         };
-        
+
         setUser(userData);
         setIsAuthenticated(true);
-        
-        // Cargar información del restaurante
+
+        // Cargar información del restaurante usando la nueva lógica
         await fetchRestaurantInfo(session.user.id);
       }
     } else if (event === 'SIGNED_OUT') {
@@ -273,7 +237,7 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('Error getting session:', error);
         }
@@ -346,10 +310,10 @@ export const AuthProvider = ({ children }) => {
 
       if (data?.user && !data?.user?.email_confirmed_at) {
         toast.success('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.');
-        return { 
-          success: true, 
+        return {
+          success: true,
           data,
-          needsConfirmation: true 
+          needsConfirmation: true
         };
       }
 
@@ -380,7 +344,7 @@ export const AuthProvider = ({ children }) => {
   const initSession = useCallback(async () => {
     const { data: authData } = await supabase.auth.getUser();
     const user = authData?.user || null;
-    const restaurant = await loadUserRestaurant(user);
+    const restaurant = await loadUserRestaurant(user?.id); // Asegurarse de pasar el id del usuario
     return { user, restaurant };
   }, [loadUserRestaurant]);
 
