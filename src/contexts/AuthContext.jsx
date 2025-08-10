@@ -112,42 +112,11 @@ export const AuthProvider = ({ children }) => {
     setLoadingRestaurant(true);
 
     try {
-      // Buscar en user_restaurant_mapping
-      const { data: mappingData, error: mappingError } = await supabase
-        .from('user_restaurant_mapping')
-        .select(`
-          restaurant_id,
-          restaurants (
-            id,
-            name,
-            address,
-            phone,
-            email,
-            website,
-            logo_url,
-            settings,
-            created_at
-          )
-        `)
-        .eq('auth_user_id', userId)
-        .single();
+      // Usar el servicio centralizado con auth_user_id correcto
+      const { getMiRestaurante } = await import('../lib/restaurantService');
+      const mappingData = await getMiRestaurante({ id: userId });
 
-      if (mappingError) {
-        console.error('Error fetching restaurant mapping:', mappingError);
-        
-        // Si es el primer intento, intentar crear el restaurante
-        if (attempt === 1) {
-          console.log('🔄 First attempt failed, trying to create restaurant...');
-          const created = await createDefaultRestaurant(userId);
-          if (created) {
-            return fetchRestaurantInfo(userId, attempt + 1);
-          }
-        }
-        
-        throw mappingError;
-      }
-
-      const restaurant = mappingData?.restaurants;
+      const restaurant = mappingData?.restaurant;
       
       if (!restaurant) {
         console.log('No restaurant found in mapping');
@@ -229,18 +198,15 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
 
-      // Crear el mapping
-      const { error: mappingError } = await supabase
-        .from('user_restaurant_mapping')
-        .insert([
-          {
-            auth_user_id: userId,
-            restaurant_id: restaurant.id,
-            role: 'owner'
-          }
-        ]);
-
-      if (mappingError) {
+      // Crear el mapping usando el servicio centralizado
+      try {
+        const { linkUserToRestaurant } = await import('../lib/restaurantService');
+        await linkUserToRestaurant({
+          authUserId: userId,
+          restaurantId: restaurant.id,
+          role: 'owner'
+        });
+      } catch (mappingError) {
         console.error('Error creating user-restaurant mapping:', mappingError);
         return false;
       }
