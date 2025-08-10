@@ -20,6 +20,65 @@ export const AuthProvider = ({ children }) => {
   const [restaurantInfo, setRestaurantInfo] = useState(null);
   const [loadingRestaurant, setLoadingRestaurant] = useState(false);
   const [retryAttempts, setRetryAttempts] = useState(3);
+  
+  // Estados para notificaciones
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Función para agregar notificación
+  const addNotification = useCallback((notification) => {
+    const newNotification = {
+      id: Date.now() + Math.random(),
+      type: notification.type || 'info',
+      title: notification.title,
+      message: notification.message,
+      priority: notification.priority || 'normal',
+      read: false,
+      created_at: new Date().toISOString(),
+      metadata: notification.metadata || {},
+      link: notification.link
+    };
+
+    setNotifications(prev => [newNotification, ...prev]);
+    setUnreadCount(prev => prev + 1);
+  }, []);
+
+  // Función para marcar notificación como leída
+  const markNotificationAsRead = useCallback((notificationId) => {
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === notificationId 
+          ? { ...notification, read: true }
+          : notification
+      )
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  }, []);
+
+  // Función para marcar todas como leídas
+  const markAllNotificationsAsRead = useCallback(() => {
+    setNotifications(prev => 
+      prev.map(notification => ({ ...notification, read: true }))
+    );
+    setUnreadCount(0);
+  }, []);
+
+  // Función para eliminar notificación
+  const deleteNotification = useCallback((notificationId) => {
+    setNotifications(prev => {
+      const notification = prev.find(n => n.id === notificationId);
+      if (notification && !notification.read) {
+        setUnreadCount(count => Math.max(0, count - 1));
+      }
+      return prev.filter(n => n.id !== notificationId);
+    });
+  }, []);
+
+  // Función para limpiar todas las notificaciones
+  const clearAllNotifications = useCallback(() => {
+    setNotifications([]);
+    setUnreadCount(0);
+  }, []);
 
   // Función para obtener el perfil del usuario
   const fetchUserProfile = useCallback(async (userId) => {
@@ -346,13 +405,28 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     isReady,
     restaurantInfo,
+    restaurant: restaurantInfo, // Alias para compatibilidad
     loadingRestaurant,
     retryAttempts,
     signIn,
     signUp,
     signOut,
     handleRetry,
-    restaurantId: restaurantInfo?.id
+    restaurantId: restaurantInfo?.id,
+    // Sistema de notificaciones
+    notifications,
+    unreadCount,
+    addNotification,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    deleteNotification,
+    clearAllNotifications,
+    // Estado del agente (mock por ahora)
+    agentStatus: {
+      active: true,
+      connected: true,
+      lastSeen: new Date()
+    }
   };
 
   return (
