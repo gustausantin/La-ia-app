@@ -46,11 +46,16 @@ async function loadUserRestaurant(authUserId) {
 
 /** Crea restaurante por defecto en el servidor (RPC) */
 async function ensureRestaurantForCurrentUser(name = "Mi Restaurante") {
-  const { data, error } = await supabase.rpc("create_restaurant_for_current_user", {
-    p_name: name,
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData?.user?.id) throw new Error('Usuario no autenticado');
+  
+  const { error } = await supabase.rpc("create_default_restaurant", {
+    p_auth_user_id: authData.user.id,
   });
   if (error) throw error;
-  return data?.restaurant ?? null;
+  
+  // Después de crear, cargar el restaurante
+  return await loadUserRestaurant(authData.user.id);
 }
 
 /** ÚNICA función pública de inicialización */
