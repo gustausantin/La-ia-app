@@ -186,9 +186,8 @@ function AppRoutes() {
 
   // MODO PRUEBA: Comentar estas líneas para volver al funcionamiento normal
   // y descomentar el return de abajo
-  /*
+  
   return <InitializationTest />;
-  */
 
   // Mostrar pantalla de carga mientras se verifica la autenticación
   if (!isReady) {
