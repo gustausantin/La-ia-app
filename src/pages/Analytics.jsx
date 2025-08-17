@@ -354,6 +354,18 @@ function Analytics() {
     const { restaurant, restaurantId, isReady } = useAuthContext();
 
     // Estados principales
+    
+    return (
+        <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow p-6">
+                <h1 className="text-2xl font-bold text-gray-900 mb-4">Analytics</h1>
+                <p className="text-gray-600">Analiza el rendimiento de tu restaurante.</p>
+            </div>
+        </div>
+    );
+}
+
+export default Analytics;
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState("30d");
     const [activeTab, setActiveTab] = useState("ai-overview");
