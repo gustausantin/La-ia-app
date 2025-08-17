@@ -113,7 +113,7 @@ export default function Layout() {
                             <Bot className="w-8 h-8 text-purple-600" />
                             <div>
                                 <h1 className="text-xl font-bold text-gray-900">
-                                    Son-IA
+                                    La-IA
                                 </h1>
                                 <p className="text-xs text-gray-500">
                                     Sistema Operativo IA
