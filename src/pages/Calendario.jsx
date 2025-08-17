@@ -107,18 +107,6 @@ function Calendario() {
     const { restaurant, agentStatus } = useAuthContext();
     const restaurantId = restaurant?.id;
 
-    return (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">Calendario</h1>
-                <p className="text-gray-600">Visualiza y gestiona tu calendario de eventos.</p>
-            </div>
-        </div>
-    );
-}
-
-export default Calendario;
-
     // Estados principales
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('horarios');
@@ -925,7 +913,7 @@ export default Calendario;
                             {/* Configuración por canal */}
                             <div className="space-y-4">
                                 {Object.entries(agentSchedule).map(([channel, config]) => {
-                                    const ChannelIcon = channel === 'whatsapp' ? MessageCircle :
+                                    const ChannelIcon = channel === 'whatsapp' ? MessageSquare :
                                                        channel === 'vapi' ? PhoneCall :
                                                        channel === 'instagram' ? Instagram :
                                                        channel === 'facebook' ? Facebook :

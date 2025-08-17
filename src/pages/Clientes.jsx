@@ -105,7 +105,7 @@ import toast from "react-hot-toast";
 // - get_customer_lifetime_value(customer_id)
 // - get_segmentation_insights(restaurant_id)
 // - launch_ai_campaign(restaurant_id, segment, message, channel)
-
+//
 // Segmentación mejorada con IA
 const CUSTOMER_SEGMENTS = {
     new: {
@@ -635,22 +635,10 @@ const LoadingState = () => (
 // Componente principal
 function Clientes() {
     console.log('👥 Clientes component rendering...');
-    
+
     const { restaurant, restaurantId, isReady, agentStatus, addNotification } = useAuthContext();
 
     // Estados principales
-    
-    return (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">Gestión de Clientes</h1>
-                <p className="text-gray-600">Administra la información de tus clientes.</p>
-            </div>
-        </div>
-    );
-}
-
-export default Clientes;
     const [loading, setLoading] = useState(true);
     const [customers, setCustomers] = useState([]);
     const [stats, setStats] = useState({});
@@ -1192,7 +1180,7 @@ export default Clientes;
                             <p className="text-gray-600 mt-1">
                                 Gestión de clientes potenciada por IA •{" "}
                                 {stats.total || 0} clientes •{" "}
-                                {stats.aiPercentage}% captados por IA
+                                {stats.aiPercentage || 0}% captados por IA
                             </p>
                         </div>
 
@@ -1383,7 +1371,7 @@ export default Clientes;
                                                     handleAICampaign(key);
                                                 }}
                                                 className={`
-                                                absolute -top-2 -right-2 w-6 h-6 bg-purple-600 text-white 
+                                                absolute -top-2 -right-2 w-6 h-6 bg-purple-600 text-white
                                                 rounded-full opacity-0 group-hover:opacity-100 transition-opacity
                                                 flex items-center justify-center shadow-lg
                                             `}
@@ -1869,8 +1857,8 @@ export default Clientes;
                                                                 ? "bg-green-100 text-green-700"
                                                                 : campaign.status ===
                                                                     "scheduled"
-                                                                  ? "bg-blue-100 text-blue-700"
-                                                                  : "bg-gray-100 text-gray-700"
+                                                                      ? "bg-blue-100 text-blue-700"
+                                                                      : "bg-gray-100 text-gray-700"
                                                         }
                                                     `}
                                                     >
@@ -1879,8 +1867,8 @@ export default Clientes;
                                                             ? "Activa"
                                                             : campaign.status ===
                                                                 "scheduled"
-                                                              ? "Programada"
-                                                              : "Completada"}
+                                                                  ? "Programada"
+                                                                  : "Completada"}
                                                     </span>
                                                 </div>
                                                 <p className="text-sm text-gray-600 mb-3">

@@ -1,4 +1,4 @@
-// Mesas.jsx - Sistema COMPLETO de Gestión de Mesas con Agente IA para Son-IA
+// Mesas.jsx - Sistema COMPLETO de Gestión de Mesas con Agente IA para La-IA
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
@@ -37,14 +37,6 @@ import {
     Zap,
 } from "lucide-react";
 import toast from "react-hot-toast";
-
-// DATOS NECESARIOS DE SUPABASE:
-// - tabla: tables (id, restaurant_id, table_number, name, zone, min_capacity, max_capacity, status, notes)
-// - tabla: reservations (con campos 'source' y 'channel' para identificar origen)
-// - tabla: agent_table_preferences (table_id, score, reason, updated_at)
-// - RPC: get_table_statistics(table_id, date_range)
-// - RPC: get_agent_table_insights(restaurant_id)
-// - real-time: suscripción a cambios en tables y reservations
 
 // Estados de mesa con iconos y colores
 const TABLE_STATES = {
@@ -457,21 +449,8 @@ const TableCard = ({
 // Componente principal
 function Mesas() {
     console.log('🪑 Mesas component rendering...');
-    
-    const { restaurant, restaurantId, isReady, addNotification } =
-        useAuthContext();
 
-    return (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">Gestión de Mesas</h1>
-                <p className="text-gray-600">Configura y gestiona las mesas de tu restaurante.</p>
-            </div>
-        </div>
-    );
-}
-
-export default Mesas;
+    const { restaurant, restaurantId, isReady, addNotification } = useAuthContext();
 
     // Estados principales
     const [loading, setLoading] = useState(true);
@@ -1154,16 +1133,16 @@ export default Mesas;
                                     : "Comienza creando tu primera mesa"}
                             </p>
                             {!searchTerm &&
-                                selectedZone === "all" &&
-                                selectedStatus === "all" && (
-                                    <button
-                                        onClick={() => setShowCreateModal(true)}
-                                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        Crear primera mesa
-                                    </button>
-                                )}
+                            selectedZone === "all" &&
+                            selectedStatus === "all" && (
+                                <button
+                                    onClick={() => setShowCreateModal(true)}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Crear primera mesa
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
