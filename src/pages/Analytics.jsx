@@ -348,7 +348,20 @@ const LoadingState = () => (
 );
 
 // Componente principal
-export default function Analytics() {
+function Analytics() {
+  console.log('📊 Analytics component rendering...');
+  
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow p-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Analytics</h1>
+        <p className="text-gray-600">Analiza el rendimiento de tu restaurante.</p>
+      </div>
+    </div>
+  );
+}
+
+export default Analytics;
     const { restaurant, restaurantId, isReady } = useAuthContext();
 
     // Estados principales
