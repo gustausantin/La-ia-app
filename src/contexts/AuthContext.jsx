@@ -200,54 +200,74 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Función para manejar cambios de sesión
-  const handleAuthStateChange = useCallback(async (event, session) => {
-    console.log('🔐 Auth state changed:', event, session?.user?.id);
+  const handleAuthStateChange = async (event, session) => {
+    console.log('🔐 Processing auth change:', event, session?.user?.id || 'no-user');
 
-    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-      if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
-        const userData = {
-          ...session.user,
-          profile
-        };
+    try {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          console.log('✅ User signed in, loading profile and restaurant...');
+          const profile = await fetchUserProfile(session.user.id);
+          const userData = {
+            ...session.user,
+            profile
+          };
 
-        setUser(userData);
-        setIsAuthenticated(true);
+          setUser(userData);
+          setIsAuthenticated(true);
 
-        // Cargar información del restaurante usando la nueva lógica
-        await fetchRestaurantInfo(session.user.id);
+          // Cargar información del restaurante usando la nueva lógica
+          await fetchRestaurantInfo(session.user.id);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        console.log('👋 User signed out');
+        setUser(null);
+        setIsAuthenticated(false);
+        setRestaurantInfo(null);
+        setRetryAttempts(3);
+      } else if (event === 'INITIAL_SESSION') {
+        console.log('🔄 Initial session check');
+        if (session?.user) {
+          setIsAuthenticated(true);
+          setUser(session.user);
+          await fetchRestaurantInfo(session.user.id);
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
+        }
       }
-    } else if (event === 'SIGNED_OUT') {
-      setUser(null);
-      setIsAuthenticated(false);
-      setRestaurantInfo(null);
-      setRetryAttempts(3);
+    } catch (error) {
+      console.error('❌ Error in handleAuthStateChange:', error);
+    } finally {
+      console.log('✅ Auth initialization complete, setting isReady to true');
+      setIsReady(true);
     }
-
-    setIsReady(true);
-  }, [fetchUserProfile, fetchRestaurantInfo]);
+  };
 
   // Inicializar autenticación
   useEffect(() => {
     let mounted = true;
 
     const initializeAuth = async () => {
+      console.log('🚀 Initializing auth...');
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
-          console.error('Error getting session:', error);
+          console.error('❌ Error getting session:', error);
         }
 
         if (mounted) {
           if (session?.user) {
+            console.log('✅ Session found, user logged in');
             await handleAuthStateChange('SIGNED_IN', session);
           } else {
+            console.log('ℹ️ No session found, user not logged in');
             setIsReady(true);
           }
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('❌ Error initializing auth:', error);
         if (mounted) {
           setIsReady(true);
         }
@@ -257,13 +277,16 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
 
     // Suscribirse a cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔐 Auth state changed:', event, session?.user?.id || 'no-user');
+      handleAuthStateChange(event, session);
+    });
 
     return () => {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, [handleAuthStateChange]);
+  }, []); // Removemos handleAuthStateChange de las dependencias para evitar re-renders infinitos
 
   // Función de login
   const signIn = async (email, password) => {
