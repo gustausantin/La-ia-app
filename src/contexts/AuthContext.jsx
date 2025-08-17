@@ -252,7 +252,6 @@ export const AuthProvider = ({ children }) => {
   // Inicializar autenticación
   useEffect(() => {
     let mounted = true;
-    let initializationTimeout;
 
     const initializeAuth = async () => {
       console.log('🚀 Initializing auth...');
@@ -277,20 +276,15 @@ export const AuthProvider = ({ children }) => {
             setRestaurantInfo(null);
           }
           
-          // Usar timeout para evitar bucles
-          initializationTimeout = setTimeout(() => {
-            if (mounted) {
-              console.log('✅ Auth initialization complete, setting isReady = true');
-              setIsReady(true);
-            }
-          }, 100);
+          // Establecer isReady inmediatamente después de procesar la sesión
+          console.log('✅ Auth initialization complete, setting isReady = true');
+          setIsReady(true);
         }
       } catch (error) {
         console.error('❌ Error initializing auth:', error);
         if (mounted) {
-          initializationTimeout = setTimeout(() => {
-            setIsReady(true); // Establecer isReady incluso si hay error
-          }, 100);
+          // Establecer isReady incluso si hay error para evitar pantalla en blanco
+          setIsReady(true);
         }
       }
     };
@@ -314,15 +308,17 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(false);
           setRestaurantInfo(null);
         }
+        
+        // Asegurar que isReady está en true después de cualquier cambio de auth
+        if (!isReady) {
+          setIsReady(true);
+        }
       }
     });
 
     return () => {
       mounted = false;
       subscription?.unsubscribe();
-      if (initializationTimeout) {
-        clearTimeout(initializationTimeout);
-      }
     };
   }, [fetchRestaurantInfo]);
 
