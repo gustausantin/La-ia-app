@@ -148,6 +148,12 @@ export const AuthProvider = ({ children }) => {
         .eq('id', userId)
         .single();
 
+      // Si no existe el perfil (PGRST116), es normal, devolvemos null sin error
+      if (error && error.code === 'PGRST116') {
+        console.log('No profile found for user, using basic auth data');
+        return null;
+      }
+
       if (error) {
         console.error('Error fetching user profile:', error);
         return null;
