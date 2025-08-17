@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuthContext } from './contexts/AuthContext';
 import { Toaster } from 'react-hot-toast';
+import { Bot } from 'lucide-react';
 
 // Páginas
 import Login from './pages/Login';
@@ -27,15 +28,19 @@ function AppContent() {
   console.log('🎯 AppContent render:', { isAuthenticated, isReady });
 
   if (!isReady) {
+    console.log('❌ App not ready, showing loading...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Iniciando La-IA...</p>
+          <Bot className="w-16 h-16 text-purple-600 mx-auto mb-4 animate-pulse" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Iniciando La-IA...</h2>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
         </div>
       </div>
     );
   }
+
+  console.log('✅ App ready, rendering router...');
 
   return (
     <Router>
@@ -153,16 +158,7 @@ function AppContent() {
           } 
         />
       </Routes>
-    </Router>
-  );
-}
-
-export default function App() {
-  console.log('🚀 App component rendering...');
-  
-  return (
-    <AuthProvider>
-      <AppContent />
+      
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -187,6 +183,16 @@ export default function App() {
           },
         }}
       />
+    </Router>
+  );
+}
+
+export default function App() {
+  console.log('🚀 App component rendering...');
+  
+  return (
+    <AuthProvider>
+      <AppContent />
     </AuthProvider>
   );
 }
