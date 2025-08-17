@@ -384,18 +384,6 @@ function Reservas() {
     const { restaurant, restaurantId, isReady, addNotification } =
         useAuthContext();
 
-    return (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">Gestión de Reservas</h1>
-                <p className="text-gray-600">Aquí puedes gestionar todas las reservas de tu restaurante.</p>
-            </div>
-        </div>
-    );
-}
-
-export default Reservas;
-
     const [loading, setLoading] = useState(true);
     const [reservations, setReservations] = useState([]);
     const [selectedReservations, setSelectedReservations] = useState(new Set());
