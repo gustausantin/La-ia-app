@@ -994,19 +994,8 @@ const CustomerInfoPanel = ({ conversation, onClose }) => {
 
 // Componente principal
 function Comunicacion() {
-  console.log('💬 Comunicacion component rendering...');
-  
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Centro de Comunicación</h1>
-        <p className="text-gray-600">Gestiona todas las conversaciones con tus clientes.</p>
-      </div>
-    </div>
-  );
-}
-
-export default Comunicacion;
+    console.log('💬 Comunicacion component rendering...');
+    
     const { restaurant, restaurantId, isReady } = useAuthContext();
 
     // Estados principales
