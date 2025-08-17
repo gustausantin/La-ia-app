@@ -32,6 +32,7 @@ function AppContent() {
     timestamp: new Date().toISOString() 
   });
 
+  // Mostrar loading solo por un tiempo muy breve
   if (!isReady) {
     console.log('❌ App not ready, showing loading...');
     return (
@@ -40,6 +41,7 @@ function AppContent() {
           <Bot className="w-16 h-16 text-purple-600 mx-auto mb-4 animate-pulse" />
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Iniciando La-IA...</h2>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="text-sm text-gray-500 mt-4">Cargando aplicación...</p>
         </div>
       </div>
     );
