@@ -252,25 +252,30 @@ export const AuthProvider = ({ children }) => {
 
     const initializeAuth = async () => {
       console.log('🚀 Initializing auth...');
+      
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
 
-        if (error) {
-          console.error('❌ Error getting session:', error);
-        } else {
-          console.log('✅ Session check complete');
-        }
-
         if (mounted) {
           if (session?.user) {
-            console.log('✅ User is logged in');
+            console.log('✅ User is logged in:', session.user.email);
             setUser(session.user);
             setIsAuthenticated(true);
+            
+            // Cargar restaurante si hay usuario
+            try {
+              await fetchRestaurantInfo(session.user.id);
+            } catch (restError) {
+              console.error('⚠️ Error loading restaurant, but continuing:', restError);
+            }
           } else {
             console.log('ℹ️ No user session');
             setUser(null);
             setIsAuthenticated(false);
+            setRestaurantInfo(null);
           }
+          
+          console.log('✅ Auth initialization complete, setting isReady = true');
           setIsReady(true);
         }
       } catch (error) {
@@ -283,8 +288,30 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
 
+    // Escuchar cambios de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth state changed:', event);
+      
+      if (mounted) {
+        if (session?.user) {
+          setUser(session.user);
+          setIsAuthenticated(true);
+          try {
+            await fetchRestaurantInfo(session.user.id);
+          } catch (restError) {
+            console.error('⚠️ Error loading restaurant after auth change:', restError);
+          }
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+          setRestaurantInfo(null);
+        }
+      }
+    });
+
     return () => {
       mounted = false;
+      subscription?.unsubscribe();
     };
   }, []);
 
