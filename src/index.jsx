@@ -206,12 +206,9 @@ setTimeout(() => {
   root.render(
     <React.StrictMode>
       <ErrorBoundary>
-        <AuthProvider>
-          <React.Suspense fallback={<LoadingScreen />}>
-            <App />
-            <Toaster {...toasterConfig} />
-          </React.Suspense>
-        </AuthProvider>
+        <React.Suspense fallback={<LoadingScreen />}>
+          <App />
+        </React.Suspense>
       </ErrorBoundary>
     </React.StrictMode>,
   );
