@@ -102,19 +102,8 @@ const TimeSlotInput = ({ label, value, onChange, icon: Icon }) => (
 
 // Componente principal
 function Calendario() {
-  console.log('📆 Calendario component rendering...');
-  
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Calendario</h1>
-        <p className="text-gray-600">Visualiza y gestiona tu calendario de eventos.</p>
-      </div>
-    </div>
-  );
-}
-
-export default Calendario;
+    console.log('📆 Calendario component rendering...');
+    
     const { restaurant, agentStatus } = useAuthContext();
     const restaurantId = restaurant?.id;
 
