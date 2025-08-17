@@ -294,7 +294,7 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 Auth state changed:', event);
       
-      if (mounted) {
+      if (mounted && event !== 'INITIAL_SESSION') {
         if (session?.user) {
           setUser(session.user);
           setIsAuthenticated(true);
@@ -307,12 +307,6 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(false);
           setRestaurantInfo(null);
         }
-        
-        // Asegurar que isReady esté en true después de cualquier cambio de auth
-        if (!isReady) {
-          console.log('🔧 Setting isReady = true after auth change');
-          setIsReady(true);
-        }
       }
     });
 
@@ -320,7 +314,7 @@ export const AuthProvider = ({ children }) => {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [fetchRestaurantInfo]);
 
   // Función de login
   const signIn = async (email, password) => {

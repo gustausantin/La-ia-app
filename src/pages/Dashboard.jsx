@@ -566,8 +566,8 @@ function Dashboard() {
         return sorted.slice(0, 3).map((h) => h.hour.replace(":00", "h"));
     }, [stats.hourly_reservations]);
 
-    // Si está cargando
-    if (loadingState === LOADING_STATES.LOADING && isLoading) {
+    // Si no está listo o está cargando
+    if (!isReady || (loadingState === LOADING_STATES.LOADING && isLoading)) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
