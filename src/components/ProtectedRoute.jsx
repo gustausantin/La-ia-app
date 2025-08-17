@@ -24,6 +24,7 @@ const ProtectedRoute = ({ children }) => {
           <div className="w-32 h-1 bg-gray-200 rounded-full mx-auto overflow-hidden">
             <div className="w-full h-full bg-gradient-to-r from-purple-500 to-blue-500 animate-pulse"></div>
           </div>
+          <p className="text-xs text-gray-500 mt-4">Conectando con Supabase...</p>
         </div>
       </div>
     );
