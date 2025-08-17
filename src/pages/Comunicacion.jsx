@@ -119,7 +119,7 @@ import toast from "react-hot-toast";
 // REAL-TIME:
 // - Suscripción a nuevos mensajes
 // - Suscripción a cambios de estado de conversaciones
-
+//
 // Canales de comunicación mejorados
 const COMMUNICATION_CHANNELS = {
     whatsapp: {
@@ -273,8 +273,7 @@ const LoadingState = () => (
                 Cargando centro de comunicación...
             </p>
             <p className="text-sm text-gray-600">
-                Conectando con {Math.floor(Math.random() * 5 + 3)} canales
-                activos
+                Conectando con {Math.floor(Math.random() * 5 + 3)} canales activos
             </p>
         </div>
     </div>
@@ -421,7 +420,7 @@ const ConversationItem = ({ conversation, isSelected, onSelect }) => {
                     </div>
                     <div
                         className={`
-                        absolute -bottom-1 -right-1 w-6 h-6 rounded-full 
+                        absolute -bottom-1 -right-1 w-6 h-6 rounded-full
                         flex items-center justify-center border-2 border-white
                         ${channel.bgColor}
                     `}
@@ -995,22 +994,10 @@ const CustomerInfoPanel = ({ conversation, onClose }) => {
 // Componente principal
 function Comunicacion() {
     console.log('💬 Comunicacion component rendering...');
-    
+
     const { restaurant, restaurantId, isReady } = useAuthContext();
 
     // Estados principales
-    
-    return (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">Centro de Comunicación</h1>
-                <p className="text-gray-600">Gestiona todas las conversaciones con tus clientes.</p>
-            </div>
-        </div>
-    );
-}
-
-export default Comunicacion;
     const [loading, setLoading] = useState(true);
     const [conversations, setConversations] = useState([]);
     const [selectedConversation, setSelectedConversation] = useState(null);
@@ -1388,7 +1375,7 @@ export default Comunicacion;
         //         loadConversations();
         //     })
         //     .subscribe();
-
+        //
         // return () => {
         //     subscription.unsubscribe();
         // };
@@ -1927,7 +1914,8 @@ export default Comunicacion;
                                                             </span>
                                                             <span>
                                                                 {
-                                                                    selectedConversation.customer_phone
+                                                                    selectedConversation
+                                                                        .customer_phone
                                                                 }
                                                             </span>
                                                         </div>
@@ -2025,21 +2013,21 @@ export default Comunicacion;
                                                     </div>
                                                     <div
                                                         className={`
-                                                        flex items-center gap-2
-                                                        ${
-                                                            selectedConversation
-                                                                .ai_insights
-                                                                .sentiment ===
-                                                            "positive"
-                                                                ? "text-green-600"
-                                                                : selectedConversation
+                                                            flex items-center gap-2
+                                                            ${
+                                                                selectedConversation
+                                                                    .ai_insights
+                                                                    .sentiment ===
+                                                                "positive"
+                                                                    ? "text-green-600"
+                                                                    : selectedConversation
                                                                         .ai_insights
                                                                         .sentiment ===
-                                                                    "negative"
-                                                                  ? "text-red-600"
-                                                                  : "text-gray-600"
-                                                        }
-                                                    `}
+                                                                        "negative"
+                                                                      ? "text-red-600"
+                                                                      : "text-gray-600"
+                                                            }
+                                                        `}
                                                     >
                                                         {selectedConversation
                                                             .ai_insights
@@ -2047,9 +2035,9 @@ export default Comunicacion;
                                                         "positive" ? (
                                                             <ThumbsUp className="w-4 h-4" />
                                                         ) : selectedConversation
-                                                              .ai_insights
-                                                              .sentiment ===
-                                                          "negative" ? (
+                                                                .ai_insights
+                                                                .sentiment ===
+                                                            "negative" ? (
                                                             <ThumbsDown className="w-4 h-4" />
                                                         ) : (
                                                             <Activity className="w-4 h-4" />
@@ -2199,7 +2187,8 @@ export default Comunicacion;
                                                             value={newMessage}
                                                             onChange={(e) =>
                                                                 setNewMessage(
-                                                                    e.target
+                                                                    e
+                                                                        .target
                                                                         .value,
                                                                 )
                                                             }
@@ -2235,14 +2224,14 @@ export default Comunicacion;
                                                             sendingMessage
                                                         }
                                                         className={`
-                                                            p-3 rounded-xl transition-all flex items-center justify-center
-                                                            ${
-                                                                newMessage.trim() &&
-                                                                !sendingMessage
-                                                                    ? "bg-purple-600 text-white hover:bg-purple-700 shadow-lg"
-                                                                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                                            }
-                                                        `}
+                                                                p-3 rounded-xl transition-all flex items-center justify-center
+                                                                ${
+                                                                    newMessage.trim() &&
+                                                                    !sendingMessage
+                                                                        ? "bg-purple-600 text-white hover:bg-purple-700 shadow-lg"
+                                                                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                                }
+                                                            `}
                                                     >
                                                         {sendingMessage ? (
                                                             <RefreshCw className="w-5 h-5 animate-spin" />
@@ -2748,3 +2737,5 @@ export default Comunicacion;
         </div>
     );
 }
+
+export default Comunicacion;
