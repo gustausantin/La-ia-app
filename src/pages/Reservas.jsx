@@ -1,3 +1,4 @@
+
 // Reservas.jsx - Sistema COMPLETO de Gestión de Reservas con Agente IA para Son-IA
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
@@ -40,16 +41,6 @@ import {
     ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
-
-// DATOS NECESARIOS DE SUPABASE:
-// - tabla: reservations (con campos 'source' y 'channel')
-// - tabla: customers
-// - tabla: tables
-// - tabla: agent_reservation_insights (insights del agente)
-// - RPC: get_reservation_stats_by_source(restaurant_id, start_date, end_date)
-// - RPC: get_agent_conversion_stats(restaurant_id)
-// - real-time: suscripción a cambios en reservations
-//
 
 // Estados de reserva con colores y acciones
 const RESERVATION_STATES = {
@@ -401,7 +392,7 @@ function Reservas() {
         search: "",
         status: "",
         channel: "",
-        source: "", // nuevo filtro
+        source: "",
         period: "today",
     });
 
@@ -503,14 +494,13 @@ function Reservas() {
 
             setReservations(data || []);
 
-            // Calcular estadísticas del agente - CORREGIDO
             const agentReservations = (data || []).filter(
-                (r) => r.source === "agent", // Ya no necesitamos el fallback
+                (r) => r.source === "agent",
             );
             setAgentStats((prev) => ({
                 ...prev,
                 agentReservations: agentReservations.length,
-                conversionRate: agentReservations.length > 0 ? 85 : 0, // Simulado por ahora
+                conversionRate: agentReservations.length > 0 ? 85 : 0,
             }));
         } catch (error) {
             console.error("Error loading reservations:", error);
@@ -552,8 +542,6 @@ function Reservas() {
         if (!restaurantId) return;
 
         try {
-            // Simular insights por ahora
-            // TODO: Reemplazar con datos reales cuando exista la tabla agent_reservation_insights
             const mockInsights = [
                 "El 80% de las reservas de WhatsApp son para 2 personas",
                 "Los viernes a las 21:00 es la hora más solicitada",
@@ -563,7 +551,6 @@ function Reservas() {
 
             setAgentInsights(mockInsights);
 
-            // Simular estadísticas adicionales
             setAgentStats((prev) => ({
                 ...prev,
                 avgResponseTime: "3.2s",
@@ -579,7 +566,6 @@ function Reservas() {
     useEffect(() => {
         if (!restaurantId) return;
 
-        // Suscribirse a cambios en tiempo real
         const subscription = supabase
             .channel("reservations-changes")
             .on(
@@ -593,7 +579,6 @@ function Reservas() {
                 (payload) => {
                     console.log("Cambio en reservations:", payload);
 
-                    // Notificar si el agente creó una reserva
                     if (
                         payload.eventType === "INSERT" &&
                         payload.new.source === "agent"
@@ -605,7 +590,6 @@ function Reservas() {
                             </div>,
                         );
 
-                        // Agregar notificación global
                         addNotification({
                             type: "agent",
                             message: `Nueva reserva de ${payload.new.customer_name} para ${payload.new.party_size} personas`,
@@ -643,12 +627,10 @@ function Reservas() {
             );
         }
 
-        // Aplicar filtro por source con validación
         if (filters.source) {
             filtered = filtered.filter((r) => r.source === filters.source);
         }
 
-        // Aplicar filtro por channel con validación
         if (filters.channel) {
             filtered = filtered.filter((r) => r.channel === filters.channel);
         }
@@ -743,7 +725,6 @@ function Reservas() {
                         setShowEditModal(true);
                         return;
                     case "view":
-                        // TODO: Implementar vista detallada
                         toast.info("Vista detallada disponible próximamente");
                         return;
                     default:
@@ -751,7 +732,7 @@ function Reservas() {
                 }
 
                 const { error } = await supabase
-                    .from("reservas")
+                    .from("reservations")
                     .update({
                         status: newStatus,
                         updated_at: new Date().toISOString(),
@@ -810,7 +791,7 @@ function Reservas() {
                 }
 
                 const { error } = await supabase
-                    .from("reservas")
+                    .from("reservations")
                     .update({
                         status: newStatus,
                         updated_at: new Date().toISOString(),
@@ -912,7 +893,6 @@ function Reservas() {
             {/* Filtros */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 <div className="flex flex-col lg:flex-row gap-4">
-                    {/* Búsqueda */}
                     <div className="flex-1 relative">
                         <Search
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -932,7 +912,6 @@ function Reservas() {
                         />
                     </div>
 
-                    {/* Filtros adicionales */}
                     <div className="flex flex-wrap gap-2">
                         <select
                             value={filters.source}
@@ -1100,7 +1079,6 @@ function Reservas() {
                         </span>
                     </div>
 
-                    {/* Leyenda de orígenes */}
                     <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-1">
                             <div className="w-1 h-4 bg-purple-500 rounded"></div>
@@ -1114,7 +1092,6 @@ function Reservas() {
                     </div>
                 </div>
 
-                {/* Acciones masivas */}
                 {selectedReservations.size > 0 && (
                     <div className="flex items-center gap-2">
                         <button
@@ -1196,61 +1173,6 @@ function Reservas() {
                     </div>
                 )}
             </div>
-
-            {/* Modal de nueva reserva mejorado */}
-            {showCreateModal && (
-                <ReservationFormModal
-                    isOpen={showCreateModal}
-                    onClose={() => setShowCreateModal(false)}
-                    onSave={() => {
-                        setShowCreateModal(false);
-                        loadReservations();
-                        toast.success("Reserva creada correctamente");
-                        addNotification({
-                            type: "system",
-                            message: "Nueva reserva manual creada",
-                            priority: "low",
-                        });
-                    }}
-                    tables={tables}
-                    restaurantId={restaurantId}
-                />
-            )}
-
-            {/* Modal de edición */}
-            {showEditModal && editingReservation && (
-                <ReservationFormModal
-                    isOpen={showEditModal}
-                    onClose={() => {
-                        setShowEditModal(false);
-                        setEditingReservation(null);
-                    }}
-                    onSave={() => {
-                        setShowEditModal(false);
-                        setEditingReservation(null);
-                        loadReservations();
-                        toast.success("Reserva actualizada correctamente");
-                        addNotification({
-                            type: "system",
-                            message: "Reserva actualizada",
-                            priority: "low",
-                        });
-                    }}
-                    reservation={editingReservation}
-                    tables={tables}
-                    restaurantId={restaurantId}
-                />
-            )}
-
-            {/* Modal de insights */}
-            {showInsightsModal && (
-                <InsightsModal
-                    isOpen={showInsightsModal}
-                    onClose={() => setShowInsightsModal(false)}
-                    insights={agentInsights}
-                    stats={agentStats}
-                />
-            )}
         </div>
     );
 }
@@ -1314,13 +1236,12 @@ const ReservationFormModal = ({
                 ...formData,
                 restaurant_id: restaurantId,
                 party_size: parseInt(formData.party_size),
-                source: "manual", // Siempre manual desde el formulario
+                source: "manual",
                 channel: "manual",
                 created_by: "user",
             };
 
             if (reservation) {
-                // Actualizar
                 const { error } = await supabase
                     .from("reservations")
                     .update(reservationData)
@@ -1328,7 +1249,6 @@ const ReservationFormModal = ({
 
                 if (error) throw error;
             } else {
-                // Crear
                 const { error } = await supabase
                     .from("reservations")
                     .insert([reservationData]);
@@ -1359,7 +1279,6 @@ const ReservationFormModal = ({
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    {/* Información del cliente */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1431,7 +1350,6 @@ const ReservationFormModal = ({
                         />
                     </div>
 
-                    {/* Detalles de la reserva */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1507,7 +1425,6 @@ const ReservationFormModal = ({
                         </div>
                     </div>
 
-                    {/* Mesa y estado */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1554,7 +1471,6 @@ const ReservationFormModal = ({
                         </div>
                     </div>
 
-                    {/* Solicitudes especiales */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Solicitudes especiales (opcional)
@@ -1573,7 +1489,6 @@ const ReservationFormModal = ({
                         />
                     </div>
 
-                    {/* Indicador de origen */}
                     <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                         <p className="text-sm text-gray-600 flex items-center gap-2">
                             <Edit className="w-4 h-4" />
@@ -1581,7 +1496,6 @@ const ReservationFormModal = ({
                         </p>
                     </div>
 
-                    {/* Botones */}
                     <div className="flex justify-end gap-3 pt-4">
                         <button
                             type="button"
@@ -1622,7 +1536,6 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                 </div>
 
                 <div className="p-6 space-y-6">
-                    {/* Estadísticas destacadas */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="bg-purple-50 rounded-lg p-4 text-center">
                             <Bot className="w-8 h-8 text-purple-600 mx-auto mb-2" />
@@ -1665,7 +1578,6 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                         </div>
                     </div>
 
-                    {/* Insights detallados */}
                     <div>
                         <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                             <Sparkles className="w-5 h-5 text-purple-600" />
@@ -1690,7 +1602,6 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                         </div>
                     </div>
 
-                    {/* Recomendaciones */}
                     <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
                         <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
                             <Target className="w-5 h-5" />
@@ -1721,7 +1632,6 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                         </ul>
                     </div>
 
-                    {/* Distribución por canal */}
                     <div>
                         <h4 className="font-semibold text-gray-900 mb-3">
                             Rendimiento por Canal
