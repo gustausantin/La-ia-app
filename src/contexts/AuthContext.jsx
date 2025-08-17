@@ -188,13 +188,16 @@ export const AuthProvider = ({ children }) => {
         setRetryAttempts(3); // Reset retry attempts on success
         return result.restaurant;
       } else {
-        throw new Error('No restaurant found after all attempts');
+        console.log('⚠️ No restaurant found, but continuing with app load');
+        setRestaurantInfo(null);
+        return null;
       }
 
     } catch (error) {
       console.error(`❌ Error fetching restaurant:`, error);
-      setRetryAttempts(0);
-      toast.error('Error cargando el restaurante. Por favor, contacta con soporte.');
+      setRetryAttempts(prev => Math.max(0, prev - 1));
+      // No mostrar error toast inmediatamente para no bloquear la carga
+      console.log('Restaurant will be created when needed');
       return null;
     } finally {
       setLoadingRestaurant(false);
@@ -262,12 +265,10 @@ export const AuthProvider = ({ children }) => {
             setUser(session.user);
             setIsAuthenticated(true);
             
-            // Cargar restaurante si hay usuario
-            try {
-              await fetchRestaurantInfo(session.user.id);
-            } catch (restError) {
-              console.error('⚠️ Error loading restaurant, but continuing:', restError);
-            }
+            // Cargar restaurante en background, pero no bloquear la carga
+            fetchRestaurantInfo(session.user.id).catch(restError => {
+              console.error('⚠️ Error loading restaurant, but app will continue:', restError);
+            });
           } else {
             console.log('ℹ️ No user session');
             setUser(null);
@@ -275,13 +276,14 @@ export const AuthProvider = ({ children }) => {
             setRestaurantInfo(null);
           }
           
+          // SIEMPRE establecer isReady al final
           console.log('✅ Auth initialization complete, setting isReady = true');
           setIsReady(true);
         }
       } catch (error) {
         console.error('❌ Error initializing auth:', error);
         if (mounted) {
-          setIsReady(true);
+          setIsReady(true); // Establecer isReady incluso si hay error
         }
       }
     };
@@ -296,15 +298,20 @@ export const AuthProvider = ({ children }) => {
         if (session?.user) {
           setUser(session.user);
           setIsAuthenticated(true);
-          try {
-            await fetchRestaurantInfo(session.user.id);
-          } catch (restError) {
+          // Cargar restaurante en background
+          fetchRestaurantInfo(session.user.id).catch(restError => {
             console.error('⚠️ Error loading restaurant after auth change:', restError);
-          }
+          });
         } else {
           setUser(null);
           setIsAuthenticated(false);
           setRestaurantInfo(null);
+        }
+        
+        // Asegurar que isReady esté en true después de cualquier cambio de auth
+        if (!isReady) {
+          console.log('🔧 Setting isReady = true after auth change');
+          setIsReady(true);
         }
       }
     });
