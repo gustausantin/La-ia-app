@@ -72,6 +72,8 @@ async function initSession() {
   return { user, restaurant };
 }
 
+// No exportar initSession para evitar problemas con Fast Refresh
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -177,7 +179,7 @@ export const AuthProvider = ({ children }) => {
     setLoadingRestaurant(true);
 
     try {
-      // Usar la nueva función robusta
+      // Usar la función de inicialización interna
       const result = await initSession();
 
       if (result.restaurant) {

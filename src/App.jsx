@@ -23,9 +23,14 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
-  const { isAuthenticated, isReady } = useAuthContext();
+  const { isAuthenticated, isReady, user } = useAuthContext();
   
-  console.log('🎯 AppContent render:', { isAuthenticated, isReady });
+  console.log('🎯 AppContent render:', { 
+    isAuthenticated, 
+    isReady, 
+    hasUser: !!user,
+    timestamp: new Date().toISOString() 
+  });
 
   if (!isReady) {
     console.log('❌ App not ready, showing loading...');
