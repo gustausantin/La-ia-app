@@ -59,7 +59,7 @@ async function ensureRestaurantForCurrentUser(name = "Mi Restaurante") {
 }
 
 /** ÚNICA función pública de inicialización */
-export async function initSession() {
+async function initSession() {
   const { data: authData, error: authErr } = await supabase.auth.getUser();
   if (authErr) throw authErr;
   const user = authData?.user ?? null;
@@ -380,7 +380,6 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signOut,
     handleRetry,
-    initSession,
     restaurantId: restaurantInfo?.id,
     // Sistema de notificaciones
     notifications: notifications || [], // Fix para el error de filter

@@ -4133,7 +4133,7 @@ export default function Settings() {
                                                     <div className="flex items-center justify-between">
                                                     <div>
                                                         <p className="text-sm font-medium text-gray-900">Respuesta lenta</p>
-                                                        <p className="text-xs text-gray-600">Tiempo de respuesta > 30 segundos</p>
+                                                        <p className="text-xs text-gray-600">Tiempo de respuesta &gt; 30 segundos</p>
                                                     </div>
                                                     <ToggleSwitch
                                                         enabled={settings.notifications.agent_alerts.response_time_slow.enabled}
