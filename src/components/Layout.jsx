@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 
 export default function Layout() {
+    console.log('🏗️ Layout component rendering...');
+    
     // Obtener TODOS los datos necesarios del contexto global
     const {
         user,
@@ -330,6 +332,7 @@ export default function Layout() {
 
                 {/* Page Content */}
                 <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+                    {console.log('🎯 Layout rendering Outlet...')}
                     <Outlet />
                 </main>
             </div>

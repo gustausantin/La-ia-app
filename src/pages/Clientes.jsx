@@ -633,7 +633,20 @@ const LoadingState = () => (
 );
 
 // Componente principal
-export default function Clientes() {
+function Clientes() {
+  console.log('👥 Clientes component rendering...');
+  
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow p-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Gestión de Clientes</h1>
+        <p className="text-gray-600">Administra la información de tus clientes.</p>
+      </div>
+    </div>
+  );
+}
+
+export default Clientes;
     const { restaurant, restaurantId, isReady, agentStatus, addNotification } = useAuthContext();
 
     // Estados principales
