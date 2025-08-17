@@ -72,6 +72,9 @@ async function initSession() {
   return { user, restaurant };
 }
 
+// Export para usar en otros componentes si es necesario
+export { initSession };
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
