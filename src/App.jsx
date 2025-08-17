@@ -23,6 +23,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
   const { isAuthenticated, isReady } = useAuthContext();
+  
+  console.log('🎯 AppContent render:', { isAuthenticated, isReady });
 
   if (!isReady) {
     return (
@@ -156,6 +158,8 @@ function AppContent() {
 }
 
 export default function App() {
+  console.log('🚀 App component rendering...');
+  
   return (
     <AuthProvider>
       <AppContent />

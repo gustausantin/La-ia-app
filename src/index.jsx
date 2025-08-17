@@ -196,37 +196,35 @@ const updateMetaTags = () => {
 // Renderizar la aplicación
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
-// Show loading screen initially
-root.render(<LoadingScreen />);
-
-// Simular carga inicial (en producción esto sería mientras carga chunks, fonts, etc.)
-setTimeout(() => {
+// Función para renderizar la app
+const renderApp = () => {
   updateMetaTags();
-
+  
   root.render(
     <React.StrictMode>
       <ErrorBoundary>
-        <React.Suspense fallback={<LoadingScreen />}>
-          <App />
-        </React.Suspense>
+        <App />
       </ErrorBoundary>
-    </React.StrictMode>,
+    </React.StrictMode>
   );
+};
 
-  // Registrar Service Worker para PWA (si existe)
-  if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("/service-worker.js")
-        .then((registration) => {
-          console.log("SW registrado:", registration);
-        })
-        .catch((error) => {
-          console.log("Error al registrar SW:", error);
-        });
-    });
-  }
-}, 0);
+// Renderizar inmediatamente
+renderApp();
+
+// Registrar Service Worker para PWA (si existe)
+if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/service-worker.js")
+      .then((registration) => {
+        console.log("SW registrado:", registration);
+      })
+      .catch((error) => {
+        console.log("Error al registrar SW:", error);
+      });
+  });
+}
 
 // Hot Module Replacement para desarrollo
 if (import.meta.hot) {
