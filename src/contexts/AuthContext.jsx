@@ -72,9 +72,6 @@ async function initSession() {
   return { user, restaurant };
 }
 
-// Export para usar en otros componentes si es necesario
-export { initSession };
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -258,16 +255,21 @@ export const AuthProvider = ({ children }) => {
 
         if (error) {
           console.error('❌ Error getting session:', error);
+        } else {
+          console.log('✅ Session check complete');
         }
 
         if (mounted) {
           if (session?.user) {
-            console.log('✅ Session found, user logged in');
-            await handleAuthStateChange('SIGNED_IN', session);
+            console.log('✅ User is logged in');
+            setUser(session.user);
+            setIsAuthenticated(true);
           } else {
-            console.log('ℹ️ No session found, user not logged in');
-            setIsReady(true);
+            console.log('ℹ️ No user session');
+            setUser(null);
+            setIsAuthenticated(false);
           }
+          setIsReady(true);
         }
       } catch (error) {
         console.error('❌ Error initializing auth:', error);
@@ -279,17 +281,10 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
 
-    // Suscribirse a cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔐 Auth state changed:', event, session?.user?.id || 'no-user');
-      handleAuthStateChange(event, session);
-    });
-
     return () => {
       mounted = false;
-      subscription?.unsubscribe();
     };
-  }, []); // Removemos handleAuthStateChange de las dependencias para evitar re-renders infinitos
+  }, []);
 
   // Función de login
   const signIn = async (email, password) => {
