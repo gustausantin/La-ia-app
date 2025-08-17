@@ -49,6 +49,7 @@ import toast from "react-hot-toast";
 // - RPC: get_reservation_stats_by_source(restaurant_id, start_date, end_date)
 // - RPC: get_agent_conversion_stats(restaurant_id)
 // - real-time: suscripción a cambios en reservations
+//
 
 // Estados de reserva con colores y acciones
 const RESERVATION_STATES = {
@@ -195,7 +196,7 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
         RESERVATION_STATES[reservation.status] || RESERVATION_STATES.pendiente;
     const channel =
         CHANNELS[reservation.channel || "manual"] || CHANNELS.manual;
-    const isAgentReservation = reservation.source === "agent"; // CORREGIDO - sin fallback
+    const isAgentReservation = reservation.source === "agent";
 
     const formatTime = (timeString) => {
         return timeString ? timeString.slice(0, 5) : "00:00";
@@ -380,34 +381,11 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
 // Componente principal
 function Reservas() {
     console.log('📅 Reservas component rendering...');
-    
-    const { restaurant, restaurantId, isReady, addNotification } =
-        useAuthContext();
+
+    const { restaurant, restaurantId, isReady, addNotification } = useAuthContext();
 
     const [loading, setLoading] = useState(true);
     const [reservations, setReservations] = useState([]);
-
-    // Si no está listo el contexto
-    if (!isReady) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-                    <p className="text-gray-600">Cargando reservas...</p>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">Gestión de Reservas</h1>
-                <p className="text-gray-600">Aquí puedes gestionar todas las reservas de tu restaurante.</p>
-            </div>
-        </div>
-    );
-}
     const [selectedReservations, setSelectedReservations] = useState(new Set());
     const [tables, setTables] = useState([]);
     const [agentStats, setAgentStats] = useState({
@@ -434,6 +412,18 @@ function Reservas() {
 
     // Subscription de real-time
     const [realtimeSubscription, setRealtimeSubscription] = useState(null);
+
+    // Si no está listo el contexto
+    if (!isReady) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
+                    <p className="text-gray-600">Cargando reservas...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Calcular rango de fechas
     const calculateDateRange = useCallback((period) => {
@@ -761,7 +751,7 @@ function Reservas() {
                 }
 
                 const { error } = await supabase
-                    .from("reservations")
+                    .from("reservas")
                     .update({
                         status: newStatus,
                         updated_at: new Date().toISOString(),
@@ -820,7 +810,7 @@ function Reservas() {
                 }
 
                 const { error } = await supabase
-                    .from("reservations")
+                    .from("reservas")
                     .update({
                         status: newStatus,
                         updated_at: new Date().toISOString(),
@@ -867,17 +857,6 @@ function Reservas() {
 
         return { total, confirmed, pending, covers, agentCount, manualCount };
     }, [filteredReservations]);
-
-    if (!isReady) {
-        return (
-            <div className="p-6 flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                    <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-                    <p className="text-gray-600">Cargando reservas...</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="max-w-7xl mx-auto space-y-6">
@@ -1203,17 +1182,17 @@ function Reservas() {
                                 : "No hay reservas para el período seleccionado"}
                         </p>
                         {!filters.search &&
-                            !filters.status &&
-                            !filters.channel &&
-                            !filters.source && (
-                                <button
-                                    onClick={() => setShowCreateModal(true)}
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Crear primera reserva
-                                </button>
-                            )}
+                        !filters.status &&
+                        !filters.channel &&
+                        !filters.source && (
+                            <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Crear primera reserva
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
@@ -1806,3 +1785,5 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
         </div>
     );
 };
+
+export default Reservas;
