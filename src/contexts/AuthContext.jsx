@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
       const { data, error } = await supabase
         .from('restaurants')
         .select('*')
-        .eq('owner_id', userId)
+        .eq('user_id', userId)
         .single();
 
       if (error) {
