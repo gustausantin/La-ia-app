@@ -19,6 +19,18 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [agentStatus, setAgentStatus] = useState({
+    active: true,
+    activeConversations: 0,
+    pendingActions: 0,
+    channels: {
+      vapi: true,
+      whatsapp: true,
+      email: true,
+      instagram: false,
+      facebook: false
+    }
+  });
 
   // Initialize session
   const initSession = async () => {
@@ -76,7 +88,7 @@ export const AuthProvider = ({ children }) => {
       const { data, error } = await supabase
         .from('restaurants')
         .select('*')
-        .eq('user_id', userId)
+        .eq('owner_id', userId)
         .single();
 
       if (error) {
@@ -259,11 +271,14 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     isReady,
     notifications,
+    agentStatus,
+    unreadCount: notifications.filter(n => !n.read).length,
     login,
     register,
     logout,
     addNotification,
     markNotificationAsRead,
+    markAllNotificationsAsRead: clearNotifications,
     clearNotifications,
     fetchRestaurantInfo
   };
