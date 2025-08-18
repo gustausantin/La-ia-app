@@ -1868,3 +1868,5 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
         </div>
     );
 };
+
+export default Mesas;

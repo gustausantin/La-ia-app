@@ -2552,3 +2552,5 @@ const AICampaignModal = ({
         </div>
     );
 };
+
+export default Clientes;

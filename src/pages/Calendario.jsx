@@ -54,7 +54,8 @@ import {
     Facebook,
     Zap,
     BarChart3,
-    Activity
+    Activity,
+    Brain
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -103,7 +104,7 @@ const TimeSlotInput = ({ label, value, onChange, icon: Icon }) => (
 // Componente principal
 function Calendario() {
     console.log('📆 Calendario component rendering...');
-    
+
     const { restaurant, agentStatus } = useAuthContext();
     const restaurantId = restaurant?.id;
 
@@ -1475,3 +1476,5 @@ function AgentSettingsModal({ onClose, agentSchedule, onUpdate }) {
         </div>
     );
 }
+
+export default Calendario;

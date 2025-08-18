@@ -1004,3 +1004,5 @@ function getChannelIcon(channel) {
     };
     return icons[channel?.toLowerCase()] || null;
 }
+
+export default Dashboard;
