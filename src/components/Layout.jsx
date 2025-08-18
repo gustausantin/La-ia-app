@@ -56,7 +56,7 @@ export default function Layout() {
             name: "Comunicación",
             path: "/comunicacion",
             icon: MessageSquare,
-            badge: agentStatus.activeConversations || 0,
+            badge: agentStatus?.activeConversations || 0,
         },
         { name: "Clientes", path: "/clientes", icon: Users, badge: null },
         { name: "Mesas", path: "/mesas", icon: Briefcase, badge: null },
@@ -71,7 +71,7 @@ export default function Layout() {
             name: "Agente IA",
             path: "/configuracion",
             icon: Bot,
-            badge: agentStatus.pendingActions || 0,
+            badge: agentStatus?.pendingActions || 0,
         },
         {
             name: "Configuración",
@@ -131,23 +131,21 @@ export default function Layout() {
                         </div>
                         <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                agentStatus.active
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-gray-100 text-gray-700"
+                                agentStatus?.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
                             }`}
                         >
-                            {agentStatus.active ? "Activo" : "Inactivo"}
+                            {agentStatus?.active ? "Activo" : "Inactivo"}
                         </span>
                     </div>
-                    {agentStatus.active && (
+                    {agentStatus?.active && (
                         <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                             <div className="flex items-center space-x-1 text-gray-600">
                                 <MessageCircle className="w-3 h-3" />
-                                <span className="font-medium">{agentStatus.activeConversations || 0}</span>
+                                <span className="font-medium">{agentStatus?.activeConversations || 0}</span>
                             </div>
                             <div className="flex items-center space-x-1 text-orange-600">
                                 <Activity className="w-3 h-3" />
-                                <span className="font-medium">{agentStatus.pendingActions || 0}</span>
+                                <span className="font-medium">{agentStatus?.pendingActions || 0}</span>
                             </div>
                         </div>
                     )}
@@ -165,19 +163,19 @@ export default function Layout() {
                     {/* Canales Activos - usando datos del contexto */}
                     <div className="flex items-center space-x-2 mt-3">
                         <Phone
-                            className={`w-4 h-4 ${agentStatus.channels?.vapi ? "text-green-600" : "text-gray-400"}`}
+                            className={`w-4 h-4 ${agentStatus?.channels?.vapi ? "text-green-600" : "text-gray-400"}`}
                         />
                         <MessageCircle
-                            className={`w-4 h-4 ${agentStatus.channels?.whatsapp ? "text-green-600" : "text-gray-400"}`}
+                            className={`w-4 h-4 ${agentStatus?.channels?.whatsapp ? "text-green-600" : "text-gray-400"}`}
                         />
                         <Mail
-                            className={`w-4 h-4 ${agentStatus.channels?.email ? "text-green-600" : "text-gray-400"}`}
+                            className={`w-4 h-4 ${agentStatus?.channels?.email ? "text-green-600" : "text-gray-400"}`}
                         />
                         <Instagram
-                            className={`w-4 h-4 ${agentStatus.channels?.instagram ? "text-green-600" : "text-gray-400"}`}
+                            className={`w-4 h-4 ${agentStatus?.channels?.instagram ? "text-green-600" : "text-gray-400"}`}
                         />
                         <Facebook
-                            className={`w-4 h-4 ${agentStatus.channels?.facebook ? "text-green-600" : "text-gray-400"}`}
+                            className={`w-4 h-4 ${agentStatus?.channels?.facebook ? "text-green-600" : "text-gray-400"}`}
                         />
                     </div>
                 </div>
