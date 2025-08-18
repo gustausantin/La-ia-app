@@ -262,16 +262,41 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = async () => {
     try {
+      console.log('🚪 Cerrando sesión...');
+      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
+      // Limpiar completamente el estado
       setUser(null);
       setIsAuthenticated(false);
       setRestaurant(null);
       setRestaurantId(null);
       setNotifications([]);
+      setAgentStatus({
+        active: false,
+        activeConversations: 0,
+        pendingActions: 0,
+        channels: {
+          vapi: false,
+          whatsapp: false,
+          email: false,
+          instagram: false,
+          facebook: false
+        }
+      });
 
+      // Limpiar localStorage si hay datos guardados
+      localStorage.removeItem('supabase.auth.token');
+      
+      console.log('✅ Sesión cerrada correctamente');
       toast.success('Sesión cerrada correctamente');
+      
+      // Forzar recarga para limpiar completamente
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 500);
+      
     } catch (error) {
       console.error('❌ Logout error:', error);
       toast.error('Error al cerrar sesión');
@@ -317,6 +342,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    signOut: logout, // Alias para compatibilidad con Layout
     addNotification,
     markNotificationAsRead,
     markAllNotificationsAsRead: clearNotifications,
