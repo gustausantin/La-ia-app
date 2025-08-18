@@ -1,3 +1,4 @@
+
 // src/pages/Comunicacion.jsx - Centro de Comunicación OMNICANAL PREMIUM con IA
 import React, {
     useState,
@@ -119,7 +120,7 @@ import toast from "react-hot-toast";
 // REAL-TIME:
 // - Suscripción a nuevos mensajes
 // - Suscripción a cambios de estado de conversaciones
-//
+
 // Canales de comunicación mejorados
 const COMMUNICATION_CHANNELS = {
     whatsapp: {
@@ -273,7 +274,8 @@ const LoadingState = () => (
                 Cargando centro de comunicación...
             </p>
             <p className="text-sm text-gray-600">
-                Conectando con {Math.floor(Math.random() * 5 + 3)} canales activos
+                Conectando con {Math.floor(Math.random() * 5 + 3)} canales
+                activos
             </p>
         </div>
     </div>
@@ -420,7 +422,7 @@ const ConversationItem = ({ conversation, isSelected, onSelect }) => {
                     </div>
                     <div
                         className={`
-                        absolute -bottom-1 -right-1 w-6 h-6 rounded-full
+                        absolute -bottom-1 -right-1 w-6 h-6 rounded-full 
                         flex items-center justify-center border-2 border-white
                         ${channel.bgColor}
                     `}
@@ -992,10 +994,10 @@ const CustomerInfoPanel = ({ conversation, onClose }) => {
 };
 
 // Componente principal
-function Comunicacion() {
+export default function Comunicacion() {
     console.log('💬 Comunicacion component rendering...');
-
-    const { restaurant, restaurantId, isReady } = useAuthContext();
+    
+    const { restaurant, restaurantId, isReady, addNotification } = useAuthContext();
 
     // Estados principales
     const [loading, setLoading] = useState(true);
@@ -1375,7 +1377,7 @@ function Comunicacion() {
         //         loadConversations();
         //     })
         //     .subscribe();
-        //
+
         // return () => {
         //     subscription.unsubscribe();
         // };
@@ -1566,7 +1568,14 @@ function Comunicacion() {
         );
 
         toast.info("Conversación escalada a atención humana");
-    }, [selectedConversation]);
+        if (addNotification) {
+            addNotification({
+                type: 'system',
+                message: `Conversación escalada: ${selectedConversation.customer_name}`,
+                priority: 'normal'
+            });
+        }
+    }, [selectedConversation, addNotification]);
 
     const handleResolveConversation = useCallback(async () => {
         if (!selectedConversation) return;
@@ -1586,7 +1595,14 @@ function Comunicacion() {
         );
 
         toast.success("Conversación marcada como resuelta");
-    }, [selectedConversation]);
+        if (addNotification) {
+            addNotification({
+                type: 'system',
+                message: `Conversación resuelta: ${selectedConversation.customer_name}`,
+                priority: 'normal'
+            });
+        }
+    }, [selectedConversation, addNotification]);
 
     if (!isReady) {
         return <LoadingState />;
@@ -1914,8 +1930,7 @@ function Comunicacion() {
                                                             </span>
                                                             <span>
                                                                 {
-                                                                    selectedConversation
-                                                                        .customer_phone
+                                                                    selectedConversation.customer_phone
                                                                 }
                                                             </span>
                                                         </div>
@@ -2013,21 +2028,21 @@ function Comunicacion() {
                                                     </div>
                                                     <div
                                                         className={`
-                                                            flex items-center gap-2
-                                                            ${
-                                                                selectedConversation
-                                                                    .ai_insights
-                                                                    .sentiment ===
-                                                                "positive"
-                                                                    ? "text-green-600"
-                                                                    : selectedConversation
+                                                        flex items-center gap-2
+                                                        ${
+                                                            selectedConversation
+                                                                .ai_insights
+                                                                .sentiment ===
+                                                            "positive"
+                                                                ? "text-green-600"
+                                                                : selectedConversation
                                                                         .ai_insights
                                                                         .sentiment ===
-                                                                        "negative"
-                                                                      ? "text-red-600"
-                                                                      : "text-gray-600"
-                                                            }
-                                                        `}
+                                                                    "negative"
+                                                                  ? "text-red-600"
+                                                                  : "text-gray-600"
+                                                        }
+                                                    `}
                                                     >
                                                         {selectedConversation
                                                             .ai_insights
@@ -2035,9 +2050,9 @@ function Comunicacion() {
                                                         "positive" ? (
                                                             <ThumbsUp className="w-4 h-4" />
                                                         ) : selectedConversation
-                                                                .ai_insights
-                                                                .sentiment ===
-                                                            "negative" ? (
+                                                              .ai_insights
+                                                              .sentiment ===
+                                                          "negative" ? (
                                                             <ThumbsDown className="w-4 h-4" />
                                                         ) : (
                                                             <Activity className="w-4 h-4" />
@@ -2187,8 +2202,7 @@ function Comunicacion() {
                                                             value={newMessage}
                                                             onChange={(e) =>
                                                                 setNewMessage(
-                                                                    e
-                                                                        .target
+                                                                    e.target
                                                                         .value,
                                                                 )
                                                             }
@@ -2224,14 +2238,14 @@ function Comunicacion() {
                                                             sendingMessage
                                                         }
                                                         className={`
-                                                                p-3 rounded-xl transition-all flex items-center justify-center
-                                                                ${
-                                                                    newMessage.trim() &&
-                                                                    !sendingMessage
-                                                                        ? "bg-purple-600 text-white hover:bg-purple-700 shadow-lg"
-                                                                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                                                }
-                                                            `}
+                                                            p-3 rounded-xl transition-all flex items-center justify-center
+                                                            ${
+                                                                newMessage.trim() &&
+                                                                !sendingMessage
+                                                                    ? "bg-purple-600 text-white hover:bg-purple-700 shadow-lg"
+                                                                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                            }
+                                                        `}
                                                     >
                                                         {sendingMessage ? (
                                                             <RefreshCw className="w-5 h-5 animate-spin" />
@@ -2508,18 +2522,10 @@ function Comunicacion() {
                                                             <Cell
                                                                 key={`cell-${index}`}
                                                                 fill={
-                                                                    COMMUNICATION_CHANNELS[
-                                                                        entry.channel.toLowerCase()
-                                                                    ]?.color
-                                                                        .replace(
-                                                                            "text-",
-                                                                            "#",
-                                                                        )
-                                                                        .replace(
-                                                                            "-600",
-                                                                            "",
-                                                                        ) ||
-                                                                    "#6B7280"
+                                                                    CHART_COLORS[
+                                                                        index %
+                                                                            CHART_COLORS.length
+                                                                    ]
                                                                 }
                                                             />
                                                         ),
@@ -2737,5 +2743,3 @@ function Comunicacion() {
         </div>
     );
 }
-
-export default Comunicacion;
