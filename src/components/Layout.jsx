@@ -27,7 +27,7 @@ import {
 
 export default function Layout() {
     console.log('🏗️ Layout component rendering...');
-    
+
     // Obtener TODOS los datos necesarios del contexto global
     const {
         user,
@@ -104,6 +104,13 @@ export default function Layout() {
         return icons[type] || Bell;
     };
 
+    // Mock data for conversations to prevent errors
+    const mockStats = {
+        activeConversations: 0,
+        pendingReservations: 0,
+        todayRevenue: 0
+    };
+
     return (
         <div className="flex h-screen bg-gray-50">
             {/* Sidebar */}
@@ -136,15 +143,11 @@ export default function Layout() {
                         <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                             <div className="flex items-center space-x-1 text-gray-600">
                                 <MessageCircle className="w-3 h-3" />
-                                <span>
-                                    {agentStatus.activeConversations} activas
-                                </span>
+                                <span className="font-medium">{agentStatus.activeConversations || 0}</span>
                             </div>
                             <div className="flex items-center space-x-1 text-orange-600">
                                 <Activity className="w-3 h-3" />
-                                <span>
-                                    {agentStatus.pendingActions} pendientes
-                                </span>
+                                <span className="font-medium">{agentStatus.pendingActions || 0}</span>
                             </div>
                         </div>
                     )}
