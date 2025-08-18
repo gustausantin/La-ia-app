@@ -1,3 +1,4 @@
+
 // src/pages/Calendario.jsx - Gestión PREMIUM de horarios y disponibilidad con IA
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -6,6 +7,146 @@ import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMon
 import { es } from 'date-fns/locale';
 import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, Clock, Users, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+// Modal de eventos
+function EventModal({ event, date, onSave, onClose, onDelete }) {
+    const [formData, setFormData] = useState({
+        title: event?.title || '',
+        type: event?.type || 'reservation',
+        time: event?.time || '12:00',
+        customer_name: event?.details?.customer_name || '',
+        customer_phone: event?.details?.customer_phone || '',
+        party_size: event?.details?.party_size || 2,
+        special_requests: event?.details?.special_requests || '',
+        status: event?.status || 'pendiente'
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave(formData);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-gray-100">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        {event ? 'Editar Evento' : 'Nuevo Evento'}
+                    </h3>
+                    {date && (
+                        <p className="text-sm text-gray-600 mt-1">
+                            {format(date, "d 'de' MMMM, yyyy", { locale: es })}
+                        </p>
+                    )}
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Título
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Hora
+                        </label>
+                        <input
+                            type="time"
+                            value={formData.time}
+                            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            required
+                        />
+                    </div>
+
+                    {formData.type === 'reservation' && (
+                        <>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Nombre del cliente
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.customer_name}
+                                    onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Número de personas
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="20"
+                                    value={formData.party_size}
+                                    onChange={(e) => setFormData({ ...formData, party_size: parseInt(e.target.value) })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Estado
+                                </label>
+                                <select
+                                    value={formData.status}
+                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                >
+                                    <option value="pendiente">Pendiente</option>
+                                    <option value="confirmada">Confirmada</option>
+                                    <option value="sentada">Sentada</option>
+                                    <option value="completada">Completada</option>
+                                    <option value="cancelada">Cancelada</option>
+                                </select>
+                            </div>
+                        </>
+                    )}
+
+                    <div className="flex justify-between pt-4">
+                        <div>
+                            {event && onDelete && (
+                                <button
+                                    type="button"
+                                    onClick={onDelete}
+                                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                >
+                                    Eliminar
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                            >
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
 
 function Calendario() {
     const { restaurantId } = useAuthContext();
@@ -331,146 +472,6 @@ function Calendario() {
                     }}
                 />
             )}
-        </div>
-    );
-}
-
-// Modal de eventos
-function EventModal({ event, date, onSave, onClose, onDelete }) {
-    const [formData, setFormData] = useState({
-        title: event?.title || '',
-        type: event?.type || 'reservation',
-        time: event?.time || '12:00',
-        customer_name: event?.details?.customer_name || '',
-        customer_phone: event?.details?.customer_phone || '',
-        party_size: event?.details?.party_size || 2,
-        special_requests: event?.details?.special_requests || '',
-        status: event?.status || 'pendiente'
-    });
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave(formData);
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-gray-100">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                        {event ? 'Editar Evento' : 'Nuevo Evento'}
-                    </h3>
-                    {date && (
-                        <p className="text-sm text-gray-600 mt-1">
-                            {format(date, "d 'de' MMMM, yyyy", { locale: es })}
-                        </p>
-                    )}
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Título
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Hora
-                        </label>
-                        <input
-                            type="time"
-                            value={formData.time}
-                            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            required
-                        />
-                    </div>
-
-                    {formData.type === 'reservation' && (
-                        <>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Nombre del cliente
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.customer_name}
-                                    onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Número de personas
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="20"
-                                    value={formData.party_size}
-                                    onChange={(e) => setFormData({ ...formData, party_size: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Estado
-                                </label>
-                                <select
-                                    value={formData.status}
-                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                >
-                                    <option value="pendiente">Pendiente</option>
-                                    <option value="confirmada">Confirmada</option>
-                                    <option value="sentada">Sentada</option>
-                                    <option value="completada">Completada</option>
-                                    <option value="cancelada">Cancelada</option>
-                                </select>
-                            </div>
-                        </>
-                    )}
-
-                    <div className="flex justify-between pt-4">
-                        <div>
-                            {event && onDelete && (
-                                <button
-                                    type="button"
-                                    onClick={onDelete}
-                                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                >
-                                    Eliminar
-                                </button>
-                            )}
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                            >
-                                Guardar
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
         </div>
     );
 }
