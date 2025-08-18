@@ -12,12 +12,10 @@ const Calendario = () => {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Obtener días del mes actual
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  // Funciones de navegación
   const handlePreviousMonth = () => {
     setCurrentDate(subMonths(currentDate, 1));
   };
@@ -26,7 +24,6 @@ const Calendario = () => {
     setCurrentDate(addMonths(currentDate, 1));
   };
 
-  // Cargar reservas
   useEffect(() => {
     setLoading(true);
     setTimeout(() => {
@@ -46,28 +43,18 @@ const Calendario = () => {
           personas: 2,
           hora: '19:30',
           estado: 'pendiente'
-        },
-        {
-          id: 3,
-          fecha: selectedDate,
-          cliente: 'Carlos López',
-          personas: 6,
-          hora: '21:00',
-          estado: 'confirmada'
         }
       ]);
       setLoading(false);
     }, 1000);
-  }, [currentDate, selectedDate]);
+  }, [currentDate]);
 
-  // Obtener reservas para una fecha específica
   const getReservationsForDate = (date) => {
     return reservations.filter(reservation =>
       isSameDay(reservation.fecha, date)
     );
   };
 
-  // Obtener reservas del día seleccionado
   const selectedDateReservations = getReservationsForDate(selectedDate);
 
   return (
