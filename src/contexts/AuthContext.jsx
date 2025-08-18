@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -45,46 +44,33 @@ export const AuthProvider = ({ children }) => {
     return () => clearTimeout(forceReadyTimeout);
   }, [isReady]);
 
-  // Initialize session
+  // Función para verificar sesión inicial
   const initSession = async () => {
-    console.log('🚀 Initializing auth...');
-    
     try {
+      console.log('🚀 Initializing auth...');
+
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error) {
-        console.error('❌ Error getting session:', error);
-        setUser(null);
-        setIsAuthenticated(false);
-        setRestaurant(null);
-        setRestaurantId(null);
-      } else if (session?.user) {
-        console.log('✅ Session found:', session.user.email);
-        setUser(session.user);
-        setIsAuthenticated(true);
+        console.error('❌ Error getting session:', error.message);
+        setIsReady(true);
+        return;
+      }
 
-        // Fetch restaurant info asíncrono, no bloqueante
-        fetchRestaurantInfo(session.user.id).catch(error => {
-          console.error('❌ Error fetching restaurant (non-blocking):', error);
-        });
+      if (session?.user) {
+        console.log('✅ Session found:', session.user.email);
+        await loadUserData(session.user);
+        console.log('✅ Setting isReady = true');
       } else {
         console.log('❌ No session found');
-        setUser(null);
-        setIsAuthenticated(false);
-        setRestaurant(null);
-        setRestaurantId(null);
       }
+
+      // SIEMPRE marcar como ready
+      setIsReady(true);
     } catch (error) {
-      console.error('❌ Error in initSession:', error);
-      setUser(null);
-      setIsAuthenticated(false);
-      setRestaurant(null);
-      setRestaurantId(null);
+      console.error('❌ Error in initSession:', error.message);
+      setIsReady(true);
     }
-    
-    // SIEMPRE establecer isReady como true al final
-    console.log('✅ FORZANDO isReady = true');
-    setIsReady(true);
   };
 
   // Fetch restaurant information
@@ -127,7 +113,7 @@ export const AuthProvider = ({ children }) => {
       if (mappingError) {
         if (mappingError.code === 'PGRST116') {
           console.log('🏪 No restaurant mapping found, trying direct restaurant query');
-          
+
           // Try to find restaurant directly by auth_user_id
           const { data: restaurantData, error: restaurantError } = await supabase
             .from('restaurants')
@@ -155,7 +141,7 @@ export const AuthProvider = ({ children }) => {
           }
           return;
         }
-        
+
         console.error('❌ Database error fetching restaurant mapping:', mappingError);
         setRestaurant(null);
         setRestaurantId(null);
@@ -178,6 +164,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Helper to load user data including restaurant information
+  const loadUserData = async (user) => {
+    setUser(user);
+    setIsAuthenticated(true);
+    await fetchRestaurantInfo(user.id);
+  };
+
+
   // Auth state listener
   useEffect(() => {
     let isMounted = true;
@@ -191,13 +185,7 @@ export const AuthProvider = ({ children }) => {
 
         if (event === 'SIGNED_IN' && session) {
           console.log('✅ User signed in:', session.user.email);
-          setUser(session.user);
-          setIsAuthenticated(true);
-          
-          // Fetch restaurant info asíncrono
-          fetchRestaurantInfo(session.user.id).catch(error => {
-            console.error('❌ Error fetching restaurant after sign in:', error);
-          });
+          await loadUserData(session.user);
         } else if (event === 'SIGNED_OUT') {
           console.log('👋 User signed out');
           setUser(null);
@@ -205,7 +193,7 @@ export const AuthProvider = ({ children }) => {
           setRestaurant(null);
           setRestaurantId(null);
         }
-        
+
         // Asegurar que isReady siempre esté en true después de cualquier cambio
         if (!isReady) {
           console.log('🔧 Auth state changed - Setting isReady = true');
@@ -282,7 +270,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       console.log('🚪 Cerrando sesión...');
-      
+
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
@@ -307,15 +295,15 @@ export const AuthProvider = ({ children }) => {
 
       // Limpiar localStorage si hay datos guardados
       localStorage.removeItem('supabase.auth.token');
-      
+
       console.log('✅ Sesión cerrada correctamente');
       toast.success('Sesión cerrada correctamente');
-      
+
       // Forzar recarga para limpiar completamente
       setTimeout(() => {
         window.location.href = '/login';
       }, 500);
-      
+
     } catch (error) {
       console.error('❌ Logout error:', error);
       toast.error('Error al cerrar sesión');
