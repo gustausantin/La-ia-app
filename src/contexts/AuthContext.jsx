@@ -33,11 +33,23 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
+  // TIMEOUT DE SEGURIDAD - Forzar isReady después de 3 segundos
+  useEffect(() => {
+    const forceReadyTimeout = setTimeout(() => {
+      if (!isReady) {
+        console.log('⏰ TIMEOUT: Forzando isReady = true después de 3 segundos');
+        setIsReady(true);
+      }
+    }, 3000);
+
+    return () => clearTimeout(forceReadyTimeout);
+  }, [isReady]);
+
   // Initialize session
   const initSession = async () => {
+    console.log('🚀 Initializing auth...');
+    
     try {
-      console.log('🚀 Initializing auth...');
-
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error) {
@@ -46,18 +58,14 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         setRestaurant(null);
         setRestaurantId(null);
-        return;
-      }
-
-      if (session?.user) {
+      } else if (session?.user) {
         console.log('✅ Session found:', session.user.email);
         setUser(session.user);
         setIsAuthenticated(true);
 
-        // Fetch restaurant info but don't block
+        // Fetch restaurant info asíncrono, no bloqueante
         fetchRestaurantInfo(session.user.id).catch(error => {
           console.error('❌ Error fetching restaurant (non-blocking):', error);
-          // Continue anyway
         });
       } else {
         console.log('❌ No session found');
@@ -72,11 +80,11 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setRestaurant(null);
       setRestaurantId(null);
-    } finally {
-      // ALWAYS set isReady to true, no matter what
-      console.log('✅ Setting isReady = true');
-      setIsReady(true);
     }
+    
+    // SIEMPRE establecer isReady como true al final
+    console.log('✅ FORZANDO isReady = true');
+    setIsReady(true);
   };
 
   // Fetch restaurant information
@@ -174,6 +182,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
 
+    // 1. PRIMERO configurar el listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔐 Auth state changed:', event);
@@ -185,7 +194,7 @@ export const AuthProvider = ({ children }) => {
           setUser(session.user);
           setIsAuthenticated(true);
           
-          // Fetch restaurant info but don't block
+          // Fetch restaurant info asíncrono
           fetchRestaurantInfo(session.user.id).catch(error => {
             console.error('❌ Error fetching restaurant after sign in:', error);
           });
@@ -196,13 +205,23 @@ export const AuthProvider = ({ children }) => {
           setRestaurant(null);
           setRestaurantId(null);
         }
+        
+        // Asegurar que isReady siempre esté en true después de cualquier cambio
+        if (!isReady) {
+          console.log('🔧 Auth state changed - Setting isReady = true');
+          setIsReady(true);
+        }
       }
     );
 
-    // Initialize session only once on mount
-    if (isMounted) {
-      initSession();
-    }
+    // 2. LUEGO inicializar la sesión
+    initSession().then(() => {
+      console.log('🎯 initSession completed');
+    }).catch(error => {
+      console.error('❌ initSession failed:', error);
+      // Incluso si falla, establecer isReady
+      setIsReady(true);
+    });
 
     return () => {
       isMounted = false;

@@ -27,13 +27,13 @@ export default function Dashboard() {
     avgRating: 4.6
   });
 
-  // Protección - si no está autenticado, mostrar loading
-  if (!isReady || !isAuthenticated) {
+  // Si no está listo aún, mostrar loading mínimo
+  if (!isReady) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Bot className="w-8 h-8 animate-pulse text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600">Verificando autenticación...</p>
+          <p className="text-gray-600">Cargando dashboard...</p>
         </div>
       </div>
     );

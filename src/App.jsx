@@ -32,16 +32,15 @@ function AppContent() {
     timestamp: new Date().toISOString() 
   });
 
-  // Mostrar loading solo por un tiempo muy breve
+  // Mostrar loading solo si realmente no está listo
   if (!isReady) {
     console.log('❌ App not ready, showing loading...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="text-center">
-          <Bot className="w-16 h-16 text-purple-600 mx-auto mb-4 animate-pulse" />
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Iniciando La-IA...</h2>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="text-sm text-gray-500 mt-4">Cargando aplicación...</p>
+          <Bot className="w-12 h-12 text-purple-600 mx-auto mb-4 animate-pulse" />
+          <h2 className="text-lg font-semibold text-gray-800 mb-2">La-IA</h2>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto"></div>
         </div>
       </div>
     );
