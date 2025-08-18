@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -59,7 +60,9 @@ export const AuthProvider = ({ children }) => {
           await fetchRestaurantInfo(session.user.id);
         } catch (restaurantError) {
           console.error('❌ Error fetching restaurant:', restaurantError);
-          // Continue anyway, restaurant will be created when needed
+          // Set some default values and continue
+          setRestaurant(null);
+          setRestaurantId(null);
         }
       } else {
         console.log('❌ No session found');
@@ -85,8 +88,8 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🔍 Fetching restaurant info for user', userId);
 
-      // Use user_restaurant_mapping to get the restaurant
-      const { data, error } = await supabase
+      // First try to get restaurant from user_restaurant_mapping
+      const { data: mappingData, error: mappingError } = await supabase
         .from('user_restaurant_mapping')
         .select(`
           role,
@@ -117,23 +120,48 @@ export const AuthProvider = ({ children }) => {
         .eq('auth_user_id', userId)
         .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          console.log('🏪 No restaurant mapping found, will create when needed');
-          setRestaurant(null);
-          setRestaurantId(null);
+      if (mappingError) {
+        if (mappingError.code === 'PGRST116') {
+          console.log('🏪 No restaurant mapping found, trying direct restaurant query');
+          
+          // Try to find restaurant directly by auth_user_id
+          const { data: restaurantData, error: restaurantError } = await supabase
+            .from('restaurants')
+            .select('*')
+            .eq('auth_user_id', userId)
+            .single();
+
+          if (restaurantError) {
+            if (restaurantError.code === 'PGRST116') {
+              console.log('🏪 No restaurant found, will create when needed');
+              setRestaurant(null);
+              setRestaurantId(null);
+              return;
+            }
+            console.error('❌ Database error fetching restaurant:', restaurantError);
+            setRestaurant(null);
+            setRestaurantId(null);
+            return;
+          }
+
+          if (restaurantData) {
+            console.log('✅ Restaurant found directly:', restaurantData.name);
+            setRestaurant(restaurantData);
+            setRestaurantId(restaurantData.id);
+          }
           return;
         }
-        console.error('❌ Database error fetching restaurant:', error);
+        
+        console.error('❌ Database error fetching restaurant mapping:', mappingError);
         setRestaurant(null);
         setRestaurantId(null);
         return;
       }
 
-      if (data && data.restaurant) {
-        console.log('✅ Restaurant info fetched successfully:', data.restaurant.name);
-        setRestaurant(data.restaurant);
-        setRestaurantId(data.restaurant.id);
+      if (mappingData && mappingData.restaurant) {
+        console.log('✅ Restaurant info fetched successfully:', mappingData.restaurant.name);
+        setRestaurant(mappingData.restaurant);
+        setRestaurantId(mappingData.restaurant.id);
       } else {
         console.log('Restaurant will be created when needed');
         setRestaurant(null);
@@ -143,10 +171,6 @@ export const AuthProvider = ({ children }) => {
       console.error('❌ Error fetching restaurant:', error);
       setRestaurant(null);
       setRestaurantId(null);
-    } finally {
-      // Always set ready to true after restaurant fetch
-      console.log('✅ Restaurant fetch complete, setting isReady = true');
-      setIsReady(true);
     }
   };
 
@@ -168,7 +192,6 @@ export const AuthProvider = ({ children }) => {
             await fetchRestaurantInfo(session.user.id);
           } catch (error) {
             console.error('❌ Error fetching restaurant after sign in:', error);
-            setIsReady(true); // Set ready even on error
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('👋 User signed out');
@@ -176,10 +199,6 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(false);
           setRestaurant(null);
           setRestaurantId(null);
-          setIsReady(true); // Set ready after sign out
-        } else if (event === 'INITIAL_SESSION') {
-          // Don't set ready here, let initSession handle it
-          console.log('Initial session event - not setting ready here');
         }
       }
     );
