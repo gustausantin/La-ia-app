@@ -1,160 +1,16 @@
 
-// src/pages/Calendario.jsx - Gestión PREMIUM de horarios y disponibilidad con IA
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO } from 'date-fns';
+import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, Clock, Users, MapPin } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, Clock, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-// Modal de eventos
-function EventModal({ event, date, onSave, onClose, onDelete }) {
-    const [formData, setFormData] = useState({
-        title: event?.title || '',
-        type: event?.type || 'reservation',
-        time: event?.time || '12:00',
-        customer_name: event?.details?.customer_name || '',
-        customer_phone: event?.details?.customer_phone || '',
-        party_size: event?.details?.party_size || 2,
-        special_requests: event?.details?.special_requests || '',
-        status: event?.status || 'pendiente'
-    });
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave(formData);
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-gray-100">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                        {event ? 'Editar Evento' : 'Nuevo Evento'}
-                    </h3>
-                    {date && (
-                        <p className="text-sm text-gray-600 mt-1">
-                            {format(date, "d 'de' MMMM, yyyy", { locale: es })}
-                        </p>
-                    )}
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Título
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Hora
-                        </label>
-                        <input
-                            type="time"
-                            value={formData.time}
-                            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            required
-                        />
-                    </div>
-
-                    {formData.type === 'reservation' && (
-                        <>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Nombre del cliente
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.customer_name}
-                                    onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Número de personas
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="20"
-                                    value={formData.party_size}
-                                    onChange={(e) => setFormData({ ...formData, party_size: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Estado
-                                </label>
-                                <select
-                                    value={formData.status}
-                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                >
-                                    <option value="pendiente">Pendiente</option>
-                                    <option value="confirmada">Confirmada</option>
-                                    <option value="sentada">Sentada</option>
-                                    <option value="completada">Completada</option>
-                                    <option value="cancelada">Cancelada</option>
-                                </select>
-                            </div>
-                        </>
-                    )}
-
-                    <div className="flex justify-between pt-4">
-                        <div>
-                            {event && onDelete && (
-                                <button
-                                    type="button"
-                                    onClick={onDelete}
-                                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                >
-                                    Eliminar
-                                </button>
-                            )}
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                            >
-                                Guardar
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-}
 
 function Calendario() {
     const { restaurantId } = useAuthContext();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [events, setEvents] = useState([]);
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [showEventModal, setShowEventModal] = useState(false);
-    const [selectedEvent, setSelectedEvent] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Cargar eventos del calendario
@@ -238,36 +94,6 @@ function Calendario() {
         return events.filter(event => event.date === dateStr);
     };
 
-    // Manejar clic en día
-    const handleDayClick = (date) => {
-        setSelectedDate(date);
-        const dayEvents = getEventsForDate(date);
-        if (dayEvents.length === 1) {
-            setSelectedEvent(dayEvents[0]);
-            setShowEventModal(true);
-        } else if (dayEvents.length > 1) {
-            // Mostrar lista de eventos para ese día
-            setShowEventModal(true);
-        } else {
-            // Crear nuevo evento para ese día
-            setSelectedEvent(null);
-            setShowEventModal(true);
-        }
-    };
-
-    // Manejar guardar evento
-    const handleSaveEvent = async (eventData) => {
-        try {
-            // Aquí iría la lógica para guardar/actualizar eventos
-            toast.success('Evento guardado correctamente');
-            setShowEventModal(false);
-            loadEvents();
-        } catch (error) {
-            console.error('Error saving event:', error);
-            toast.error('Error al guardar evento');
-        }
-    };
-
     const days = getDaysInMonth();
 
     if (loading) {
@@ -294,14 +120,7 @@ function Calendario() {
                         Gestiona reservas y eventos de tu restaurante
                     </p>
                 </div>
-                <button
-                    onClick={() => {
-                        setSelectedDate(new Date());
-                        setSelectedEvent(null);
-                        setShowEventModal(true);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
+                <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                     <Plus className="w-4 h-4" />
                     Nuevo Evento
                 </button>
@@ -343,17 +162,14 @@ function Calendario() {
                     {days.map(day => {
                         const dayEvents = getEventsForDate(day);
                         const isToday = isSameDay(day, new Date());
-                        const isSelected = selectedDate && isSameDay(day, selectedDate);
 
                         return (
                             <div
                                 key={day.toString()}
-                                onClick={() => handleDayClick(day)}
                                 className={`
                                     min-h-[120px] p-2 border-b border-r border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors
                                     ${!isSameMonth(day, currentDate) ? 'text-gray-400 bg-gray-50' : ''}
                                     ${isToday ? 'bg-blue-50' : ''}
-                                    ${isSelected ? 'bg-purple-50' : ''}
                                 `}
                             >
                                 <div className={`
@@ -396,82 +212,32 @@ function Calendario() {
                 </div>
             </div>
 
-            {/* Lista de eventos del día seleccionado */}
-            {selectedDate && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Eventos del {format(selectedDate, "d 'de' MMMM", { locale: es })}
-                    </h3>
-                    <div className="space-y-3">
-                        {getEventsForDate(selectedDate).map(event => (
-                            <div
-                                key={event.id}
-                                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
-                                onClick={() => {
-                                    setSelectedEvent(event);
-                                    setShowEventModal(true);
-                                }}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`
-                                        w-3 h-3 rounded-full
-                                        ${event.type === 'reservation' ? 
-                                            event.status === 'confirmada' ? 'bg-green-500' :
-                                            event.status === 'pendiente' ? 'bg-yellow-500' :
-                                            'bg-gray-500'
-                                        : 'bg-purple-500'}
-                                    `} />
-                                    <div>
-                                        <div className="font-medium text-gray-900">{event.title}</div>
-                                        <div className="text-sm text-gray-600 flex items-center gap-2">
-                                            <Clock className="w-4 h-4" />
-                                            {event.time}
-                                            {event.details.party_size && (
-                                                <>
-                                                    <Users className="w-4 h-4" />
-                                                    {event.details.party_size} personas
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className={`
-                                    px-3 py-1 text-xs font-medium rounded-full
-                                    ${event.status === 'confirmada' ? 'bg-green-100 text-green-800' :
-                                      event.status === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
-                                      'bg-gray-100 text-gray-800'}
-                                `}>
-                                    {event.status}
-                                </div>
-                            </div>
-                        ))}
-                        {getEventsForDate(selectedDate).length === 0 && (
-                            <div className="text-center py-8 text-gray-500">
-                                <CalendarIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                                <p>No hay eventos para este día</p>
-                            </div>
-                        )}
+            {/* Resumen de eventos */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Resumen del mes
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">
+                            {events.length}
+                        </div>
+                        <div className="text-sm text-blue-800">Total reservas</div>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">
+                            {events.filter(e => e.status === 'confirmada').length}
+                        </div>
+                        <div className="text-sm text-green-800">Confirmadas</div>
+                    </div>
+                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                        <div className="text-2xl font-bold text-yellow-600">
+                            {events.filter(e => e.status === 'pendiente').length}
+                        </div>
+                        <div className="text-sm text-yellow-800">Pendientes</div>
                     </div>
                 </div>
-            )}
-
-            {/* Modal de eventos */}
-            {showEventModal && (
-                <EventModal
-                    event={selectedEvent}
-                    date={selectedDate}
-                    onSave={handleSaveEvent}
-                    onClose={() => {
-                        setShowEventModal(false);
-                        setSelectedEvent(null);
-                    }}
-                    onDelete={() => {
-                        // Lógica de eliminación
-                        setShowEventModal(false);
-                        loadEvents();
-                    }}
-                />
-            )}
+            </div>
         </div>
     );
 }
