@@ -1,40 +1,46 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuthContext } from '../contexts/AuthContext';
-import { Calendar, Clock, Users, Plus, Search, Filter } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, Clock, Users, Phone, Mail, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 export default function Reservas() {
-  const { restaurant } = useAuthContext();
-  const [reservas, setReservas] = useState([
+  console.log('📅 Reservas component rendering...');
+  
+  const [reservas] = useState([
     {
       id: 1,
-      cliente: 'María García',
+      cliente: 'María González',
       fecha: '2024-01-18',
-      hora: '20:00',
+      hora: '19:00',
       personas: 4,
-      mesa: 12,
+      mesa: 5,
+      telefono: '+34 666 777 888',
+      email: 'maria@email.com',
       estado: 'confirmada',
-      telefono: '+34 666 123 456'
+      notas: 'Cumpleaños, necesita tarta'
     },
     {
       id: 2,
-      cliente: 'Juan Pérez',
+      cliente: 'Carlos Martín',
       fecha: '2024-01-18',
       hora: '19:30',
       personas: 2,
-      mesa: 8,
+      mesa: 2,
+      telefono: '+34 555 444 333',
+      email: 'carlos@email.com',
       estado: 'pendiente',
-      telefono: '+34 666 789 012'
+      notas: ''
     },
     {
       id: 3,
-      cliente: 'Ana Martínez',
-      fecha: '2024-01-19',
-      hora: '21:00',
+      cliente: 'Ana López',
+      fecha: '2024-01-18',
+      hora: '20:00',
       personas: 6,
-      mesa: 15,
+      mesa: 8,
+      telefono: '+34 777 888 999',
+      email: 'ana@email.com',
       estado: 'confirmada',
-      telefono: '+34 666 345 678'
+      notas: 'Cena de empresa'
     }
   ]);
 
@@ -51,134 +57,142 @@ export default function Reservas() {
     }
   };
 
+  const getEstadoIcon = (estado) => {
+    switch (estado) {
+      case 'confirmada':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'pendiente':
+        return <AlertCircle className="w-4 h-4" />;
+      case 'cancelada':
+        return <XCircle className="w-4 h-4" />;
+      default:
+        return <AlertCircle className="w-4 h-4" />;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reservas</h1>
-          <p className="text-gray-600">Gestiona las reservas de {restaurant?.name || 'tu restaurante'}</p>
+          <p className="text-gray-600 mt-1">Gestiona las reservas de tu restaurante</p>
         </div>
-        <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          <Plus className="w-4 h-4" />
-          <span>Nueva Reserva</span>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+          Nueva Reserva
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar por cliente, teléfono..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <select className="px-4 py-2 border border-gray-300 rounded-lg">
-              <option>Todas las fechas</option>
-              <option>Hoy</option>
-              <option>Mañana</option>
-              <option>Esta semana</option>
-            </select>
-            <select className="px-4 py-2 border border-gray-300 rounded-lg">
-              <option>Todos los estados</option>
-              <option>Confirmadas</option>
-              <option>Pendientes</option>
-              <option>Canceladas</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center space-x-3">
-            <Calendar className="w-8 h-8 text-blue-600" />
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Hoy</p>
+              <p className="text-sm font-medium text-gray-600">Hoy</p>
               <p className="text-2xl font-bold text-gray-900">12</p>
             </div>
+            <Calendar className="w-8 h-8 text-blue-600" />
           </div>
         </div>
+        
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center space-x-3">
-            <Clock className="w-8 h-8 text-green-600" />
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Confirmadas</p>
-              <p className="text-2xl font-bold text-gray-900">8</p>
+              <p className="text-sm font-medium text-gray-600">Confirmadas</p>
+              <p className="text-2xl font-bold text-green-600">10</p>
             </div>
+            <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
         </div>
+        
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center space-x-3">
-            <Users className="w-8 h-8 text-yellow-600" />
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Pendientes</p>
-              <p className="text-2xl font-bold text-gray-900">3</p>
+              <p className="text-sm font-medium text-gray-600">Pendientes</p>
+              <p className="text-2xl font-bold text-yellow-600">2</p>
             </div>
+            <AlertCircle className="w-8 h-8 text-yellow-600" />
           </div>
         </div>
+        
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Personas</p>
+              <p className="text-2xl font-bold text-purple-600">48</p>
+            </div>
             <Users className="w-8 h-8 text-purple-600" />
-            <div>
-              <p className="text-sm text-gray-600">Total personas</p>
-              <p className="text-2xl font-bold text-gray-900">48</p>
-            </div>
           </div>
         </div>
       </div>
 
       {/* Reservas List */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm">
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Lista de Reservas</h3>
+          <h2 className="text-lg font-semibold text-gray-900">Reservas de Hoy</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hora</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Personas</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mesa</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {reservas.map((reserva) => (
-                <tr key={reserva.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
+        
+        <div className="divide-y divide-gray-200">
+          {reservas.map((reserva) => (
+            <div key={reserva.id} className="p-6 hover:bg-gray-50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-4">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{reserva.cliente}</div>
-                      <div className="text-sm text-gray-500">{reserva.telefono}</div>
+                      <h3 className="text-lg font-medium text-gray-900">{reserva.cliente}</h3>
+                      <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {reserva.hora}
+                        </div>
+                        <div className="flex items-center">
+                          <Users className="w-4 h-4 mr-1" />
+                          {reserva.personas} personas
+                        </div>
+                        <div className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          Mesa {reserva.mesa}
+                        </div>
+                      </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{reserva.fecha}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{reserva.hora}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{reserva.personas}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">Mesa {reserva.mesa}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoColor(reserva.estado)}`}>
-                      {reserva.estado}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm space-x-2">
-                    <button className="text-blue-600 hover:text-blue-800">Editar</button>
-                    <button className="text-red-600 hover:text-red-800">Cancelar</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                  
+                  <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+                    <div className="flex items-center">
+                      <Phone className="w-4 h-4 mr-1" />
+                      {reserva.telefono}
+                    </div>
+                    <div className="flex items-center">
+                      <Mail className="w-4 h-4 mr-1" />
+                      {reserva.email}
+                    </div>
+                  </div>
+                  
+                  {reserva.notas && (
+                    <p className="mt-2 text-sm text-gray-600 italic">
+                      Nota: {reserva.notas}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="flex items-center space-x-3">
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(reserva.estado)}`}>
+                    {getEstadoIcon(reserva.estado)}
+                    <span className="ml-1 capitalize">{reserva.estado}</span>
+                  </span>
+                  
+                  <div className="flex space-x-2">
+                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                      Editar
+                    </button>
+                    <button className="text-red-600 hover:text-red-700 text-sm font-medium">
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
