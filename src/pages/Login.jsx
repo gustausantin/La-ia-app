@@ -5,7 +5,7 @@ import { Bot, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Login() {
-  const { signIn, isAuthenticated, loading } = useAuthContext();
+  const { login, isAuthenticated, isReady } = useAuthContext();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -48,7 +48,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const result = await signIn(formData.email, formData.password);
+      const result = await login(formData.email, formData.password);
 
       if (result.success) {
         toast.success('¡Bienvenido a La-IA!');
@@ -91,7 +91,7 @@ export default function Login() {
     }
   };
 
-  if (loading) {
+  if (!isReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="text-center">

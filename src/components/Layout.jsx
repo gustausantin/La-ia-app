@@ -120,6 +120,20 @@ export default function Layout() {
         todayRevenue: 0
     };
 
+    // Función para manejar el logout
+    const handleLogout = async () => {
+        try {
+            console.log('🚪 Layout: Iniciando logout...');
+            await signOut();
+        } catch (error) {
+            console.error('❌ Layout: Error during logout:', error);
+            // Forzar logout incluso si hay error
+            localStorage.clear();
+            window.location.replace('/login');
+        }
+    };
+
+
     try {
         return (
             <div className="flex h-screen bg-gray-50">
@@ -242,7 +256,7 @@ export default function Layout() {
                         </div>
 
                         <button
-                            onClick={signOut}
+                            onClick={handleLogout}
                             className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
                         >
                             <LogOut className="w-4 h-4" />
@@ -326,7 +340,7 @@ export default function Layout() {
                                                 <button
                                                     onClick={() => {
                                                         setShowUserMenu(false);
-                                                        signOut();
+                                                        handleLogout();
                                                     }}
                                                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg"
                                                 >

@@ -271,10 +271,7 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🚪 Cerrando sesión...');
 
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
-      // Limpiar completamente el estado
+      // Limpiar estado ANTES del signOut
       setUser(null);
       setIsAuthenticated(false);
       setRestaurant(null);
@@ -293,20 +290,27 @@ export const AuthProvider = ({ children }) => {
         }
       });
 
-      // Limpiar localStorage si hay datos guardados
-      localStorage.removeItem('supabase.auth.token');
+      // Limpiar localStorage
+      localStorage.clear();
+      
+      // Cerrar sesión en Supabase
+      await supabase.auth.signOut();
 
       console.log('✅ Sesión cerrada correctamente');
       toast.success('Sesión cerrada correctamente');
 
-      // Forzar recarga para limpiar completamente
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 500);
+      // Redirigir inmediatamente
+      window.location.replace('/login');
 
     } catch (error) {
       console.error('❌ Logout error:', error);
-      toast.error('Error al cerrar sesión');
+      // Incluso si hay error, limpiar y redirigir
+      setUser(null);
+      setIsAuthenticated(false);
+      setRestaurant(null);
+      setRestaurantId(null);
+      localStorage.clear();
+      window.location.replace('/login');
     }
   };
 
