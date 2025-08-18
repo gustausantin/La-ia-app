@@ -55,7 +55,8 @@ import {
     Facebook,
     Zap,
     BarChart3,
-    Activity
+    Activity,
+    Star
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
