@@ -18,41 +18,13 @@ import {
 export default function Dashboard() {
   console.log('📊 Dashboard component rendering...');
   
-  const { user, restaurant, agentStatus, isAuthenticated, isReady } = useAuthContext();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const { user, restaurant, agentStatus } = useAuthContext();
+  const [stats] = useState({
     todayReservations: 12,
     totalCustomers: 89,
     todayRevenue: 1245,
     avgRating: 4.6
   });
-
-  // Eliminar verificación problemática - el Layout ya maneja esto
-
-  useEffect(() => {
-    // Simular carga de datos - más rápido
-    console.log('📊 Dashboard useEffect ejecutándose...');
-    const timer = setTimeout(() => {
-      console.log('📊 Dashboard carga completada');
-      setLoading(false);
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  console.log('📊 Dashboard render state:', { loading, isReady, isAuthenticated });
-
-  if (loading) {
-    console.log('📊 Dashboard mostrando loading...');
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <Bot className="w-8 h-8 animate-pulse text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600">Cargando dashboard...</p>
-        </div>
-      </div>
-    );
-  }
 
   console.log('📊 Dashboard renderizando contenido principal...');
 

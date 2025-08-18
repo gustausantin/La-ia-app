@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuthContext } from './contexts/AuthContext';
@@ -24,12 +23,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
   const { isAuthenticated, isReady, user } = useAuthContext();
-  
-  console.log('🎯 AppContent render:', { 
-    isAuthenticated, 
-    isReady, 
+
+  console.log('🎯 AppContent render:', {
+    isAuthenticated,
+    isReady,
     hasUser: !!user,
-    timestamp: new Date().toISOString() 
+    timestamp: new Date().toISOString()
   });
 
   // Mostrar loading solo si realmente no está listo
@@ -52,17 +51,20 @@ function AppContent() {
     <Router>
       <Routes>
         {/* Rutas públicas */}
-        <Route 
-          path="/login" 
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} 
+        <Route
+          path="/login"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
         />
-        <Route 
-          path="/register" 
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />} 
+        <Route
+          path="/register"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />}
         />
         <Route path="/confirm" element={<Confirm />} />
 
-        {/* Rutas protegidas */}
+        {/* Redirect root to dashboard */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+        {/* Rutas protegidas con Layout */}
         <Route
           path="/dashboard"
           element={
@@ -145,27 +147,27 @@ function AppContent() {
         />
 
         {/* Redirección por defecto */}
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
-            isAuthenticated ? 
-              <Navigate to="/dashboard" replace /> : 
+            isAuthenticated ?
+              <Navigate to="/dashboard" replace /> :
               <Navigate to="/login" replace />
-          } 
+          }
         />
-        
+
         {/* Catch all - redirigir a dashboard o login */}
-        <Route 
-          path="*" 
+        <Route
+          path="*"
           element={
-            isAuthenticated ? 
-              <Navigate to="/dashboard" replace /> : 
+            isAuthenticated ?
+              <Navigate to="/dashboard" replace /> :
               <Navigate to="/login" replace />
-          } 
+          }
         />
       </Routes>
-      
-      <Toaster 
+
+      <Toaster
         position="top-right"
         toastOptions={{
           duration: 4000,
@@ -195,7 +197,7 @@ function AppContent() {
 
 export default function App() {
   console.log('🚀 App component rendering...');
-  
+
   return (
     <AuthProvider>
       <AppContent />
