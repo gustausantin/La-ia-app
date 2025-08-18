@@ -1,74 +1,43 @@
-
-import React, { useState } from 'react';
-import { Calendar, Clock, Users, Phone, Mail, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useAuthContext } from '../contexts/AuthContext';
+import { 
+  Calendar, 
+  Users, 
+  Clock, 
+  Search, 
+  Filter,
+  Plus,
+  CheckCircle,
+  AlertCircle,
+  XCircle
+} from 'lucide-react';
 
 export default function Reservas() {
   console.log('📅 Reservas component rendering...');
-  
+
+  const { user, restaurant } = useAuthContext();
   const [reservas] = useState([
     {
       id: 1,
-      cliente: 'María González',
+      cliente: 'Familia González',
+      personas: 4,
       fecha: '2024-01-18',
       hora: '19:00',
-      personas: 4,
       mesa: 5,
-      telefono: '+34 666 777 888',
-      email: 'maria@email.com',
       estado: 'confirmada',
-      notas: 'Cumpleaños, necesita tarta'
+      telefono: '600123456'
     },
     {
       id: 2,
-      cliente: 'Carlos Martín',
+      cliente: 'Sr. Martín',
+      personas: 2,
       fecha: '2024-01-18',
       hora: '19:30',
-      personas: 2,
       mesa: 2,
-      telefono: '+34 555 444 333',
-      email: 'carlos@email.com',
       estado: 'pendiente',
-      notas: ''
-    },
-    {
-      id: 3,
-      cliente: 'Ana López',
-      fecha: '2024-01-18',
-      hora: '20:00',
-      personas: 6,
-      mesa: 8,
-      telefono: '+34 777 888 999',
-      email: 'ana@email.com',
-      estado: 'confirmada',
-      notas: 'Cena de empresa'
+      telefono: '600789123'
     }
   ]);
-
-  const getEstadoColor = (estado) => {
-    switch (estado) {
-      case 'confirmada':
-        return 'bg-green-100 text-green-700';
-      case 'pendiente':
-        return 'bg-yellow-100 text-yellow-700';
-      case 'cancelada':
-        return 'bg-red-100 text-red-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
-
-  const getEstadoIcon = (estado) => {
-    switch (estado) {
-      case 'confirmada':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'pendiente':
-        return <AlertCircle className="w-4 h-4" />;
-      case 'cancelada':
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return <AlertCircle className="w-4 h-4" />;
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -76,10 +45,11 @@ export default function Reservas() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reservas</h1>
-          <p className="text-gray-600 mt-1">Gestiona las reservas de tu restaurante</p>
+          <p className="text-gray-600 mt-1">Gestiona todas las reservas del restaurante</p>
         </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-          Nueva Reserva
+        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+          <Plus className="w-4 h-4" />
+          <span>Nueva Reserva</span>
         </button>
       </div>
 
@@ -94,7 +64,7 @@ export default function Reservas() {
             <Calendar className="w-8 h-8 text-blue-600" />
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -104,7 +74,7 @@ export default function Reservas() {
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -114,80 +84,81 @@ export default function Reservas() {
             <AlertCircle className="w-8 h-8 text-yellow-600" />
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Personas</p>
-              <p className="text-2xl font-bold text-purple-600">48</p>
+              <p className="text-2xl font-bold text-purple-600">34</p>
             </div>
             <Users className="w-8 h-8 text-purple-600" />
           </div>
         </div>
       </div>
 
-      {/* Reservas List */}
+      {/* Filters */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="flex items-center space-x-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar cliente o teléfono..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+            <Filter className="w-4 h-4" />
+            <span>Filtros</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Reservations List */}
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Reservas de Hoy</h2>
+          <h3 className="text-lg font-semibold text-gray-900">Reservas de Hoy</h3>
         </div>
-        
         <div className="divide-y divide-gray-200">
           {reservas.map((reserva) => (
-            <div key={reserva.id} className="p-6 hover:bg-gray-50 transition-colors">
+            <div key={reserva.id} className="p-6 hover:bg-gray-50">
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">{reserva.cliente}</h3>
-                      <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {reserva.hora}
-                        </div>
-                        <div className="flex items-center">
-                          <Users className="w-4 h-4 mr-1" />
-                          {reserva.personas} personas
-                        </div>
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          Mesa {reserva.mesa}
-                        </div>
-                      </div>
+                <div className="flex items-center space-x-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Users className="w-6 h-6 text-blue-600" />
                     </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <Phone className="w-4 h-4 mr-1" />
-                      {reserva.telefono}
-                    </div>
-                    <div className="flex items-center">
-                      <Mail className="w-4 h-4 mr-1" />
-                      {reserva.email}
-                    </div>
+                  <div>
+                    <h4 className="text-lg font-medium text-gray-900">{reserva.cliente}</h4>
+                    <p className="text-sm text-gray-600">{reserva.telefono}</p>
                   </div>
-                  
-                  {reserva.notas && (
-                    <p className="mt-2 text-sm text-gray-600 italic">
-                      Nota: {reserva.notas}
-                    </p>
-                  )}
                 </div>
-                
-                <div className="flex items-center space-x-3">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(reserva.estado)}`}>
-                    {getEstadoIcon(reserva.estado)}
-                    <span className="ml-1 capitalize">{reserva.estado}</span>
-                  </span>
-                  
-                  <div className="flex space-x-2">
-                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                      Editar
-                    </button>
-                    <button className="text-red-600 hover:text-red-700 text-sm font-medium">
-                      Cancelar
-                    </button>
+
+                <div className="flex items-center space-x-6">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-900">{reserva.personas} personas</p>
+                    <p className="text-xs text-gray-500">Mesa {reserva.mesa}</p>
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-900">{reserva.hora}</p>
+                    <p className="text-xs text-gray-500">{reserva.fecha}</p>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      reserva.estado === 'confirmada' 
+                        ? 'bg-green-100 text-green-700'
+                        : reserva.estado === 'pendiente'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      {reserva.estado === 'confirmada' ? 'Confirmada' : 
+                       reserva.estado === 'pendiente' ? 'Pendiente' : 'Cancelada'}
+                    </span>
                   </div>
                 </div>
               </div>
