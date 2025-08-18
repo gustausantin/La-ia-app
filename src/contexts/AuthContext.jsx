@@ -85,15 +85,41 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🔍 Fetching restaurant info for user', userId);
 
+      // Use user_restaurant_mapping to get the restaurant
       const { data, error } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('owner_id', userId)
+        .from('user_restaurant_mapping')
+        .select(`
+          role,
+          permissions,
+          restaurant:restaurant_id (
+            id,
+            name,
+            email,
+            phone,
+            address,
+            city,
+            postal_code,
+            country,
+            timezone,
+            currency,
+            logo_url,
+            website,
+            active,
+            trial_end_at,
+            subscription_status,
+            agent_config,
+            settings,
+            created_at,
+            updated_at,
+            ui_cuisine_type
+          )
+        `)
+        .eq('auth_user_id', userId)
         .single();
 
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('🏪 No restaurant found, will create when needed');
+          console.log('🏪 No restaurant mapping found, will create when needed');
           setRestaurant(null);
           setRestaurantId(null);
           return;
@@ -104,10 +130,10 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      if (data) {
-        console.log('✅ Restaurant info fetched successfully:', data.name);
-        setRestaurant(data);
-        setRestaurantId(data.id);
+      if (data && data.restaurant) {
+        console.log('✅ Restaurant info fetched successfully:', data.restaurant.name);
+        setRestaurant(data.restaurant);
+        setRestaurantId(data.restaurant.id);
       } else {
         console.log('Restaurant will be created when needed');
         setRestaurant(null);
