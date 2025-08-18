@@ -1476,3 +1476,5 @@ function AgentSettingsModal({ onClose, agentSchedule, onUpdate }) {
         </div>
     );
 }
+
+export default Calendario;
