@@ -212,7 +212,7 @@ export default function Clientes() {
           <h4 className="text-lg font-semibold text-gray-900 mb-4">Segmentación</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span>Clientes frecuentes (>5 visitas)</span>
+              <span>Clientes frecuentes (&gt;5 visitas)</span>
               <span className="font-medium">67%</span>
             </div>
             <div className="flex justify-between">
