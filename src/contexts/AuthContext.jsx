@@ -46,7 +46,6 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         setRestaurant(null);
         setRestaurantId(null);
-        setIsReady(true);
         return;
       }
 
@@ -55,15 +54,11 @@ export const AuthProvider = ({ children }) => {
         setUser(session.user);
         setIsAuthenticated(true);
 
-        // Fetch restaurant info
-        try {
-          await fetchRestaurantInfo(session.user.id);
-        } catch (restaurantError) {
-          console.error('❌ Error fetching restaurant:', restaurantError);
-          // Set some default values and continue
-          setRestaurant(null);
-          setRestaurantId(null);
-        }
+        // Fetch restaurant info but don't block
+        fetchRestaurantInfo(session.user.id).catch(error => {
+          console.error('❌ Error fetching restaurant (non-blocking):', error);
+          // Continue anyway
+        });
       } else {
         console.log('❌ No session found');
         setUser(null);
@@ -78,7 +73,8 @@ export const AuthProvider = ({ children }) => {
       setRestaurant(null);
       setRestaurantId(null);
     } finally {
-      console.log('✅ Auth initialization complete, setting isReady = true');
+      // ALWAYS set isReady to true, no matter what
+      console.log('✅ Setting isReady = true');
       setIsReady(true);
     }
   };
@@ -185,14 +181,14 @@ export const AuthProvider = ({ children }) => {
         if (!isMounted) return;
 
         if (event === 'SIGNED_IN' && session) {
-          console.log('✅ User is logged in:', session.user.email);
+          console.log('✅ User signed in:', session.user.email);
           setUser(session.user);
           setIsAuthenticated(true);
-          try {
-            await fetchRestaurantInfo(session.user.id);
-          } catch (error) {
+          
+          // Fetch restaurant info but don't block
+          fetchRestaurantInfo(session.user.id).catch(error => {
             console.error('❌ Error fetching restaurant after sign in:', error);
-          }
+          });
         } else if (event === 'SIGNED_OUT') {
           console.log('👋 User signed out');
           setUser(null);
