@@ -35,7 +35,7 @@ function Calendario() {
     setCurrentDate(addMonths(currentDate, 1));
   };
 
-  // Cargar reservas (simulado por ahora)
+  // Cargar reservas
   useEffect(() => {
     setLoading(true);
     setTimeout(() => {
