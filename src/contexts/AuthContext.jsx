@@ -29,7 +29,12 @@ export const AuthProvider = ({ children }) => {
 
       if (error) {
         console.error('❌ Error getting session:', error);
-        throw error;
+        setUser(null);
+        setIsAuthenticated(false);
+        setRestaurant(null);
+        setRestaurantId(null);
+        setIsReady(true);
+        return;
       }
 
       if (session?.user) {
@@ -38,7 +43,12 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
 
         // Fetch restaurant info
-        await fetchRestaurantInfo(session.user.id);
+        try {
+          await fetchRestaurantInfo(session.user.id);
+        } catch (restaurantError) {
+          console.error('❌ Error fetching restaurant:', restaurantError);
+          // Continue anyway, restaurant will be created when needed
+        }
       } else {
         console.log('❌ No session found');
         setUser(null);
@@ -53,6 +63,7 @@ export const AuthProvider = ({ children }) => {
       setRestaurant(null);
       setRestaurantId(null);
     } finally {
+      console.log('✅ Auth initialization complete, setting isReady = true');
       setIsReady(true);
     }
   };
@@ -70,33 +81,50 @@ export const AuthProvider = ({ children }) => {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('🏪 No restaurant found, will create default');
+          console.log('🏪 No restaurant found, will create when needed');
+          setRestaurant(null);
+          setRestaurantId(null);
           return;
         }
-        throw error;
+        console.error('❌ Database error fetching restaurant:', error);
+        return;
       }
 
       if (data) {
         console.log('✅ Restaurant info fetched successfully:', data.name);
         setRestaurant(data);
         setRestaurantId(data.id);
+      } else {
+        console.log('Restaurant will be created when needed');
+        setRestaurant(null);
+        setRestaurantId(null);
       }
     } catch (error) {
       console.error('❌ Error fetching restaurant:', error);
+      setRestaurant(null);
+      setRestaurantId(null);
     }
   };
 
   // Auth state listener
   useEffect(() => {
+    let isMounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔐 Auth state changed:', event);
+
+        if (!isMounted) return;
 
         if (event === 'SIGNED_IN' && session) {
           console.log('✅ User is logged in:', session.user.email);
           setUser(session.user);
           setIsAuthenticated(true);
-          await fetchRestaurantInfo(session.user.id);
+          try {
+            await fetchRestaurantInfo(session.user.id);
+          } catch (error) {
+            console.error('❌ Error fetching restaurant after sign in:', error);
+          }
         } else if (event === 'SIGNED_OUT') {
           console.log('👋 User signed out');
           setUser(null);
@@ -105,16 +133,20 @@ export const AuthProvider = ({ children }) => {
           setRestaurantId(null);
         }
 
-        if (event !== 'INITIAL_SESSION') {
+        // Always set ready to true after any auth event
+        if (isMounted && event !== 'INITIAL_SESSION') {
           setIsReady(true);
         }
       }
     );
 
-    // Initialize session on mount
-    initSession();
+    // Initialize session only once on mount
+    if (isMounted) {
+      initSession();
+    }
 
     return () => {
+      isMounted = false;
       subscription?.unsubscribe();
     };
   }, []);
