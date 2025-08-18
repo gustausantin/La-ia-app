@@ -38,7 +38,6 @@ function Calendario() {
   // Cargar reservas (simulado por ahora)
   useEffect(() => {
     setLoading(true);
-    // Simular carga de reservas
     setTimeout(() => {
       setReservations([
         {
@@ -72,7 +71,6 @@ function Calendario() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -99,10 +97,8 @@ function Calendario() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Calendario principal */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              {/* Header del calendario */}
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">
                   {format(currentDate, 'MMMM yyyy', { locale: es })}
@@ -123,7 +119,6 @@ function Calendario() {
                 </div>
               </div>
 
-              {/* Días de la semana */}
               <div className="grid grid-cols-7 gap-1 mb-4">
                 {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
                   <div key={day} className="p-3 text-center text-sm font-medium text-gray-600">
@@ -132,7 +127,6 @@ function Calendario() {
                 ))}
               </div>
 
-              {/* Días del mes */}
               <div className="grid grid-cols-7 gap-1">
                 {monthDays.map((day, index) => {
                   const dayReservations = getReservationsForDate(day);
@@ -171,9 +165,7 @@ function Calendario() {
             </div>
           </div>
 
-          {/* Panel lateral */}
           <div className="space-y-6">
-            {/* Reservas del día seleccionado */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 {format(selectedDate, 'dd/MM/yyyy', { locale: es })}
@@ -222,7 +214,6 @@ function Calendario() {
               )}
             </div>
 
-            {/* Estadísticas rápidas */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen del mes</h3>
               
