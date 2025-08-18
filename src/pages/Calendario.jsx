@@ -1179,8 +1179,6 @@ function Calendario() {
     );
 }
 
-export default Calendario;
-
 // Modal de eventos mejorado
 function EventModal({ event, onSave, onClose, onDelete }) {
     const [formData, setFormData] = useState({
