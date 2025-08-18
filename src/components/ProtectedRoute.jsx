@@ -17,14 +17,12 @@ const ProtectedRoute = ({ children }) => {
   // Mostrar loading mientras se inicializa la autenticación
   if (!isReady) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="text-center">
           <Bot className="w-16 h-16 text-purple-600 mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-600 text-lg font-medium mb-2">Iniciando La-IA...</p>
-          <div className="w-32 h-1 bg-gray-200 rounded-full mx-auto overflow-hidden">
-            <div className="w-full h-full bg-gradient-to-r from-purple-500 to-blue-500 animate-pulse"></div>
-          </div>
-          <p className="text-xs text-gray-500 mt-4">Conectando con Supabase...</p>
+          <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Verificando acceso...</h2>
+          <p className="text-sm text-gray-500">Un momento por favor</p>
         </div>
       </div>
     );
