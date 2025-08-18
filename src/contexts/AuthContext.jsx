@@ -87,6 +87,8 @@ export const AuthProvider = ({ children }) => {
           return;
         }
         console.error('❌ Database error fetching restaurant:', error);
+        setRestaurant(null);
+        setRestaurantId(null);
         return;
       }
 
@@ -103,6 +105,10 @@ export const AuthProvider = ({ children }) => {
       console.error('❌ Error fetching restaurant:', error);
       setRestaurant(null);
       setRestaurantId(null);
+    } finally {
+      // Always set ready to true after restaurant fetch
+      console.log('✅ Restaurant fetch complete, setting isReady = true');
+      setIsReady(true);
     }
   };
 
@@ -124,6 +130,7 @@ export const AuthProvider = ({ children }) => {
             await fetchRestaurantInfo(session.user.id);
           } catch (error) {
             console.error('❌ Error fetching restaurant after sign in:', error);
+            setIsReady(true); // Set ready even on error
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('👋 User signed out');
@@ -131,11 +138,10 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(false);
           setRestaurant(null);
           setRestaurantId(null);
-        }
-
-        // Always set ready to true after any auth event
-        if (isMounted && event !== 'INITIAL_SESSION') {
-          setIsReady(true);
+          setIsReady(true); // Set ready after sign out
+        } else if (event === 'INITIAL_SESSION') {
+          // Don't set ready here, let initSession handle it
+          console.log('Initial session event - not setting ready here');
         }
       }
     );
