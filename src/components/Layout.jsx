@@ -3,6 +3,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useAuthContext } from "../contexts/AuthContext";
 import { useState } from "react";
 import NotificationCenter from "./NotificationCenter"; // NUEVA IMPORTACIÓN
+import EmergencyActions from "./EmergencyActions"; // NUEVA IMPORTACIÓN
 import {
     Home,
     Calendar,
@@ -34,6 +35,8 @@ export default function Layout() {
         user,
         restaurant,
         signOut,
+        restartApp, // NUEVO - función de reinicio
+        forceLogout, // NUEVO - función de cierre forzado
         agentStatus, // NUEVO - del contexto
         notifications, // NUEVO - del contexto
         unreadCount, // NUEVO - del contexto
@@ -255,13 +258,26 @@ export default function Layout() {
                             </div>
                         </div>
 
-                        <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
-                        >
-                            <LogOut className="w-4 h-4" />
-                            <span>Cerrar Sesión</span>
-                        </button>
+                        {/* Botones de acciones rápidas */}
+                        <div className="space-y-2">
+                            <button
+                                onClick={restartApp}
+                                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-colors font-medium"
+                                title="Reiniciar aplicación completa"
+                            >
+                                <Activity className="w-4 h-4" />
+                                <span>Reiniciar App</span>
+                            </button>
+                            
+                            <button
+                                onClick={forceLogout}
+                                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors font-medium"
+                                title="Cerrar sesión forzado"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                <span>Cerrar Sesión</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -367,6 +383,9 @@ export default function Layout() {
                     isOpen={showNotifications}
                     onClose={() => setShowNotifications(false)}
                 />
+
+                {/* Acciones de Emergencia - NUEVO */}
+                <EmergencyActions />
             </div>
         );
     } catch (error) {
