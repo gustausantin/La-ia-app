@@ -1,119 +1,183 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 
-// Context
-import { AuthProvider, useAuthContext } from './contexts/AuthContext';
+// App.jsx - Aplicación principal mejorada para Son-IA
 
-// Components
-import Layout from './components/Layout';
-import ProtectedRoute from './components/ProtectedRoute';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy, useEffect } from 'react';
+import { useAuthContext } from './contexts/AuthContext';
+import { Bot, RefreshCw } from 'lucide-react';
 
-// Pages
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Confirm from './pages/Confirm';
-import Dashboard from './pages/Dashboard';
-import Reservas from './pages/Reservas';
-import Mesas from './pages/Mesas';
-import Clientes from './pages/Clientes';
-import Comunicacion from './pages/Comunicacion';
-import Analytics from './pages/Analytics';
-import Calendario from './pages/Calendario';
-import Configuracion from './pages/Configuracion';
+// Debug logging
+console.log('🚀 Starting React application...');
 
-// Styles
-import './index.css';
+// Lazy loading para optimización
+const Layout = lazy(() => import('./components/Layout'));
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Reservas = lazy(() => import('./pages/Reservas'));
+const Clientes = lazy(() => import('./pages/Clientes'));
+const Mesas = lazy(() => import('./pages/Mesas'));
+const Calendario = lazy(() => import('./pages/Calendario'));
+const Comunicacion = lazy(() => import('./pages/Comunicacion'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Configuracion = lazy(() => import('./pages/Configuracion'));
 
+// Componente de carga mejorado
+const LoadingScreen = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="text-center">
+      <div className="flex items-center justify-center mb-4">
+        <Bot className="w-12 h-12 text-purple-600 mr-2" />
+        <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+      <h2 className="text-xl font-semibold text-gray-700">
+        Cargando Son-IA...
+      </h2>
+      <p className="text-sm text-gray-500 mt-2">
+        Tu asistente IA está preparando todo
+      </p>
+    </div>
+  </div>
+);
+
+// Componente de fallback para Suspense
+const PageLoading = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="text-center">
+      <RefreshCw className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
+      <p className="text-gray-600">Cargando página...</p>
+    </div>
+  </div>
+);
+
+// Componente principal de contenido
 function AppContent() {
-  const { isAuthenticated, isReady, user } = useAuthContext();
+  const { isReady, isAuthenticated, user } = useAuthContext();
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('🎯 AppContent render:', {
+      isAuthenticated,
+      isReady,
+      hasUser: !!user,
+      timestamp: new Date().toISOString()
+    });
+  }, [isAuthenticated, isReady, user]);
 
-  console.log('🎯 AppContent render:', {
-    isAuthenticated,
-    isReady,
-    hasUser: !!user,
-    timestamp: new Date().toISOString()
-  });
-
-  // Si no está listo, mostrar loading
+  // Mostrar pantalla de carga mientras se verifica la autenticación
   if (!isReady) {
     console.log('❌ App not ready, showing loading...');
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Iniciando La-IA...</h2>
-          <p className="text-sm text-gray-500">Configurando tu experiencia</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   console.log('✅ App ready, rendering router...');
 
   return (
-    <Router>
+    <Suspense fallback={<LoadingScreen />}>
       <Routes>
-        {/* Rutas públicas */}
-        <Route path="/login" element={
-          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-        } />
-        <Route path="/register" element={
-          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />
-        } />
-        <Route path="/confirm" element={<Confirm />} />
+        {!isAuthenticated ? (
+          <>
+            <Route path="/login" element={<Login />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </>
+        ) : (
+          <>
+            <Route element={<Layout />}>
+              {/* Ruta por defecto al dashboard */}
+              <Route index element={<Navigate to="/dashboard" replace />} />
 
-        {/* Rutas protegidas */}
-        <Route path="/" element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="reservas" element={<Reservas />} />
-          <Route path="mesas" element={<Mesas />} />
-          <Route path="clientes" element={<Clientes />} />
-          <Route path="comunicacion" element={<Comunicacion />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="calendario" element={<Calendario />} />
-          <Route path="configuracion" element={<Configuracion />} />
-        </Route>
+              {/* Rutas principales con lazy loading */}
+              <Route 
+                path="/dashboard" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <Dashboard />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/reservas" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <Reservas />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/clientes" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <Clientes />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/mesas" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <Mesas />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/calendario"
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <Calendario />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/analytics" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <Analytics />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/comunicacion" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <Comunicacion />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/configuracion" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <Configuracion />
+                  </Suspense>
+                } 
+              />
+            </Route>
 
-        {/* Ruta catch-all */}
-        <Route path="*" element={
-          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
-        } />
+            {/* Redirigir cualquier ruta no válida al dashboard */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </>
+        )}
       </Routes>
-
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-        }}
-      />
-    </Router>
+    </Suspense>
   );
 }
 
-export default function App() {
+function App() {
   console.log('🚀 App component rendering...');
 
   useEffect(() => {
-    console.log('🚀 Starting React application...');
     console.log('✅ React app rendered');
+    
+    // Cleanup en unmount
     return () => {
       console.log('🔄 React application unmounting...');
     };
   }, []);
 
   return (
-    <AuthProvider>
+    <BrowserRouter>
       <AppContent />
-    </AuthProvider>
+    </BrowserRouter>
   );
 }
+
+export default App;
