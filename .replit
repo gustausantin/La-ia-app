@@ -71,7 +71,7 @@ localPort = 5176
 externalPort = 8081
 
 [workflows]
-runButton = "Start Development Server"
+runButton = "Dev with Host Fix"
 
 [[workflows.workflow]]
 name = "Start Development Server"
@@ -81,3 +81,12 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Dev with Host Fix"
+author = 41843571
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "concurrently \"npm run server\" \"npx vite --host 0.0.0.0 --port 5173\""
