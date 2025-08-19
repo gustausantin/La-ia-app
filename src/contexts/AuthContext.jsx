@@ -51,23 +51,18 @@ export const AuthProvider = ({ children }) => {
 
       if (error) {
         console.error('❌ Error getting session:', error.message);
-        setIsReady(true);
         return;
       }
 
       if (session?.user) {
         console.log('✅ Session found:', session.user.email);
         await loadUserData(session.user);
-        console.log('✅ Setting isReady = true');
       } else {
         console.log('❌ No session found');
       }
-
-      // SIEMPRE marcar como ready
-      setIsReady(true);
     } catch (error) {
       console.error('❌ Error in initSession:', error.message);
-      setIsReady(true);
+      throw error;
     }
   };
 
@@ -173,49 +168,62 @@ export const AuthProvider = ({ children }) => {
   // Auth state listener
   useEffect(() => {
     let isMounted = true;
-    let sessionInitialized = false;
+    let isInitialized = false;
 
-    // 1. PRIMERO configurar el listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔐 Auth state changed:', event);
+    const handleAuthChange = async (event, session) => {
+      console.log('🔐 Auth state changed:', event);
 
-        if (!isMounted) return;
+      if (!isMounted) return;
 
-        // Skip TOKEN_REFRESHED events to prevent loops
-        if (event === 'TOKEN_REFRESHED') {
-          return;
-        }
+      // Skip all refresh events to prevent loops
+      if (event === 'TOKEN_REFRESHED' || event === 'TOKEN_RENEWED') {
+        return;
+      }
 
-        if (event === 'SIGNED_IN' && session) {
-          console.log('✅ User signed in:', session.user.email);
-          await loadUserData(session.user);
-        } else if (event === 'SIGNED_OUT') {
-          console.log('👋 User signed out');
-          setUser(null);
-          setIsAuthenticated(false);
-          setRestaurant(null);
-          setRestaurantId(null);
-        }
+      // Handle auth state changes
+      if (event === 'SIGNED_IN' && session) {
+        console.log('✅ User signed in:', session.user.email);
+        await loadUserData(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        console.log('👋 User signed out');
+        setUser(null);
+        setIsAuthenticated(false);
+        setRestaurant(null);
+        setRestaurantId(null);
+      } else if (event === 'INITIAL_SESSION') {
+        // Initial session is handled by initSession, skip here
+        return;
+      }
 
-        // Set ready only once after initial session
-        if (!sessionInitialized) {
-          console.log('🔧 Auth state changed - Setting isReady = true');
+      // Set ready only once
+      if (!isInitialized) {
+        console.log('🔧 Auth state changed - Setting isReady = true');
+        setIsReady(true);
+        isInitialized = true;
+      }
+    };
+
+    // 1. Configure auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+
+    // 2. Initialize session
+    const init = async () => {
+      if (isInitialized) return;
+      
+      try {
+        await initSession();
+        console.log('🎯 initSession completed');
+      } catch (error) {
+        console.error('❌ initSession failed:', error);
+      } finally {
+        if (!isInitialized) {
           setIsReady(true);
-          sessionInitialized = true;
+          isInitialized = true;
         }
       }
-    );
+    };
 
-    // 2. LUEGO inicializar la sesión
-    initSession().then(() => {
-      console.log('🎯 initSession completed');
-      sessionInitialized = true;
-    }).catch(error => {
-      console.error('❌ initSession failed:', error);
-      setIsReady(true);
-      sessionInitialized = true;
-    });
+    init();
 
     return () => {
       isMounted = false;
