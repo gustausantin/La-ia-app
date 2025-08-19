@@ -1,36 +1,51 @@
+
 {
-  "name": "la-ia",
-  "private": true,
-  "version": "0.0.0",
+  "name": "son-ia-production",
+  "version": "1.0.0",
   "type": "module",
+  "description": "Son-IA - Sistema de Inteligencia para Restaurantes",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"vite\"",
     "server": "node server.js",
-    "client": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:css": "tailwindcss -i ./src/index.css -o ./dist/index.css --minify",
+    "preview": "vite preview",
+    "lint": "echo 'Linting ready for future implementation'",
+    "test": "echo 'Testing ready for future implementation'"
+  },
+  "keywords": [
+    "restaurant",
+    "reservations",
+    "ai",
+    "omnichannel",
+    "supabase"
+  ],
+  "author": "Son-IA Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.3.6",
+    "vite": "^5.0.0",
+    "concurrently": "^8.2.2"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.7",
-    "concurrently": "^8.2.2",
-    "cors": "^2.8.5",
-    "date-fns": "^4.1.0",
-    "dotenv": "^17.2.1",
-    "express": "^4.18.2",
-    "lucide-react": "^0.358.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "react-router-dom": "^6.20.0",
+    "date-fns": "^2.30.0",
+    "lucide-react": "^0.294.0",
+    "recharts": "^2.8.0",
+    "clsx": "^2.0.0",
     "react-hot-toast": "^2.4.1",
-    "react-router-dom": "^6.21.3",
-    "recharts": "^2.15.4"
-  },
-  "devDependencies": {
-    "@types/react": "^18.2.56",
-    "@types/react-dom": "^18.2.19",
-    "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.17",
-    "postcss": "^8.4.35",
-    "tailwindcss": "^3.4.1",
-    "vite": "^5.1.0"
+    "react-hook-form": "^7.48.0",
+    "@hookform/resolvers": "^3.3.0",
+    "zod": "^3.22.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.3",
+    "cors": "^2.8.5"
   }
 }
