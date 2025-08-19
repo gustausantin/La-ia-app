@@ -25,10 +25,17 @@ export default defineConfig({
     strictPort: true,
     allowedHosts: 'all',
     origin: 'http://0.0.0.0:5173',
+    fs: {
+      strict: false
+    },
+    cors: {
+      origin: true
+    },
     hmr: {
       port: 5173,
       host: '0.0.0.0',
-      clientPort: 5173
+      clientPort: 5173,
+      overlay: false
     }
   },
   preview: {
