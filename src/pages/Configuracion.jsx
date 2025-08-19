@@ -82,6 +82,21 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+// DATOS NECESARIOS DE SUPABASE:
+// - tabla: restaurants (configuración general)
+// - tabla: agent_settings (configuración del agente IA)
+// - tabla: agent_messages (plantillas de mensajes)
+// - tabla: agent_personality (personalidad del bot)
+// - tabla: agent_rules (reglas de escalamiento)
+// - tabla: agent_table_preferences (preferencias de mesas)
+// - tabla: agent_real_time_status (estado en tiempo real)
+// - tabla: channel_configs (configuración por canal)
+// - tabla: n8n_workflows (flujos activos)
+// - tabla: crm_settings (configuración del CRM)
+// - RPC: update_restaurant_settings(restaurant_id, settings)
+// - RPC: get_agent_performance_stats(restaurant_id)
+// - RPC: test_channel_connection(channel, config)
+
 // Componente para cada sección de configuración
 const SettingSection = ({
     title,
@@ -166,6 +181,7 @@ export default function Configuracion() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState("general");
+    const [testingConnection, setTestingConnection] = useState({});
 
     // Estados para todas las configuraciones
     const [settings, setSettings] = useState({
@@ -184,6 +200,32 @@ export default function Configuracion() {
         currency: "EUR",
         language: "es",
         logo_url: "",
+        
+        // Horarios de operación
+        operating_hours: {
+            monday: { open: "09:00", close: "22:00", closed: false },
+            tuesday: { open: "09:00", close: "22:00", closed: false },
+            wednesday: { open: "09:00", close: "22:00", closed: false },
+            thursday: { open: "09:00", close: "22:00", closed: false },
+            friday: { open: "09:00", close: "23:00", closed: false },
+            saturday: { open: "09:00", close: "23:00", closed: false },
+            sunday: { open: "10:00", close: "22:00", closed: false }
+        },
+
+        // Configuración de reservas
+        reservations: {
+            enabled: true,
+            advance_booking_days: 30,
+            min_party_size: 1,
+            max_party_size: 12,
+            slot_duration: 90,
+            buffer_time: 15,
+            auto_confirm: false,
+            require_phone: true,
+            require_email: true,
+            cancellation_window: 2,
+            modification_window: 1
+        },
 
         // Configuración del Agente IA
         agent: {
@@ -192,7 +234,16 @@ export default function Configuracion() {
             personality: "professional_friendly",
             language: "es",
             voice: "es-ES-Standard-A",
-
+            auto_escalation: true,
+            escalation_triggers: {
+                multiple_requests: true,
+                negative_sentiment: true,
+                complex_queries: true,
+                payment_issues: true
+            },
+            response_time_target: 30,
+            working_hours_only: false,
+            
             // Optimización de mesas
             table_optimization: {
                 enabled: true,
@@ -202,6 +253,111 @@ export default function Configuracion() {
                     capacity: 70,
                     customer_history: 50
                 }
+            },
+
+            // Personalidad y comportamiento
+            personality_traits: {
+                friendliness: 80,
+                formality: 60,
+                helpfulness: 90,
+                proactiveness: 70
+            },
+
+            // Plantillas de respuesta
+            message_templates: {
+                greeting: "¡Hola! Soy {agent_name}, el asistente virtual de {restaurant_name}. ¿En qué puedo ayudarte hoy?",
+                reservation_confirmed: "¡Perfecto! He confirmado tu reserva para {party_size} personas el {date} a las {time}. Tu número de reserva es {reservation_id}.",
+                availability_check: "Déjame consultar la disponibilidad para {party_size} personas el {date}...",
+                no_availability: "Lo siento, no tenemos disponibilidad para {party_size} personas el {date} a las {time}. ¿Te gustaría que te sugiera otras opciones?",
+                cancellation: "He cancelado tu reserva {reservation_id}. ¿Hay algo más en lo que pueda ayudarte?",
+                escalation: "Voy a conectarte con uno de nuestros especialistas que podrá ayudarte mejor con tu consulta."
+            }
+        },
+
+        // Configuración de canales
+        channels: {
+            vapi: {
+                enabled: true,
+                api_key: "",
+                phone_number: "",
+                voice_id: "es-ES-Standard-A",
+                max_call_duration: 600
+            },
+            whatsapp: {
+                enabled: false,
+                phone_number: "",
+                api_key: "",
+                webhook_url: ""
+            },
+            web_chat: {
+                enabled: true,
+                widget_color: "#3B82F6",
+                widget_position: "bottom-right",
+                greeting_message: "¡Hola! ¿En qué puedo ayudarte?",
+                office_hours_only: false
+            },
+            email: {
+                enabled: true,
+                smtp_host: "",
+                smtp_port: 587,
+                smtp_user: "",
+                smtp_password: "",
+                from_email: "",
+                auto_reply: true
+            },
+            instagram: {
+                enabled: false,
+                access_token: "",
+                page_id: ""
+            },
+            facebook: {
+                enabled: false,
+                access_token: "",
+                page_id: ""
+            }
+        },
+
+        // Configuración de notificaciones
+        notifications: {
+            email_enabled: true,
+            sms_enabled: false,
+            push_enabled: true,
+            slack_enabled: false,
+            
+            // Tipos de notificaciones
+            new_reservation: true,
+            reservation_cancelled: true,
+            reservation_modified: true,
+            no_show: true,
+            agent_escalation: true,
+            system_alerts: true,
+            daily_summary: true,
+            weekly_reports: true,
+
+            // Configuración de horarios
+            quiet_hours: {
+                enabled: false,
+                start: "22:00",
+                end: "08:00"
+            }
+        },
+
+        // Configuración de integraciones
+        integrations: {
+            google_calendar: {
+                enabled: false,
+                calendar_id: ""
+            },
+            pos_system: {
+                enabled: false,
+                system_type: "",
+                api_endpoint: "",
+                api_key: ""
+            },
+            crm: {
+                enabled: false,
+                system_type: "",
+                api_key: ""
             }
         }
     });
@@ -212,7 +368,20 @@ export default function Configuracion() {
         resolved_automatically: 0,
         escalated_to_human: 0,
         avg_response_time: 0,
-        satisfaction_score: 0
+        satisfaction_score: 0,
+        daily_stats: {
+            today: 0,
+            yesterday: 0,
+            change_percent: 0
+        }
+    });
+
+    // Estados para estado en tiempo real
+    const [realTimeStatus, setRealTimeStatus] = useState({
+        active_conversations: 0,
+        pending_reservations: 0,
+        system_health: "healthy",
+        last_updated: new Date()
     });
 
     // Tabs de navegación
@@ -281,26 +450,32 @@ export default function Configuracion() {
         if (isReady && restaurantId) {
             loadSettings();
             loadAgentMetrics();
+            loadRealTimeStatus();
         }
     }, [isReady, restaurantId]);
 
     const loadSettings = async () => {
         try {
             setLoading(true);
+            console.log('🔧 Cargando configuración del restaurante...');
             
-            // Simular carga de datos
+            // Simular carga de datos desde Supabase
             setTimeout(() => {
                 setSettings((prev) => ({
                     ...prev,
                     name: restaurant?.name || "Mi Restaurante",
-                    email: "contacto@mirestaurante.com",
-                    phone: "+34 666 123 456",
+                    email: restaurant?.email || "contacto@mirestaurante.com",
+                    phone: restaurant?.phone || "+34 666 123 456",
+                    address: restaurant?.address || "",
+                    city: restaurant?.city || "",
+                    postal_code: restaurant?.postal_code || "",
                     agent: {
                         ...prev.agent,
                         name: "Asistente de " + (restaurant?.name || "Mi Restaurante"),
                     }
                 }));
                 setLoading(false);
+                console.log('✅ Configuración cargada correctamente');
             }, 1000);
         } catch (error) {
             console.error("Error loading settings:", error);
@@ -311,27 +486,49 @@ export default function Configuracion() {
 
     const loadAgentMetrics = async () => {
         try {
-            // Simular métricas del agente
+            console.log('📊 Cargando métricas del agente...');
+            // Simular métricas del agente desde Supabase
             setAgentMetrics({
                 total_conversations: 1247,
                 resolved_automatically: 1052,
                 escalated_to_human: 195,
                 avg_response_time: 3.2,
-                satisfaction_score: 92
+                satisfaction_score: 92,
+                daily_stats: {
+                    today: 47,
+                    yesterday: 52,
+                    change_percent: -9.6
+                }
             });
         } catch (error) {
             console.error("Error loading agent metrics:", error);
         }
     };
 
+    const loadRealTimeStatus = async () => {
+        try {
+            console.log('⚡ Cargando estado en tiempo real...');
+            setRealTimeStatus({
+                active_conversations: 3,
+                pending_reservations: 8,
+                system_health: "healthy",
+                last_updated: new Date()
+            });
+        } catch (error) {
+            console.error("Error loading real-time status:", error);
+        }
+    };
+
     const handleSave = async (section) => {
         try {
             setSaving(true);
+            console.log(`💾 Guardando configuración: ${section}`);
             
-            // Simular guardado
+            // Simular guardado en Supabase
             await new Promise((resolve) => setTimeout(resolve, 1000));
 
             toast.success(`${section} actualizado correctamente`);
+            console.log(`✅ ${section} guardado exitosamente`);
         } catch (error) {
             console.error("Error saving settings:", error);
             toast.error("Error al guardar los cambios");
@@ -355,6 +552,35 @@ export default function Configuracion() {
                 [field]: value,
             },
         }));
+    };
+
+    const handleDeepNestedChange = (parent, child, field, value) => {
+        setSettings((prev) => ({
+            ...prev,
+            [parent]: {
+                ...prev[parent],
+                [child]: {
+                    ...prev[parent][child],
+                    [field]: value,
+                },
+            },
+        }));
+    };
+
+    const testChannelConnection = async (channel) => {
+        try {
+            setTestingConnection({ ...testingConnection, [channel]: true });
+            console.log(`🔌 Probando conexión con ${channel}...`);
+
+            // Simular test de conexión
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            toast.success(`Conexión con ${channel} exitosa!`);
+        } catch (error) {
+            toast.error(`Error conectando con ${channel}`);
+        } finally {
+            setTestingConnection({ ...testingConnection, [channel]: false });
+        }
     };
 
     if (loading) {
@@ -414,6 +640,30 @@ export default function Configuracion() {
                                 </button>
                             ))}
                         </nav>
+
+                        {/* Estado en tiempo real */}
+                        <div className="mt-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                            <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                                <Activity className="w-4 h-4 text-green-600" />
+                                Estado en Tiempo Real
+                            </h4>
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Conversaciones activas</span>
+                                    <span className="font-medium text-blue-600">{realTimeStatus.active_conversations}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Reservas pendientes</span>
+                                    <span className="font-medium text-orange-600">{realTimeStatus.pending_reservations}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Estado del sistema</span>
+                                    <span className={`font-medium ${realTimeStatus.system_health === 'healthy' ? 'text-green-600' : 'text-red-600'}`}>
+                                        {realTimeStatus.system_health === 'healthy' ? 'Saludable' : 'Con problemas'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Ayuda rápida */}
                         <div className="mt-4 bg-blue-50 rounded-xl p-4">
@@ -685,6 +935,215 @@ export default function Configuracion() {
                             </div>
                         )}
 
+                        {/* Horarios de Operación */}
+                        {activeTab === "hours" && (
+                            <SettingSection
+                                title="Horarios de Operación"
+                                description="Define los horarios de apertura y cierre"
+                                icon={<Clock />}
+                            >
+                                <div className="space-y-4">
+                                    {Object.entries(settings.operating_hours).map(([day, hours]) => (
+                                        <div key={day} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                                            <div className="w-24">
+                                                <span className="font-medium text-gray-900 capitalize">
+                                                    {day === 'monday' ? 'Lunes' :
+                                                     day === 'tuesday' ? 'Martes' :
+                                                     day === 'wednesday' ? 'Miércoles' :
+                                                     day === 'thursday' ? 'Jueves' :
+                                                     day === 'friday' ? 'Viernes' :
+                                                     day === 'saturday' ? 'Sábado' :
+                                                     'Domingo'}
+                                                </span>
+                                            </div>
+                                            <ToggleSwitch
+                                                enabled={!hours.closed}
+                                                onChange={(enabled) => 
+                                                    setSettings(prev => ({
+                                                        ...prev,
+                                                        operating_hours: {
+                                                            ...prev.operating_hours,
+                                                            [day]: { ...prev.operating_hours[day], closed: !enabled }
+                                                        }
+                                                    }))
+                                                }
+                                                label=""
+                                            />
+                                            {!hours.closed && (
+                                                <>
+                                                    <input
+                                                        type="time"
+                                                        value={hours.open}
+                                                        onChange={(e) =>
+                                                            setSettings(prev => ({
+                                                                ...prev,
+                                                                operating_hours: {
+                                                                    ...prev.operating_hours,
+                                                                    [day]: { ...prev.operating_hours[day], open: e.target.value }
+                                                                }
+                                                            }))
+                                                        }
+                                                        className="px-3 py-2 border border-gray-300 rounded-lg"
+                                                    />
+                                                    <span className="text-gray-500">a</span>
+                                                    <input
+                                                        type="time"
+                                                        value={hours.close}
+                                                        onChange={(e) =>
+                                                            setSettings(prev => ({
+                                                                ...prev,
+                                                                operating_hours: {
+                                                                    ...prev.operating_hours,
+                                                                    [day]: { ...prev.operating_hours[day], close: e.target.value }
+                                                                }
+                                                            }))
+                                                        }
+                                                        className="px-3 py-2 border border-gray-300 rounded-lg"
+                                                    />
+                                                </>
+                                            )}
+                                            {hours.closed && (
+                                                <span className="text-gray-500">Cerrado</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                                    <button
+                                        onClick={() => handleSave("Horarios de operación")}
+                                        disabled={saving}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                    >
+                                        {saving ? (
+                                            <RefreshCw className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Save className="w-4 h-4" />
+                                        )}
+                                        Guardar horarios
+                                    </button>
+                                </div>
+                            </SettingSection>
+                        )}
+
+                        {/* Configuración de Reservas */}
+                        {activeTab === "reservations" && (
+                            <SettingSection
+                                title="Configuración de Reservas"
+                                description="Políticas y reglas de reserva"
+                                icon={<Calendar />}
+                            >
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Días de antelación máxima
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={settings.reservations.advance_booking_days}
+                                                onChange={(e) => handleDeepNestedChange('reservations', 'advance_booking_days', '', parseInt(e.target.value))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                min="1"
+                                                max="365"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Duración de turno (minutos)
+                                            </label>
+                                            <select
+                                                value={settings.reservations.slot_duration}
+                                                onChange={(e) => handleDeepNestedChange('reservations', 'slot_duration', '', parseInt(e.target.value))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            >
+                                                <option value="60">60 minutos</option>
+                                                <option value="90">90 minutos</option>
+                                                <option value="120">120 minutos</option>
+                                                <option value="150">150 minutos</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Mínimo de personas
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={settings.reservations.min_party_size}
+                                                onChange={(e) => handleDeepNestedChange('reservations', 'min_party_size', '', parseInt(e.target.value))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                min="1"
+                                                max="20"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Máximo de personas
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={settings.reservations.max_party_size}
+                                                onChange={(e) => handleDeepNestedChange('reservations', 'max_party_size', '', parseInt(e.target.value))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                min="1"
+                                                max="50"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <ToggleSwitch
+                                            enabled={settings.reservations.auto_confirm}
+                                            onChange={(enabled) => setSettings(prev => ({
+                                                ...prev,
+                                                reservations: { ...prev.reservations, auto_confirm: enabled }
+                                            }))}
+                                            label="Confirmación automática"
+                                            description="Las reservas se confirman automáticamente si hay disponibilidad"
+                                        />
+
+                                        <ToggleSwitch
+                                            enabled={settings.reservations.require_phone}
+                                            onChange={(enabled) => setSettings(prev => ({
+                                                ...prev,
+                                                reservations: { ...prev.reservations, require_phone: enabled }
+                                            }))}
+                                            label="Requerir teléfono"
+                                            description="El teléfono es obligatorio para hacer una reserva"
+                                        />
+
+                                        <ToggleSwitch
+                                            enabled={settings.reservations.require_email}
+                                            onChange={(enabled) => setSettings(prev => ({
+                                                ...prev,
+                                                reservations: { ...prev.reservations, require_email: enabled }
+                                            }))}
+                                            label="Requerir email"
+                                            description="El email es obligatorio para hacer una reserva"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                                    <button
+                                        onClick={() => handleSave("Configuración de reservas")}
+                                        disabled={saving}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                    >
+                                        {saving ? (
+                                            <RefreshCw className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Save className="w-4 h-4" />
+                                        )}
+                                        Guardar configuración
+                                    </button>
+                                </div>
+                            </SettingSection>
+                        )}
+
                         {/* Configuración del Agente IA */}
                         {activeTab === "agent" && (
                             <div className="space-y-6">
@@ -872,33 +1331,439 @@ export default function Configuracion() {
                             </div>
                         )}
 
+                        {/* Configuración de Canales */}
+                        {activeTab === "channels" && (
+                            <div className="space-y-6">
+                                <SettingSection
+                                    title="Canales de Comunicación"
+                                    description="Configura WhatsApp, llamadas, web y redes sociales"
+                                    icon={<MessageSquare />}
+                                >
+                                    <div className="space-y-6">
+                                        {/* VAPI (Llamadas) */}
+                                        <div className="p-4 border border-gray-200 rounded-lg">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <Phone className="w-5 h-5 text-blue-600" />
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-900">VAPI - Llamadas</h4>
+                                                        <p className="text-sm text-gray-600">Atención telefónica con IA</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <ToggleSwitch
+                                                        enabled={settings.channels.vapi.enabled}
+                                                        onChange={(enabled) => 
+                                                            setSettings(prev => ({
+                                                                ...prev,
+                                                                channels: {
+                                                                    ...prev.channels,
+                                                                    vapi: { ...prev.channels.vapi, enabled }
+                                                                }
+                                                            }))
+                                                        }
+                                                        label=""
+                                                    />
+                                                    <button
+                                                        onClick={() => testChannelConnection('VAPI')}
+                                                        disabled={testingConnection.VAPI}
+                                                        className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                                                    >
+                                                        {testingConnection.VAPI ? 'Probando...' : 'Probar'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            {settings.channels.vapi.enabled && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            API Key
+                                                        </label>
+                                                        <input
+                                                            type="password"
+                                                            value={settings.channels.vapi.api_key}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        vapi: { ...prev.channels.vapi, api_key: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="Ingresa tu API key de VAPI"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Número de teléfono
+                                                        </label>
+                                                        <input
+                                                            type="tel"
+                                                            value={settings.channels.vapi.phone_number}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        vapi: { ...prev.channels.vapi, phone_number: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="+34 666 123 456"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* WhatsApp */}
+                                        <div className="p-4 border border-gray-200 rounded-lg">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <MessageCircle className="w-5 h-5 text-green-600" />
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-900">WhatsApp</h4>
+                                                        <p className="text-sm text-gray-600">Chat automático por WhatsApp</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <ToggleSwitch
+                                                        enabled={settings.channels.whatsapp.enabled}
+                                                        onChange={(enabled) => 
+                                                            setSettings(prev => ({
+                                                                ...prev,
+                                                                channels: {
+                                                                    ...prev.channels,
+                                                                    whatsapp: { ...prev.channels.whatsapp, enabled }
+                                                                }
+                                                            }))
+                                                        }
+                                                        label=""
+                                                    />
+                                                    <button
+                                                        onClick={() => testChannelConnection('WhatsApp')}
+                                                        disabled={testingConnection.WhatsApp}
+                                                        className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                                                    >
+                                                        {testingConnection.WhatsApp ? 'Probando...' : 'Probar'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            {settings.channels.whatsapp.enabled && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Número de WhatsApp
+                                                        </label>
+                                                        <input
+                                                            type="tel"
+                                                            value={settings.channels.whatsapp.phone_number}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        whatsapp: { ...prev.channels.whatsapp, phone_number: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="+34 666 123 456"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            API Key
+                                                        </label>
+                                                        <input
+                                                            type="password"
+                                                            value={settings.channels.whatsapp.api_key}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        whatsapp: { ...prev.channels.whatsapp, api_key: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="Token de WhatsApp Business API"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Chat Web */}
+                                        <div className="p-4 border border-gray-200 rounded-lg">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <MessageSquare className="w-5 h-5 text-blue-600" />
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-900">Chat Web</h4>
+                                                        <p className="text-sm text-gray-600">Widget de chat en tu sitio web</p>
+                                                    </div>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.channels.web_chat.enabled}
+                                                    onChange={(enabled) => 
+                                                        setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev.channels,
+                                                                web_chat: { ...prev.channels.web_chat, enabled }
+                                                            }
+                                                        }))
+                                                    }
+                                                    label=""
+                                                />
+                                            </div>
+                                            {settings.channels.web_chat.enabled && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Color del widget
+                                                        </label>
+                                                        <input
+                                                            type="color"
+                                                            value={settings.channels.web_chat.widget_color}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        web_chat: { ...prev.channels.web_chat, widget_color: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full h-10 border border-gray-300 rounded-lg"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Posición
+                                                        </label>
+                                                        <select
+                                                            value={settings.channels.web_chat.widget_position}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        web_chat: { ...prev.channels.web_chat, widget_position: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                        >
+                                                            <option value="bottom-right">Abajo derecha</option>
+                                                            <option value="bottom-left">Abajo izquierda</option>
+                                                            <option value="top-right">Arriba derecha</option>
+                                                            <option value="top-left">Arriba izquierda</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                                        <button
+                                            onClick={() => handleSave("Configuración de canales")}
+                                            disabled={saving}
+                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                        >
+                                            {saving ? (
+                                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Save className="w-4 h-4" />
+                                            )}
+                                            Guardar configuración
+                                        </button>
+                                    </div>
+                                </SettingSection>
+                            </div>
+                        )}
+
+                        {/* Notificaciones */}
+                        {activeTab === "notifications" && (
+                            <SettingSection
+                                title="Configuración de Notificaciones"
+                                description="Configura alertas y avisos automáticos"
+                                icon={<Bell />}
+                            >
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4">
+                                            <h4 className="font-medium text-gray-900">Canales de notificación</h4>
+                                            <ToggleSwitch
+                                                enabled={settings.notifications.email_enabled}
+                                                onChange={(enabled) => 
+                                                    setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: { ...prev.notifications, email_enabled: enabled }
+                                                    }))
+                                                }
+                                                label="Email"
+                                                description="Recibir notificaciones por correo electrónico"
+                                            />
+                                            <ToggleSwitch
+                                                enabled={settings.notifications.sms_enabled}
+                                                onChange={(enabled) => 
+                                                    setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: { ...prev.notifications, sms_enabled: enabled }
+                                                    }))
+                                                }
+                                                label="SMS"
+                                                description="Recibir notificaciones por mensaje de texto"
+                                            />
+                                            <ToggleSwitch
+                                                enabled={settings.notifications.push_enabled}
+                                                onChange={(enabled) => 
+                                                    setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: { ...prev.notifications, push_enabled: enabled }
+                                                    }))
+                                                }
+                                                label="Push"
+                                                description="Notificaciones push en el navegador"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <h4 className="font-medium text-gray-900">Tipos de notificación</h4>
+                                            <ToggleSwitch
+                                                enabled={settings.notifications.new_reservation}
+                                                onChange={(enabled) => 
+                                                    setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: { ...prev.notifications, new_reservation: enabled }
+                                                    }))
+                                                }
+                                                label="Nueva reserva"
+                                                description="Cuando se recibe una nueva reserva"
+                                            />
+                                            <ToggleSwitch
+                                                enabled={settings.notifications.reservation_cancelled}
+                                                onChange={(enabled) => 
+                                                    setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: { ...prev.notifications, reservation_cancelled: enabled }
+                                                    }))
+                                                }
+                                                label="Reserva cancelada"
+                                                description="Cuando un cliente cancela una reserva"
+                                            />
+                                            <ToggleSwitch
+                                                enabled={settings.notifications.agent_escalation}
+                                                onChange={(enabled) => 
+                                                    setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: { ...prev.notifications, agent_escalation: enabled }
+                                                    }))
+                                                }
+                                                label="Escalación del agente"
+                                                description="Cuando el agente IA deriva a humano"
+                                            />
+                                            <ToggleSwitch
+                                                enabled={settings.notifications.daily_summary}
+                                                onChange={(enabled) => 
+                                                    setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: { ...prev.notifications, daily_summary: enabled }
+                                                    }))
+                                                }
+                                                label="Resumen diario"
+                                                description="Resumen de actividad del día"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Horarios de silencio */}
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <ToggleSwitch
+                                            enabled={settings.notifications.quiet_hours.enabled}
+                                            onChange={(enabled) => 
+                                                setSettings(prev => ({
+                                                    ...prev,
+                                                    notifications: {
+                                                        ...prev.notifications,
+                                                        quiet_hours: { ...prev.notifications.quiet_hours, enabled }
+                                                    }
+                                                }))
+                                            }
+                                            label="Horarios de silencio"
+                                            description="No enviar notificaciones durante ciertas horas"
+                                        />
+
+                                        {settings.notifications.quiet_hours.enabled && (
+                                            <div className="mt-4 grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Inicio
+                                                    </label>
+                                                    <input
+                                                        type="time"
+                                                        value={settings.notifications.quiet_hours.start}
+                                                        onChange={(e) => 
+                                                            setSettings(prev => ({
+                                                                ...prev,
+                                                                notifications: {
+                                                                    ...prev.notifications,
+                                                                    quiet_hours: { ...prev.notifications.quiet_hours, start: e.target.value }
+                                                                }
+                                                            }))
+                                                        }
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Fin
+                                                    </label>
+                                                    <input
+                                                        type="time"
+                                                        value={settings.notifications.quiet_hours.end}
+                                                        onChange={(e) => 
+                                                            setSettings(prev => ({
+                                                                ...prev,
+                                                                notifications: {
+                                                                    ...prev.notifications,
+                                                                    quiet_hours: { ...prev.notifications.quiet_hours, end: e.target.value }
+                                                                }
+                                                            }))
+                                                        }
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                                    <button
+                                        onClick={() => handleSave("Notificaciones")}
+                                        disabled={saving}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                    >
+                                        {saving ? (
+                                            <RefreshCw className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Save className="w-4 h-4" />
+                                        )}
+                                        Guardar configuración
+                                    </button>
+                                </div>
+                            </SettingSection>
+                        )}
+
                         {/* Otras pestañas con contenido placeholder */}
-                        {activeTab === "hours" && (
-                            <SettingSection
-                                title="Horarios de Operación"
-                                description="Define los horarios de apertura y cierre"
-                                icon={<Clock />}
-                            >
-                                <div className="text-center py-8 text-gray-500">
-                                    <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>Configuración de horarios próximamente...</p>
-                                </div>
-                            </SettingSection>
-                        )}
-
-                        {activeTab === "reservations" && (
-                            <SettingSection
-                                title="Configuración de Reservas"
-                                description="Políticas y reglas de reserva"
-                                icon={<Calendar />}
-                            >
-                                <div className="text-center py-8 text-gray-500">
-                                    <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>Configuración de reservas próximamente...</p>
-                                </div>
-                            </SettingSection>
-                        )}
-
                         {activeTab === "crm" && (
                             <SettingSection
                                 title="CRM Inteligente"
@@ -913,19 +1778,6 @@ export default function Configuracion() {
                             </SettingSection>
                         )}
 
-                        {activeTab === "channels" && (
-                            <SettingSection
-                                title="Canales de Comunicación"
-                                description="WhatsApp, llamadas, web y redes sociales"
-                                icon={<MessageSquare />}
-                            >
-                                <div className="text-center py-8 text-gray-500">
-                                    <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>Configuración de canales próximamente...</p>
-                                </div>
-                            </SettingSection>
-                        )}
-
                         {activeTab === "workflows" && (
                             <SettingSection
                                 title="Workflows y Automatizaciones"
@@ -935,19 +1787,6 @@ export default function Configuracion() {
                                 <div className="text-center py-8 text-gray-500">
                                     <Webhook className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                                     <p>Workflows próximamente...</p>
-                                </div>
-                            </SettingSection>
-                        )}
-
-                        {activeTab === "notifications" && (
-                            <SettingSection
-                                title="Notificaciones"
-                                description="Alertas y avisos automáticos"
-                                icon={<Bell />}
-                            >
-                                <div className="text-center py-8 text-gray-500">
-                                    <Bell className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>Configuración de notificaciones próximamente...</p>
                                 </div>
                             </SettingSection>
                         )}
