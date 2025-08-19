@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -7,29 +8,36 @@ const ProtectedRoute = ({ children }) => {
   const {
     isReady,
     isAuthenticated,
-    user
+    user,
+    loading
   } = useAuthContext();
 
-  // Mostrar loading mientras se inicializa la autenticación
-  if (!isReady) {
+  // Show loading while initializing
+  if (!isReady || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="text-center">
-          <Bot className="w-16 h-16 text-purple-600 mx-auto mb-4 animate-pulse" />
-          <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Verificando acceso...</h2>
-          <p className="text-sm text-gray-500">Un momento por favor</p>
+          <div className="flex items-center justify-center mb-4">
+            <Bot className="w-12 h-12 text-purple-600 mr-2" />
+            <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-700">
+            Cargando Son-IA...
+          </h2>
+          <p className="text-sm text-gray-500 mt-2">
+            Tu asistente IA está preparando todo
+          </p>
         </div>
       </div>
     );
   }
 
-  // Redirigir al login si no está autenticado
+  // Redirect to login if not authenticated
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Renderizar la aplicación protegida
+  // Render protected content
   return children;
 };
 
