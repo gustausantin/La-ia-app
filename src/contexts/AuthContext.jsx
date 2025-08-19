@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -18,6 +19,7 @@ export const AuthProvider = ({ children }) => {
   const [restaurantId, setRestaurantId] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [loading, setLoading] = useState(true); // Para compatibilidad con ProtectedRoute
   const [notifications, setNotifications] = useState([]);
   const [agentStatus, setAgentStatus] = useState({
     active: true,
@@ -32,20 +34,11 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  // TIMEOUT DE SEGURIDAD - Forzar isReady después de 3 segundos
-  useEffect(() => {
-    const forceReadyTimeout = setTimeout(() => {
-      console.log('⏰ TIMEOUT: Forzando isReady = true después de 3 segundos');
-      setIsReady(true);
-    }, 3000);
-
-    return () => clearTimeout(forceReadyTimeout);
-  }, []); // Remove isReady dependency to prevent loop
-
   // Función para verificar sesión inicial
   const initSession = async () => {
     try {
       console.log('🚀 Initializing auth...');
+      setLoading(true);
 
       const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -62,7 +55,9 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('❌ Error in initSession:', error.message);
-      throw error;
+    } finally {
+      setLoading(false);
+      setIsReady(true);
     }
   };
 
@@ -164,23 +159,26 @@ export const AuthProvider = ({ children }) => {
     await fetchRestaurantInfo(user.id);
   };
 
-
-  // Auth state listener
+  // Auth state listener - SIMPLIFICADO
   useEffect(() => {
-    let isMounted = true;
     let isInitialized = false;
 
-    const handleAuthChange = async (event, session) => {
+    // 1. Initialize session once
+    const init = async () => {
+      if (isInitialized) return;
+      isInitialized = true;
+      await initSession();
+    };
+
+    // 2. Set up auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 Auth state changed:', event);
 
-      if (!isMounted) return;
-
-      // Skip all refresh events to prevent loops
-      if (event === 'TOKEN_REFRESHED' || event === 'TOKEN_RENEWED') {
+      // Skip token refresh events to prevent loops
+      if (event === 'TOKEN_REFRESHED') {
         return;
       }
 
-      // Handle auth state changes
       if (event === 'SIGNED_IN' && session) {
         console.log('✅ User signed in:', session.user.email);
         await loadUserData(session.user);
@@ -190,46 +188,15 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         setRestaurant(null);
         setRestaurantId(null);
-      } else if (event === 'INITIAL_SESSION') {
-        // Initial session is handled by initSession, skip here
-        return;
       }
-
-      // Set ready only once
-      if (!isInitialized) {
-        console.log('🔧 Auth state changed - Setting isReady = true');
-        setIsReady(true);
-        isInitialized = true;
-      }
-    };
-
-    // 1. Configure auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
-
-    // 2. Initialize session
-    const init = async () => {
-      if (isInitialized) return;
-      
-      try {
-        await initSession();
-        console.log('🎯 initSession completed');
-      } catch (error) {
-        console.error('❌ initSession failed:', error);
-      } finally {
-        if (!isInitialized) {
-          setIsReady(true);
-          isInitialized = true;
-        }
-      }
-    };
+    });
 
     init();
 
     return () => {
-      isMounted = false;
       subscription?.unsubscribe();
     };
-  }, []);
+  }, []); // EMPTY dependency array to prevent loops
 
   // Login function
   const login = async (email, password) => {
@@ -285,7 +252,7 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🚪 Cerrando sesión...');
 
-      // Limpiar estado ANTES del signOut
+      // Clear state BEFORE signOut
       setUser(null);
       setIsAuthenticated(false);
       setRestaurant(null);
@@ -304,21 +271,21 @@ export const AuthProvider = ({ children }) => {
         }
       });
 
-      // Limpiar localStorage
+      // Clear localStorage
       localStorage.clear();
       
-      // Cerrar sesión en Supabase
+      // Sign out from Supabase
       await supabase.auth.signOut();
 
       console.log('✅ Sesión cerrada correctamente');
       toast.success('Sesión cerrada correctamente');
 
-      // Redirigir inmediatamente
+      // Redirect immediately
       window.location.replace('/login');
 
     } catch (error) {
       console.error('❌ Logout error:', error);
-      // Incluso si hay error, limpiar y redirigir
+      // Even if there's an error, clear and redirect
       setUser(null);
       setIsAuthenticated(false);
       setRestaurant(null);
@@ -354,6 +321,9 @@ export const AuthProvider = ({ children }) => {
     setNotifications([]);
   };
 
+  // Calculate unread count
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   const value = {
     user,
     restaurant,
@@ -361,9 +331,10 @@ export const AuthProvider = ({ children }) => {
     restaurantInfo: restaurant, // Alias for compatibility
     isAuthenticated,
     isReady,
+    loading, // Para compatibilidad con ProtectedRoute
     notifications,
     agentStatus,
-    unreadCount: notifications.filter(n => !n.read).length,
+    unreadCount,
     login,
     register,
     logout,
