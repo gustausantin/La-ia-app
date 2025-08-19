@@ -295,6 +295,79 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Función para reinicio completo de la aplicación
+  const restartApp = () => {
+    try {
+      console.log('🔄 Reiniciando aplicación completa...');
+      
+      // Limpiar todo el estado
+      setUser(null);
+      setIsAuthenticated(false);
+      setRestaurant(null);
+      setRestaurantId(null);
+      setNotifications([]);
+      setAgentStatus({
+        active: false,
+        activeConversations: 0,
+        pendingActions: 0,
+        channels: {
+          vapi: false,
+          whatsapp: false,
+          email: false,
+          instagram: false,
+          facebook: false
+        }
+      });
+      setIsReady(false);
+      setLoading(true);
+
+      // Limpiar almacenamiento local
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Cerrar sesión de Supabase sin await para evitar bloqueos
+      supabase.auth.signOut().catch(console.error);
+
+      toast.success('Aplicación reiniciada');
+      
+      // Recargar página completamente
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+      
+    } catch (error) {
+      console.error('❌ Error en reinicio:', error);
+      // Forzar recarga si hay error
+      window.location.reload();
+    }
+  };
+
+  // Función para cierre de sesión forzado
+  const forceLogout = () => {
+    console.log('🚪 Cierre de sesión forzado...');
+    
+    // Limpiar todo inmediatamente
+    setUser(null);
+    setIsAuthenticated(false);
+    setRestaurant(null);
+    setRestaurantId(null);
+    setNotifications([]);
+    setIsReady(false);
+    setLoading(false);
+    
+    // Limpiar almacenamiento
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Cerrar sesión sin esperar respuesta
+    supabase.auth.signOut().catch(() => {});
+    
+    toast.success('Sesión cerrada');
+    
+    // Redirigir inmediatamente
+    window.location.replace('/login');
+  };
+
   // Add notification
   const addNotification = (notification) => {
     const newNotification = {
@@ -339,6 +412,8 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     signOut: logout, // Alias para compatibilidad con Layout
+    restartApp, // Nueva función de reinicio
+    forceLogout, // Nueva función de cierre forzado
     addNotification,
     markNotificationAsRead,
     markAllNotificationsAsRead: clearNotifications,
