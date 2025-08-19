@@ -82,6 +82,21 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+// DATOS NECESARIOS DE SUPABASE:
+// - tabla: restaurants (configuración general)
+// - tabla: agent_settings (configuración del agente IA)
+// - tabla: agent_messages (plantillas de mensajes)
+// - tabla: agent_personality (personalidad del bot)
+// - tabla: agent_rules (reglas de escalamiento)
+// - tabla: agent_table_preferences (preferencias de mesas)
+// - tabla: agent_real_time_status (estado en tiempo real)
+// - tabla: channel_configs (configuración por canal)
+// - tabla: n8n_workflows (flujos activos)
+// - tabla: crm_settings (configuración del CRM)
+// - RPC: update_restaurant_settings(restaurant_id, settings)
+// - RPC: get_agent_performance_stats(restaurant_id)
+// - RPC: test_channel_connection(channel, config)
+
 // Componente para cada sección de configuración
 const SettingSection = ({
     title,
