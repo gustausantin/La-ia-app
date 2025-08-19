@@ -35,14 +35,12 @@ export const AuthProvider = ({ children }) => {
   // TIMEOUT DE SEGURIDAD - Forzar isReady después de 3 segundos
   useEffect(() => {
     const forceReadyTimeout = setTimeout(() => {
-      if (!isReady) {
-        console.log('⏰ TIMEOUT: Forzando isReady = true después de 3 segundos');
-        setIsReady(true);
-      }
+      console.log('⏰ TIMEOUT: Forzando isReady = true después de 3 segundos');
+      setIsReady(true);
     }, 3000);
 
     return () => clearTimeout(forceReadyTimeout);
-  }, [isReady]);
+  }, []); // Remove isReady dependency to prevent loop
 
   // Función para verificar sesión inicial
   const initSession = async () => {
@@ -175,6 +173,7 @@ export const AuthProvider = ({ children }) => {
   // Auth state listener
   useEffect(() => {
     let isMounted = true;
+    let sessionInitialized = false;
 
     // 1. PRIMERO configurar el listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -182,6 +181,11 @@ export const AuthProvider = ({ children }) => {
         console.log('🔐 Auth state changed:', event);
 
         if (!isMounted) return;
+
+        // Skip TOKEN_REFRESHED events to prevent loops
+        if (event === 'TOKEN_REFRESHED') {
+          return;
+        }
 
         if (event === 'SIGNED_IN' && session) {
           console.log('✅ User signed in:', session.user.email);
@@ -194,10 +198,11 @@ export const AuthProvider = ({ children }) => {
           setRestaurantId(null);
         }
 
-        // Asegurar que isReady siempre esté en true después de cualquier cambio
-        if (!isReady) {
+        // Set ready only once after initial session
+        if (!sessionInitialized) {
           console.log('🔧 Auth state changed - Setting isReady = true');
           setIsReady(true);
+          sessionInitialized = true;
         }
       }
     );
@@ -205,10 +210,11 @@ export const AuthProvider = ({ children }) => {
     // 2. LUEGO inicializar la sesión
     initSession().then(() => {
       console.log('🎯 initSession completed');
+      sessionInitialized = true;
     }).catch(error => {
       console.error('❌ initSession failed:', error);
-      // Incluso si falla, establecer isReady
       setIsReady(true);
+      sessionInitialized = true;
     });
 
     return () => {
