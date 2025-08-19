@@ -82,21 +82,6 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-// DATOS NECESARIOS DE SUPABASE:
-// - tabla: restaurants (configuración general)
-// - tabla: agent_settings (configuración del agente IA)
-// - tabla: agent_messages (plantillas de mensajes)
-// - tabla: agent_personality (personalidad del bot)
-// - tabla: agent_rules (reglas de escalamiento)
-// - tabla: agent_table_preferences (preferencias de mesas)
-// - tabla: agent_real_time_status (estado en tiempo real)
-// - tabla: channel_configs (configuración por canal)
-// - tabla: n8n_workflows (flujos activos)
-// - tabla: crm_settings (configuración del CRM)
-// - RPC: update_restaurant_settings(restaurant_id, settings)
-// - RPC: get_agent_performance_stats(restaurant_id)
-// - RPC: test_channel_connection(channel, config)
-
 // Componente para cada sección de configuración
 const SettingSection = ({
     title,
@@ -175,13 +160,12 @@ export default function Configuracion() {
         restaurant, 
         restaurantId, 
         isReady,
-        agentStatus // Estado real del agente del contexto
+        agentStatus 
     } = useAuthContext();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState("general");
-    const [testingConnection, setTestingConnection] = useState({});
 
     // Estados para todas las configuraciones
     const [settings, setSettings] = useState({
@@ -201,68 +185,6 @@ export default function Configuracion() {
         language: "es",
         logo_url: "",
 
-        // Horarios
-        business_hours: {
-            monday: {
-                open: "13:00",
-                close: "16:00",
-                dinner_open: "20:00",
-                dinner_close: "23:30",
-                closed: false,
-            },
-            tuesday: {
-                open: "13:00",
-                close: "16:00",
-                dinner_open: "20:00",
-                dinner_close: "23:30",
-                closed: false,
-            },
-            wednesday: {
-                open: "13:00",
-                close: "16:00",
-                dinner_open: "20:00",
-                dinner_close: "23:30",
-                closed: false,
-            },
-            thursday: {
-                open: "13:00",
-                close: "16:00",
-                dinner_open: "20:00",
-                dinner_close: "23:30",
-                closed: false,
-            },
-            friday: {
-                open: "13:00",
-                close: "16:00",
-                dinner_open: "20:00",
-                dinner_close: "00:00",
-                closed: false,
-            },
-            saturday: {
-                open: "13:00",
-                close: "16:00",
-                dinner_open: "20:00",
-                dinner_close: "00:00",
-                closed: false,
-            },
-            sunday: {
-                open: "13:00",
-                close: "16:00",
-                dinner_open: null,
-                dinner_close: null,
-                closed: false,
-            },
-        },
-
-        // Configuración de reservas
-        min_party_size: 1,
-        max_party_size: 20,
-        reservation_duration: 120, // minutos
-        buffer_time: 15, // minutos entre reservas
-        advance_booking_days: 30,
-        same_day_cutoff: "12:00",
-        cancellation_hours: 2,
-
         // Configuración del Agente IA
         agent: {
             enabled: true,
@@ -270,22 +192,6 @@ export default function Configuracion() {
             personality: "professional_friendly",
             language: "es",
             voice: "es-ES-Standard-A",
-
-            // Límites de conversación y rendimiento
-            conversation_limits: {
-                max_concurrent: 10,
-                max_messages_per_session: 20,
-                session_timeout_minutes: 30,
-                max_reservation_attempts: 3
-            },
-
-            // Objetivos de rendimiento
-            performance_goals: {
-                response_time_seconds: 5,
-                resolution_rate_target: 80,
-                satisfaction_target: 90,
-                escalation_rate_max: 20
-            },
 
             // Optimización de mesas
             table_optimization: {
@@ -295,236 +201,7 @@ export default function Configuracion() {
                     location: 60,
                     capacity: 70,
                     customer_history: 50
-                },
-                rules: {
-                    vip_priority: true,
-                    group_size_optimization: true,
-                    weather_adaptation: false
                 }
-            },
-
-            // Mensajes personalizados
-            messages: {
-                welcome: "¡Hola! 👋 Soy el asistente virtual de {restaurant_name}. ¿En qué puedo ayudarte hoy?",
-                welcome_back: "¡Hola de nuevo {customer_name}! 😊 ¿Qué tal estás? ¿Vienes a reservar mesa?",
-                goodbye: "¡Gracias por contactarnos! Que tengas un excelente día. 🌟",
-                reservation_confirm: "¡Perfecto! Tu reserva para {party_size} personas el {date} a las {time} está confirmada. ✅",
-                reservation_cancel: "Tu reserva ha sido cancelada. Esperamos verte pronto. 😊",
-                reservation_modify: "He actualizado tu reserva. Los nuevos detalles son: {details}",
-                no_availability: "Lo siento, no tenemos disponibilidad para esa fecha y hora. 😔 ¿Te parece si probamos con {suggestions}?",
-                menu_inquiry: "Puedes ver nuestro menú completo en {website}. ¿Tienes alguna preferencia o restricción alimentaria?",
-                location: "Estamos en {address}. ¿Necesitas indicaciones para llegar?",
-                parking: "Tenemos parking gratuito para clientes. También hay parking público a 2 minutos.",
-                error_understanding: "Disculpa, no he entendido bien. ¿Podrías reformular tu pregunta?",
-                error_system: "Estoy teniendo problemas técnicos. Por favor, llama al {phone} para hacer tu reserva.",
-                table_assignment: "Te he asignado la mesa {table}, perfecta para {party_size} personas.",
-                vip_greeting: "¡{customer_name}! Qué alegría verte de nuevo. Como cliente VIP, tenemos opciones especiales para ti.",
-                birthday_greeting: "¡Feliz cumpleaños! 🎂 Tenemos una sorpresa esperándote cuando vengas.",
-                weather_advisory: "Veo que el tiempo {weather_condition}. ¿Prefieres mesa en interior?",
-            },
-
-            // Reglas de comportamiento
-            rules: {
-                auto_response_hours: {
-                    enabled: true,
-                    start: "09:00",
-                    end: "23:00",
-                    outside_message: "Gracias por contactarnos. Nuestro horario de atención es de 9:00 a 23:00. Te responderemos lo antes posible."
-                },
-                escalation: {
-                    enabled: true,
-                    triggers: [
-                        "queja",
-                        "reclamación", 
-                        "alergia grave",
-                        "evento especial",
-                        "grupo grande",
-                        "urgente",
-                        "hablar con encargado"
-                    ],
-                    max_attempts: 3,
-                    escalation_message: "Voy a transferirte con una persona del equipo para ayudarte mejor. Un momento por favor..."
-                },
-                special_intents: {
-                    vip_detection: true,
-                    birthday_detection: true,
-                    allergy_detection: true,
-                    large_group_detection: true,
-                    special_event_detection: true
-                }
-            },
-
-            // Configuración por canal
-            channels: {
-                whatsapp: {
-                    enabled: true,
-                    use_voice_notes: true,
-                    max_message_length: 1600,
-                    send_images: true,
-                    send_location: true,
-                    quick_replies: true,
-                    business_hours_only: false
-                },
-                vapi: {
-                    enabled: true,
-                    voice_id: "es-ES-Standard-A",
-                    speed: 1.0,
-                    pitch: 0,
-                    interruption_threshold: 100,
-                    end_call_phrases: ["adiós", "hasta luego", "gracias"],
-                    background_noise_suppression: true
-                },
-                instagram: {
-                    enabled: false,
-                    auto_reply: true,
-                    story_replies: false
-                },
-                facebook: {
-                    enabled: false,
-                    messenger_only: true
-                },
-                web: {
-                    enabled: true,
-                    widget_behavior: {
-                        proactive_message_delay: 5000,
-                        typing_indicator: true,
-                        sound_notifications: true
-                    }
-                }
-            }
-        },
-
-        // N8N y Workflows
-        workflows: {
-            n8n_base_url: "",
-            webhook_secret: "",
-            active_flows: {
-                main_conversational_agent: {
-                    enabled: true,
-                    webhook_url: "",
-                    last_trigger: null,
-                    error_count: 0
-                },
-                vapi_channel: {
-                    enabled: true,
-                    webhook_url: "",
-                    phone_number: "",
-                    last_trigger: null,
-                    error_count: 0
-                },
-                whatsapp_flow: {
-                    enabled: true,
-                    webhook_url: "",
-                    verify_token: "",
-                    last_trigger: null,
-                    error_count: 0
-                },
-                analytics_processor: {
-                    enabled: true,
-                    schedule: "0 2 * * *",
-                    last_run: null
-                }
-            }
-        },
-
-        // Canales de comunicación
-        channels: {
-            whatsapp: { 
-                enabled: true, 
-                number: "", 
-                business_id: "",
-                api_key: "",
-                webhook_url: "",
-                verify_token: ""
-            },
-            vapi: {
-                enabled: true,
-                phone_number: "",
-                api_key: "",
-                assistant_id: "",
-                webhook_secret: ""
-            },
-            web: { 
-                enabled: true, 
-                widget_color: "#3B82F6",
-                position: "bottom-right",
-                auto_open_delay: 5000,
-                custom_css: ""
-            },
-            instagram: {
-                enabled: false,
-                account_id: "",
-                access_token: ""
-            },
-            facebook: {
-                enabled: false,
-                page_id: "",
-                access_token: ""
-            },
-            email: {
-                enabled: false,
-                smtp_host: "",
-                smtp_port: 587,
-                smtp_user: "",
-                smtp_password: ""
-            }
-        },
-
-        // Notificaciones
-        notifications: {
-            new_reservation: { enabled: true, email: true, whatsapp: false, webhook: false },
-            cancellation: { enabled: true, email: true, whatsapp: false, webhook: false },
-            modification: { enabled: true, email: true, whatsapp: false, webhook: false },
-            no_show: { enabled: true, email: false, whatsapp: false, webhook: false },
-
-            reminder_enabled: true,
-            reminder_hours: 2,
-            reminder_channels: ["whatsapp", "email"],
-
-            daily_summary: { 
-                enabled: true, 
-                time: "09:00",
-                include_agent_stats: true,
-                include_revenue: true
-            },
-
-            agent_alerts: {
-                escalation: { enabled: true, email: true, sms: false },
-                error_rate_high: { enabled: true, threshold: 10 },
-                response_time_slow: { enabled: true, threshold: 30 },
-                daily_limit_reached: { enabled: true, limit: 1000 }
-            }
-        },
-
-        // Integraciones
-        integrations: {
-            google_calendar: { enabled: false, calendar_id: "", client_id: "" },
-            pos_system: { enabled: false, type: "", api_key: "", sync_revenue: true },
-            accounting: { enabled: false, software: "", api_key: "" },
-            marketing: { enabled: false, tool: "", api_key: "" },
-            analytics: { enabled: true, google_analytics_id: "", pixel_id: "" }
-        },
-
-        // Configuración CRM
-        crm: {
-            ai_enabled: true,
-            vip_threshold: 85,
-            churn_threshold: 30,
-            auto_segmentation: {
-                enabled: true,
-                frequency: 'daily'
-            },
-            smart_campaigns: {
-                enabled: true,
-                birthday_greetings: true,
-                win_back: true,
-                vip_perks: true
-            },
-            predictive: {
-                ltv_calculation: true,
-                churn_prediction: true,
-                next_visit: true,
-                preferences: true
             }
         }
     });
@@ -535,10 +212,7 @@ export default function Configuracion() {
         resolved_automatically: 0,
         escalated_to_human: 0,
         avg_response_time: 0,
-        satisfaction_score: 0,
-        most_common_intents: [],
-        peak_hours: [],
-        channel_distribution: {}
+        satisfaction_score: 0
     });
 
     // Tabs de navegación
@@ -643,25 +317,7 @@ export default function Configuracion() {
                 resolved_automatically: 1052,
                 escalated_to_human: 195,
                 avg_response_time: 3.2,
-                satisfaction_score: 92,
-                most_common_intents: [
-                    { intent: "reservation", count: 523, percentage: 42 },
-                    { intent: "menu_inquiry", count: 298, percentage: 24 },
-                    { intent: "hours", count: 186, percentage: 15 },
-                    { intent: "location", count: 124, percentage: 10 },
-                    { intent: "other", count: 116, percentage: 9 }
-                ],
-                peak_hours: [
-                    { hour: "12:00-14:00", count: 287 },
-                    { hour: "19:00-21:00", count: 412 },
-                    { hour: "21:00-23:00", count: 198 }
-                ],
-                channel_distribution: {
-                    whatsapp: 68,
-                    vapi: 22,
-                    web: 8,
-                    other: 2
-                }
+                satisfaction_score: 92
             });
         } catch (error) {
             console.error("Error loading agent metrics:", error);
@@ -699,33 +355,6 @@ export default function Configuracion() {
                 [field]: value,
             },
         }));
-    };
-
-    const handleDeepNestedChange = (parent, child, field, value) => {
-        setSettings((prev) => ({
-            ...prev,
-            [parent]: {
-                ...prev[parent],
-                [child]: {
-                    ...prev[parent][child],
-                    [field]: value,
-                },
-            },
-        }));
-    };
-
-    const testChannelConnection = async (channel) => {
-        try {
-            setTestingConnection({ ...testingConnection, [channel]: true });
-
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            toast.success(`Conexión con ${channel} exitosa!`);
-        } catch (error) {
-            toast.error(`Error conectando con ${channel}`);
-        } finally {
-            setTestingConnection({ ...testingConnection, [channel]: false });
-        }
     };
 
     if (loading) {
