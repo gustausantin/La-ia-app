@@ -1,7 +1,10 @@
 run = "npm run dev"
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "web"]
 hidden = [".config", "package-lock.json"]
-entrypoint = "index.html"
+entrypoint = "src/index.jsx"
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix"]
 
 [nix]
 channel = "stable-24_05"
@@ -10,68 +13,25 @@ channel = "stable-24_05"
 language = "nodejs"
 
 [deployment]
-deploymentTarget = "static"
-build = ["npm", "run", "build"]
-publicDir = "dist"
+run = ["sh", "-c", "npm run build && npm start"]
+deploymentTarget = "cloudrun"
+ignorePorts = false
 
 [[ports]]
-localPort = 3000
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 5001
 externalPort = 3001
 
-[[ports]]
-localPort = 3001
-externalPort = 3002
-
-[[ports]]
-localPort = 5000
-externalPort = 5000
-
-[[ports]]
-localPort = 5000
-externalPort = 80
-
-[[ports]]
-localPort = 5002
-externalPort = 4200
-
-[[ports]]
-localPort = 5003
-externalPort = 5173
-
-[[ports]]
-localPort = 5004
-externalPort = 6000
-
-[[ports]]
-localPort = 5005
-externalPort = 6800
-
-[[ports]]
-localPort = 5006
-externalPort = 8000
-
-[[ports]]
-localPort = 5007
-externalPort = 8008
-
-[[ports]]
-localPort = 5173
-externalPort = 80
-
-[[ports]]
-localPort = 5174
-externalPort = 3000
-
-[[ports]]
-localPort = 5175
-externalPort = 8080
-
-[[ports]]
-localPort = 5176
-externalPort = 8081
+[env]
+XDG_CONFIG_HOME = "$REPL_HOME/.config"
+PATH = "$REPL_HOME/.config/npm/node_global/bin:$REPL_HOME/node_modules/.bin"
+npm_config_prefix = "$REPL_HOME/.config/npm/node_global"
 
 [workflows]
-runButton = "FUNCIONA DEFINITIVO"
+runButton = "TEST Y ARREGLO"
 
 [[workflows.workflow]]
 name = "Start Development Server"
@@ -181,6 +141,15 @@ args = "npm run dev"
 
 [[workflows.workflow]]
 name = "SERVIDOR LIMPIO"
+author = 41843571
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "TEST Y ARREGLO"
 author = 41843571
 mode = "sequential"
 
