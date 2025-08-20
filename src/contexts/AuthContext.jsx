@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -159,44 +158,47 @@ export const AuthProvider = ({ children }) => {
     await fetchRestaurantInfo(user.id);
   };
 
-  // Auth state listener - SIMPLIFICADO
+  // Auth state listener - SIMPLIFICADO Y ESTABLE
   useEffect(() => {
-    let isInitialized = false;
+    let mounted = true;
 
-    // 1. Initialize session once
-    const init = async () => {
-      if (isInitialized) return;
-      isInitialized = true;
+    const initAuth = async () => {
+      if (!mounted) return;
       await initSession();
     };
 
-    // 2. Set up auth listener
+    // 1. Initialize once
+    initAuth();
+
+    // 2. Listen to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
       console.log('🔐 Auth state changed:', event);
 
-      // Skip token refresh events to prevent loops
-      if (event === 'TOKEN_REFRESHED') {
-        return;
-      }
+      if (event === 'TOKEN_REFRESHED') return; // Skip token refresh
 
       if (event === 'SIGNED_IN' && session) {
         console.log('✅ User signed in:', session.user.email);
-        await loadUserData(session.user);
+        if (mounted) {
+          await loadUserData(session.user);
+        }
       } else if (event === 'SIGNED_OUT') {
         console.log('👋 User signed out');
-        setUser(null);
-        setIsAuthenticated(false);
-        setRestaurant(null);
-        setRestaurantId(null);
+        if (mounted) {
+          setUser(null);
+          setIsAuthenticated(false);
+          setRestaurant(null);
+          setRestaurantId(null);
+        }
       }
     });
 
-    init();
-
     return () => {
+      mounted = false;
       subscription?.unsubscribe();
     };
-  }, []); // EMPTY dependency array to prevent loops
+  }, []); // EMPTY - NO dependencies to prevent loops
 
   // Login function
   const login = async (email, password) => {
@@ -251,121 +253,13 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       console.log('🚪 Cerrando sesión...');
-
-      // Clear state BEFORE signOut
-      setUser(null);
-      setIsAuthenticated(false);
-      setRestaurant(null);
-      setRestaurantId(null);
-      setNotifications([]);
-      setAgentStatus({
-        active: false,
-        activeConversations: 0,
-        pendingActions: 0,
-        channels: {
-          vapi: false,
-          whatsapp: false,
-          email: false,
-          instagram: false,
-          facebook: false
-        }
-      });
-
-      // Clear localStorage
-      localStorage.clear();
-      
-      // Sign out from Supabase
       await supabase.auth.signOut();
-
       console.log('✅ Sesión cerrada correctamente');
       toast.success('Sesión cerrada correctamente');
-
-      // Redirect immediately
-      window.location.replace('/login');
-
     } catch (error) {
       console.error('❌ Logout error:', error);
-      // Even if there's an error, clear and redirect
-      setUser(null);
-      setIsAuthenticated(false);
-      setRestaurant(null);
-      setRestaurantId(null);
-      localStorage.clear();
-      window.location.replace('/login');
+      toast.error('Error al cerrar sesión');
     }
-  };
-
-  // Función para reinicio completo de la aplicación
-  const restartApp = () => {
-    try {
-      console.log('🔄 Reiniciando aplicación completa...');
-      
-      // Limpiar todo el estado
-      setUser(null);
-      setIsAuthenticated(false);
-      setRestaurant(null);
-      setRestaurantId(null);
-      setNotifications([]);
-      setAgentStatus({
-        active: false,
-        activeConversations: 0,
-        pendingActions: 0,
-        channels: {
-          vapi: false,
-          whatsapp: false,
-          email: false,
-          instagram: false,
-          facebook: false
-        }
-      });
-      setIsReady(false);
-      setLoading(true);
-
-      // Limpiar almacenamiento local
-      localStorage.clear();
-      sessionStorage.clear();
-
-      // Cerrar sesión de Supabase sin await para evitar bloqueos
-      supabase.auth.signOut().catch(console.error);
-
-      toast.success('Aplicación reiniciada');
-      
-      // Recargar página completamente
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
-      
-    } catch (error) {
-      console.error('❌ Error en reinicio:', error);
-      // Forzar recarga si hay error
-      window.location.reload();
-    }
-  };
-
-  // Función para cierre de sesión forzado
-  const forceLogout = () => {
-    console.log('🚪 Cierre de sesión forzado...');
-    
-    // Limpiar todo inmediatamente
-    setUser(null);
-    setIsAuthenticated(false);
-    setRestaurant(null);
-    setRestaurantId(null);
-    setNotifications([]);
-    setIsReady(false);
-    setLoading(false);
-    
-    // Limpiar almacenamiento
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // Cerrar sesión sin esperar respuesta
-    supabase.auth.signOut().catch(() => {});
-    
-    toast.success('Sesión cerrada');
-    
-    // Redirigir inmediatamente
-    window.location.replace('/login');
   };
 
   // Add notification
@@ -401,19 +295,17 @@ export const AuthProvider = ({ children }) => {
     user,
     restaurant,
     restaurantId,
-    restaurantInfo: restaurant, // Alias for compatibility
+    restaurantInfo: restaurant,
     isAuthenticated,
     isReady,
-    loading, // Para compatibilidad con ProtectedRoute
+    loading,
     notifications,
     agentStatus,
     unreadCount,
     login,
     register,
     logout,
-    signOut: logout, // Alias para compatibilidad con Layout
-    restartApp, // Nueva función de reinicio
-    forceLogout, // Nueva función de cierre forzado
+    signOut: logout,
     addNotification,
     markNotificationAsRead,
     markAllNotificationsAsRead: clearNotifications,

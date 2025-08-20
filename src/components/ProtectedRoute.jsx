@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children }) => {
             <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
           </div>
           <h2 className="text-xl font-semibold text-gray-700">
-            Cargando Son-IA...
+            Cargando La-IA...
           </h2>
           <p className="text-sm text-gray-500 mt-2">
             Tu asistente IA está preparando todo
