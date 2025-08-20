@@ -205,15 +205,29 @@ const Alert = ({
 
 // Componente principal del Dashboard
 export default function Dashboard() {
-    console.log('📊 Dashboard avanzado rendering...');
-
     const {
-        restaurant,
-        restaurantId,
-        isReady,
-        agentStatus,
-        user
-    } = useAuthContext();
+        status,
+        isAuthenticated, 
+        restaurant, 
+        agentStatus, 
+        addNotification 
+      } = useAuthContext();
+
+    console.log('📊 Dashboard avanzado rendering...', { status });
+
+    // Mostrar loading mientras se inicializa
+    if (status === 'checking') {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Cargando dashboard...</p>
+                </div>
+            </div>
+        );
+    }
+
+    const restaurantId = restaurant?.id; // Asegurarse de que restaurantId se derive de restaurant
 
     // Función de notificaciones fallback si no existe
     const addNotification = useCallback((notification) => {
@@ -402,7 +416,7 @@ export default function Dashboard() {
     // Función para cargar todos los datos
     const loadDashboardData = useCallback(async () => {
         if (!restaurantId) return;
-        
+
         // Solo prevenir carga múltiple si ya está cargando
         if (loadingState === LOADING_STATES.LOADING) {
             console.log('📊 Dashboard: Ya está cargando, esperando...');
@@ -425,11 +439,11 @@ export default function Dashboard() {
             statsResult.status === 'fulfilled' 
                 ? console.log('✅ Stats cargadas') 
                 : console.warn('⚠️ Error en stats:', statsResult.reason);
-            
+
             conversationsResult.status === 'fulfilled' 
                 ? console.log('✅ Conversaciones cargadas') 
                 : console.warn('⚠️ Error en conversaciones:', conversationsResult.reason);
-            
+
             reservationsResult.status === 'fulfilled' 
                 ? console.log('✅ Reservas cargadas') 
                 : console.warn('⚠️ Error en reservas:', reservationsResult.reason);
@@ -462,18 +476,18 @@ export default function Dashboard() {
     // Efecto para cargar datos iniciales automáticamente - SIMPLIFICADO Y ROBUSTO
     useEffect(() => {
         console.log('🔄 Dashboard: Verificando condiciones de carga -', { 
-            isReady, 
+            status, 
             restaurantId, 
             loadingState,
             hasRestaurant: !!restaurant 
         });
 
         // Solo cargar si todas las condiciones se cumplen y no estamos ya cargando
-        if (isReady && restaurantId && loadingState === LOADING_STATES.INITIAL) {
+        if (status === 'authenticated' && restaurantId && loadingState === LOADING_STATES.INITIAL) {
             console.log('✅ Dashboard: Iniciando carga automática inmediata...');
             loadDashboardData();
         }
-    }, [isReady, restaurantId, loadingState]); // Removido loadDashboardData de dependencies para evitar loops
+    }, [status, restaurantId, loadingState]); // Removido loadDashboardData de dependencies para evitar loops
 
     // Suscripción real-time a reservas
     useEffect(() => {
@@ -545,13 +559,13 @@ export default function Dashboard() {
         return sorted.slice(0, 3).map((h) => h.hour.replace(":00", "h"));
     }, [stats.hourly_reservations]);
 
-    // Control robusto de loading - usar solo isReady (no depender de loading)
-    if (!isReady) {
+    // Control robusto de loading - usar solo status (no depender de loading)
+    if (status !== 'authenticated') { // Cambiado para asegurar que el usuario esté autenticado para mostrar el dashboard
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-                    <p className="text-gray-600">Cargando dashboard...</p>
+                    <p className="text-gray-600">Por favor, inicia sesión para ver el dashboard.</p>
                 </div>
             </div>
         );
@@ -583,7 +597,7 @@ export default function Dashboard() {
                 </button>
             </div>
 
-            
+
 
             {/* Métricas principales del AGENTE */}
             <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6">
