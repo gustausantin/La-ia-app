@@ -31,7 +31,7 @@ PATH = "$REPL_HOME/.config/npm/node_global/bin:$REPL_HOME/node_modules/.bin"
 npm_config_prefix = "$REPL_HOME/.config/npm/node_global"
 
 [workflows]
-runButton = "SON-IA REINICIADA"
+runButton = "SON-IA FINAL"
 
 [[workflows.workflow]]
 name = "Start Development Server"
@@ -191,3 +191,25 @@ mode = "parallel"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[workflows.workflow]]
+name = "ESTABLE FINAL"
+author = 41843571
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server.js &"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "vite --host 0.0.0.0 --port 5000 --strictPort"
+
+[[workflows.workflow]]
+name = "SON-IA FINAL"
+author = 41843571
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node start-app.js"
