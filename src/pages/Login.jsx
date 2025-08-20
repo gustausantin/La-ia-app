@@ -1,4 +1,3 @@
-
 // Login.jsx - Versión ORIGINAL con solo 1 error corregido
 
 import { useState } from "react";
@@ -346,7 +345,7 @@ export default function Login() {
           <div className="text-center">
             <div className="flex items-center justify-center gap-3 mb-4">
               <Bot className="w-10 h-10 text-purple-600" />
-              <h1 className="text-4xl font-bold text-gray-900">Son-IA</h1>
+              <h1 className="text-4xl font-bold text-gray-900">La-IA</h1>
             </div>
             <p className="text-gray-600 text-lg">
               Sistema Inteligente de Reservas con IA
@@ -792,7 +791,7 @@ export default function Login() {
             </div>
           )}
           <div className="text-center text-sm text-gray-500">
-            <p>© 2024 Son-IA. Sistema de Inteligencia para Restaurantes</p>
+            <p>© 2024 La-IA. Sistema de Inteligencia para Restaurantes</p>
           </div>
         </div>
       </div>

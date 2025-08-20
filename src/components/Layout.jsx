@@ -268,7 +268,7 @@ export default function Layout() {
                                 <Activity className="w-4 h-4" />
                                 <span>Reiniciar App</span>
                             </button>
-                            
+
                             <button
                                 onClick={forceLogout}
                                 className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors font-medium"

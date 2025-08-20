@@ -31,7 +31,7 @@ PATH = "$REPL_HOME/.config/npm/node_global/bin:$REPL_HOME/node_modules/.bin"
 npm_config_prefix = "$REPL_HOME/.config/npm/node_global"
 
 [workflows]
-runButton = "SON-IA FINAL"
+runButton = "LA-IA FINAL"
 
 [[workflows.workflow]]
 name = "Start Development Server"
@@ -213,3 +213,12 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node start-app.js"
+
+[[workflows.workflow]]
+name = "LA-IA FINAL"
+author = 41843571
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
