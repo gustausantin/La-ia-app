@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
   const bootedRef = useRef(false);
   const lastSignInRef = useRef(null);
 
-  // Función con TIMEOUT FORZADO para evitar bucles
+  // Función SIMPLIFICADA que falla rápido
   const fetchRestaurantInfo = async (userId) => {
     console.log('🔍 Fetching restaurant info for user:', userId);
     
@@ -35,90 +35,59 @@ export const AuthProvider = ({ children }) => {
       return; 
     }
 
-    // TIMEOUT FORZADO: máximo 3 segundos
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('fetchRestaurantInfo timeout')), 3000);
-    });
-
     try {
-      const fetchPromise = (async () => {
-        // Primer intento: mapping table
-        const { data: map, error: mapErr } = await supabase
-          .from('user_restaurant_mapping')
-          .select(`
-            role, permissions,
-            restaurant:restaurant_id (
-              id, name, email, phone, address, city, postal_code, country,
-              timezone, currency, logo_url, website, active, trial_end_at,
-              subscription_status, agent_config, settings, created_at, updated_at, ui_cuisine_type
-            )
-          `)
-          .eq('auth_user_id', userId)
-          .maybeSingle();
+      // Timeout AGRESIVO de 2 segundos
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-        if (map?.restaurant) {
-          console.log('✅ Restaurant via mapping:', map.restaurant.name);
-          setRestaurant(map.restaurant); 
-          setRestaurantId(map.restaurant.id); 
-          return;
-        }
+      // Solo un intento - mapping table
+      const { data: map, error: mapErr } = await supabase
+        .from('user_restaurant_mapping')
+        .select('restaurant:restaurant_id(id, name)')
+        .eq('auth_user_id', userId)
+        .abortSignal(controller.signal)
+        .maybeSingle();
 
-        if (mapErr && mapErr.code !== 'PGRST116') {
-          console.error('❌ DB mapping error:', mapErr);
-        }
+      clearTimeout(timeoutId);
 
-        // Segundo intento: direct
-        console.log('📋 No mapping; trying direct...');
-        const { data: direct, error: directErr } = await supabase
-          .from('restaurants')
-          .select('*')
-          .eq('auth_user_id', userId)
-          .maybeSingle();
-
-        if (direct) { 
-          console.log('✅ Restaurant direct:', direct.name);
-          setRestaurant(direct); 
-          setRestaurantId(direct.id); 
-        } else {
-          if (directErr && directErr.code !== 'PGRST116') {
-            console.error('❌ DB direct error:', directErr);
-          }
-          console.log('🏪 No restaurant found');
-          setRestaurant(null); 
-          setRestaurantId(null);
-        }
-      })();
-
-      // Race entre fetch y timeout
-      await Promise.race([fetchPromise, timeoutPromise]);
+      if (map?.restaurant) {
+        console.log('✅ Restaurant found:', map.restaurant.name);
+        setRestaurant(map.restaurant); 
+        setRestaurantId(map.restaurant.id); 
+      } else {
+        console.log('🏪 No restaurant found - app continues normally');
+        setRestaurant(null); 
+        setRestaurantId(null);
+      }
       
     } catch (e) {
-      if (e.message === 'fetchRestaurantInfo timeout') {
-        console.warn('⏰ fetchRestaurantInfo TIMEOUT - continuando sin restaurante');
+      if (e.name === 'AbortError') {
+        console.warn('⏰ fetchRestaurantInfo ABORTED - app continues');
       } else {
-        console.error('❌ fetchRestaurantInfo error:', e?.message || e);
+        console.error('❌ fetchRestaurantInfo error (ignored):', e?.message || e);
       }
       setRestaurant(null); 
       setRestaurantId(null);
     } finally {
-      console.log('✅ fetchRestaurantInfo FINISHED (con timeout forzado)');
+      console.log('✅ fetchRestaurantInfo FINISHED');
     }
   };
 
-  // CAMBIO RADICAL: loadUserData establece isReady INMEDIATAMENTE
+  // RADICAL: loadUserData NO depende de fetchRestaurantInfo
   const loadUserData = async (u) => {
     console.log('🔄 Loading user data for:', u.email);
     try {
       setUser(u);
-      
-      // NUEVO: Establecer ready INMEDIATAMENTE tras setear el usuario
       setStatus('signed_in');
       console.log('🚀 User ready IMMEDIATELY (status=signed_in)');
       
-      // Ejecutar fetchRestaurantInfo en background (no bloquea)
-      fetchRestaurantInfo(u.id).catch(e => {
-        console.warn('⚠️ Background restaurant fetch failed:', e);
-      });
+      // fetchRestaurantInfo en background OPCIONAL - si falla, no importa
+      setTimeout(() => {
+        fetchRestaurantInfo(u.id).catch(e => {
+          console.warn('⚠️ Background restaurant fetch failed (ignored):', e);
+          // App sigue funcionando sin restaurante
+        });
+      }, 500); // Delay para evitar race conditions
       
     } catch (e) {
       console.error('❌ loadUserData error:', e?.message || e);
