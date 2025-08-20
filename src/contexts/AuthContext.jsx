@@ -64,6 +64,7 @@ export const AuthProvider = ({ children }) => {
       // Pase lo que pase, salimos de "cargando"
       setLoading(false);
       setIsReady(true);
+      console.log('🎯 initSession: Setting isReady = true ALWAYS');
     }
   };
 
@@ -149,6 +150,8 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       await fetchRestaurantInfo(user.id);
+    } catch (err) {
+      console.error('❌ Error in loadUserData:', err);
     } finally {
       setLoading(false);
       // isReady ya se setea dentro de fetchRestaurantInfo, pero aseguramos
