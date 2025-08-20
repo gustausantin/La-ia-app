@@ -57,9 +57,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // EFECTO PRINCIPAL - SIN DEPENDENCIAS
+  // EFECTO PRINCIPAL - ULTRA SIMPLIFICADO
   useEffect(() => {
-    console.log('🚀 Initializing auth...');
+    console.log('🚀 Initializing auth FIXED VERSION...');
     let mounted = true;
 
     const initAuth = async () => {
@@ -69,8 +69,7 @@ export const AuthProvider = ({ children }) => {
         if (!mounted) return;
 
         if (session?.user) {
-          console.log('✅ User signed in:', session.user.email);
-          console.log('🔍 Fetching restaurant info for user', session.user.id);
+          console.log('✅ User found:', session.user.email);
           setUser(session.user);
           setIsAuthenticated(true);
           await loadRestaurant(session.user.id);
@@ -82,8 +81,10 @@ export const AuthProvider = ({ children }) => {
           setRestaurantId(null);
         }
         
+        // SIEMPRE marcar como listo
         setLoading(false);
         setIsReady(true);
+        console.log('✅ Auth initialization complete - isReady: true');
       } catch (error) {
         console.error('Auth error:', error);
         if (mounted) {
@@ -95,31 +96,34 @@ export const AuthProvider = ({ children }) => {
 
     initAuth();
 
-    // Listener de auth
+    // Listener de auth - SIMPLIFICADO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
       console.log('🔐 Auth state changed:', event);
       
       if (event === 'SIGNED_IN' && session) {
-        console.log('✅ User signed in:', session.user.email);
-        console.log('🔍 Fetching restaurant info for user', session.user.id);
+        console.log('✅ User signed in via listener:', session.user.email);
         setUser(session.user);
         setIsAuthenticated(true);
         await loadRestaurant(session.user.id);
+        // CRÍTICO: Asegurar que isReady se pone true
         setIsReady(true);
+        setLoading(false);
+        console.log('✅ Listener set isReady: true');
       } else if (event === 'SIGNED_OUT') {
-        console.log('👋 User signed out');
+        console.log('👋 User signed out via listener');
         setUser(null);
         setIsAuthenticated(false);
         setRestaurant(null);
         setRestaurantId(null);
         setIsReady(true);
+        setLoading(false);
       }
     });
 
     return () => {
-      console.log('🔄 React application unmounting...');
+      console.log('🔄 Cleaning up auth context...');
       mounted = false;
       subscription.unsubscribe();
     };
@@ -144,7 +148,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      console.log('🚪 Cierre de sesión forzado...');
+      console.log('🚪 Logging out...');
       await supabase.auth.signOut();
       
       // Reset inmediato
@@ -174,6 +178,8 @@ export const AuthProvider = ({ children }) => {
     addNotification: () => {},
     agentStatus: { active: false },
   };
+
+  console.log('🔍 AuthContext values:', { isAuthenticated, isReady, loading, hasUser: !!user });
 
   return (
     <AuthContext.Provider value={value}>
