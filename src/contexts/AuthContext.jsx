@@ -21,10 +21,14 @@ export const AuthProvider = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Cargar restaurante
+  // Cargar restaurante - VERSIÓN ROBUSTA CON LOGS
   const loadRestaurant = async (userId) => {
+    console.log('🔍 loadRestaurant START for user:', userId);
+    
     try {
-      const { data: mappingData } = await supabase
+      // PASO 1: Buscar en mapping
+      console.log('🔍 Step 1: Checking user_restaurant_mapping...');
+      const { data: mappingData, error: mappingError } = await supabase
         .from('user_restaurant_mapping')
         .select(`
           restaurant:restaurant_id (
@@ -36,25 +40,51 @@ export const AuthProvider = ({ children }) => {
         .eq('auth_user_id', userId)
         .single();
 
+      if (mappingError) {
+        console.log('⚠️ Mapping query error (normal if no mapping):', mappingError.message);
+      }
+
       if (mappingData?.restaurant) {
+        console.log('✅ Restaurant found via mapping:', mappingData.restaurant.name);
         setRestaurant(mappingData.restaurant);
         setRestaurantId(mappingData.restaurant.id);
+        console.log('✅ loadRestaurant COMPLETE via mapping');
         return;
       }
 
-      const { data: restaurantData } = await supabase
+      // PASO 2: Buscar directo en restaurants
+      console.log('🔍 Step 2: Checking restaurants table directly...');
+      const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
         .select('*')
         .eq('auth_user_id', userId)
         .single();
 
+      if (restaurantError) {
+        console.log('⚠️ Restaurant query error:', restaurantError.message);
+      }
+
       if (restaurantData) {
+        console.log('✅ Restaurant found directly:', restaurantData.name);
         setRestaurant(restaurantData);
         setRestaurantId(restaurantData.id);
+        console.log('✅ loadRestaurant COMPLETE via direct');
+        return;
       }
+
+      // PASO 3: No encontrado
+      console.log('⚠️ No restaurant found for user:', userId);
+      setRestaurant(null);
+      setRestaurantId(null);
+      console.log('✅ loadRestaurant COMPLETE - no restaurant');
+      
     } catch (error) {
-      console.error('Error loading restaurant:', error);
+      console.error('❌ CRITICAL ERROR in loadRestaurant:', error);
+      setRestaurant(null);
+      setRestaurantId(null);
     }
+    
+    console.log('🏁 loadRestaurant FINISHED');
   };
 
   // EFECTO PRINCIPAL - ULTRA SIMPLIFICADO
@@ -117,17 +147,19 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         
         // Cargar restaurante Y luego marcar como listo
+        console.log('🚀 Starting loadRestaurant in listener...');
         try {
           await loadRestaurant(session.user.id);
-          console.log('🏆 Restaurant loaded, setting isReady=true');
+          console.log('🏆 Restaurant load attempt completed');
         } catch (error) {
-          console.error('Error loading restaurant in listener:', error);
-        } finally {
-          // SIEMPRE marcar como listo, haya o no error
-          setIsReady(true);
-          setLoading(false);
-          console.log('✅ Listener GUARANTEED isReady: true');
+          console.error('❌ CRITICAL ERROR in listener loadRestaurant:', error);
         }
+        
+        // GARANTIZAR que isReady se ponga true
+        console.log('🎯 FORCING isReady=true and loading=false');
+        setIsReady(true);
+        setLoading(false);
+        console.log('✅ Listener ABSOLUTELY GUARANTEED isReady: true');
       } else if (event === 'SIGNED_OUT') {
         console.log('👋 User signed out via listener');
         setUser(null);
