@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   const [restaurantId, setRestaurantId] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const [loading, setLoading] = useState(true); // Para compatibilidad con ProtectedRoute
+  const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [agentStatus, setAgentStatus] = useState({
     active: true,
@@ -44,6 +44,8 @@ export const AuthProvider = ({ children }) => {
 
       if (error) {
         console.error('❌ Error getting session:', error.message);
+        setLoading(false);
+        setIsReady(true);
         return;
       }
 
@@ -52,18 +54,19 @@ export const AuthProvider = ({ children }) => {
         await loadUserData(session.user);
       } else {
         console.log('❌ No session found');
+        setLoading(false);
+        setIsReady(true);
       }
     } catch (error) {
       console.error('❌ Error in initSession:', error.message);
-    } finally {
       setLoading(false);
       setIsReady(true);
     }
   };
 
-  // Fetch restaurant information - COMPLETAMENTE REPARADO
+  // Fetch restaurant information - DEFINITIVAMENTE ARREGLADO
   const fetchRestaurantInfo = async (userId) => {
-    console.log('🔍 Fetching restaurant info for user', userId);
+    console.log('🔍 Starting fetchRestaurantInfo for user:', userId);
     
     try {
       // First try to get restaurant from user_restaurant_mapping
@@ -137,9 +140,10 @@ export const AuthProvider = ({ children }) => {
       setRestaurantId(null);
     }
     
-    // SIEMPRE completar - SIN finally para evitar bugs
+    // CRÍTICO: SIEMPRE establecer isReady - sin falta
+    console.log('🎯 Setting isReady = true after fetchRestaurantInfo');
     setIsReady(true);
-    console.log('✅ fetchRestaurantInfo COMPLETED - isReady set to TRUE');
+    console.log('✅ fetchRestaurantInfo COMPLETED');
   };
 
   // Helper to load user data including restaurant information
@@ -148,11 +152,13 @@ export const AuthProvider = ({ children }) => {
     setUser(user);
     setIsAuthenticated(true);
     setLoading(false);
+    
+    // Fetch restaurant info and wait for completion
     await fetchRestaurantInfo(user.id);
     console.log('✅ loadUserData completed');
   };
 
-  // Auth state listener - SIMPLIFICADO Y ESTABLE
+  // Auth state listener - SIMPLIFICADO Y ROBUSTO
   useEffect(() => {
     let mounted = true;
 
@@ -170,7 +176,8 @@ export const AuthProvider = ({ children }) => {
 
       console.log('🔐 Auth state changed:', event);
 
-      if (event === 'TOKEN_REFRESHED') return; // Skip token refresh
+      // Skip token refresh to prevent loops
+      if (event === 'TOKEN_REFRESHED') return;
 
       if (event === 'SIGNED_IN' && session) {
         console.log('✅ User signed in:', session.user.email);
@@ -185,7 +192,7 @@ export const AuthProvider = ({ children }) => {
           setRestaurant(null);
           setRestaurantId(null);
           setLoading(false);
-          setIsReady(true); // CRÍTICO: También establecer isReady en logout
+          setIsReady(true); // Importante: también establecer isReady en logout
         }
       }
     });
@@ -194,7 +201,7 @@ export const AuthProvider = ({ children }) => {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, []); // EMPTY - NO dependencies to prevent loops
+  }, []); // EMPTY dependencies to prevent loops
 
   // Login function
   const login = async (email, password) => {
