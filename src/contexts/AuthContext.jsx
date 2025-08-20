@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
   const bootedRef = useRef(false);
   const lastSignInRef = useRef(null);
 
-  // Función simplificada para obtener restaurante (SIN timeout wrapper)
+  // Función simplificada para obtener restaurante (EN BACKGROUND, NO BLOQUEA)
   const fetchRestaurantInfo = async (userId) => {
     console.log('🔍 Fetching restaurant info for user:', userId);
     
@@ -90,16 +90,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // CAMBIO RADICAL: loadUserData establece isReady INMEDIATAMENTE
   const loadUserData = async (u) => {
     console.log('🔄 Loading user data for:', u.email);
     try {
       setUser(u);
-      await fetchRestaurantInfo(u.id);
+      
+      // NUEVO: Establecer ready INMEDIATAMENTE tras setear el usuario
+      setStatus('signed_in');
+      console.log('🚀 User ready IMMEDIATELY (status=signed_in)');
+      
+      // Ejecutar fetchRestaurantInfo en background (no bloquea)
+      fetchRestaurantInfo(u.id).catch(e => {
+        console.warn('⚠️ Background restaurant fetch failed:', e);
+      });
+      
     } catch (e) {
       console.error('❌ loadUserData error:', e?.message || e);
-    } finally {
-      setStatus('signed_in');
-      console.log('✅ loadUserData completed (status=signed_in)');
+      setStatus('signed_out');
     }
   };
 
@@ -130,14 +138,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Timeout de seguridad - más simple
+  // Timeout de seguridad más agresivo
   useEffect(() => {
     if (status !== 'checking') return;
     
     const timeout = setTimeout(() => {
       console.log('🚨 TIMEOUT FALLBACK: forcing signed_out');
       setStatus('signed_out');
-    }, 10000); // 10 segundos
+    }, 5000); // Solo 5 segundos
     
     return () => clearTimeout(timeout);
   }, [status]);
@@ -250,7 +258,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     status,
     isAuthenticated: status === 'signed_in',
-    isReady: status !== 'checking',
+    isReady: status !== 'checking', // CAMBIO: isReady es true tan pronto como salimos de 'checking'
     loading: status === 'checking',
     user, 
     restaurant, 
