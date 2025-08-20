@@ -48,6 +48,27 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Serve static files from React build (for production)
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Handle React routing - send all non-API requests to React app
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  
+  // Send React app for all other routes
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 // Función para encontrar puerto disponible
 const findAvailablePort = (startPort) => {
   return new Promise((resolve) => {

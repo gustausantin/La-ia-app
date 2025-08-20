@@ -31,7 +31,7 @@ PATH = "$REPL_HOME/.config/npm/node_global/bin:$REPL_HOME/node_modules/.bin"
 npm_config_prefix = "$REPL_HOME/.config/npm/node_global"
 
 [workflows]
-runButton = "REINICIO COMPLETO LA-IA"
+runButton = "Build and Serve"
 
 [[workflows.workflow]]
 name = "Start Development Server"
@@ -248,3 +248,16 @@ args = "sleep 3"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Build and Serve"
+author = 41843571
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server.js"
