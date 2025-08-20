@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
   const bootedRef = useRef(false);
   const lastSignInRef = useRef(null);
 
-  // Función simplificada para obtener restaurante (EN BACKGROUND, NO BLOQUEA)
+  // Función con TIMEOUT FORZADO para evitar bucles
   const fetchRestaurantInfo = async (userId) => {
     console.log('🔍 Fetching restaurant info for user:', userId);
     
@@ -35,58 +35,73 @@ export const AuthProvider = ({ children }) => {
       return; 
     }
 
+    // TIMEOUT FORZADO: máximo 3 segundos
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('fetchRestaurantInfo timeout')), 3000);
+    });
+
     try {
-      // Primer intento: mapping table
-      const { data: map, error: mapErr } = await supabase
-        .from('user_restaurant_mapping')
-        .select(`
-          role, permissions,
-          restaurant:restaurant_id (
-            id, name, email, phone, address, city, postal_code, country,
-            timezone, currency, logo_url, website, active, trial_end_at,
-            subscription_status, agent_config, settings, created_at, updated_at, ui_cuisine_type
-          )
-        `)
-        .eq('auth_user_id', userId)
-        .maybeSingle();
+      const fetchPromise = (async () => {
+        // Primer intento: mapping table
+        const { data: map, error: mapErr } = await supabase
+          .from('user_restaurant_mapping')
+          .select(`
+            role, permissions,
+            restaurant:restaurant_id (
+              id, name, email, phone, address, city, postal_code, country,
+              timezone, currency, logo_url, website, active, trial_end_at,
+              subscription_status, agent_config, settings, created_at, updated_at, ui_cuisine_type
+            )
+          `)
+          .eq('auth_user_id', userId)
+          .maybeSingle();
 
-      if (map?.restaurant) {
-        console.log('✅ Restaurant via mapping:', map.restaurant.name);
-        setRestaurant(map.restaurant); 
-        setRestaurantId(map.restaurant.id); 
-        return;
-      }
-
-      if (mapErr && mapErr.code !== 'PGRST116') {
-        console.error('❌ DB mapping error:', mapErr);
-      }
-
-      // Segundo intento: direct
-      console.log('📋 No mapping; trying direct...');
-      const { data: direct, error: directErr } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('auth_user_id', userId)
-        .maybeSingle();
-
-      if (direct) { 
-        console.log('✅ Restaurant direct:', direct.name);
-        setRestaurant(direct); 
-        setRestaurantId(direct.id); 
-      } else {
-        if (directErr && directErr.code !== 'PGRST116') {
-          console.error('❌ DB direct error:', directErr);
+        if (map?.restaurant) {
+          console.log('✅ Restaurant via mapping:', map.restaurant.name);
+          setRestaurant(map.restaurant); 
+          setRestaurantId(map.restaurant.id); 
+          return;
         }
-        console.log('🏪 No restaurant found');
-        setRestaurant(null); 
-        setRestaurantId(null);
-      }
+
+        if (mapErr && mapErr.code !== 'PGRST116') {
+          console.error('❌ DB mapping error:', mapErr);
+        }
+
+        // Segundo intento: direct
+        console.log('📋 No mapping; trying direct...');
+        const { data: direct, error: directErr } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('auth_user_id', userId)
+          .maybeSingle();
+
+        if (direct) { 
+          console.log('✅ Restaurant direct:', direct.name);
+          setRestaurant(direct); 
+          setRestaurantId(direct.id); 
+        } else {
+          if (directErr && directErr.code !== 'PGRST116') {
+            console.error('❌ DB direct error:', directErr);
+          }
+          console.log('🏪 No restaurant found');
+          setRestaurant(null); 
+          setRestaurantId(null);
+        }
+      })();
+
+      // Race entre fetch y timeout
+      await Promise.race([fetchPromise, timeoutPromise]);
+      
     } catch (e) {
-      console.error('❌ fetchRestaurantInfo error:', e?.message || e);
+      if (e.message === 'fetchRestaurantInfo timeout') {
+        console.warn('⏰ fetchRestaurantInfo TIMEOUT - continuando sin restaurante');
+      } else {
+        console.error('❌ fetchRestaurantInfo error:', e?.message || e);
+      }
       setRestaurant(null); 
       setRestaurantId(null);
     } finally {
-      console.log('✅ fetchRestaurantInfo FINISHED');
+      console.log('✅ fetchRestaurantInfo FINISHED (con timeout forzado)');
     }
   };
 
