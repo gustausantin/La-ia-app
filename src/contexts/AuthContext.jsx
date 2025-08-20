@@ -34,8 +34,8 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  // Helper: timeout defensivo
-  const withTimeout = (p, ms = 12000, label = 'OP') =>
+  // ARREGLO DEFINITIVO: Helper timeout más corto
+  const withTimeout = (p, ms = 8000, label = 'OP') =>
     Promise.race([
       p,
       new Promise((_, rej) => setTimeout(() => rej(new Error(`TIMEOUT_${label}`)), ms))
@@ -44,12 +44,14 @@ export const AuthProvider = ({ children }) => {
   const initSession = async () => {
     console.log('🚀 Initializing auth...');
     setLoading(true);
+    
     try {
       const { data: { session }, error } = await withTimeout(
         supabase.auth.getSession(),
-        12000,
+        8000,
         'GET_SESSION'
       );
+      
       if (error) throw error;
 
       if (session?.user) {
@@ -57,28 +59,34 @@ export const AuthProvider = ({ children }) => {
         await loadUserData(session.user);
       } else {
         console.log('❌ No session found');
+        // GARANTIZAR que isReady = true incluso sin sesión
+        setIsReady(true);
+        setLoading(false);
       }
     } catch (err) {
       console.error('❌ Error in initSession:', err?.message || err);
-    } finally {
-      // Pase lo que pase, salimos de "cargando"
-      setLoading(false);
+      // GARANTIZAR que isReady = true incluso con error
       setIsReady(true);
-      console.log('🎯 initSession: Setting isReady = true ALWAYS');
+      setLoading(false);
     }
   };
 
+  // SIMPLIFICADO: fetchRestaurantInfo más robusto
   const fetchRestaurantInfo = async (userId) => {
     console.log('🔍 Starting fetchRestaurantInfo for user:', userId);
+    
     if (!userId) {
-      console.warn('⚠️ No userId; skipping restaurant fetch');
+      console.warn('⚠️ No userId; setting defaults');
       setRestaurant(null);
       setRestaurantId(null);
+      // GARANTIZAR que isReady = true
+      setIsReady(true);
+      console.log('✅ fetchRestaurantInfo COMPLETED (no user)');
       return;
     }
 
     try {
-      // mapping -> restaurant
+      // Buscar mapping
       const { data: mappingData, error: mappingError } = await withTimeout(
         supabase
           .from('user_restaurant_mapping')
@@ -94,7 +102,7 @@ export const AuthProvider = ({ children }) => {
           `)
           .eq('auth_user_id', userId)
           .single(),
-        12000,
+        6000,
         'MAP_RESTAURANT'
       );
 
@@ -102,17 +110,17 @@ export const AuthProvider = ({ children }) => {
         console.log('✅ Restaurant via mapping:', mappingData.restaurant.name);
         setRestaurant(mappingData.restaurant);
         setRestaurantId(mappingData.restaurant.id);
-        console.log('🎯 Setting isReady = true after fetchRestaurantInfo (mapping)');
         setIsReady(true);
         console.log('✅ fetchRestaurantInfo COMPLETED (mapping)');
         return;
       }
 
-      if (mappingError && mappingError.code === 'PGRST116') {
-        console.log('🏪 No mapping; querying restaurants directly');
+      // Si no hay mapping o es PGRST116, buscar directo
+      if (mappingError?.code === 'PGRST116' || !mappingData?.restaurant) {
+        console.log('🏪 No mapping found, trying direct query');
         const { data: restaurantData, error: restaurantError } = await withTimeout(
           supabase.from('restaurants').select('*').eq('auth_user_id', userId).single(),
-          12000,
+          6000,
           'DIRECT_RESTAURANT'
         );
 
@@ -121,30 +129,29 @@ export const AuthProvider = ({ children }) => {
           setRestaurant(restaurantData);
           setRestaurantId(restaurantData.id);
         } else {
-          console.log('🏪 No restaurant found');
+          console.log('🏪 No restaurant found at all');
           setRestaurant(null);
           setRestaurantId(null);
         }
-        console.log('🎯 Setting isReady = true after fetchRestaurantInfo (direct)');
+        
         setIsReady(true);
         console.log('✅ fetchRestaurantInfo COMPLETED (direct)');
         return;
       }
 
-      // Error real de DB
-      if (mappingError) {
-        console.error('❌ DB error (mapping):', mappingError);
-        setRestaurant(null);
-        setRestaurantId(null);
-      }
-    } catch (err) {
-      console.error('❌ fetchRestaurantInfo error:', err?.message || err);
+      // Cualquier otro error de mapping
+      console.error('❌ Mapping error:', mappingError);
       setRestaurant(null);
       setRestaurantId(null);
-    } finally {
-      console.log('🎯 Setting isReady = true after fetchRestaurantInfo (finally)');
       setIsReady(true);
-      console.log('✅ fetchRestaurantInfo COMPLETED (finally)');
+      console.log('✅ fetchRestaurantInfo COMPLETED (error handled)');
+      
+    } catch (err) {
+      console.error('❌ fetchRestaurantInfo catch error:', err?.message || err);
+      setRestaurant(null);
+      setRestaurantId(null);
+      setIsReady(true);
+      console.log('✅ fetchRestaurantInfo COMPLETED (catch)');
     }
   };
 
@@ -152,12 +159,12 @@ export const AuthProvider = ({ children }) => {
     console.log('🔄 Loading user data for:', user.email);
     setUser(user);
     setIsAuthenticated(true);
-    setLoading(true);
+    
     try {
       await fetchRestaurantInfo(user.id);
     } catch (err) {
       console.error('❌ Error in loadUserData:', err);
-      // En caso de error, asegurar que isReady se establezca
+      // GARANTIZAR que isReady = true incluso con error
       setIsReady(true);
     } finally {
       setLoading(false);
@@ -165,28 +172,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Auth state listener - SIMPLIFICADO Y ROBUSTO
+  // SIMPLIFICADO: Auth state listener sin loops
   useEffect(() => {
     let mounted = true;
 
-    const initAuth = async () => {
-      if (!mounted) return;
-      await initSession();
-    };
+    // 1. Initialize una sola vez
+    if (mounted) {
+      initSession();
+    }
 
-    // 1. Initialize once
-    initAuth();
-
-    // 2. Listen to auth changes
+    // 2. Listen to auth changes - MÁS SIMPLE
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
       console.log('🔐 Auth state changed:', event);
 
-      // Skip token refresh to prevent loops
+      // Ignorar token refresh para evitar loops
       if (event === 'TOKEN_REFRESHED') return;
 
-      if (event === 'SIGNED_IN' && session) {
+      if (event === 'SIGNED_IN' && session?.user) {
         console.log('✅ User signed in:', session.user.email);
         if (mounted) {
           await loadUserData(session.user);
@@ -199,7 +203,7 @@ export const AuthProvider = ({ children }) => {
           setRestaurant(null);
           setRestaurantId(null);
           setLoading(false);
-          setIsReady(true); // Importante: también establecer isReady en logout
+          setIsReady(true);
         }
       }
     });
@@ -208,7 +212,7 @@ export const AuthProvider = ({ children }) => {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, []); // EMPTY dependencies to prevent loops
+  }, []);
 
   // Login function
   const login = async (email, password) => {
@@ -259,17 +263,63 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function
+  // ARREGLO: Logout más robusto
   const logout = async () => {
     try {
       console.log('🚪 Cerrando sesión...');
+      
+      // Limpiar estado inmediatamente
+      setUser(null);
+      setIsAuthenticated(false);
+      setRestaurant(null);
+      setRestaurantId(null);
+      setNotifications([]);
+      setIsReady(true); // IMPORTANTE
+      setLoading(false);
+      
+      // Limpiar storage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Cerrar sesión de Supabase sin bloquear
       await supabase.auth.signOut();
+      
       console.log('✅ Sesión cerrada correctamente');
       toast.success('Sesión cerrada correctamente');
     } catch (error) {
       console.error('❌ Logout error:', error);
       toast.error('Error al cerrar sesión');
+      // Aún así, garantizar redirect
+      window.location.href = '/login';
     }
+  };
+
+  // NUEVO: Función de reinicio completo
+  const restartApp = () => {
+    console.log('🔄 REINICIO COMPLETO DE LA APLICACIÓN');
+    
+    // Limpiar todo el estado
+    setUser(null);
+    setIsAuthenticated(false);
+    setRestaurant(null);
+    setRestaurantId(null);
+    setNotifications([]);
+    setIsReady(false);
+    setLoading(true);
+    
+    // Limpiar storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Cerrar sesión
+    supabase.auth.signOut().catch(() => {});
+    
+    toast.success('Aplicación reiniciada');
+    
+    // Recargar página completa
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1000);
   };
 
   // Add notification
@@ -316,6 +366,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     signOut: logout,
+    restartApp, // NUEVA FUNCIÓN
     addNotification,
     markNotificationAsRead,
     markAllNotificationsAsRead: clearNotifications,
