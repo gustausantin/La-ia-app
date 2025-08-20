@@ -115,13 +115,13 @@ export const AuthProvider = ({ children }) => {
               setRestaurant(null);
               setRestaurantId(null);
               console.log('✅ fetchRestaurantInfo completed - no restaurant found');
-              return; // CRÍTICO: return para completar la función
+              // NO RETURN - dejamos que llegue al finally
             } else {
               console.error('❌ Database error fetching restaurant:', restaurantError);
               setRestaurant(null);
               setRestaurantId(null);
               console.log('✅ fetchRestaurantInfo completed - database error');
-              return; // CRÍTICO: return para completar la función
+              // NO RETURN - dejamos que llegue al finally
             }
           }
 
@@ -130,14 +130,14 @@ export const AuthProvider = ({ children }) => {
             setRestaurant(restaurantData);
             setRestaurantId(restaurantData.id);
             console.log('✅ fetchRestaurantInfo completed - direct restaurant found');
-            return; // CRÍTICO: return para completar la función
+            // NO RETURN - dejamos que llegue al finally
           }
         } else {
           console.error('❌ Database error fetching restaurant mapping:', mappingError);
           setRestaurant(null);
           setRestaurantId(null);
           console.log('✅ fetchRestaurantInfo completed - mapping error');
-          return; // CRÍTICO: return para completar la función
+          // NO RETURN - dejamos que llegue al finally
         }
       }
 
