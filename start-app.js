@@ -8,7 +8,7 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-console.log('🚀 Iniciando Son-IA...');
+console.log('🚀 Iniciando La-IA...');
 
 // Arrancar servidor API
 const apiServer = spawn('node', ['server.js'], {

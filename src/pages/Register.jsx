@@ -70,7 +70,7 @@ export default function Register() {
       newErrors.postalCode = 'El código postal es requerido';
     }
 
-    
+
 
     if (!formData.email) {
       newErrors.email = 'El email es requerido';
@@ -217,7 +217,7 @@ export default function Register() {
               <Mail className="h-10 w-10 text-green-600" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900">
-              ✉️ ¡Casi está!
+              ¡Casi está!
             </h2>
             <p className="mt-2 text-sm text-gray-600">
               Verifica tu email para activar tu cuenta
@@ -563,7 +563,7 @@ export default function Register() {
               )}
             </div>
 
-            
+
 
             {/* Email */}
             <div className="col-span-2">
