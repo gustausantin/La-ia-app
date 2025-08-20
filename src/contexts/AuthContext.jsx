@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -17,33 +18,124 @@ export const AuthProvider = ({ children }) => {
   const [restaurant, setRestaurant] = useState(null);
   const [restaurantId, setRestaurantId] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isReady, setIsReady] = useState(true); // SIEMPRE EMPEZAR LISTO
-  const [loading, setLoading] = useState(false); // SIEMPRE EMPEZAR SIN CARGAR
+  const [isReady, setIsReady] = useState(false); // AQUÍ ESTÁ EL PROBLEMA
+  const [loading, setLoading] = useState(false);
 
-  // FORZAR LOGOUT INMEDIATO AL INICIAR
+  // Efecto para manejar cambios de autenticación
   useEffect(() => {
-    console.log('🚨 FORZANDO LOGOUT INMEDIATO');
-
-    const forceLogout = async () => {
+    console.log('🚀 Initializing auth...');
+    
+    const initializeAuth = async () => {
       try {
-        await supabase.auth.signOut();
-        localStorage.clear();
-        sessionStorage.clear();
+        // Obtener sesión actual
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+
+        if (session?.user) {
+          console.log('✅ User signed in:', session.user.email);
+          setUser(session.user);
+          setIsAuthenticated(true);
+          
+          // Buscar información del restaurante
+          console.log('🔍 Fetching restaurant info for user', session.user.id);
+          const { data: mapping } = await supabase
+            .from('user_restaurant_mapping')
+            .select(`
+              restaurant_id,
+              restaurants (
+                id,
+                name,
+                email,
+                phone,
+                city,
+                plan,
+                active
+              )
+            `)
+            .eq('auth_user_id', session.user.id)
+            .eq('active', true)
+            .single();
+
+          if (mapping?.restaurants) {
+            setRestaurant(mapping.restaurants);
+            setRestaurantId(mapping.restaurant_id);
+          }
+        } else {
+          console.log('❌ No session found');
+          setUser(null);
+          setIsAuthenticated(false);
+          setRestaurant(null);
+          setRestaurantId(null);
+        }
       } catch (error) {
-        console.log('Error en logout forzado (ignorado):', error);
+        console.error('Error initializing auth:', error);
+      } finally {
+        // ESTO ES LO MÁS IMPORTANTE - SIEMPRE PONER READY EN TRUE
+        console.log('✅ Auth initialization complete - setting isReady to TRUE');
+        setIsReady(true);
       }
-
-      setUser(null);
-      setIsAuthenticated(false);
-      setRestaurant(null);
-      setRestaurantId(null);
-      setIsReady(true);
-      setLoading(false);
-
-      console.log('✅ LOGOUT FORZADO COMPLETADO');
     };
 
-    forceLogout();
+    initializeAuth();
+
+    // Listener para cambios de autenticación
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth state changed:', event);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('✅ User signed in:', session.user.email);
+        setUser(session.user);
+        setIsAuthenticated(true);
+        
+        // Buscar información del restaurante
+        console.log('🔍 Fetching restaurant info for user', session.user.id);
+        try {
+          const { data: mapping } = await supabase
+            .from('user_restaurant_mapping')
+            .select(`
+              restaurant_id,
+              restaurants (
+                id,
+                name,
+                email,
+                phone,
+                city,
+                plan,
+                active
+              )
+            `)
+            .eq('auth_user_id', session.user.id)
+            .eq('active', true)
+            .single();
+
+          if (mapping?.restaurants) {
+            setRestaurant(mapping.restaurants);
+            setRestaurantId(mapping.restaurant_id);
+          }
+        } catch (error) {
+          console.error('Error fetching restaurant info:', error);
+        }
+        
+        // IMPORTANTE: Asegurar que isReady esté en true
+        setIsReady(true);
+      } else if (event === 'SIGNED_OUT') {
+        console.log('👋 User signed out');
+        setUser(null);
+        setIsAuthenticated(false);
+        setRestaurant(null);
+        setRestaurantId(null);
+        setIsReady(true); // TAMBIÉN AQUÍ
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email, password) => {
@@ -56,19 +148,15 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
-      setUser(data.user);
-      setIsAuthenticated(true);
-      setIsReady(true);
-      setLoading(false);
-
+      // Los datos se actualizarán automáticamente por el listener
       toast.success('¡Bienvenido!');
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
-      setLoading(false);
-      setIsReady(true);
       toast.error(error.message || 'Error al iniciar sesión');
       return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,13 +170,7 @@ export const AuthProvider = ({ children }) => {
       console.log('Error en logout (ignorado):', error);
     }
 
-    setUser(null);
-    setIsAuthenticated(false);
-    setRestaurant(null);
-    setRestaurantId(null);
-    setIsReady(true);
-    setLoading(false);
-
+    // Los datos se limpiarán automáticamente por el listener
     toast.success('Sesión cerrada');
     window.location.replace('/login');
   };
@@ -107,7 +189,7 @@ export const AuthProvider = ({ children }) => {
     agentStatus: { active: false },
   };
 
-  console.log('🔍 AuthContext:', { isAuthenticated, isReady, loading });
+  console.log('🔍 AuthContext:', { isAuthenticated, isReady, loading, hasUser: !!user });
 
   return (
     <AuthContext.Provider value={value}>
