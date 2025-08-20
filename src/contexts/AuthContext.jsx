@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
             logo_url,
             website,
             active,
-            trial_end_at,
+            trial_ends_at,
             subscription_status,
             agent_config,
             settings,

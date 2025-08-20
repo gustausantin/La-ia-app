@@ -402,6 +402,13 @@ export default function Dashboard() {
     // Función para cargar todos los datos
     const loadDashboardData = useCallback(async () => {
         console.log('📊 Dashboard: Iniciando carga de datos...');
+        
+        // Evitar múltiples cargas simultáneas
+        if (loadingState === LOADING_STATES.LOADING) {
+            console.log('📊 Dashboard: Ya se está cargando, saltando...');
+            return;
+        }
+        
         setLoadingState(LOADING_STATES.LOADING);
         setIsLoading(true);
 
@@ -409,7 +416,7 @@ export default function Dashboard() {
             console.log('📊 Dashboard: Cargando estadísticas...');
             await Promise.all([
                 fetchDashboardStats(),
-                fetchAgentConversations(),
+                fetchAgentConversations(), 
                 fetchTodayReservations(),
             ]);
 
@@ -438,19 +445,12 @@ export default function Dashboard() {
         });
     }, [loadDashboardData, addNotification]);
 
-    // Efecto para cargar datos iniciales - cargar automáticamente
+    // Efecto para cargar datos iniciales AUTOMÁTICAMENTE
     useEffect(() => {
-        if (isReady && restaurantId) {
-            console.log('🔄 Dashboard: Cargando datos automáticamente...');
-            loadDashboardData();
-        }
-    }, [isReady, restaurantId, loadDashboardData]);
-
-    // Efecto adicional para forzar carga de datos si es necesario
-    useEffect(() => {
+        console.log('🔄 Dashboard: Estado actual -', { isReady, restaurantId, loadingState });
+        
         if (isReady && restaurantId && loadingState === LOADING_STATES.INITIAL) {
-            console.log('🔄 Dashboard: Forzando carga inicial de datos...');
-            setLoadingState(LOADING_STATES.LOADING);
+            console.log('✅ Dashboard: Iniciando carga automática de datos...');
             loadDashboardData();
         }
     }, [isReady, restaurantId, loadingState, loadDashboardData]);
