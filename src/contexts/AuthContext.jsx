@@ -111,17 +111,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Timeout de seguridad más agresivo
-  useEffect(() => {
-    if (status !== 'checking') return;
-    
-    const timeout = setTimeout(() => {
-      console.log('🚨 TIMEOUT FALLBACK: forcing signed_out');
-      setStatus('signed_out');
-    }, 5000); // Solo 5 segundos
-    
-    return () => clearTimeout(timeout);
-  }, [status]);
+  // ELIMINADO: Timeout de seguridad que causaba problemas
 
   useEffect(() => {
     if (bootedRef.current) return;
@@ -230,8 +220,8 @@ export const AuthProvider = ({ children }) => {
   const value = {
     status,
     isAuthenticated: status === 'signed_in',
-    isReady: status !== 'checking', // CAMBIO: isReady es true tan pronto como salimos de 'checking'
-    loading: status === 'checking',
+    isReady: true, // SIEMPRE true - la app está lista inmediatamente
+    loading: false, // NUNCA loading - eliminamos el concepto de loading
     user, 
     restaurant, 
     restaurantId, 
