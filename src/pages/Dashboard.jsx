@@ -545,13 +545,17 @@ export default function Dashboard() {
         return sorted.slice(0, 3).map((h) => h.hour.replace(":00", "h"));
     }, [stats.hourly_reservations]);
 
-    // Si está cargando
-    if (loadingState === LOADING_STATES.LOADING && isLoading) {
+    // Control robusto de loading - NUNCA infinito
+    const ready = isReady && !loading;
+    if (!ready) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
                     <p className="text-gray-600">Cargando dashboard...</p>
+                    <p className="text-xs text-gray-400 mt-2">
+                        Auth: {isReady ? 'Ready' : 'Loading'} | Data: {loading ? 'Loading' : 'Ready'}
+                    </p>
                 </div>
             </div>
         );
