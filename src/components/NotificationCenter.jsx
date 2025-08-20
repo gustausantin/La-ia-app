@@ -95,10 +95,10 @@ export default function NotificationCenter({ restaurant }) {
                         })}
                     </div>
                 ) : (
-                    <div className="text-center py-12">
-                        <p className="text-gray-400 text-sm">
-                            Sin notificaciones pendientes
-                        </p>
+                    <div className="text-center py-6">
+                        <div className="text-gray-300 opacity-50">
+                            <Bell className="w-8 h-8 mx-auto mb-2" />
+                        </div>
                     </div>
                 )}
     </div>
