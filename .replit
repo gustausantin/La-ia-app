@@ -71,7 +71,7 @@ localPort = 5176
 externalPort = 8081
 
 [workflows]
-runButton = "FUNCIONA FINAL"
+runButton = "FUNCIONA AHORA"
 
 [[workflows.workflow]]
 name = "Start Development Server"
@@ -167,6 +167,15 @@ args = "npm install && concurrently \"node server.js\" \"npm run dev\""
 
 [[workflows.workflow]]
 name = "FUNCIONA FINAL"
+author = 41843571
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "FUNCIONA AHORA"
 author = 41843571
 mode = "sequential"
 
