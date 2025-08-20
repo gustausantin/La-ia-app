@@ -159,11 +159,11 @@ export const AuthProvider = ({ children }) => {
       setRestaurant(null);
       setRestaurantId(null);
       console.log('✅ fetchRestaurantInfo completed - catch block');
+    } finally {
+      // CRÍTICO: SIEMPRE establecer isReady al final sin falla
+      setIsReady(true);
+      console.log('✅ fetchRestaurantInfo - isReady set to TRUE');
     }
-    
-    // CRÍTICO: SIEMPRE establecer isReady al final
-    setIsReady(true);
-    console.log('✅ fetchRestaurantInfo - isReady set to TRUE');
   };
 
   // Helper to load user data including restaurant information
