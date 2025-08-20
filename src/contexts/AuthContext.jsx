@@ -159,11 +159,18 @@ export const AuthProvider = ({ children }) => {
 
   // Helper to load user data including restaurant information
   const loadUserData = async (user) => {
-    setUser(user);
-    setIsAuthenticated(true);
-    await fetchRestaurantInfo(user.id);
-    setLoading(false);
-    setIsReady(true); // CRÍTICO: Establecer isReady después de cargar todos los datos
+    try {
+      setUser(user);
+      setIsAuthenticated(true);
+      await fetchRestaurantInfo(user.id);
+    } catch (error) {
+      console.error('❌ Error in loadUserData:', error);
+    } finally {
+      // CRÍTICO: SIEMPRE establecer estos valores al final
+      setLoading(false);
+      setIsReady(true);
+      console.log('✅ loadUserData completed - isReady set to true');
+    }
   };
 
   // Auth state listener - SIMPLIFICADO Y ESTABLE
