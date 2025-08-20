@@ -73,26 +73,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // RADICAL: loadUserData NO depende de fetchRestaurantInfo
-  const loadUserData = async (u) => {
+  // SIMPLE: loadUserData es 100% síncrono - NO ejecuta fetchRestaurantInfo
+  const loadUserData = (u) => {
     console.log('🔄 Loading user data for:', u.email);
-    try {
-      setUser(u);
-      setStatus('signed_in');
-      console.log('🚀 User ready IMMEDIATELY (status=signed_in)');
-      
-      // fetchRestaurantInfo en background OPCIONAL - si falla, no importa
-      setTimeout(() => {
-        fetchRestaurantInfo(u.id).catch(e => {
-          console.warn('⚠️ Background restaurant fetch failed (ignored):', e);
-          // App sigue funcionando sin restaurante
-        });
-      }, 500); // Delay para evitar race conditions
-      
-    } catch (e) {
-      console.error('❌ loadUserData error:', e?.message || e);
-      setStatus('signed_out');
-    }
+    setUser(u);
+    setStatus('signed_in');
+    console.log('🚀 User ready IMMEDIATELY - NO restaurant fetch');
+    
+    // NO ejecutamos fetchRestaurantInfo aquí - la app funciona sin él
+    // Se puede llamar manualmente desde componentes si es necesario
   };
 
   const initSession = async () => {
@@ -105,7 +94,7 @@ export const AuthProvider = ({ children }) => {
 
       if (session?.user) {
         console.log('✅ Session found:', session.user.email);
-        await loadUserData(session.user);
+        loadUserData(session.user); // YA NO es async
       } else {
         console.log('❌ No session found');
         setUser(null); 
@@ -154,8 +143,7 @@ export const AuthProvider = ({ children }) => {
         }
         lastSignInRef.current = session.user.id;
         console.log('✅ User signed in:', session.user.email);
-        setStatus('checking');
-        await loadUserData(session.user);
+        loadUserData(session.user); // YA NO es async
       } else if (event === 'SIGNED_OUT') {
         lastSignInRef.current = null;
         setUser(null); 
