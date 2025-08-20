@@ -123,7 +123,8 @@ export const AuthProvider = ({ children }) => {
       setRestaurant(null);
       setRestaurantId(null);
     } finally {
-      console.log("✅ fetchRestaurantInfo FINISHED");
+      setIsReady(true);
+      console.log("✅ fetchRestaurantInfo FINISHED (isReady=true)");
     }
   };
 
@@ -138,8 +139,7 @@ export const AuthProvider = ({ children }) => {
       console.error("❌ Error in loadUserData:", err);
     } finally {
       setLoading(false);
-      setIsReady(true); // <- GARANTÍA de salida
-      console.log("✅ loadUserData completed (isReady=true)");
+      console.log("✅ loadUserData completed");
     }
   };
 

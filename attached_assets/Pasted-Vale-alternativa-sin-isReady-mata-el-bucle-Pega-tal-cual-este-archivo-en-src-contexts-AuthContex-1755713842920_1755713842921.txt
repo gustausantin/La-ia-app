@@ -1,0 +1,235 @@
+Vale: alternativa sin isReady (mata el bucle).
+Pega tal cual este archivo en src/contexts/AuthContext.jsx y prueba.
+
+Qué cambia
+
+Eliminamos isReady y usamos status: 'checking' | 'signed_in' | 'signed_out'.
+
+La UI nunca queda bloqueada: hay timeout y fallback global.
+
+fetchRestaurantInfo no bloquea el “ready”; si falla, la app sigue.
+
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import toast from 'react-hot-toast';
+
+const AuthContext = createContext(null);
+export const useAuthContext = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuthContext must be used within an AuthProvider');
+  return ctx;
+};
+
+export const AuthProvider = ({ children }) => {
+  // Estado único y simple
+  const [status, setStatus] = useState('checking'); // 'checking' | 'signed_in' | 'signed_out'
+  const [user, setUser] = useState(null);
+  const [restaurant, setRestaurant] = useState(null);
+  const [restaurantId, setRestaurantId] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [agentStatus, setAgentStatus] = useState({
+    active: true, activeConversations: 0, pendingActions: 0,
+    channels: { vapi: true, whatsapp: true, email: true, instagram: false, facebook: false }
+  });
+
+  const bootedRef = useRef(false);
+  const lastSignInRef = useRef(null);
+  const subRef = useRef(null);
+
+  const withTimeout = (p, ms = 8000, label = 'OP') =>
+    Promise.race([ p, new Promise((_, rej) => setTimeout(() => rej(new Error(`TIMEOUT_${label}`)), ms)) ]);
+
+  // --- NO BLOQUEA READY ---
+  const fetchRestaurantInfo = async (userId) => {
+    try {
+      if (!userId) { setRestaurant(null); setRestaurantId(null); return; }
+
+      const { data: map, error: mapErr } = await withTimeout(
+        supabase.from('user_restaurant_mapping')
+          .select(`
+            role, permissions,
+            restaurant:restaurant_id (
+              id, name, email, phone, address, city, postal_code, country,
+              timezone, currency, logo_url, website, active, trial_end_at,
+              subscription_status, agent_config, settings, created_at, updated_at, ui_cuisine_type
+            )
+          `)
+          .eq('auth_user_id', userId)
+          .maybeSingle(),
+        8000, 'MAP'
+      );
+
+      if (map?.restaurant) {
+        setRestaurant(map.restaurant); setRestaurantId(map.restaurant.id); return;
+      }
+
+      if (mapErr && mapErr.code !== 'PGRST116') console.error('DB mapping error:', mapErr);
+
+      const { data: direct, error: directErr } = await withTimeout(
+        supabase.from('restaurants').select('*').eq('auth_user_id', userId).maybeSingle(),
+        8000, 'DIRECT'
+      );
+
+      if (direct) { setRestaurant(direct); setRestaurantId(direct.id); }
+      else {
+        if (directErr && directErr.code !== 'PGRST116') console.error('DB direct error:', directErr);
+        setRestaurant(null); setRestaurantId(null);
+      }
+    } catch (e) {
+      console.error('fetchRestaurantInfo error:', e?.message || e);
+      setRestaurant(null); setRestaurantId(null);
+    }
+  };
+
+  const loadUserData = async (u) => {
+    try {
+      setUser(u);
+      await fetchRestaurantInfo(u.id);
+    } catch (e) {
+      console.error('loadUserData error:', e?.message || e);
+    } finally {
+      setStatus('signed_in'); // pase lo que pase, salimos de "checking"
+    }
+  };
+
+  const initSession = async () => {
+    setStatus('checking');
+    try {
+      const { data: { session }, error } = await withTimeout(supabase.auth.getSession(), 8000, 'GET_SESSION');
+      if (error) throw error;
+
+      if (session?.user) await loadUserData(session.user);
+      else {
+        setUser(null); setRestaurant(null); setRestaurantId(null);
+        setStatus('signed_out');
+      }
+    } catch (e) {
+      console.error('initSession error:', e?.message || e);
+      setUser(null); setRestaurant(null); setRestaurantId(null);
+      setStatus('signed_out');
+    }
+  };
+
+  // Fallback global: aunque algo se cuelgue, liberamos la UI a los 9s
+  useEffect(() => {
+    if (status !== 'checking') return;
+    const t = setTimeout(() => setStatus((s) => (s === 'checking' ? 'signed_out' : s)), 9000);
+    return () => clearTimeout(t);
+  }, [status]);
+
+  useEffect(() => {
+    if (bootedRef.current) return;
+    bootedRef.current = true;
+
+    (async () => { await initSession(); })();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth change:', event);
+
+      if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        if (lastSignInRef.current === session.user.id) {
+          console.log('SIGNED_IN duplicado ignorado'); return;
+        }
+        lastSignInRef.current = session.user.id;
+        setStatus('checking');
+        await loadUserData(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        lastSignInRef.current = null;
+        setUser(null); setRestaurant(null); setRestaurantId(null);
+        setStatus('signed_out');
+      }
+    });
+
+    subRef.current = subscription;
+    return () => subRef.current?.unsubscribe();
+  }, []);
+
+  // Helpers auth
+  const login = async (email, password) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      toast.success('¡Bienvenido de vuelta!');
+      return { success: true };
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error(error.message || 'Error al iniciar sesión');
+      return { success: false, error: error.message };
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email, password: userData.password,
+        options: { data: { restaurant_name: userData.restaurantName, owner_name: userData.ownerName } }
+      });
+      if (error) throw error;
+      if (data.user && !data.session) { toast.success('Confirma tu email.'); return { success: true, needsConfirmation: true }; }
+      toast.success('Cuenta creada.'); return { success: true, needsConfirmation: false };
+    } catch (error) {
+      console.error('Register error:', error);
+      toast.error(error.message || 'Error en el registro');
+      return { success: false, error: error.message };
+    }
+  };
+
+  const logout = async () => {
+    try { await supabase.auth.signOut(); toast.success('Sesión cerrada'); }
+    catch (e) { console.error('Logout error:', e); toast.error('Error al cerrar sesión'); }
+  };
+
+  // Notifs
+  const addNotification = (n) => {
+    const newN = { id: Date.now() + Math.random(), timestamp: new Date(), read: false, ...n };
+    setNotifications((p) => [newN, ...p].slice(0, 50));
+  };
+  const markNotificationAsRead = (id) => setNotifications((p) => p.map(n => n.id === id ? { ...n, read: true } : n));
+  const clearNotifications = () => setNotifications([]);
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const value = {
+    // estado
+    status, // 'checking' | 'signed_in' | 'signed_out'
+    isAuthenticated: status === 'signed_in',
+    // datos
+    user, restaurant, restaurantId, restaurantInfo: restaurant,
+    // notifs
+    notifications, agentStatus, unreadCount,
+    // acciones
+    login, register, logout, signOut: logout,
+    addNotification, markNotificationAsRead, markAllNotificationsAsRead: clearNotifications, clearNotifications,
+    fetchRestaurantInfo,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export default AuthProvider;
+
+Dashboard (clave)
+
+Asegúrate de usar solo status:
+
+const { status, user, restaurant } = useAuthContext();
+if (status === 'checking') return <Spinner/>;
+
+return (
+  <>
+    {status === 'signed_in' ? (
+      restaurant ? <DatosRestaurante data={restaurant}/> : <EmptyState texto="Sin datos de restaurante"/>
+    ) : (
+      <LoginPrompt/>
+    )}
+  </>
+);
+
+Si aún falla
+
+Revisa que no haya dos <AuthProvider> montados.
+
+Usa maybeSingle() (hecho) para evitar errores duros.
+
+Si el hang viene de red/firewall: con este diseño no bloquea la UI igualmente.
