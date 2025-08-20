@@ -213,7 +213,7 @@ export default function Dashboard() {
         addNotification 
       } = useAuthContext();
 
-    console.log('📊 Dashboard avanzado rendering...', { status });
+    console.log('📊 Dashboard avanzado rendering...', { status, isAuthenticated });
 
     // Mostrar loading mientras se inicializa
     if (status === 'checking') {
@@ -483,7 +483,7 @@ export default function Dashboard() {
         });
 
         // Solo cargar si todas las condiciones se cumplen y no estamos ya cargando
-        if (status === 'authenticated' && restaurantId && loadingState === LOADING_STATES.INITIAL) {
+        if (status === 'signed_in' && restaurantId && loadingState === LOADING_STATES.INITIAL) {
             console.log('✅ Dashboard: Iniciando carga automática inmediata...');
             loadDashboardData();
         }
@@ -559,8 +559,8 @@ export default function Dashboard() {
         return sorted.slice(0, 3).map((h) => h.hour.replace(":00", "h"));
     }, [stats.hourly_reservations]);
 
-    // Control robusto de loading - usar solo status (no depender de loading)
-    if (status !== 'authenticated') { // Cambiado para asegurar que el usuario esté autenticado para mostrar el dashboard
+    // Control robusto de loading - usar solo status
+    if (status !== 'signed_in') {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">

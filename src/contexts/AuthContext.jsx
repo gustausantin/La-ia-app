@@ -11,8 +11,7 @@ export const useAuthContext = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  // Estado único y simple
-  const [status, setStatus] = useState('checking'); // 'checking' | 'signed_in' | 'signed_out'
+  const [status, setStatus] = useState('checking');
   const [user, setUser] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
   const [restaurantId, setRestaurantId] = useState(null);
@@ -24,36 +23,32 @@ export const AuthProvider = ({ children }) => {
 
   const bootedRef = useRef(false);
   const lastSignInRef = useRef(null);
-  const subRef = useRef(null);
 
-  const withTimeout = (p, ms = 8000, label = 'OP') =>
-    Promise.race([ p, new Promise((_, rej) => setTimeout(() => rej(new Error(`TIMEOUT_${label}`)), ms)) ]);
-
-  // --- NO BLOQUEA READY ---
+  // Función simplificada para obtener restaurante (SIN timeout wrapper)
   const fetchRestaurantInfo = async (userId) => {
     console.log('🔍 Fetching restaurant info for user:', userId);
-    try {
-      if (!userId) { 
-        console.log('⚠️ No userId provided');
-        setRestaurant(null); 
-        setRestaurantId(null); 
-        return; 
-      }
+    
+    if (!userId) { 
+      console.log('⚠️ No userId provided');
+      setRestaurant(null); 
+      setRestaurantId(null); 
+      return; 
+    }
 
-      const { data: map, error: mapErr } = await withTimeout(
-        supabase.from('user_restaurant_mapping')
-          .select(`
-            role, permissions,
-            restaurant:restaurant_id (
-              id, name, email, phone, address, city, postal_code, country,
-              timezone, currency, logo_url, website, active, trial_end_at,
-              subscription_status, agent_config, settings, created_at, updated_at, ui_cuisine_type
-            )
-          `)
-          .eq('auth_user_id', userId)
-          .maybeSingle(),
-        8000, 'MAP'
-      );
+    try {
+      // Primer intento: mapping table
+      const { data: map, error: mapErr } = await supabase
+        .from('user_restaurant_mapping')
+        .select(`
+          role, permissions,
+          restaurant:restaurant_id (
+            id, name, email, phone, address, city, postal_code, country,
+            timezone, currency, logo_url, website, active, trial_end_at,
+            subscription_status, agent_config, settings, created_at, updated_at, ui_cuisine_type
+          )
+        `)
+        .eq('auth_user_id', userId)
+        .maybeSingle();
 
       if (map?.restaurant) {
         console.log('✅ Restaurant via mapping:', map.restaurant.name);
@@ -62,21 +57,26 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      if (mapErr && mapErr.code !== 'PGRST116') console.error('❌ DB mapping error:', mapErr);
+      if (mapErr && mapErr.code !== 'PGRST116') {
+        console.error('❌ DB mapping error:', mapErr);
+      }
 
+      // Segundo intento: direct
       console.log('📋 No mapping; trying direct...');
-      const { data: direct, error: directErr } = await withTimeout(
-        supabase.from('restaurants').select('*').eq('auth_user_id', userId).maybeSingle(),
-        8000, 'DIRECT'
-      );
+      const { data: direct, error: directErr } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('auth_user_id', userId)
+        .maybeSingle();
 
       if (direct) { 
         console.log('✅ Restaurant direct:', direct.name);
         setRestaurant(direct); 
         setRestaurantId(direct.id); 
-      }
-      else {
-        if (directErr && directErr.code !== 'PGRST116') console.error('❌ DB direct error:', directErr);
+      } else {
+        if (directErr && directErr.code !== 'PGRST116') {
+          console.error('❌ DB direct error:', directErr);
+        }
         console.log('🏪 No restaurant found');
         setRestaurant(null); 
         setRestaurantId(null);
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
       setRestaurant(null); 
       setRestaurantId(null);
     } finally {
-      console.log('✅ fetchRestaurantInfo FINISHED (no blocking)');
+      console.log('✅ fetchRestaurantInfo FINISHED');
     }
   };
 
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }) => {
     } catch (e) {
       console.error('❌ loadUserData error:', e?.message || e);
     } finally {
-      setStatus('signed_in'); // pase lo que pase, salimos de "checking"
+      setStatus('signed_in');
       console.log('✅ loadUserData completed (status=signed_in)');
     }
   };
@@ -106,15 +106,15 @@ export const AuthProvider = ({ children }) => {
   const initSession = async () => {
     console.log('🚀 Initializing auth...');
     setStatus('checking');
+    
     try {
-      const { data: { session }, error } = await withTimeout(supabase.auth.getSession(), 8000, 'GET_SESSION');
+      const { data: { session }, error } = await supabase.auth.getSession();
       if (error) throw error;
 
       if (session?.user) {
         console.log('✅ Session found:', session.user.email);
         await loadUserData(session.user);
-      }
-      else {
+      } else {
         console.log('❌ No session found');
         setUser(null); 
         setRestaurant(null); 
@@ -130,23 +130,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Fallback global: aunque algo se cuelgue, liberamos la UI a los 9s
+  // Timeout de seguridad - más simple
   useEffect(() => {
     if (status !== 'checking') return;
-    console.log('⏰ Setting 9s timeout fallback...');
-    const t = setTimeout(() => {
+    
+    const timeout = setTimeout(() => {
       console.log('🚨 TIMEOUT FALLBACK: forcing signed_out');
-      setStatus((s) => (s === 'checking' ? 'signed_out' : s));
-    }, 9000);
-    return () => clearTimeout(t);
+      setStatus('signed_out');
+    }, 10000); // 10 segundos
+    
+    return () => clearTimeout(timeout);
   }, [status]);
 
   useEffect(() => {
     if (bootedRef.current) return;
     bootedRef.current = true;
 
-    (async () => { await initSession(); })();
+    // Inicializar inmediatamente
+    initSession();
 
+    // Auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 Auth state changed:', event);
 
@@ -171,8 +174,7 @@ export const AuthProvider = ({ children }) => {
       }
     });
 
-    subRef.current = subscription;
-    return () => subRef.current?.unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
   // Helpers auth
@@ -221,8 +223,7 @@ export const AuthProvider = ({ children }) => {
       await supabase.auth.signOut(); 
       console.log('✅ Sesión cerrada correctamente');
       toast.success('Sesión cerrada correctamente'); 
-    }
-    catch (e) { 
+    } catch (e) { 
       console.error('❌ Logout error:', e); 
       toast.error('Error al cerrar sesión'); 
     }
@@ -247,21 +248,17 @@ export const AuthProvider = ({ children }) => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const value = {
-    // estado
-    status, // 'checking' | 'signed_in' | 'signed_out'
+    status,
     isAuthenticated: status === 'signed_in',
-    isReady: status !== 'checking', // para compatibilidad
-    loading: status === 'checking', // para compatibilidad
-    // datos
+    isReady: status !== 'checking',
+    loading: status === 'checking',
     user, 
     restaurant, 
     restaurantId, 
     restaurantInfo: restaurant,
-    // notifs
     notifications, 
     agentStatus, 
     unreadCount,
-    // acciones
     login, 
     register, 
     logout, 
