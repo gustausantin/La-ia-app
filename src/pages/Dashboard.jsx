@@ -207,10 +207,10 @@ const Alert = ({
 export default function Dashboard() {
     console.log('📊 Dashboard avanzado rendering...');
 
-    const { 
-        restaurant, 
-        restaurantId, 
-        isReady, 
+    const {
+        restaurant,
+        restaurantId,
+        isReady,
         agentStatus,
         user
     } = useAuthContext();
@@ -384,8 +384,8 @@ export default function Dashboard() {
                 return {
                     ...res,
                     source: res.source || (Math.random() > 0.3 ? 'agent' : 'manual'),
-                    channel: res.channel || (res.source === 'agent' ? 
-                        ['whatsapp', 'vapi', 'web'][Math.floor(Math.random() * 3)] : 
+                    channel: res.channel || (res.source === 'agent' ?
+                        ['whatsapp', 'vapi', 'web'][Math.floor(Math.random() * 3)] :
                         'manual')
                 };
             });
@@ -402,13 +402,13 @@ export default function Dashboard() {
     // Función para cargar todos los datos
     const loadDashboardData = useCallback(async () => {
         console.log('📊 Dashboard: Iniciando carga de datos...');
-        
+
         // Evitar múltiples cargas simultáneas
         if (loadingState === LOADING_STATES.LOADING) {
             console.log('📊 Dashboard: Ya se está cargando, saltando...');
             return;
         }
-        
+
         setLoadingState(LOADING_STATES.LOADING);
         setIsLoading(true);
 
@@ -416,7 +416,7 @@ export default function Dashboard() {
             console.log('📊 Dashboard: Cargando estadísticas...');
             await Promise.all([
                 fetchDashboardStats(),
-                fetchAgentConversations(), 
+                fetchAgentConversations(),
                 fetchTodayReservations(),
             ]);
 
@@ -428,7 +428,7 @@ export default function Dashboard() {
             setLoadingState(LOADING_STATES.ERROR);
             setIsLoading(false);
         }
-    }, [fetchDashboardStats, fetchAgentConversations, fetchTodayReservations]);
+    }, [loadingState]); // Dependencia removida de fetch functions
 
     // Función para refrescar datos
     const handleRefresh = useCallback(async () => {
@@ -445,15 +445,15 @@ export default function Dashboard() {
         });
     }, [loadDashboardData, addNotification]);
 
-    // Efecto para cargar datos iniciales - UNA SOLA VEZ
+    // Efecto para cargar datos iniciales AUTOMÁTICAMENTE - SIN dependencias que causen loops
     useEffect(() => {
         console.log('🔄 Dashboard: Estado actual -', { isReady, restaurantId, loadingState });
-        
+
         if (isReady && restaurantId && loadingState === LOADING_STATES.INITIAL) {
             console.log('✅ Dashboard: Iniciando carga automática de datos...');
             loadDashboardData();
         }
-    }, [isReady, restaurantId]); // Dependencias mínimas para evitar loops
+    }, [isReady, restaurantId, loadingState]); // REMOVIDO loadDashboardData de dependencias
 
     // Suscripción real-time a reservas
     useEffect(() => {
@@ -481,8 +481,8 @@ export default function Dashboard() {
                         ...prev,
                         total_reservations: prev.total_reservations + 1,
                         total_covers: prev.total_covers + (newReservation.party_size || 0),
-                        agent_reservations: newReservation.source === 'agent' 
-                            ? prev.agent_reservations + 1 
+                        agent_reservations: newReservation.source === 'agent'
+                            ? prev.agent_reservations + 1
                             : prev.agent_reservations,
                         manual_reservations: newReservation.source === 'manual'
                             ? prev.manual_reservations + 1

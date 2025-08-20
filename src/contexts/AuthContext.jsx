@@ -119,6 +119,7 @@ export const AuthProvider = ({ children }) => {
         if (mounted) {
           setLoading(false);
           setIsReady(true);
+          console.log('✅ Auth initialization complete, isReady=true');
         }
       }
     };
@@ -145,6 +146,7 @@ export const AuthProvider = ({ children }) => {
       if (!isReady) {
         setIsReady(true);
         setLoading(false);
+        console.log('✅ Auth state change complete, isReady=true');
       }
     });
 
