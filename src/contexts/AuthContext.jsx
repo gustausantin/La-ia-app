@@ -114,13 +114,12 @@ export const AuthProvider = ({ children }) => {
               setRestaurant(null);
               setRestaurantId(null);
               console.log('✅ fetchRestaurantInfo completed - no restaurant');
-              return;
+            } else {
+              console.error('❌ Database error fetching restaurant:', restaurantError);
+              setRestaurant(null);
+              setRestaurantId(null);
+              console.log('✅ fetchRestaurantInfo completed - error handled');
             }
-            console.error('❌ Database error fetching restaurant:', restaurantError);
-            setRestaurant(null);
-            setRestaurantId(null);
-            console.log('✅ fetchRestaurantInfo completed - error handled');
-            return;
           }
 
           if (restaurantData) {
@@ -129,14 +128,12 @@ export const AuthProvider = ({ children }) => {
             setRestaurantId(restaurantData.id);
           }
           console.log('✅ fetchRestaurantInfo completed - direct restaurant');
-          return;
+        } else {
+          console.error('❌ Database error fetching restaurant mapping:', mappingError);
+          setRestaurant(null);
+          setRestaurantId(null);
+          console.log('✅ fetchRestaurantInfo completed - mapping error handled');
         }
-
-        console.error('❌ Database error fetching restaurant mapping:', mappingError);
-        setRestaurant(null);
-        setRestaurantId(null);
-        console.log('✅ fetchRestaurantInfo completed - mapping error handled');
-        return;
       }
 
       if (mappingData && mappingData.restaurant) {
