@@ -447,7 +447,7 @@ export default function Dashboard() {
             console.log('✅ Dashboard: Iniciando carga automática de datos...');
             loadDashboardData();
         }
-    }, [isReady, restaurantId]); // SIN loadingState para evitar loops
+    }, [isReady, restaurantId, loadDashboardData]);
 
     // Suscripción real-time a reservas
     useEffect(() => {

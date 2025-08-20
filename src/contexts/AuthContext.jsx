@@ -21,10 +21,9 @@ export const AuthProvider = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Función simple para cargar restaurante
+  // Cargar restaurante
   const loadRestaurant = async (userId) => {
     try {
-      // Primero intentar user_restaurant_mapping
       const { data: mappingData } = await supabase
         .from('user_restaurant_mapping')
         .select(`
@@ -43,7 +42,6 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // Si no, intentar tabla restaurants directa
       const { data: restaurantData } = await supabase
         .from('restaurants')
         .select('*')
@@ -59,39 +57,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // UN SOLO useEffect - SIN DEPENDENCIAS para evitar loops
+  // EFECTO PRINCIPAL - SIN DEPENDENCIAS
   useEffect(() => {
-    let isMounted = true;
+    console.log('🚀 Initializing auth...');
+    let mounted = true;
 
     const initAuth = async () => {
       try {
-        console.log('🚀 Init auth - SIMPLE VERSION');
-        
-        // Obtener sesión actual
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (isMounted) {
-          if (session?.user) {
-            console.log('✅ User found:', session.user.email);
-            setUser(session.user);
-            setIsAuthenticated(true);
-            await loadRestaurant(session.user.id);
-          } else {
-            console.log('❌ No user');
-            setUser(null);
-            setIsAuthenticated(false);
-            setRestaurant(null);
-            setRestaurantId(null);
-          }
-          
-          // SIEMPRE marcar como listo
-          setLoading(false);
-          setIsReady(true);
-          console.log('✅ Auth ready');
+        if (!mounted) return;
+
+        if (session?.user) {
+          console.log('✅ User signed in:', session.user.email);
+          console.log('🔍 Fetching restaurant info for user', session.user.id);
+          setUser(session.user);
+          setIsAuthenticated(true);
+          await loadRestaurant(session.user.id);
+        } else {
+          console.log('❌ No session found');
+          setUser(null);
+          setIsAuthenticated(false);
+          setRestaurant(null);
+          setRestaurantId(null);
         }
+        
+        setLoading(false);
+        setIsReady(true);
       } catch (error) {
-        console.error('❌ Auth error:', error);
-        if (isMounted) {
+        console.error('Auth error:', error);
+        if (mounted) {
           setLoading(false);
           setIsReady(true);
         }
@@ -100,31 +95,36 @@ export const AuthProvider = ({ children }) => {
 
     initAuth();
 
-    // Listener de cambios de auth
+    // Listener de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) return;
+      if (!mounted) return;
       
-      console.log('🔐 Auth changed:', event);
+      console.log('🔐 Auth state changed:', event);
       
       if (event === 'SIGNED_IN' && session) {
+        console.log('✅ User signed in:', session.user.email);
+        console.log('🔍 Fetching restaurant info for user', session.user.id);
         setUser(session.user);
         setIsAuthenticated(true);
         await loadRestaurant(session.user.id);
+        setIsReady(true);
       } else if (event === 'SIGNED_OUT') {
+        console.log('👋 User signed out');
         setUser(null);
         setIsAuthenticated(false);
         setRestaurant(null);
         setRestaurantId(null);
+        setIsReady(true);
       }
     });
 
     return () => {
-      isMounted = false;
+      console.log('🔄 React application unmounting...');
+      mounted = false;
       subscription.unsubscribe();
     };
-  }, []); // SIN DEPENDENCIAS - solo se ejecuta UNA VEZ
+  }, []); // SIN DEPENDENCIAS
 
-  // Login simple
   const login = async (email, password) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -142,10 +142,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout simple
   const logout = async () => {
     try {
+      console.log('🚪 Cierre de sesión forzado...');
       await supabase.auth.signOut();
+      
+      // Reset inmediato
+      setUser(null);
+      setIsAuthenticated(false);
+      setRestaurant(null);
+      setRestaurantId(null);
+      setIsReady(true);
+      
       toast.success('Sesión cerrada');
       window.location.replace('/login');
     } catch (error) {
@@ -162,7 +170,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
-    // Funciones dummy para compatibilidad
+    // Funciones dummy
     addNotification: () => {},
     agentStatus: { active: false },
   };
