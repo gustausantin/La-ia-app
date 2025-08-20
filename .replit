@@ -31,7 +31,7 @@ PATH = "$REPL_HOME/.config/npm/node_global/bin:$REPL_HOME/node_modules/.bin"
 npm_config_prefix = "$REPL_HOME/.config/npm/node_global"
 
 [workflows]
-runButton = "FINAL DEFINITIVO"
+runButton = "SON-IA REINICIADA"
 
 [[workflows.workflow]]
 name = "Start Development Server"
@@ -176,6 +176,15 @@ args = "npm run dev"
 
 [[workflows.workflow]]
 name = "FINAL DEFINITIVO"
+author = 41843571
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "SON-IA REINICIADA"
 author = 41843571
 mode = "parallel"
 
