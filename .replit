@@ -31,7 +31,7 @@ PATH = "$REPL_HOME/.config/npm/node_global/bin:$REPL_HOME/node_modules/.bin"
 npm_config_prefix = "$REPL_HOME/.config/npm/node_global"
 
 [workflows]
-runButton = "LA-IA RESTART"
+runButton = "REINICIO COMPLETO LA-IA"
 
 [[workflows.workflow]]
 name = "Start Development Server"
@@ -227,6 +227,23 @@ args = "npm run dev"
 name = "LA-IA RESTART"
 author = 41843571
 mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "REINICIO COMPLETO LA-IA"
+author = 41843571
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"node|vite|npm\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sleep 3"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
