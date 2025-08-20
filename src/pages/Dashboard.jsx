@@ -545,9 +545,8 @@ export default function Dashboard() {
         return sorted.slice(0, 3).map((h) => h.hour.replace(":00", "h"));
     }, [stats.hourly_reservations]);
 
-    // Control robusto de loading - NUNCA infinito
-    const ready = isReady && !loading;
-    if (!ready) {
+    // Control robusto de loading - usar solo isReady (no depender de loading)
+    if (!isReady) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
