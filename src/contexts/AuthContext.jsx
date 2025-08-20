@@ -39,7 +39,6 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🔍 Fetching restaurant info for user', userId);
 
-      // Intentar obtener por mapping
       const { data: mappingData, error: mappingError } = await supabase
         .from('user_restaurant_mapping')
         .select(`
@@ -72,7 +71,6 @@ export const AuthProvider = ({ children }) => {
         .single();
 
       if (mappingError?.code === 'PGRST116') {
-        // Intentar búsqueda directa
         const { data: restaurantData } = await supabase
           .from('restaurants')
           .select('*')
@@ -95,14 +93,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Inicializar auth - SIMPLIFICADO para evitar loops
+  // UN SOLO useEffect que maneja TODO
   useEffect(() => {
     let mounted = true;
+    let authSubscription = null;
 
-    const initAuth = async () => {
+    const initializeAuth = async () => {
       try {
         console.log('🚀 Initializing auth...');
         
+        // 1. Obtener sesión actual
         const { data: { session } } = await supabase.auth.getSession();
         
         if (mounted) {
@@ -113,15 +113,42 @@ export const AuthProvider = ({ children }) => {
             await fetchRestaurantInfo(session.user.id);
           } else {
             console.log('❌ No session found');
+            setUser(null);
+            setIsAuthenticated(false);
+            setRestaurant(null);
+            setRestaurantId(null);
           }
           
-          // SIEMPRE establecer isReady después de inicializar
+          // 2. SIEMPRE establecer como listo
           setLoading(false);
           setIsReady(true);
-          console.log('✅ Auth initialization complete, isReady=true');
+          console.log('✅ Auth ready!');
         }
+
+        // 3. Configurar listener DESPUÉS de inicializar
+        if (mounted) {
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (!mounted) return;
+            
+            console.log('🔐 Auth state changed:', event);
+
+            if (event === 'SIGNED_IN' && session) {
+              setUser(session.user);
+              setIsAuthenticated(true);
+              await fetchRestaurantInfo(session.user.id);
+            } else if (event === 'SIGNED_OUT') {
+              setUser(null);
+              setIsAuthenticated(false);
+              setRestaurant(null);
+              setRestaurantId(null);
+            }
+          });
+
+          authSubscription = subscription;
+        }
+
       } catch (error) {
-        console.error('❌ Error in initAuth:', error);
+        console.error('❌ Error in auth init:', error);
         if (mounted) {
           setLoading(false);
           setIsReady(true);
@@ -129,36 +156,15 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    initAuth();
+    initializeAuth();
 
     return () => {
       mounted = false;
-    };
-  }, []); // Solo ejecutar una vez
-
-  // Listener de cambios de auth SEPARADO
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 Auth state changed:', event);
-
-      if (event === 'SIGNED_IN' && session) {
-        console.log('✅ User signed in:', session.user.email);
-        setUser(session.user);
-        setIsAuthenticated(true);
-        await fetchRestaurantInfo(session.user.id);
-      } else if (event === 'SIGNED_OUT') {
-        console.log('👋 User signed out');
-        setUser(null);
-        setIsAuthenticated(false);
-        setRestaurant(null);
-        setRestaurantId(null);
+      if (authSubscription) {
+        authSubscription.unsubscribe();
       }
-    });
-
-    return () => {
-      subscription?.unsubscribe();
     };
-  }, []);
+  }, []); // SOLO ejecutar UNA VEZ
 
   // Login
   const login = async (email, password) => {
@@ -209,7 +215,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout simple
+  // Logout
   const logout = async () => {
     try {
       await supabase.auth.signOut();

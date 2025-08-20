@@ -439,15 +439,15 @@ export default function Dashboard() {
         });
     }, [loadDashboardData, addNotification]);
 
-    // Efecto para cargar datos iniciales - SUPER SIMPLE
+    // Efecto para cargar datos iniciales - ULTRA SIMPLE
     useEffect(() => {
-        console.log('🔄 Dashboard: Estado actual -', { isReady, restaurantId, loadingState });
+        console.log('🔄 Dashboard: Estado actual -', { isReady, restaurantId });
 
-        if (isReady && restaurantId && loadingState === LOADING_STATES.INITIAL) {
+        if (isReady && restaurantId) {
             console.log('✅ Dashboard: Iniciando carga automática de datos...');
             loadDashboardData();
         }
-    }, [isReady, restaurantId]); // Solo dependencias básicas
+    }, [isReady, restaurantId]); // Solo cuando esté listo y tenga restaurantId
 
     // Suscripción real-time a reservas
     useEffect(() => {
