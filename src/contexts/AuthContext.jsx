@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -20,19 +19,6 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [notifications, setNotifications] = useState([]);
-  const [agentStatus, setAgentStatus] = useState({
-    active: true,
-    activeConversations: 0,
-    pendingActions: 0,
-    channels: {
-      vapi: true,
-      whatsapp: true,
-      email: true,
-      instagram: false,
-      facebook: false
-    }
-  });
 
   // Función para cargar info del restaurante
   const fetchRestaurantInfo = async (userId) => {
@@ -96,15 +82,14 @@ export const AuthProvider = ({ children }) => {
   // UN SOLO useEffect que maneja TODO
   useEffect(() => {
     let mounted = true;
-    let authSubscription = null;
 
     const initializeAuth = async () => {
       try {
         console.log('🚀 Initializing auth...');
-        
+
         // 1. Obtener sesión actual
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (mounted) {
           if (session?.user) {
             console.log('✅ Session found:', session.user.email);
@@ -118,33 +103,11 @@ export const AuthProvider = ({ children }) => {
             setRestaurant(null);
             setRestaurantId(null);
           }
-          
+
           // 2. SIEMPRE establecer como listo
           setLoading(false);
           setIsReady(true);
           console.log('✅ Auth ready!');
-        }
-
-        // 3. Configurar listener DESPUÉS de inicializar
-        if (mounted) {
-          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (!mounted) return;
-            
-            console.log('🔐 Auth state changed:', event);
-
-            if (event === 'SIGNED_IN' && session) {
-              setUser(session.user);
-              setIsAuthenticated(true);
-              await fetchRestaurantInfo(session.user.id);
-            } else if (event === 'SIGNED_OUT') {
-              setUser(null);
-              setIsAuthenticated(false);
-              setRestaurant(null);
-              setRestaurantId(null);
-            }
-          });
-
-          authSubscription = subscription;
         }
 
       } catch (error) {
@@ -158,11 +121,27 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
 
+    // 3. Listener de cambios de auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
+      console.log('🔐 Auth state changed:', event);
+
+      if (event === 'SIGNED_IN' && session) {
+        setUser(session.user);
+        setIsAuthenticated(true);
+        await fetchRestaurantInfo(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setIsAuthenticated(false);
+        setRestaurant(null);
+        setRestaurantId(null);
+      }
+    });
+
     return () => {
       mounted = false;
-      if (authSubscription) {
-        authSubscription.unsubscribe();
-      }
+      subscription.unsubscribe();
     };
   }, []); // SOLO ejecutar UNA VEZ
 
@@ -185,36 +164,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register
-  const register = async (userData) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-        options: {
-          data: {
-            restaurant_name: userData.restaurantName,
-            owner_name: userData.ownerName,
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.user && !data.session) {
-        toast.success('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.');
-        return { success: true, needsConfirmation: true };
-      } else {
-        toast.success('¡Cuenta creada exitosamente!');
-        return { success: true, needsConfirmation: false };
-      }
-    } catch (error) {
-      console.error('❌ Register error:', error);
-      toast.error(error.message || 'Error en el registro');
-      return { success: false, error: error.message };
-    }
-  };
-
   // Logout
   const logout = async () => {
     try {
@@ -223,39 +172,12 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setRestaurant(null);
       setRestaurantId(null);
-      setNotifications([]);
       toast.success('Sesión cerrada correctamente');
       window.location.replace('/login');
     } catch (error) {
       console.error('❌ Logout error:', error);
     }
   };
-
-  // Funciones de notificaciones
-  const addNotification = (notification) => {
-    const newNotification = {
-      id: Date.now() + Math.random(),
-      timestamp: new Date(),
-      read: false,
-      ...notification
-    };
-
-    setNotifications(prev => [newNotification, ...prev].slice(0, 50));
-  };
-
-  const markNotificationAsRead = (id) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
-  };
-
-  const clearNotifications = () => {
-    setNotifications([]);
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   const value = {
     user,
@@ -265,18 +187,12 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     isReady,
     loading,
-    notifications,
-    agentStatus,
-    unreadCount,
     login,
-    register,
     logout,
     signOut: logout,
-    addNotification,
-    markNotificationAsRead,
-    markAllNotificationsAsRead: clearNotifications,
-    clearNotifications,
-    fetchRestaurantInfo
+    fetchRestaurantInfo,
+    // Función dummy para notificaciones
+    addNotification: () => {},
   };
 
   return (
