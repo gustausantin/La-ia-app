@@ -61,11 +61,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Fetch restaurant information - ARREGLADO DEFINITIVAMENTE
+  // Fetch restaurant information - COMPLETAMENTE REPARADO
   const fetchRestaurantInfo = async (userId) => {
+    console.log('🔍 Fetching restaurant info for user', userId);
+    
     try {
-      console.log('🔍 Fetching restaurant info for user', userId);
-
       // First try to get restaurant from user_restaurant_mapping
       const { data: mappingData, error: mappingError } = await supabase
         .from('user_restaurant_mapping')
@@ -98,72 +98,48 @@ export const AuthProvider = ({ children }) => {
         .eq('auth_user_id', userId)
         .single();
 
-      if (mappingError) {
-        if (mappingError.code === 'PGRST116') {
-          console.log('🏪 No restaurant mapping found, trying direct restaurant query');
+      if (mappingError && mappingError.code === 'PGRST116') {
+        console.log('🏪 No restaurant mapping found, trying direct restaurant query');
 
-          // Try to find restaurant directly by auth_user_id
-          const { data: restaurantData, error: restaurantError } = await supabase
-            .from('restaurants')
-            .select('*')
-            .eq('auth_user_id', userId)
-            .single();
+        // Try to find restaurant directly by auth_user_id
+        const { data: restaurantData, error: restaurantError } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('auth_user_id', userId)
+          .single();
 
-          if (restaurantError) {
-            if (restaurantError.code === 'PGRST116') {
-              console.log('🏪 No restaurant found, will create when needed');
-              setRestaurant(null);
-              setRestaurantId(null);
-              console.log('✅ fetchRestaurantInfo completed - no restaurant found');
-              // NO RETURN - dejamos que llegue al finally
-            } else {
-              console.error('❌ Database error fetching restaurant:', restaurantError);
-              setRestaurant(null);
-              setRestaurantId(null);
-              console.log('✅ fetchRestaurantInfo completed - database error');
-              // NO RETURN - dejamos que llegue al finally
-            }
-          }
-
-          if (restaurantData) {
-            console.log('✅ Restaurant found directly:', restaurantData.name);
-            setRestaurant(restaurantData);
-            setRestaurantId(restaurantData.id);
-            console.log('✅ fetchRestaurantInfo completed - direct restaurant found');
-            // NO RETURN - dejamos que llegue al finally
-          }
-        } else {
-          console.error('❌ Database error fetching restaurant mapping:', mappingError);
+        if (restaurantError && restaurantError.code === 'PGRST116') {
+          console.log('🏪 No restaurant found, will create when needed');
           setRestaurant(null);
           setRestaurantId(null);
-          console.log('✅ fetchRestaurantInfo completed - mapping error');
-          // NO RETURN - dejamos que llegue al finally
+        } else if (!restaurantError && restaurantData) {
+          console.log('✅ Restaurant found directly:', restaurantData.name);
+          setRestaurant(restaurantData);
+          setRestaurantId(restaurantData.id);
+        } else {
+          console.error('❌ Database error fetching restaurant:', restaurantError);
+          setRestaurant(null);
+          setRestaurantId(null);
         }
-      }
-
-      // Si llegamos aquí, mappingData existe - AQUÍ ESTABA EL BUG
-      if (mappingData && mappingData.restaurant) {
+      } else if (!mappingError && mappingData?.restaurant) {
         console.log('✅ Restaurant info fetched successfully:', mappingData.restaurant.name);
         setRestaurant(mappingData.restaurant);
         setRestaurantId(mappingData.restaurant.id);
       } else {
-        console.log('🏪 Restaurant will be created when needed');
+        console.error('❌ Database error fetching restaurant mapping:', mappingError);
         setRestaurant(null);
         setRestaurantId(null);
       }
-      
-      console.log('✅ fetchRestaurantInfo completed - SUCCESS');
       
     } catch (error) {
       console.error('❌ Error fetching restaurant:', error);
       setRestaurant(null);
       setRestaurantId(null);
-      console.log('✅ fetchRestaurantInfo completed - catch block');
-    } finally {
-      // CRÍTICO: SIEMPRE establecer isReady al final sin falla
-      setIsReady(true);
-      console.log('✅ fetchRestaurantInfo - isReady set to TRUE');
     }
+    
+    // SIEMPRE completar - SIN finally para evitar bugs
+    setIsReady(true);
+    console.log('✅ fetchRestaurantInfo COMPLETED - isReady set to TRUE');
   };
 
   // Helper to load user data including restaurant information
@@ -171,10 +147,9 @@ export const AuthProvider = ({ children }) => {
     console.log('🔄 Loading user data for:', user.email);
     setUser(user);
     setIsAuthenticated(true);
-    await fetchRestaurantInfo(user.id);
     setLoading(false);
-    setIsReady(true);
-    console.log('✅ loadUserData completed - isReady set to true');
+    await fetchRestaurantInfo(user.id);
+    console.log('✅ loadUserData completed');
   };
 
   // Auth state listener - SIMPLIFICADO Y ESTABLE
