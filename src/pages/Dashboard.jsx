@@ -441,13 +441,13 @@ export default function Dashboard() {
 
     // Efecto para cargar datos iniciales - ULTRA SIMPLE
     useEffect(() => {
-        console.log('🔄 Dashboard: Estado actual -', { isReady, restaurantId });
+        console.log('🔄 Dashboard: Estado actual -', { isReady, restaurantId, loadingState });
 
-        if (isReady && restaurantId) {
+        if (isReady && restaurantId && loadingState === LOADING_STATES.INITIAL) {
             console.log('✅ Dashboard: Iniciando carga automática de datos...');
             loadDashboardData();
         }
-    }, [isReady, restaurantId]); // Solo cuando esté listo y tenga restaurantId
+    }, [isReady, restaurantId, loadingState]); // Incluir loadingState para evitar loops
 
     // Suscripción real-time a reservas
     useEffect(() => {
