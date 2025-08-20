@@ -553,9 +553,6 @@ export default function Dashboard() {
                 <div className="text-center">
                     <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
                     <p className="text-gray-600">Cargando dashboard...</p>
-                    <p className="text-xs text-gray-400 mt-2">
-                        Auth: {isReady ? 'Ready' : 'Loading'} | Data: {loading ? 'Loading' : 'Ready'}
-                    </p>
                 </div>
             </div>
         );
@@ -587,18 +584,7 @@ export default function Dashboard() {
                 </button>
             </div>
 
-            {/* Alerta de estado del agente */}
-            {(!agentStatus || !agentStatus.active) && (
-                <Alert
-                    type="warning"
-                    title="Agente IA Desactivado"
-                    message="El agente no está procesando reservas automáticamente. Actívalo para aprovechar todo el potencial de La-IA."
-                    actionText="Activar Agente"
-                    onAction={() => {
-                        window.location.href = "/configuracion";
-                    }}
-                />
-            )}
+            
 
             {/* Métricas principales del AGENTE */}
             <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6">

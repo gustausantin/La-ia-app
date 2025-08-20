@@ -162,18 +162,7 @@ export default function Layout() {
                                 {safeAgentStatus?.active ? "Activo" : "Inactivo"}
                             </span>
                         </div>
-                        {safeAgentStatus?.active && (
-                            <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                                <div className="flex items-center space-x-1 text-gray-600">
-                                    <MessageCircle className="w-3 h-3" />
-                                    <span className="font-medium">{safeAgentStatus?.activeConversations || 0}</span>
-                                </div>
-                                <div className="flex items-center space-x-1 text-orange-600">
-                                    <Activity className="w-3 h-3" />
-                                    <span className="font-medium">{safeAgentStatus?.pendingActions || 0}</span>
-                                </div>
-                            </div>
-                        )}
+                        
                     </div>
 
                     {/* Info del Restaurante */}
@@ -250,21 +239,21 @@ export default function Layout() {
 
                             <div className="flex items-center space-x-4">
                                 {/* Notificaciones - ahora del contexto global */}
-                                <div className="relative">
-                                    <button
-                                        onClick={() =>
-                                            setShowNotifications(!showNotifications)
-                                        }
-                                        className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                                    >
-                                        <Bell className="w-5 h-5" />
-                                        {unreadCount > 0 && (
+                                {unreadCount > 0 && (
+                                    <div className="relative">
+                                        <button
+                                            onClick={() =>
+                                                setShowNotifications(!showNotifications)
+                                            }
+                                            className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                        >
+                                            <Bell className="w-5 h-5" />
                                             <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                                                 {unreadCount}
                                             </span>
-                                        )}
-                                    </button>
-                                </div>
+                                        </button>
+                                    </div>
+                                )}
 
                                 {/* Menú de usuario */}
                                 <div className="relative">
