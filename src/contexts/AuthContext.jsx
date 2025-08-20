@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Inicializar una sola vez
+  // Inicializar auth - SIMPLIFICADO para evitar loops
   useEffect(() => {
     let mounted = true;
 
@@ -105,29 +105,40 @@ export const AuthProvider = ({ children }) => {
         
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (mounted && session?.user) {
-          console.log('✅ Session found:', session.user.email);
-          setUser(session.user);
-          setIsAuthenticated(true);
-          await fetchRestaurantInfo(session.user.id);
-        } else {
-          console.log('❌ No session found');
-        }
-      } catch (error) {
-        console.error('❌ Error in initAuth:', error);
-      } finally {
         if (mounted) {
+          if (session?.user) {
+            console.log('✅ Session found:', session.user.email);
+            setUser(session.user);
+            setIsAuthenticated(true);
+            await fetchRestaurantInfo(session.user.id);
+          } else {
+            console.log('❌ No session found');
+          }
+          
+          // SIEMPRE establecer isReady después de inicializar
           setLoading(false);
           setIsReady(true);
           console.log('✅ Auth initialization complete, isReady=true');
         }
+      } catch (error) {
+        console.error('❌ Error in initAuth:', error);
+        if (mounted) {
+          setLoading(false);
+          setIsReady(true);
+        }
       }
     };
 
-    // Listener de cambios de auth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
+    initAuth();
 
+    return () => {
+      mounted = false;
+    };
+  }, []); // Solo ejecutar una vez
+
+  // Listener de cambios de auth SEPARADO
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 Auth state changed:', event);
 
       if (event === 'SIGNED_IN' && session) {
@@ -142,21 +153,12 @@ export const AuthProvider = ({ children }) => {
         setRestaurant(null);
         setRestaurantId(null);
       }
-
-      if (!isReady) {
-        setIsReady(true);
-        setLoading(false);
-        console.log('✅ Auth state change complete, isReady=true');
-      }
     });
 
-    initAuth();
-
     return () => {
-      mounted = false;
       subscription?.unsubscribe();
     };
-  }, []); // Solo ejecutar una vez
+  }, []);
 
   // Login
   const login = async (email, password) => {
