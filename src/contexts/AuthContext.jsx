@@ -216,6 +216,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // FUNCIÓN DE LOGOUT ADMINISTRATIVO FORZADO
+  const forceLogoutUser = async () => {
+    console.log('🚨 LOGOUT ADMINISTRATIVO FORZADO para:', user?.email);
+    
+    try {
+      // Forzar cierre en Supabase
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.log('Error en signOut (ignorado):', error);
+    }
+    
+    // Reset completo inmediato
+    setUser(null);
+    setIsAuthenticated(false);
+    setRestaurant(null);
+    setRestaurantId(null);
+    setIsReady(true);
+    setLoading(false);
+    
+    // Limpiar localStorage y sessionStorage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    toast.success('Sesión cerrada administrativamente');
+    console.log('✅ Usuario desconectado forzadamente');
+    
+    // Redireccionar inmediatamente
+    window.location.replace('/login');
+  };
+
   const value = {
     user,
     restaurant,
@@ -225,6 +255,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
+    forceLogoutUser, // NUEVA FUNCIÓN ADMINISTRATIVA
     // Funciones dummy
     addNotification: () => {},
     agentStatus: { active: false },
