@@ -401,7 +401,13 @@ export default function Dashboard() {
 
     // Función para cargar todos los datos
     const loadDashboardData = useCallback(async () => {
-        if (!restaurantId || loadingState === LOADING_STATES.LOADING) return;
+        if (!restaurantId) return;
+        
+        // Solo prevenir carga múltiple si ya está cargando
+        if (loadingState === LOADING_STATES.LOADING) {
+            console.log('📊 Dashboard: Ya está cargando, esperando...');
+            return;
+        }
 
         console.log('📊 Dashboard: Iniciando carga de datos...');
         setLoadingState(LOADING_STATES.LOADING);
@@ -409,11 +415,24 @@ export default function Dashboard() {
 
         try {
             console.log('📊 Dashboard: Cargando estadísticas...');
-            await Promise.all([
+            const [statsResult, conversationsResult, reservationsResult] = await Promise.allSettled([
                 fetchDashboardStats(),
                 fetchAgentConversations(),
                 fetchTodayReservations(),
             ]);
+
+            // Log de resultados
+            statsResult.status === 'fulfilled' 
+                ? console.log('✅ Stats cargadas') 
+                : console.warn('⚠️ Error en stats:', statsResult.reason);
+            
+            conversationsResult.status === 'fulfilled' 
+                ? console.log('✅ Conversaciones cargadas') 
+                : console.warn('⚠️ Error en conversaciones:', conversationsResult.reason);
+            
+            reservationsResult.status === 'fulfilled' 
+                ? console.log('✅ Reservas cargadas') 
+                : console.warn('⚠️ Error en reservas:', reservationsResult.reason);
 
             console.log('📊 Dashboard: Datos cargados exitosamente');
             setLoadingState(LOADING_STATES.SUCCESS);
@@ -442,13 +461,25 @@ export default function Dashboard() {
 
     // Efecto para cargar datos iniciales automáticamente
     useEffect(() => {
-        console.log('🔄 Dashboard: Estado actual -', { isReady, restaurantId });
+        console.log('🔄 Dashboard: Estado actual -', { isReady, restaurantId, loadingState });
 
         if (isReady && restaurantId && loadingState === LOADING_STATES.INITIAL) {
             console.log('✅ Dashboard: Iniciando carga automática de datos...');
             loadDashboardData();
         }
     }, [isReady, restaurantId, loadDashboardData, loadingState]);
+
+    // Efecto adicional para forzar carga si no se ha iniciado después de un tiempo
+    useEffect(() => {
+        if (isReady && restaurantId && loadingState === LOADING_STATES.INITIAL) {
+            const timer = setTimeout(() => {
+                console.log('⏰ Dashboard: Forzando carga por timeout...');
+                loadDashboardData();
+            }, 1000);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [isReady, restaurantId, loadingState, loadDashboardData]);
 
     // Suscripción real-time a reservas
     useEffect(() => {
