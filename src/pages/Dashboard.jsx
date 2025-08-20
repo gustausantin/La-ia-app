@@ -459,27 +459,21 @@ export default function Dashboard() {
         });
     }, [loadDashboardData, addNotification]);
 
-    // Efecto para cargar datos iniciales automáticamente
+    // Efecto para cargar datos iniciales automáticamente - SIMPLIFICADO Y ROBUSTO
     useEffect(() => {
-        console.log('🔄 Dashboard: Estado actual -', { isReady, restaurantId, loadingState });
+        console.log('🔄 Dashboard: Verificando condiciones de carga -', { 
+            isReady, 
+            restaurantId, 
+            loadingState,
+            hasRestaurant: !!restaurant 
+        });
 
+        // Solo cargar si todas las condiciones se cumplen y no estamos ya cargando
         if (isReady && restaurantId && loadingState === LOADING_STATES.INITIAL) {
-            console.log('✅ Dashboard: Iniciando carga automática de datos...');
+            console.log('✅ Dashboard: Iniciando carga automática inmediata...');
             loadDashboardData();
         }
-    }, [isReady, restaurantId, loadDashboardData, loadingState]);
-
-    // Efecto adicional para forzar carga si no se ha iniciado después de un tiempo
-    useEffect(() => {
-        if (isReady && restaurantId && loadingState === LOADING_STATES.INITIAL) {
-            const timer = setTimeout(() => {
-                console.log('⏰ Dashboard: Forzando carga por timeout...');
-                loadDashboardData();
-            }, 1000);
-            
-            return () => clearTimeout(timer);
-        }
-    }, [isReady, restaurantId, loadingState, loadDashboardData]);
+    }, [isReady, restaurantId, loadingState]); // Removido loadDashboardData de dependencies para evitar loops
 
     // Suscripción real-time a reservas
     useEffect(() => {
