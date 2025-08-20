@@ -178,30 +178,11 @@ export default function Layout() {
                     {/* Info del Restaurante */}
                     <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
                         <h3 className="font-semibold text-gray-900 truncate">
-                            {restaurant?.name || "Cargando..."}
+                            {restaurant?.name || "Mi Restaurante"}
                         </h3>
                         <p className="text-sm text-gray-600 truncate mt-1">
                             {user?.email}
                         </p>
-
-                        {/* Canales Activos - usando datos del contexto */}
-                        <div className="flex items-center space-x-2 mt-3">
-                            <Phone
-                                className={`w-4 h-4 ${safeAgentStatus?.channels?.vapi ? "text-green-600" : "text-gray-400"}`}
-                            />
-                            <MessageCircle
-                                className={`w-4 h-4 ${safeAgentStatus?.channels?.whatsapp ? "text-green-600" : "text-gray-400"}`}
-                            />
-                            <Mail
-                                className={`w-4 h-4 ${safeAgentStatus?.channels?.email ? "text-green-600" : "text-gray-400"}`}
-                            />
-                            <Instagram
-                                className={`w-4 h-4 ${safeAgentStatus?.channels?.instagram ? "text-green-600" : "text-gray-400"}`}
-                            />
-                            <Facebook
-                                className={`w-4 h-4 ${safeAgentStatus?.channels?.facebook ? "text-green-600" : "text-gray-400"}`}
-                            />
-                        </div>
                     </div>
 
                     {/* Navegación */}
@@ -238,43 +219,16 @@ export default function Layout() {
                         ))}
                     </nav>
 
-                    {/* Plan y Acciones */}
+                    {/* Acciones */}
                     <div className="p-4 border-t border-gray-200">
-                        <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg p-4 mb-3">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-semibold text-gray-900">
-                                    Plan Pro
-                                </span>
-                                <Zap className="w-4 h-4 text-purple-600" />
-                            </div>
-                            <div className="text-xs text-gray-600">
-                                <div>1,247 conversaciones este mes</div>
-                                <div className="text-purple-600 font-medium">
-                                    3,000 incluidas
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Botones de acciones rápidas */}
-                        <div className="space-y-2">
-                            <button
-                                onClick={restartApp}
-                                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-colors font-medium"
-                                title="Reiniciar aplicación completa"
-                            >
-                                <Activity className="w-4 h-4" />
-                                <span>Reiniciar App</span>
-                            </button>
-
-                            <button
-                                onClick={forceLogout}
-                                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors font-medium"
-                                title="Cerrar sesión forzado"
-                            >
-                                <LogOut className="w-4 h-4" />
-                                <span>Cerrar Sesión</span>
-                            </button>
-                        </div>
+                        <button
+                            onClick={forceLogout}
+                            className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors font-medium"
+                            title="Cerrar sesión forzado"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            <span>Cerrar Sesión</span>
+                        </button>
                     </div>
                 </div>
 
