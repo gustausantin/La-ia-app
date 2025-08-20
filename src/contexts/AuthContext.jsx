@@ -156,6 +156,8 @@ export const AuthProvider = ({ children }) => {
     setUser(user);
     setIsAuthenticated(true);
     await fetchRestaurantInfo(user.id);
+    setLoading(false);
+    setIsReady(true); // CRÍTICO: Establecer isReady después de cargar todos los datos
   };
 
   // Auth state listener - SIMPLIFICADO Y ESTABLE
@@ -182,8 +184,6 @@ export const AuthProvider = ({ children }) => {
         console.log('✅ User signed in:', session.user.email);
         if (mounted) {
           await loadUserData(session.user);
-          setLoading(false);
-          setIsReady(true); // CRÍTICO: Establecer isReady después de cargar datos
         }
       } else if (event === 'SIGNED_OUT') {
         console.log('👋 User signed out');
