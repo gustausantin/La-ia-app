@@ -151,9 +151,6 @@ export default function Layout() {
                                     <h1 className="text-xl font-bold text-gray-900">
                                         La-IA
                                     </h1>
-                                    <p className="text-xs text-gray-500">
-                                        Sistema Operativo IA
-                                    </p>
                                 </div>
                             </div>
                             <span

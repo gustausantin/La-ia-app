@@ -49,9 +49,7 @@ export default function NotificationCenter({ restaurant }) {
   return (
     <div>
       <h3>Notificaciones ({unread.length} sin leer)</h3>
-      {list.length === 0 ? (
-        <div>No hay notificaciones</div>
-      ) : (
+      {list.length === 0 ? null : (
         <ul>
           {list.map(n => (
             <li key={n.id}>
