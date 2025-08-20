@@ -34,128 +34,127 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  // Función para verificar sesión inicial
+  // Helper: timeout defensivo
+  const withTimeout = (p, ms = 12000, label = 'OP') =>
+    Promise.race([
+      p,
+      new Promise((_, rej) => setTimeout(() => rej(new Error(`TIMEOUT_${label}`)), ms))
+    ]);
+
   const initSession = async () => {
+    console.log('🚀 Initializing auth...');
+    setLoading(true);
     try {
-      console.log('🚀 Initializing auth...');
-      setLoading(true);
-
-      const { data: { session }, error } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error('❌ Error getting session:', error.message);
-        setLoading(false);
-        setIsReady(true);
-        return;
-      }
+      const { data: { session }, error } = await withTimeout(
+        supabase.auth.getSession(),
+        12000,
+        'GET_SESSION'
+      );
+      if (error) throw error;
 
       if (session?.user) {
         console.log('✅ Session found:', session.user.email);
         await loadUserData(session.user);
       } else {
         console.log('❌ No session found');
-        setLoading(false);
-        setIsReady(true);
       }
-    } catch (error) {
-      console.error('❌ Error in initSession:', error.message);
+    } catch (err) {
+      console.error('❌ Error in initSession:', err?.message || err);
+    } finally {
+      // Pase lo que pase, salimos de "cargando"
       setLoading(false);
       setIsReady(true);
     }
   };
 
-  // Fetch restaurant information - DEFINITIVAMENTE ARREGLADO
   const fetchRestaurantInfo = async (userId) => {
     console.log('🔍 Starting fetchRestaurantInfo for user:', userId);
-    
+    if (!userId) {
+      console.warn('⚠️ No userId; skipping restaurant fetch');
+      setRestaurant(null);
+      setRestaurantId(null);
+      setIsReady(true);
+      return;
+    }
+
     try {
-      // First try to get restaurant from user_restaurant_mapping
-      const { data: mappingData, error: mappingError } = await supabase
-        .from('user_restaurant_mapping')
-        .select(`
-          role,
-          permissions,
-          restaurant:restaurant_id (
-            id,
-            name,
-            email,
-            phone,
-            address,
-            city,
-            postal_code,
-            country,
-            timezone,
-            currency,
-            logo_url,
-            website,
-            active,
-            trial_end_at,
-            subscription_status,
-            agent_config,
-            settings,
-            created_at,
-            updated_at,
-            ui_cuisine_type
-          )
-        `)
-        .eq('auth_user_id', userId)
-        .single();
+      // mapping -> restaurant
+      const { data: mappingData, error: mappingError } = await withTimeout(
+        supabase
+          .from('user_restaurant_mapping')
+          .select(`
+            role,
+            permissions,
+            restaurant:restaurant_id (
+              id, name, email, phone, address, city, postal_code, country,
+              timezone, currency, logo_url, website, active, trial_end_at,
+              subscription_status, agent_config, settings, created_at, updated_at,
+              ui_cuisine_type
+            )
+          `)
+          .eq('auth_user_id', userId)
+          .single(),
+        12000,
+        'MAP_RESTAURANT'
+      );
+
+      if (!mappingError && mappingData?.restaurant) {
+        console.log('✅ Restaurant via mapping:', mappingData.restaurant.name);
+        setRestaurant(mappingData.restaurant);
+        setRestaurantId(mappingData.restaurant.id);
+        return;
+      }
 
       if (mappingError && mappingError.code === 'PGRST116') {
-        console.log('🏪 No restaurant mapping found, trying direct restaurant query');
+        console.log('🏪 No mapping; querying restaurants directly');
+        const { data: restaurantData, error: restaurantError } = await withTimeout(
+          supabase.from('restaurants').select('*').eq('auth_user_id', userId).single(),
+          12000,
+          'DIRECT_RESTAURANT'
+        );
 
-        // Try to find restaurant directly by auth_user_id
-        const { data: restaurantData, error: restaurantError } = await supabase
-          .from('restaurants')
-          .select('*')
-          .eq('auth_user_id', userId)
-          .single();
-
-        if (restaurantError && restaurantError.code === 'PGRST116') {
-          console.log('🏪 No restaurant found, will create when needed');
-          setRestaurant(null);
-          setRestaurantId(null);
-        } else if (!restaurantError && restaurantData) {
-          console.log('✅ Restaurant found directly:', restaurantData.name);
+        if (!restaurantError && restaurantData) {
+          console.log('✅ Restaurant direct:', restaurantData.name);
           setRestaurant(restaurantData);
           setRestaurantId(restaurantData.id);
         } else {
-          console.error('❌ Database error fetching restaurant:', restaurantError);
+          console.log('🏪 No restaurant found');
           setRestaurant(null);
           setRestaurantId(null);
         }
-      } else if (!mappingError && mappingData?.restaurant) {
-        console.log('✅ Restaurant info fetched successfully:', mappingData.restaurant.name);
-        setRestaurant(mappingData.restaurant);
-        setRestaurantId(mappingData.restaurant.id);
-      } else {
-        console.error('❌ Database error fetching restaurant mapping:', mappingError);
+        return;
+      }
+
+      // Error real de DB
+      if (mappingError) {
+        console.error('❌ DB error (mapping):', mappingError);
         setRestaurant(null);
         setRestaurantId(null);
       }
-      
-    } catch (error) {
-      console.error('❌ Error fetching restaurant:', error);
+    } catch (err) {
+      console.error('❌ fetchRestaurantInfo error:', err?.message || err);
       setRestaurant(null);
       setRestaurantId(null);
+    } finally {
+      console.log('🎯 Setting isReady = true after fetchRestaurantInfo');
+      setIsReady(true);
+      console.log('✅ fetchRestaurantInfo COMPLETED');
     }
-    
-    // CRÍTICO: SIEMPRE establecer isReady - sin falta
-    console.log('🎯 Setting isReady = true after fetchRestaurantInfo');
-    setIsReady(true);
-    console.log('✅ fetchRestaurantInfo COMPLETED');
   };
 
-  // Helper to load user data including restaurant information
   const loadUserData = async (user) => {
     console.log('🔄 Loading user data for:', user.email);
     setUser(user);
     setIsAuthenticated(true);
-    setLoading(false);
-    
-    // Fetch restaurant info and wait for completion
-    await fetchRestaurantInfo(user.id);
-    console.log('✅ loadUserData completed');
+    setLoading(true);
+    try {
+      await fetchRestaurantInfo(user.id);
+    } finally {
+      setLoading(false);
+      // isReady ya se setea dentro de fetchRestaurantInfo, pero aseguramos
+      setIsReady(true);
+      console.log('✅ loadUserData completed');
+    }
   };
 
   // Auth state listener - SIMPLIFICADO Y ROBUSTO
