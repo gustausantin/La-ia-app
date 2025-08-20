@@ -1,0 +1,32 @@
+webglcontextlost event received
+framework-f03c3238d03bda59.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-f03c3238d03bda59.js:1
+(anonymous) @ framework-f03c3238d03bda59.js:1
+uD @ framework-f03c3238d03bda59.js:1
+uI @ framework-f03c3238d03bda59.js:1
+uM @ framework-f03c3238d03bda59.js:1
+uS @ framework-f03c3238d03bda59.js:1
+C @ framework-f03c3238d03bda59.js:1
+z @ framework-f03c3238d03bda59.js:1Understand this error
+_app-a5f1ca30285b1ec0.js:13 webglcontextrestored event received
+(anonymous) @ _app-a5f1ca30285b1ec0.js:13
+(anonymous) @ 6344.a2143cf8f41403a5.js:15
+n @ _app-a5f1ca30285b1ec0.js:13Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'battery'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'layout-animations'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'navigation-override'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'oversized-images'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Unrecognized feature: 'unsized-media'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:151  GET https://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:3001/ 404 (Not Found)
+(anonymous) @ workspace_iframe.html?initialPath=%2F&id=%3Arka%3A:151Understand this error
+(index):1 Refused to execute inline event handler because it violates the following Content Security Policy directive: "default-src 'none'". Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. Note also that 'script-src' was not explicitly set, so 'default-src' is used as a fallback.

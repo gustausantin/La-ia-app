@@ -1,0 +1,19 @@
+workspace_iframe.html?initialPath=%2F&id=%3Ar36%3A:151  GET https://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:3001/ 404 (Not Found)
+(anonymous) @ workspace_iframe.html?initialPath=%2F&id=%3Ar36%3A:151Understand this error
+(index):1 Refused to load the script 'https://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:3001/__replco/static/devtools/eruda/3.2.3/eruda.js' because it violates the following Content Security Policy directive: "default-src 'none'". Note that 'script-src-elem' was not explicitly set, so 'default-src' is used as a fallback.
+Understand this error
+(index):1 Refused to load the script 'https://7fa71e82-53a4-4e1e-82a1-c655249eb89b-00-2wl7uivadzug4.kirk.replit.dev:3001/__replco/static/devtools/injected.js' because it violates the following Content Security Policy directive: "default-src 'none'". Note that 'script-src-elem' was not explicitly set, so 'default-src' is used as a fallback.
+Understand this error
+(index):1 Refused to execute inline event handler because it violates the following Content Security Policy directive: "default-src 'none'". Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. Note also that 'script-src' was not explicitly set, so 'default-src' is used as a fallback.
+Understand this error
+workspace_iframe.html?initialPath=%2F&id=%3Ar36%3A:142 Refused to load the script 'https://replit.com/public/js/beacon.js' because it violates the following Content Security Policy directive: "default-src 'none'". Note that 'script-src-elem' was not explicitly set, so 'default-src' is used as a fallback.
+
+onIframeLoad @ workspace_iframe.html?initialPath=%2F&id=%3Ar36%3A:142Understand this error
+28WARNING: Too many active WebGL contexts. Oldest context will be lost.Understand this warning
+3_app-a5f1ca30285b1ec0.js:13 webglcontextlost event received
+_app-a5f1ca30285b1ec0.js:13 webglcontextrestored event received
+(anonymous) @ _app-a5f1ca30285b1ec0.js:13
+(anonymous) @ 6344.a2143cf8f41403a5.js:15
+n @ _app-a5f1ca30285b1ec0.js:13Understand this warning
+72WebGL: INVALID_OPERATION: delete: object does not belong to this contextUnderstand this warning
+2_app-a5f1ca30285b1ec0.js:13 webglcontextrestored event received
