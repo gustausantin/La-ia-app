@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -60,7 +61,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Fetch restaurant information
+  // Fetch restaurant information - ARREGLADO DEFINITIVAMENTE
   const fetchRestaurantInfo = async (userId) => {
     try {
       console.log('🔍 Fetching restaurant info for user', userId);
@@ -113,11 +114,13 @@ export const AuthProvider = ({ children }) => {
               console.log('🏪 No restaurant found, will create when needed');
               setRestaurant(null);
               setRestaurantId(null);
+              console.log('✅ fetchRestaurantInfo completed - no restaurant found');
               return; // CRÍTICO: return para completar la función
             } else {
               console.error('❌ Database error fetching restaurant:', restaurantError);
               setRestaurant(null);
               setRestaurantId(null);
+              console.log('✅ fetchRestaurantInfo completed - database error');
               return; // CRÍTICO: return para completar la función
             }
           }
@@ -126,40 +129,51 @@ export const AuthProvider = ({ children }) => {
             console.log('✅ Restaurant found directly:', restaurantData.name);
             setRestaurant(restaurantData);
             setRestaurantId(restaurantData.id);
+            console.log('✅ fetchRestaurantInfo completed - direct restaurant found');
             return; // CRÍTICO: return para completar la función
           }
         } else {
           console.error('❌ Database error fetching restaurant mapping:', mappingError);
           setRestaurant(null);
           setRestaurantId(null);
+          console.log('✅ fetchRestaurantInfo completed - mapping error');
           return; // CRÍTICO: return para completar la función
         }
       }
 
+      // Si llegamos aquí, mappingData existe
       if (mappingData && mappingData.restaurant) {
         console.log('✅ Restaurant info fetched successfully:', mappingData.restaurant.name);
         setRestaurant(mappingData.restaurant);
         setRestaurantId(mappingData.restaurant.id);
+        console.log('✅ fetchRestaurantInfo completed - mapping found');
+        return; // CRÍTICO: return para completar la función
       } else {
-        console.log('Restaurant will be created when needed');
+        console.log('🏪 Restaurant will be created when needed');
         setRestaurant(null);
         setRestaurantId(null);
+        console.log('✅ fetchRestaurantInfo completed - no restaurant in mapping');
+        return; // CRÍTICO: return para completar la función
       }
       
     } catch (error) {
       console.error('❌ Error fetching restaurant:', error);
       setRestaurant(null);
       setRestaurantId(null);
+      console.log('✅ fetchRestaurantInfo completed - catch block');
+      return; // CRÍTICO: return para completar la función
     }
   };
 
   // Helper to load user data including restaurant information
   const loadUserData = async (user) => {
+    console.log('🔄 Loading user data for:', user.email);
     setUser(user);
     setIsAuthenticated(true);
     await fetchRestaurantInfo(user.id);
     setLoading(false);
     setIsReady(true);
+    console.log('✅ loadUserData completed - isReady set to true');
   };
 
   // Auth state listener - SIMPLIFICADO Y ESTABLE
