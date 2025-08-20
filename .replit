@@ -71,7 +71,7 @@ localPort = 5176
 externalPort = 8081
 
 [workflows]
-runButton = "FUNCIONA DEFINITIVO"
+runButton = "APP FUNCIONANDO"
 
 [[workflows.workflow]]
 name = "Start Development Server"
@@ -155,3 +155,12 @@ args = "node server.js"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "vite --host 0.0.0.0 --port 5000"
+
+[[workflows.workflow]]
+name = "APP FUNCIONANDO"
+author = 41843571
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install && concurrently \"node server.js\" \"npm run dev\""
