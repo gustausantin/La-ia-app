@@ -141,27 +141,24 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
-      // Si llegamos aquí, mappingData existe
+      // Si llegamos aquí, mappingData existe - AQUÍ ESTABA EL BUG
       if (mappingData && mappingData.restaurant) {
         console.log('✅ Restaurant info fetched successfully:', mappingData.restaurant.name);
         setRestaurant(mappingData.restaurant);
         setRestaurantId(mappingData.restaurant.id);
-        console.log('✅ fetchRestaurantInfo completed - mapping found');
-        return; // CRÍTICO: return para completar la función
       } else {
         console.log('🏪 Restaurant will be created when needed');
         setRestaurant(null);
         setRestaurantId(null);
-        console.log('✅ fetchRestaurantInfo completed - no restaurant in mapping');
-        return; // CRÍTICO: return para completar la función
       }
+      
+      console.log('✅ fetchRestaurantInfo completed - SUCCESS');
       
     } catch (error) {
       console.error('❌ Error fetching restaurant:', error);
       setRestaurant(null);
       setRestaurantId(null);
       console.log('✅ fetchRestaurantInfo completed - catch block');
-      return; // CRÍTICO: return para completar la función
     }
   };
 
