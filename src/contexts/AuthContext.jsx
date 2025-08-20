@@ -96,7 +96,16 @@ export const AuthProvider = ({ children }) => {
 
     initAuth();
 
-    // Listener de auth - SIMPLIFICADO
+    // TIMEOUT DE SEGURIDAD - Si después de 5 segundos no se ha puesto isReady, forzarlo
+    const safetyTimeout = setTimeout(() => {
+      if (mounted && !isReady) {
+        console.log('⚠️ SAFETY TIMEOUT - Forcing isReady=true');
+        setIsReady(true);
+        setLoading(false);
+      }
+    }, 5000);
+
+    // Listener de auth - ARREGLADO DEFINITIVAMENTE
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
@@ -106,11 +115,19 @@ export const AuthProvider = ({ children }) => {
         console.log('✅ User signed in via listener:', session.user.email);
         setUser(session.user);
         setIsAuthenticated(true);
-        await loadRestaurant(session.user.id);
-        // CRÍTICO: Asegurar que isReady se pone true
-        setIsReady(true);
-        setLoading(false);
-        console.log('✅ Listener set isReady: true');
+        
+        // Cargar restaurante Y luego marcar como listo
+        try {
+          await loadRestaurant(session.user.id);
+          console.log('🏆 Restaurant loaded, setting isReady=true');
+        } catch (error) {
+          console.error('Error loading restaurant in listener:', error);
+        } finally {
+          // SIEMPRE marcar como listo, haya o no error
+          setIsReady(true);
+          setLoading(false);
+          console.log('✅ Listener GUARANTEED isReady: true');
+        }
       } else if (event === 'SIGNED_OUT') {
         console.log('👋 User signed out via listener');
         setUser(null);
@@ -119,6 +136,7 @@ export const AuthProvider = ({ children }) => {
         setRestaurantId(null);
         setIsReady(true);
         setLoading(false);
+        console.log('✅ Logout - isReady: true');
       }
     });
 
@@ -126,6 +144,7 @@ export const AuthProvider = ({ children }) => {
       console.log('🔄 Cleaning up auth context...');
       mounted = false;
       subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
     };
   }, []); // SIN DEPENDENCIAS
 
