@@ -74,7 +74,6 @@ export const AuthProvider = ({ children }) => {
       console.warn('⚠️ No userId; skipping restaurant fetch');
       setRestaurant(null);
       setRestaurantId(null);
-      setIsReady(true);
       return;
     }
 
@@ -103,6 +102,9 @@ export const AuthProvider = ({ children }) => {
         console.log('✅ Restaurant via mapping:', mappingData.restaurant.name);
         setRestaurant(mappingData.restaurant);
         setRestaurantId(mappingData.restaurant.id);
+        console.log('🎯 Setting isReady = true after fetchRestaurantInfo (mapping)');
+        setIsReady(true);
+        console.log('✅ fetchRestaurantInfo COMPLETED (mapping)');
         return;
       }
 
@@ -123,6 +125,9 @@ export const AuthProvider = ({ children }) => {
           setRestaurant(null);
           setRestaurantId(null);
         }
+        console.log('🎯 Setting isReady = true after fetchRestaurantInfo (direct)');
+        setIsReady(true);
+        console.log('✅ fetchRestaurantInfo COMPLETED (direct)');
         return;
       }
 
@@ -137,9 +142,9 @@ export const AuthProvider = ({ children }) => {
       setRestaurant(null);
       setRestaurantId(null);
     } finally {
-      console.log('🎯 Setting isReady = true after fetchRestaurantInfo');
+      console.log('🎯 Setting isReady = true after fetchRestaurantInfo (finally)');
       setIsReady(true);
-      console.log('✅ fetchRestaurantInfo COMPLETED');
+      console.log('✅ fetchRestaurantInfo COMPLETED (finally)');
     }
   };
 
@@ -152,10 +157,10 @@ export const AuthProvider = ({ children }) => {
       await fetchRestaurantInfo(user.id);
     } catch (err) {
       console.error('❌ Error in loadUserData:', err);
+      // En caso de error, asegurar que isReady se establezca
+      setIsReady(true);
     } finally {
       setLoading(false);
-      // isReady ya se setea dentro de fetchRestaurantInfo, pero aseguramos
-      setIsReady(true);
       console.log('✅ loadUserData completed');
     }
   };
