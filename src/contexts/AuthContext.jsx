@@ -27,52 +27,24 @@ export const AuthProvider = ({ children }) => {
   });
 
   // Timeout defensivo
-  const withTimeout = (p, ms = 12000, label = 'OP') =>
+  const withTimeout = (p, ms = 8000, label = 'OP') =>
     Promise.race([
       p,
       new Promise((_, rej) => setTimeout(() => rej(new Error(`TIMEOUT_${label}`)), ms)),
     ]);
 
-  // 1) Sesión inicial: SIEMPRE deja la app lista (isReady=true) en finally
-  const initSession = async () => {
-    console.log('🚀 Initializing auth...');
-    setLoading(true);
-    try {
-      const { data: { session }, error } = await withTimeout(supabase.auth.getSession(), 12000, 'GET_SESSION');
-      if (error) throw error;
-
-      if (session?.user) {
-        console.log('✅ Session found:', session.user.email);
-        await loadUserData(session.user); // isReady se fijará en su finally
-        return;
-      }
-
-      console.log('❌ No session found');
-      setUser(null);
-      setIsAuthenticated(false);
-      setRestaurant(null);
-      setRestaurantId(null);
-    } catch (err) {
-      console.error('❌ Error in initSession:', err?.message || err);
-    } finally {
-      setLoading(false);
-      setIsReady(true); // PASE LO QUE PASE, la UI no queda colgada
-      console.log('🎯 initSession: isReady = true');
-    }
-  };
-
-  // 2) Datos de restaurante (NO toca isReady)
+  // Función para obtener datos del restaurante
   const fetchRestaurantInfo = async (userId) => {
-    console.log('🔍 Starting fetchRestaurantInfo for user:', userId);
+    console.log('🔍 Fetching restaurant info for user:', userId);
     if (!userId) {
-      console.warn('⚠️ No userId; skipping restaurant fetch');
+      console.warn('⚠️ No userId provided');
       setRestaurant(null);
       setRestaurantId(null);
       return;
     }
 
     try {
-      // mapping -> restaurant
+      // Intentar mapping primero
       const { data: mappingData, error: mappingError } = await withTimeout(
         supabase
           .from('user_restaurant_mapping')
@@ -88,27 +60,28 @@ export const AuthProvider = ({ children }) => {
           `)
           .eq('auth_user_id', userId)
           .single(),
-        12000,
-        'MAP_RESTAURANT'
+        8000,
+        'MAPPING'
       );
 
       if (!mappingError && mappingData?.restaurant) {
-        console.log('✅ Restaurant via mapping:', mappingData.restaurant.name);
+        console.log('✅ Restaurant found via mapping:', mappingData.restaurant.name);
         setRestaurant(mappingData.restaurant);
         setRestaurantId(mappingData.restaurant.id);
         return;
       }
 
-      if (mappingError && mappingError.code === 'PGRST116') {
-        console.log('🏪 No mapping; querying restaurants directly');
+      // Si no hay mapping, intentar directo
+      if (mappingError?.code === 'PGRST116') {
+        console.log('📋 No mapping found, trying direct query...');
         const { data: restaurantData, error: restaurantError } = await withTimeout(
           supabase.from('restaurants').select('*').eq('auth_user_id', userId).single(),
-          12000,
-          'DIRECT_RESTAURANT'
+          8000,
+          'DIRECT'
         );
 
         if (!restaurantError && restaurantData) {
-          console.log('✅ Restaurant direct:', restaurantData.name);
+          console.log('✅ Restaurant found directly:', restaurantData.name);
           setRestaurant(restaurantData);
           setRestaurantId(restaurantData.id);
         } else {
@@ -119,39 +92,76 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      if (mappingError) {
-        console.error('❌ DB error (mapping):', mappingError);
-        setRestaurant(null);
-        setRestaurantId(null);
-      }
+      console.error('❌ Database error:', mappingError);
+      setRestaurant(null);
+      setRestaurantId(null);
     } catch (err) {
       console.error('❌ fetchRestaurantInfo error:', err?.message || err);
       setRestaurant(null);
       setRestaurantId(null);
-    } finally {
-      console.log('✅ fetchRestaurantInfo FINISHED'); // NO toca isReady
     }
   };
 
-  // 3) Carga de usuario: controla loading/isReady de forma atómica
+  // Inicialización de sesión
+  const initSession = async () => {
+    console.log('🚀 Initializing auth...');
+    setLoading(true);
+    setIsReady(false);
+
+    try {
+      const { data: { session }, error } = await withTimeout(
+        supabase.auth.getSession(), 
+        10000, 
+        'GET_SESSION'
+      );
+      
+      if (error) throw error;
+
+      if (session?.user) {
+        console.log('✅ Session found:', session.user.email);
+        setUser(session.user);
+        setIsAuthenticated(true);
+        await fetchRestaurantInfo(session.user.id);
+      } else {
+        console.log('❌ No session found');
+        setUser(null);
+        setIsAuthenticated(false);
+        setRestaurant(null);
+        setRestaurantId(null);
+      }
+    } catch (err) {
+      console.error('❌ Error in initSession:', err?.message || err);
+      setUser(null);
+      setIsAuthenticated(false);
+      setRestaurant(null);
+      setRestaurantId(null);
+    } finally {
+      setLoading(false);
+      setIsReady(true); // SIEMPRE establecer isReady = true
+      console.log('✅ initSession completed (isReady=true)');
+    }
+  };
+
+  // Cargar datos de usuario
   const loadUserData = async (u) => {
     console.log('🔄 Loading user data for:', u.email);
-    setIsReady(false);  // arranca flujo de carga atómico
+    setIsReady(false);
     setLoading(true);
     setUser(u);
     setIsAuthenticated(true);
+    
     try {
       await fetchRestaurantInfo(u.id);
     } catch (err) {
       console.error('❌ Error in loadUserData:', err);
     } finally {
       setLoading(false);
-      setIsReady(true); // garantizado al final
+      setIsReady(true); // SIEMPRE establecer isReady = true
       console.log('✅ loadUserData completed (isReady=true)');
     }
   };
 
-  // 4) Listener de auth
+  // Listener de autenticación
   useEffect(() => {
     let mounted = true;
 
@@ -176,8 +186,8 @@ export const AuthProvider = ({ children }) => {
         setRestaurant(null);
         setRestaurantId(null);
         setLoading(false);
-        setIsReady(true); // listo aunque no haya sesión
-        console.log('👋 Signed out (isReady=true)');
+        setIsReady(true); // Mantener listo aunque no haya sesión
+        console.log('👋 User signed out');
       }
     });
 
