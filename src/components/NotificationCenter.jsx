@@ -61,8 +61,8 @@ export default function NotificationCenter({ restaurant }) {
                                 <div
                                     key={notification.id}
                                     className={`p-4 rounded-lg border transition-all duration-200 hover:bg-gray-50 cursor-pointer ${
-                                        notification.read 
-                                            ? 'bg-white border-gray-200' 
+                                        notification.read
+                                            ? 'bg-white border-gray-200'
                                             : 'bg-blue-50 border-blue-200'
                                     }`}
                                     onClick={() => markNotificationAsRead(notification.id)}

@@ -25,6 +25,7 @@ import {
     Activity,
     Zap,
     Circle, // NUEVO - para el estado del agente
+    RefreshCw, // Importado para el botón de reiniciar
 } from "lucide-react";
 
 export default function Layout() {
