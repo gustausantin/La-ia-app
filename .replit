@@ -71,7 +71,7 @@ localPort = 5176
 externalPort = 8081
 
 [workflows]
-runButton = "FUNCIONA AHORA"
+runButton = "SERVIDOR LIMPIO"
 
 [[workflows.workflow]]
 name = "Start Development Server"
@@ -176,6 +176,15 @@ args = "npm run dev"
 
 [[workflows.workflow]]
 name = "FUNCIONA AHORA"
+author = 41843571
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "SERVIDOR LIMPIO"
 author = 41843571
 mode = "sequential"
 
