@@ -29,9 +29,8 @@ import {
 } from "lucide-react";
 
 export default function Layout() {
-    console.log('🏗️ Layout component rendering...');
-
-    // Obtener TODOS los datos necesarios del contexto global
+    // console.log removed for production
+// Obtener TODOS los datos necesarios del contexto global
     const {
         user,
         restaurant,
@@ -127,13 +126,12 @@ export default function Layout() {
     // Función para manejar el logout
     const handleLogout = async () => {
         try {
-            console.log('🚪 Layout: Iniciando logout...');
-            await signOut();
+            // console.log removed for production
+await signOut();
         } catch (error) {
             console.error('❌ Layout: Error during logout:', error);
-            // Forzar logout incluso si hay error
-            localStorage.clear();
-            window.location.replace('/login');
+            // Si el logout normal falla, usar forceLogout
+            forceLogout();
         }
     };
 
@@ -314,7 +312,8 @@ export default function Layout() {
 
                     {/* Page Content */}
                     <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
-                        {console.log('🎯 Layout rendering Outlet...')}
+                        {// console.log removed for production
+}
                         <Outlet />
                     </main>
                 </div>
