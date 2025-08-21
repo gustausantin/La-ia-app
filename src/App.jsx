@@ -1,13 +1,16 @@
 
-// App.jsx - Aplicación principal mejorada para Son-IA
+// App.jsx - Aplicación principal mejorada para La-IA
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy, useEffect } from 'react';
 import { useAuthContext } from './contexts/AuthContext';
 import { Bot, RefreshCw } from 'lucide-react';
+import ErrorBoundary from './components/ErrorBoundary';
+import ToastContainer from './components/ToastContainer';
+import logger from './utils/logger';
 
 // Debug logging
-console.log('🚀 Starting React application...');
+logger.info('Starting React application...');
 
 // Lazy loading para optimización
 const Layout = lazy(() => import('./components/Layout'));
@@ -55,7 +58,7 @@ function AppContent() {
   
   // Debug logging
   useEffect(() => {
-    console.log('🎯 AppContent render:', {
+    logger.debug('AppContent render', {
       isAuthenticated,
       isReady,
       hasUser: !!user,
@@ -65,11 +68,11 @@ function AppContent() {
 
   // Mostrar pantalla de carga mientras se verifica la autenticación
   if (!isReady) {
-    console.log('❌ App not ready, showing loading...');
+    logger.warn('App not ready, showing loading...');
     return <LoadingScreen />;
   }
 
-  console.log('✅ App ready, rendering router...');
+  logger.info('App ready, rendering router...');
 
   return (
     <Suspense fallback={<LoadingScreen />}>
@@ -162,21 +165,24 @@ function AppContent() {
 }
 
 function App() {
-  console.log('🚀 App component rendering...');
+  logger.info('App component rendering...');
 
   useEffect(() => {
-    console.log('✅ React app rendered');
+    logger.info('React app rendered');
     
     // Cleanup en unmount
     return () => {
-      console.log('🔄 React application unmounting...');
+      logger.info('React application unmounting...');
     };
   }, []);
 
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AppContent />
+        <ToastContainer />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

@@ -169,9 +169,8 @@ const ToggleSwitch = ({ enabled, onChange, label, description }) => (
 
 // Componente principal de Settings
 export default function Configuracion() {
-    console.log('⚙️ Configuracion component rendering...');
-
-    const { 
+    // console.log removed for production
+const { 
         restaurant, 
         restaurantId, 
         isReady,
@@ -457,27 +456,25 @@ export default function Configuracion() {
     const loadSettings = async () => {
         try {
             setLoading(true);
-            console.log('🔧 Cargando configuración del restaurante...');
+            // console.log removed for production
+// Cargar datos reales del contexto inmediatamente (no simular)
+            setSettings((prev) => ({
+                ...prev,
+                name: restaurant?.name || "La-IA Restaurant",
+                email: user?.email || "contacto@la-ia.com",
+                phone: restaurant?.phone || "+34 666 123 456",
+                address: restaurant?.address || "Calle Principal 123",
+                city: restaurant?.city || "Madrid",
+                postal_code: restaurant?.postal_code || "28001",
+                agent: {
+                    ...prev.agent,
+                    name: "Asistente de " + (restaurant?.name || "La-IA"),
+                }
+            }));
             
-            // Simular carga de datos desde Supabase
-            setTimeout(() => {
-                setSettings((prev) => ({
-                    ...prev,
-                    name: restaurant?.name || "Mi Restaurante",
-                    email: restaurant?.email || "contacto@mirestaurante.com",
-                    phone: restaurant?.phone || "+34 666 123 456",
-                    address: restaurant?.address || "",
-                    city: restaurant?.city || "",
-                    postal_code: restaurant?.postal_code || "",
-                    agent: {
-                        ...prev.agent,
-                        name: "Asistente de " + (restaurant?.name || "Mi Restaurante"),
-                    }
-                }));
-                setLoading(false);
-                console.log('✅ Configuración cargada correctamente');
-            }, 1000);
-        } catch (error) {
+            setLoading(false);
+            // console.log removed for production
+} catch (error) {
             console.error("Error loading settings:", error);
             toast.error("Error al cargar la configuración");
             setLoading(false);
@@ -486,8 +483,8 @@ export default function Configuracion() {
 
     const loadAgentMetrics = async () => {
         try {
-            console.log('📊 Cargando métricas del agente...');
-            // Simular métricas del agente desde Supabase
+            // console.log removed for production
+// Simular métricas del agente desde Supabase
             setAgentMetrics({
                 total_conversations: 1247,
                 resolved_automatically: 1052,
@@ -507,8 +504,8 @@ export default function Configuracion() {
 
     const loadRealTimeStatus = async () => {
         try {
-            console.log('⚡ Cargando estado en tiempo real...');
-            setRealTimeStatus({
+            // console.log removed for production
+setRealTimeStatus({
                 active_conversations: 3,
                 pending_reservations: 8,
                 system_health: "healthy",
@@ -522,14 +519,13 @@ export default function Configuracion() {
     const handleSave = async (section) => {
         try {
             setSaving(true);
-            console.log(`💾 Guardando configuración: ${section}`);
-            
-            // Simular guardado en Supabase
+            // console.log removed for production
+// Simular guardado en Supabase
             await new Promise((resolve) => setTimeout(resolve, 1000));
 
             toast.success(`${section} actualizado correctamente`);
-            console.log(`✅ ${section} guardado exitosamente`);
-        } catch (error) {
+            // console.log removed for production
+} catch (error) {
             console.error("Error saving settings:", error);
             toast.error("Error al guardar los cambios");
         } finally {
@@ -570,9 +566,8 @@ export default function Configuracion() {
     const testChannelConnection = async (channel) => {
         try {
             setTestingConnection({ ...testingConnection, [channel]: true });
-            console.log(`🔌 Probando conexión con ${channel}...`);
-
-            // Simular test de conexión
+            // console.log removed for production
+// Simular test de conexión
             await new Promise(resolve => setTimeout(resolve, 2000));
 
             toast.success(`Conexión con ${channel} exitosa!`);

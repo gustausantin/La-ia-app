@@ -55,6 +55,8 @@ import {
     Pie,
     Cell,
 } from "recharts";
+import logger from "../utils/logger";
+import { DashboardSpinner, PageSpinner } from "../components/LoadingSpinner";
 
 // Estados de carga
 const LOADING_STATES = {
@@ -213,25 +215,18 @@ export default function Dashboard() {
         addNotification 
       } = useAuthContext();
 
-    console.log('📊 Dashboard avanzado rendering...', { status, isAuthenticated });
+    logger.info('📊 Dashboard avanzado rendering...', { status, isAuthenticated });
 
     // Mostrar loading mientras se inicializa
     if (status === 'checking') {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Cargando dashboard...</p>
-                </div>
-            </div>
-        );
+        return <DashboardSpinner text="Cargando dashboard..." />;
     }
 
     const restaurantId = restaurant?.id; // Asegurarse de que restaurantId se derive de restaurant
 
     // Función de notificaciones fallback si no existe
-    const addNotification = useCallback((notification) => {
-        console.log('📨 Notification:', notification);
+    const handleNotification = useCallback((notification) => {
+        logger.info('📨 Notification:', notification);
         // Fallback - simplemente logear
     }, []);
 
@@ -304,7 +299,7 @@ export default function Dashboard() {
             setStats(mockStats);
             return mockStats;
         } catch (error) {
-            console.error("Error fetching stats:", error);
+            logger.error("Error fetching stats:", error);
             toast.error("Error al cargar estadísticas");
             throw error;
         }
@@ -351,7 +346,7 @@ export default function Dashboard() {
             setConversations(mockConversations);
             return mockConversations;
         } catch (error) {
-            console.error("Error fetching conversations:", error);
+            logger.error("Error fetching conversations:", error);
             toast.error("Error al cargar conversaciones");
             throw error;
         }
@@ -407,7 +402,7 @@ export default function Dashboard() {
             setReservations(reservationsWithSource);
             return reservationsWithSource;
         } catch (error) {
-            console.error("Error fetching reservations:", error);
+            logger.error("Error fetching reservations:", error);
             toast.error("Error al cargar reservas");
             throw error;
         }
@@ -419,16 +414,16 @@ export default function Dashboard() {
 
         // Solo prevenir carga múltiple si ya está cargando
         if (loadingState === LOADING_STATES.LOADING) {
-            console.log('📊 Dashboard: Ya está cargando, esperando...');
+            logger.info('📊 Dashboard: Ya está cargando, esperando...');
             return;
         }
 
-        console.log('📊 Dashboard: Iniciando carga de datos...');
+        logger.info('📊 Dashboard: Iniciando carga de datos...');
         setLoadingState(LOADING_STATES.LOADING);
         setIsLoading(true);
 
         try {
-            console.log('📊 Dashboard: Cargando estadísticas...');
+            logger.info('📊 Dashboard: Cargando estadísticas...');
             const [statsResult, conversationsResult, reservationsResult] = await Promise.allSettled([
                 fetchDashboardStats(),
                 fetchAgentConversations(),
@@ -437,22 +432,22 @@ export default function Dashboard() {
 
             // Log de resultados
             statsResult.status === 'fulfilled' 
-                ? console.log('✅ Stats cargadas') 
-                : console.warn('⚠️ Error en stats:', statsResult.reason);
+                ? logger.info('✅ Stats cargadas') 
+                : logger.warn('⚠️ Error en stats:', statsResult.reason);
 
             conversationsResult.status === 'fulfilled' 
-                ? console.log('✅ Conversaciones cargadas') 
-                : console.warn('⚠️ Error en conversaciones:', conversationsResult.reason);
+                ? logger.info('✅ Conversaciones cargadas') 
+                : logger.warn('⚠️ Error en conversaciones:', conversationsResult.reason);
 
             reservationsResult.status === 'fulfilled' 
-                ? console.log('✅ Reservas cargadas') 
-                : console.warn('⚠️ Error en reservas:', reservationsResult.reason);
+                ? logger.info('✅ Reservas cargadas') 
+                : logger.warn('⚠️ Error en reservas:', reservationsResult.reason);
 
-            console.log('📊 Dashboard: Datos cargados exitosamente');
+            logger.info('📊 Dashboard: Datos cargados exitosamente');
             setLoadingState(LOADING_STATES.SUCCESS);
             setIsLoading(false);
         } catch (error) {
-            console.error('❌ Dashboard: Error cargando datos:', error);
+            logger.error('❌ Dashboard: Error cargando datos:', error);
             setLoadingState(LOADING_STATES.ERROR);
             setIsLoading(false);
         }
@@ -475,7 +470,7 @@ export default function Dashboard() {
 
     // Efecto para cargar datos iniciales automáticamente - SIMPLIFICADO Y ROBUSTO
     useEffect(() => {
-        console.log('🔄 Dashboard: Verificando condiciones de carga -', { 
+        logger.info('🔄 Dashboard: Verificando condiciones de carga -', { 
             status, 
             restaurantId, 
             loadingState,
@@ -484,7 +479,7 @@ export default function Dashboard() {
 
         // Solo cargar si todas las condiciones se cumplen y no estamos ya cargando
         if (status === 'signed_in' && restaurantId && loadingState === LOADING_STATES.INITIAL) {
-            console.log('✅ Dashboard: Iniciando carga automática inmediata...');
+            logger.info('✅ Dashboard: Iniciando carga automática inmediata...');
             loadDashboardData();
         }
     }, [status, restaurantId, loadingState]); // Removido loadDashboardData de dependencies para evitar loops
@@ -504,7 +499,7 @@ export default function Dashboard() {
                     filter: `restaurant_id=eq.${restaurantId}`,
                 },
                 (payload) => {
-                    console.log("Nueva reserva:", payload);
+                    logger.info("Nueva reserva:", payload);
                     const newReservation = payload.new;
 
                     // Actualizar lista de reservas
@@ -529,7 +524,7 @@ export default function Dashboard() {
                     );
 
                     // Agregar notificación global
-                    addNotification({
+                    handleNotification({
                         type: 'reservation',
                         message: `Nueva reserva de ${newReservation.customer_name} para ${newReservation.party_size} personas`,
                         priority: 'normal',

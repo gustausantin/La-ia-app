@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import logger from '../utils/logger';
 
 const AuthContext = createContext(null);
 export const useAuthContext = () => {
@@ -10,7 +11,7 @@ export const useAuthContext = () => {
   return ctx;
 };
 
-export const AuthProvider = ({ children }) => {
+const AuthProvider = ({ children }) => {
   const [status, setStatus] = useState('checking');
   const [user, setUser] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
@@ -26,10 +27,10 @@ export const AuthProvider = ({ children }) => {
 
   // Función SIMPLIFICADA que falla rápido
   const fetchRestaurantInfo = async (userId) => {
-    console.log('🔍 Fetching restaurant info for user:', userId);
+    logger.debug('Fetching restaurant info for user', { userId });
     
     if (!userId) { 
-      console.log('⚠️ No userId provided');
+      logger.warn('No userId provided');
       setRestaurant(null); 
       setRestaurantId(null); 
       return; 
@@ -51,41 +52,41 @@ export const AuthProvider = ({ children }) => {
       clearTimeout(timeoutId);
 
       if (map?.restaurant) {
-        console.log('✅ Restaurant found:', map.restaurant.name);
+        logger.info('Restaurant found', { name: map.restaurant.name });
         setRestaurant(map.restaurant); 
         setRestaurantId(map.restaurant.id); 
       } else {
-        console.log('🏪 No restaurant found - app continues normally');
+        logger.info('No restaurant found - app continues normally');
         setRestaurant(null); 
         setRestaurantId(null);
       }
       
     } catch (e) {
       if (e.name === 'AbortError') {
-        console.warn('⏰ fetchRestaurantInfo ABORTED - app continues');
+        logger.warn('fetchRestaurantInfo ABORTED - app continues');
       } else {
-        console.error('❌ fetchRestaurantInfo error (ignored):', e?.message || e);
+        logger.error('fetchRestaurantInfo error (ignored)', e?.message || e);
       }
       setRestaurant(null); 
       setRestaurantId(null);
     } finally {
-      console.log('✅ fetchRestaurantInfo FINISHED');
+      logger.debug('fetchRestaurantInfo FINISHED');
     }
   };
 
   // SIMPLE: loadUserData es 100% síncrono - NO ejecuta fetchRestaurantInfo
   const loadUserData = (u) => {
-    console.log('🔄 Loading user data for:', u.email);
+    logger.info('Loading user data for', { email: u.email });
     setUser(u);
     setStatus('signed_in');
-    console.log('🚀 User ready IMMEDIATELY - NO restaurant fetch');
+    logger.info('User ready IMMEDIATELY - NO restaurant fetch');
     
     // NO ejecutamos fetchRestaurantInfo aquí - la app funciona sin él
     // Se puede llamar manualmente desde componentes si es necesario
   };
 
   const initSession = async () => {
-    console.log('🚀 Initializing auth...');
+    logger.info('Initializing auth...');
     setStatus('checking');
     
     try {
@@ -93,20 +94,15 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error;
 
       if (session?.user) {
-        console.log('✅ Session found:', session.user.email);
+        logger.info('Session found', { email: session.user.email });
         loadUserData(session.user); // YA NO es async
       } else {
-        console.log('❌ No session found');
+        logger.info('No session found');
         setUser(null); 
-        setRestaurant(null); 
-        setRestaurantId(null);
         setStatus('signed_out');
       }
-    } catch (e) {
-      console.error('❌ initSession error:', e?.message || e);
-      setUser(null); 
-      setRestaurant(null); 
-      setRestaurantId(null);
+    } catch (error) {
+      logger.error('Error getting session', error);
       setStatus('signed_out');
     }
   };
@@ -122,17 +118,17 @@ export const AuthProvider = ({ children }) => {
 
     // Auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 Auth state changed:', event);
+      logger.debug('Auth state changed', { event });
 
       if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
 
       if (event === 'SIGNED_IN' && session?.user) {
         if (lastSignInRef.current === session.user.id) {
-          console.log('↩️ SIGNED_IN duplicado ignorado'); 
+          logger.debug('SIGNED_IN duplicado ignorado'); 
           return;
         }
         lastSignInRef.current = session.user.id;
-        console.log('✅ User signed in:', session.user.email);
+        logger.info('User signed in', { email: session.user.email });
         loadUserData(session.user); // YA NO es async
       } else if (event === 'SIGNED_OUT') {
         lastSignInRef.current = null;
@@ -140,7 +136,7 @@ export const AuthProvider = ({ children }) => {
         setRestaurant(null); 
         setRestaurantId(null);
         setStatus('signed_out');
-        console.log('👋 User signed out (status=signed_out)');
+        logger.info('User signed out (status=signed_out)');
       }
     });
 
@@ -150,12 +146,13 @@ export const AuthProvider = ({ children }) => {
   // Helpers auth
   const login = async (email, password) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      
       toast.success('¡Bienvenido de vuelta!');
       return { success: true };
     } catch (error) {
-      console.error('❌ Login error:', error);
+      logger.error('Login error', error);
       toast.error(error.message || 'Error al iniciar sesión');
       return { success: false, error: error.message };
     }
@@ -181,7 +178,7 @@ export const AuthProvider = ({ children }) => {
       toast.success('¡Cuenta creada exitosamente!'); 
       return { success: true, needsConfirmation: false };
     } catch (error) {
-      console.error('❌ Register error:', error);
+      logger.error('Register error', error);
       toast.error(error.message || 'Error en el registro');
       return { success: false, error: error.message };
     }
@@ -189,13 +186,57 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try { 
-      console.log('🚪 Cerrando sesión...');
+      logger.info('Closing session...');
       await supabase.auth.signOut(); 
-      console.log('✅ Sesión cerrada correctamente');
+      logger.info('Session closed correctly');
       toast.success('Sesión cerrada correctamente'); 
     } catch (e) { 
-      console.error('❌ Logout error:', e); 
+      logger.error('Logout error', e); 
       toast.error('Error al cerrar sesión'); 
+    }
+  };
+
+  const forceLogout = () => {
+    try {
+      logger.info('Force logout initiated');
+      // Limpiar todo el estado local
+      setUser(null);
+      setRestaurant(null);
+      setRestaurantId(null);
+      setStatus('signed_out');
+      setNotifications([]);
+      
+      // Limpiar localStorage
+      localStorage.clear();
+      
+      // Forzar signout de Supabase sin esperar
+      supabase.auth.signOut().catch(() => {}); // Ignore errors
+      
+      toast.success('Sesión cerrada forzadamente');
+      
+      // Redirigir inmediatamente
+      window.location.replace('/login');
+    } catch (error) {
+      logger.error('Force logout error', error);
+      // Aún así redirigir
+      window.location.replace('/login');
+    }
+  };
+
+  const restartApp = () => {
+    try {
+      logger.info('Restarting app');
+      toast.success('Reiniciando aplicación...');
+      
+      // Limpiar todo
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Recargar la página completamente
+      window.location.reload();
+    } catch (error) {
+      logger.error('Restart app error', error);
+      window.location.reload();
     }
   };
 
@@ -233,6 +274,8 @@ export const AuthProvider = ({ children }) => {
     register, 
     logout, 
     signOut: logout,
+    forceLogout,
+    restartApp,
     addNotification, 
     markNotificationAsRead, 
     markAllNotificationsAsRead: clearNotifications, 
@@ -243,4 +286,5 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+export { AuthProvider };
 export default AuthProvider;
