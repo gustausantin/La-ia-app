@@ -12,7 +12,7 @@ import logger from './utils/logger';
 // Debug logging
 logger.info('Starting React application...');
 
-// Lazy loading para optimización
+// Lazy loading mejorado con preload y error boundaries
 const Layout = lazy(() => import('./components/Layout'));
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -20,8 +20,20 @@ const Reservas = lazy(() => import('./pages/Reservas'));
 const Clientes = lazy(() => import('./pages/Clientes'));
 const Mesas = lazy(() => import('./pages/Mesas'));
 const Calendario = lazy(() => import('./pages/Calendario'));
-const Comunicacion = lazy(() => import('./pages/Comunicacion'));
-const Analytics = lazy(() => import('./pages/Analytics'));
+const Comunicacion = lazy(() => 
+  import('./pages/Comunicacion').then(module => {
+    // Preload componentes relacionados
+    import('./components/comunicacion');
+    return module;
+  })
+);
+const Analytics = lazy(() => 
+  import('./pages/Analytics').then(module => {
+    // Preload componentes relacionados
+    import('./components/analytics');
+    return module;
+  })
+);
 const Configuracion = lazy(() => import('./pages/Configuracion'));
 
 // Componente de carga mejorado
