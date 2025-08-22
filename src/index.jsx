@@ -5,8 +5,9 @@ import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
 import App from "./App.jsx";
 import "./index.css";
+import { log } from "./utils/logger.js";
 
-console.log('🚀 Starting React application...');
+log.info('🚀 Starting React application...');
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -28,4 +29,4 @@ root.render(
   </React.StrictMode>
 );
 
-console.log('✅ React app rendered');
+log.info('✅ React app rendered');
