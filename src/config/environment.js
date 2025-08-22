@@ -1,14 +1,39 @@
 // config/environment.js - Configuración centralizada para La-IA
+import { validateConfig as validateConfigSchema } from './schema.js';
 
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.NODE_ENV === 'production';
-const isTest = process.env.NODE_ENV === 'test';
+const isDevelopment = import.meta.env.NODE_ENV === 'development' || import.meta.env.DEV;
+const isProduction = import.meta.env.NODE_ENV === 'production' || import.meta.env.PROD;
+const isTest = import.meta.env.NODE_ENV === 'test';
 
-// Configuración de Supabase
+// Detectar el entorno actual con fallback seguro
+const getEnvironment = () => {
+  const env = import.meta.env.VITE_APP_ENV || import.meta.env.NODE_ENV || 'development';
+  return ['development', 'staging', 'production'].includes(env) ? env : 'development';
+};
+
+// Cargar configuración específica del entorno
+const loadEnvironmentConfig = async () => {
+  const environment = getEnvironment();
+  
+  try {
+    const envModule = await import(`./environment.${environment}.js`);
+    return envModule.config;
+  } catch (error) {
+    console.warn(`⚠️ No se pudo cargar la configuración para ${environment}, usando valores por defecto`);
+    return {
+      SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://ktsqwvhqamedpmzkzjaz.supabase.co',
+      SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzY3NzEsImV4cCI6MjA2OTk1Mjc3MX0.Y-zMa2F5a7UVT-efldv0sZjLAgmCfeEmhxfP7kgGzNY',
+      DEBUG: isDevelopment,
+      LOG_LEVEL: isDevelopment ? 'debug' : 'error'
+    };
+  }
+};
+
+// Configuración de Supabase (migrada al sistema por ambiente)
 export const SUPABASE_CONFIG = {
-  url: process.env.SUPABASE_URL || 'https://ktsqwvhqamedpmzkzjaz.supabase.co',
-  anonKey: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzY3NzEsImV4cCI6MjA2OTk1Mjc3MX0.Y-zMa2F5a7UVT-efldv0sZjLAgmCfeEmhxfP7kgGzNY',
-  serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDM3Njc3MSwiZXhwIjoyMDY5OTUyNzcxfQ.ckmlr_TAFJ9iFtLztRhrRPnagZiNLm6XYeo1faVx-BU'
+  url: import.meta.env.VITE_SUPABASE_URL || 'https://ktsqwvhqamedpmzkzjaz.supabase.co',
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzY3NzEsImV4cCI6MjA2OTk1Mjc3MX0.Y-zMa2F5a7UVT-efldv0sZjLAgmCfeEmhxfP7kgGzNY',
+  serviceRoleKey: import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDM3Njc3MSwiZXhwIjoyMDY5OTUyNzcxfQ.ckmlr_TAFJ9iFtLztRhrRPnagZiNLm6XYeo1faVx-BU'
 };
 
 // Configuración de la aplicación
@@ -140,7 +165,7 @@ export const getConfig = () => ({
   metrics: METRICS_CONFIG
 });
 
-// Función para validar configuración
+// Función para validar configuración (legacy - mantener por compatibilidad)
 export const validateConfig = () => {
   const errors = [];
   
@@ -158,6 +183,16 @@ export const validateConfig = () => {
   }
   
   return true;
+};
+
+// Función para validar configuración con schema Zod
+export const validateConfigWithSchema = (config) => {
+  try {
+    return validateConfigSchema(config);
+  } catch (error) {
+    console.error('❌ Error de validación con schema:', error);
+    return null;
+  }
 };
 
 // Función para obtener configuración específica del entorno

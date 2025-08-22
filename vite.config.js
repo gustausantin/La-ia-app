@@ -11,13 +11,25 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          supabase: ['@supabase/supabase-js'],
-          charts: ['recharts'],
-          forms: ['react-hook-form', '@hookform/resolvers', 'zod']
+          // Vendor libraries - más granular
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-router': ['react-router-dom'],
+          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          'vendor-ui': ['lucide-react', 'react-hot-toast'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-charts': ['recharts'],
+          'vendor-utils': ['date-fns', 'clsx'],
+          'vendor-logging': ['winston', 'winston-daily-rotate-file']
+        },
+        chunkFileNames: (chunkInfo) => {
+          if (chunkInfo.name && chunkInfo.name.startsWith('vendor-')) {
+            return 'vendor/[name]-[hash].js';
+          }
+          return 'chunks/[name]-[hash].js';
         }
       }
-    }
+    },
+    chunkSizeWarningLimit: 500 // Mantener límite estricto para chunks grandes
   },
   server: {
     host: "0.0.0.0",

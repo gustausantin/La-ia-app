@@ -1,0 +1,438 @@
+/* =================================================
+   ♿ ESTILOS DE ACCESIBILIDAD WCAG 2.1 AA
+   ================================================= */
+
+/* === CLASES UTILITARIAS DE ACCESIBILIDAD === */
+
+/* Screen reader only - visible solo para lectores de pantalla */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Hacer visible cuando tiene foco */
+.sr-only:focus,
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* === CONFIGURACIONES GLOBALES DE ACCESIBILIDAD === */
+
+/* Reducir movimiento cuando está activado */
+.reduce-motion,
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Alto contraste */
+.high-contrast {
+  --color-primary: #5B21B6;
+  --color-secondary: #047857;
+  --color-error: #DC2626;
+  --color-warning: #D97706;
+  --color-info: #2563EB;
+  
+  /* Mejorar contraste de texto */
+  --color-gray-600: #374151;
+  --color-gray-700: #1F2937;
+  --color-gray-800: #111827;
+}
+
+.high-contrast button {
+  border-width: 2px !important;
+}
+
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  border-width: 2px !important;
+  border-color: var(--color-gray-600) !important;
+}
+
+.high-contrast input:focus,
+.high-contrast select:focus,
+.high-contrast textarea:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(91, 33, 182, 0.3) !important;
+}
+
+/* Texto grande */
+.large-text {
+  font-size: 120% !important;
+}
+
+.large-text .text-xs { font-size: 0.9rem !important; }
+.large-text .text-sm { font-size: 1.05rem !important; }
+.large-text .text-base { font-size: 1.2rem !important; }
+.large-text .text-lg { font-size: 1.35rem !important; }
+.large-text .text-xl { font-size: 1.5rem !important; }
+.large-text .text-2xl { font-size: 1.8rem !important; }
+
+/* === FOCUS STYLES MEJORADOS === */
+
+/* Focus ring personalizado para mejor visibilidad */
+.focus-ring:focus,
+.focus-ring:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Focus para elementos interactivos */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+}
+
+/* Remover outline por defecto solo cuando hay focus-visible */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* === NAVEGACIÓN POR TECLADO === */
+
+/* Indicador visual para navegación por teclado */
+.keyboard-navigation {
+  position: relative;
+}
+
+.keyboard-navigation:focus::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid var(--color-primary);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Skip links */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--color-primary);
+  color: white;
+  padding: 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  z-index: 1000;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* === ESTADOS INTERACTIVOS MEJORADOS === */
+
+/* Hover states más visibles */
+.accessible-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+/* Active states */
+.accessible-active:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Disabled states más claros */
+.accessible-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  user-select: none;
+}
+
+.accessible-disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* === COMPONENTES ESPECÍFICOS === */
+
+/* Formularios accesibles */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--color-gray-700);
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: var(--color-error);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--color-gray-300);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  outline: none;
+}
+
+.form-input:invalid {
+  border-color: var(--color-error);
+}
+
+.form-input:invalid:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.form-error {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--color-error);
+}
+
+.form-help {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--color-gray-600);
+}
+
+/* Tablas accesibles */
+.accessible-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--color-gray-300);
+}
+
+.accessible-table th,
+.accessible-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-gray-300);
+}
+
+.accessible-table th {
+  background-color: var(--color-gray-100);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.accessible-table tbody tr:hover {
+  background-color: var(--color-gray-50);
+}
+
+.accessible-table tbody tr:focus-within {
+  background-color: var(--color-primary-50);
+  outline: 2px solid var(--color-primary);
+}
+
+/* Modales accesibles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+
+.modal-content {
+  position: relative;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content:focus {
+  outline: 3px solid var(--color-primary);
+  outline-offset: -3px;
+}
+
+/* === PATRONES DE LOADING ACCESIBLES === */
+
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-gray-300);
+  border-radius: 50%;
+  border-top-color: var(--color-primary);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Loading state para contenido */
+.loading-content {
+  position: relative;
+}
+
+.loading-content::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* === UTILIDADES DE CONTRASTE === */
+
+/* Asegurar contraste mínimo WCAG AA */
+.text-contrast-aa {
+  color: var(--color-gray-800);
+}
+
+.bg-contrast-aa {
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-800);
+}
+
+/* === RESPONSIVE ACCESIBILIDAD === */
+
+/* Aumentar áreas de toque en móvil */
+@media (max-width: 768px) {
+  button,
+  .btn,
+  a[role="button"],
+  input[type="button"],
+  input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem 1rem;
+  }
+  
+  .form-input,
+  .form-select {
+    min-height: 44px;
+    font-size: 16px; /* Prevenir zoom en iOS */
+  }
+}
+
+/* === MODO OSCURO ACCESIBLE === */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #1F2937;
+    --color-surface: #374151;
+    --color-text-primary: #F9FAFB;
+    --color-text-secondary: #D1D5DB;
+  }
+  
+  .dark-mode .form-input {
+    background-color: var(--color-surface);
+    border-color: var(--color-gray-600);
+    color: var(--color-text-primary);
+  }
+  
+  .dark-mode .form-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+  }
+}
+
+/* === ANIMACIONES RESPETANDO PREFERENCIAS === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .loading-spinner {
+    animation: none;
+    border-top-color: var(--color-primary);
+  }
+}
+
+/* === UTILIDADES ADICIONALES === */
+
+/* Texto para lectores de pantalla con contexto */
+.sr-context::after {
+  content: attr(data-sr-context);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Indicador de error en vivo */
+.live-error {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: var(--color-error);
+  color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  z-index: 1080;
+  max-width: 300px;
+}
+
+/* Indicador de éxito en vivo */
+.live-success {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: var(--color-success);
+  color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  z-index: 1080;
+  max-width: 300px;
+}

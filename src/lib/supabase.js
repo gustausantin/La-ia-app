@@ -1,6 +1,7 @@
 // lib/supabase.js - Configuración avanzada para La-IA
 import { createClient } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
+import { log } from "../utils/logger.js";
 
 // Configuración de variables de entorno
 let supabaseUrl, supabaseKey;
@@ -10,9 +11,9 @@ if (typeof window === 'undefined') {
   supabaseUrl = process.env.SUPABASE_URL;
   supabaseKey = process.env.SUPABASE_ANON_KEY;
 
-  console.log('🔍 Variables del servidor:');
-  console.log('SUPABASE_URL:', supabaseUrl ? '✅ Presente' : '❌ Falta');
-  console.log('SUPABASE_ANON_KEY:', supabaseKey ? '✅ Presente' : '❌ Falta');
+  log.debug('🔍 Variables del servidor:');
+  log.debug('SUPABASE_URL:', supabaseUrl ? '✅ Presente' : '❌ Falta');
+  log.debug('SUPABASE_ANON_KEY:', supabaseKey ? '✅ Presente' : '❌ Falta');
 } else {
   // Estamos en el cliente (browser) - usar variables con prefijo VITE_
   supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -20,11 +21,11 @@ if (typeof window === 'undefined') {
 }
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error("❌ Fallan credenciales de Supabase");
+  log.error("❌ Fallan credenciales de Supabase");
   if (typeof window === 'undefined') {
-    console.error("Servidor necesita: SUPABASE_URL y SUPABASE_ANON_KEY en .env");
+    log.error("Servidor necesita: SUPABASE_URL y SUPABASE_ANON_KEY en .env");
   } else {
-    console.error("Cliente necesita: VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en .env");
+    log.error("Cliente necesita: VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en .env");
   }
   throw new Error("Supabase credentials are missing");
 }
@@ -38,12 +39,12 @@ supabase
   .select('count', { count: 'exact', head: true })
   .then(() => {
     if (typeof window !== 'undefined') {
-      console.log('🚀 Supabase conectado correctamente');
+      log.info('🚀 Supabase conectado correctamente');
     }
   })
   .catch((error) => {
     if (typeof window !== 'undefined') {
-      console.error('❌ Error conectando Supabase:', error.message);
+      log.error('❌ Error conectando Supabase:', error.message);
     }
   });
 
