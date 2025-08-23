@@ -145,7 +145,7 @@ export default function Login() {
     setMessage("");
 
     try {
-      // 1. Crear usuario en Supabase Auth (sin confirmación de email)
+      // 1. Crear usuario en Supabase Auth (CON confirmación de email)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -155,7 +155,7 @@ export default function Login() {
             phone: phone,
             city: city,
           },
-          emailRedirectTo: undefined, // Sin confirmación de email
+          emailRedirectTo: `${window.location.origin}/confirm`, // CON confirmación de email
         },
       });
 
@@ -164,92 +164,26 @@ export default function Login() {
       }
 
       if (authData.user) {
-        // 2. Verificar si el usuario está confirmado
-        if (authData.user.email_confirmed_at) {
-          // Usuario confirmado - crear restaurante inmediatamente
-          const { data: restaurantData, error: restaurantError } = await supabase
-            .rpc('create_restaurant_securely', {
-              restaurant_data: {
-                name: restaurantName.trim(),
-                email: email,
-                phone: phone || null,
-                city: city || null,
-                plan: "trial",
-                active: true
-              },
-              user_profile: {
-                email: email,
-                full_name: restaurantName.trim()
-              }
-            });
-
-          if (restaurantError) {
-            console.error("Error creating restaurant:", restaurantError);
-            throw new Error("Error al crear el restaurante");
-          }
-
-          console.log("✅ Restaurante creado - usuario confirmado:", restaurantData);
-          
-          // Redirigir al dashboard
-          setMessage("¡Registro completado! Redirigiendo al dashboard...");
-          setTimeout(() => {
-            window.location.href = '/dashboard';
-          }, 2000);
-          
-        } else {
-          // Usuario no confirmado - guardar datos temporalmente y mostrar mensaje
-          localStorage.setItem('pendingRegistration', JSON.stringify({
-            restaurantName: restaurantName.trim(),
-            phone: phone || null,
-            city: city || null,
-            userId: authData.user.id,
-            timestamp: new Date().toISOString()
-          }));
-          
-          setMessage(`✅ ¡Registro exitoso! 
-          
+        // CON CONFIRMACIÓN DE EMAIL - siempre guardar datos temporalmente
+        localStorage.setItem('pendingRegistration', JSON.stringify({
+          restaurantName: restaurantName.trim(),
+          phone: phone || null,
+          city: city || null,
+          userId: authData.user.id,
+          email: email,
+          timestamp: new Date().toISOString()
+        }));
+        
+        setMessage(`✅ ¡Registro exitoso! 
+        
 📧 Hemos enviado un email de confirmación a: ${email}
 
 🔗 Por favor, revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta.
 
-⏰ Una vez confirmado, podrás acceder a tu dashboard de La-IA.`);
-          setLoading(false);
-          return;
-        }
-
-        // 3. El mapeo usuario-restaurante ya se crea automáticamente en la función SQL
-        console.log("✅ Restaurante creado:", restaurantData);
-
-        // TODO: Descomentar cuando exista la tabla onboarding_progress
-        /*
-        // 4. Crear entrada en onboarding_progress
-        const { error: onboardingError } = await supabase
-          .from("onboarding_progress")
-          .insert([
-            {
-              restaurant_id: restaurantData.id,
-              steps_completed: ["account_created", "agent_configured"],
-              current_step: "verify_email",
-              completed: false,
-            },
-          ]);
-        */
-
-        setMessage(
-          "¡Cuenta creada! 🎉 Revisa tu email para confirmar tu cuenta.",
-        );
-        setIsLogin(true);
-        setCurrentStep(1);
-
-        // Limpiar formularios
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-        setRestaurantName("");
-        setPhone("");
-        setCity("");
-        setAgentName("Sofia");
-        setPrimaryChannel("whatsapp");
+⏰ Una vez confirmado, se creará automáticamente tu restaurante y podrás acceder al dashboard.`);
+        
+        setLoading(false);
+        return;
       }
     } catch (err) {
       console.error("Registration error:", err);
