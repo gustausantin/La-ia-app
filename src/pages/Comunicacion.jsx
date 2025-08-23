@@ -1161,7 +1161,8 @@ export default function Comunicacion() {
                 },
             ];
 
-            setConversations(mockConversations);
+            // DATOS MOCK ELIMINADOS - Solo usar datos reales
+            setConversations([]);
 
             // Generar datos de analytics
             generateAnalyticsData();

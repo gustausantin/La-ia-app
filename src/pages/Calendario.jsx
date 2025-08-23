@@ -190,25 +190,8 @@ export default function Calendario() {
             });
 
             // Eventos de ejemplo
-            const sampleEvents = [
-                {
-                    id: 1,
-                    date: format(addDays(new Date(), 5), 'yyyy-MM-dd'),
-                    type: 'closure',
-                    title: 'Mantenimiento cocina',
-                    description: 'Mantenimiento preventivo de equipos',
-                    all_day: true
-                },
-                {
-                    id: 2,
-                    date: format(addDays(new Date(), 10), 'yyyy-MM-dd'),
-                    type: 'special_hours',
-                    title: 'Evento privado',
-                    description: 'Celebración corporativa',
-                    start_time: '18:00',
-                    end_time: '23:00'
-                }
-            ];
+            // DATOS MOCK ELIMINADOS - Sin eventos de ejemplo
+            const sampleEvents = [];
 
             // Generar datos de ocupación simulados
             const occupancySimData = {};
@@ -230,8 +213,9 @@ export default function Calendario() {
 
             setWeeklySchedule(defaultSchedule);
             setAgentSchedule(defaultAgentSchedule);
-            setEvents(sampleEvents);
-            setOccupancyData(occupancySimData);
+            // DATOS MOCK ELIMINADOS - Estados vacíos
+            setEvents([]);
+            setOccupancyData({});
 
         } catch (error) {
             console.error('Error loading data:', error);
