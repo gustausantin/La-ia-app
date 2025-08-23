@@ -1,167 +1,57 @@
-import winston from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
-import { getConfig } from '../config/environment.js';
+// Logger simple y seguro para el navegador - NO WINSTON
+const isDevelopment = import.meta.env.MODE === 'development';
+const isProduction = import.meta.env.MODE === 'production';
 
-// Configuración de formatos
-const logFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.errors({ stack: true }),
-  winston.format.json()
-);
-
-const consoleFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'HH:mm:ss' }),
-  winston.format.colorize(),
-  winston.format.printf(({ timestamp, level, message, stack, ...meta }) => {
-    let output = `${timestamp} [${level}]: ${message}`;
-    
-    if (stack) {
-      output += `\n${stack}`;
-    }
-    
-    if (Object.keys(meta).length > 0) {
-      output += `\n${JSON.stringify(meta, null, 2)}`;
-    }
-    
-    return output;
-  })
-);
-
-// Función para crear logger según el entorno
-const createLogger = async () => {
-  const config = await getConfig();
-  
-  const transports = [];
-  
-  // Console transport (solo en desarrollo)
-  if (config.logging.enableConsole) {
-    transports.push(
-      new winston.transports.Console({
-        level: config.logging.level,
-        format: consoleFormat,
-        handleExceptions: true,
-        handleRejections: true
-      })
-    );
-  }
-  
-  // File transports (producción y staging)
-  if (config.logging.enableFile) {
-    // Logs generales con rotación
-    transports.push(
-      new DailyRotateFile({
-        filename: 'logs/app-%DATE%.log',
-        datePattern: 'YYYY-MM-DD',
-        maxSize: config.logging.maxFileSize,
-        maxFiles: config.logging.maxFiles,
-        level: config.logging.level,
-        format: logFormat,
-        handleExceptions: true,
-        handleRejections: true
-      })
-    );
-    
-    // Logs de errores separados
-    transports.push(
-      new DailyRotateFile({
-        filename: 'logs/error-%DATE%.log',
-        datePattern: 'YYYY-MM-DD',
-        maxSize: config.logging.maxFileSize,
-        maxFiles: config.logging.maxFiles,
-        level: 'error',
-        format: logFormat
-      })
-    );
-  }
-  
-  return winston.createLogger({
-    level: config.logging.level,
-    format: logFormat,
-    transports,
-    exitOnError: false
-  });
+// Helper para formatear logs
+const formatLog = (level, message, meta) => {
+  const timestamp = new Date().toISOString();
+  const service = 'la-ia-app';
+  const metaStr = meta && Object.keys(meta).length ? JSON.stringify(meta) : '';
+  return `${timestamp} [${service}] ${level.toUpperCase()}: ${message} ${metaStr}`;
 };
 
-// Logger global
-let logger = null;
-
-// Función para inicializar el logger
-export const initializeLogger = async () => {
-  if (!logger) {
-    logger = await createLogger();
-    logger.info('🔧 Sistema de logging inicializado');
-  }
-  return logger;
-};
-
-// Función para obtener el logger (con lazy loading)
-export const getLogger = async () => {
-  if (!logger) {
-    await initializeLogger();
-  }
-  return logger;
-};
-
-// Logger síncrono con fallback a console
-export const log = {
+// Logger simple basado en console
+const logger = {
   debug: (message, meta = {}) => {
-    if (logger) {
-      logger.debug(message, meta);
-    } else {
-      console.debug(`[DEBUG] ${message}`, meta);
+    if (isDevelopment) {
+      console.log(formatLog('debug', message, meta));
     }
   },
   
   info: (message, meta = {}) => {
-    if (logger) {
-      logger.info(message, meta);
-    } else {
-      console.info(`[INFO] ${message}`, meta);
-    }
+    console.info(formatLog('info', message, meta));
   },
   
   warn: (message, meta = {}) => {
-    if (logger) {
-      logger.warn(message, meta);
-    } else {
-      console.warn(`[WARN] ${message}`, meta);
-    }
+    console.warn(formatLog('warn', message, meta));
   },
   
   error: (message, meta = {}) => {
-    if (logger) {
-      logger.error(message, meta);
-    } else {
-      console.error(`[ERROR] ${message}`, meta);
-    }
+    console.error(formatLog('error', message, meta));
   }
 };
 
-// Middleware para Express (opcional)
-export const expressLogger = () => {
-  return (req, res, next) => {
-    const start = Date.now();
-    
-    res.on('finish', () => {
-      const duration = Date.now() - start;
-      const logData = {
-        method: req.method,
-        url: req.url,
-        status: res.statusCode,
-        duration: `${duration}ms`,
-        userAgent: req.get('User-Agent'),
-        ip: req.ip
-      };
-      
-      if (res.statusCode >= 400) {
-        log.error(`HTTP ${res.statusCode} ${req.method} ${req.url}`, logData);
-      } else {
-        log.info(`HTTP ${res.statusCode} ${req.method} ${req.url}`, logData);
-      }
+// Función helper para logging estructurado
+export const log = {
+  debug: (message, meta = {}) => logger.debug(message, meta),
+  info: (message, meta = {}) => logger.info(message, meta),
+  warn: (message, meta = {}) => logger.warn(message, meta),
+  error: (message, meta = {}) => logger.error(message, meta),
+  
+  // Métodos específicos para eventos de la aplicación
+  auth: (message, meta = {}) => logger.info(`[AUTH] ${message}`, meta),
+  db: (message, meta = {}) => logger.info(`[DB] ${message}`, meta),
+  api: (message, meta = {}) => logger.info(`[API] ${message}`, meta),
+  ui: (message, meta = {}) => logger.debug(`[UI] ${message}`, meta),
+  
+  // Logging de errores críticos
+  critical: (message, error, meta = {}) => {
+    logger.error(`[CRITICAL] ${message}`, {
+      error: error?.message,
+      stack: error?.stack,
+      ...meta
     });
-    
-    next();
-  };
+  }
 };
 
-export default log;
+export default logger;
