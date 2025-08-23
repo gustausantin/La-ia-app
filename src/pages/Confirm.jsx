@@ -31,11 +31,28 @@ export default function Confirm() {
         // Usar el token disponible
         const tokenToUse = access_token || token;
 
-        // Verificar token con Supabase
-        const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
-          token_hash: tokenToUse,
-          type: 'signup'
-        });
+        // Usar exchangeCodeForSession para manejar el token de confirmación
+        let sessionData, sessionError;
+        
+        if (access_token && refresh_token) {
+          // Si tenemos ambos tokens, establecer sesión directamente
+          const result = await supabase.auth.setSession({
+            access_token,
+            refresh_token
+          });
+          sessionData = result.data;
+          sessionError = result.error;
+        } else if (tokenToUse) {
+          // Si solo tenemos un token, usar verifyOtp
+          const result = await supabase.auth.verifyOtp({
+            token_hash: tokenToUse,
+            type: 'signup'
+          });
+          sessionData = result.data;
+          sessionError = result.error;
+        } else {
+          throw new Error('No se encontraron tokens válidos');
+        }
 
         if (sessionError) {
           throw sessionError;
