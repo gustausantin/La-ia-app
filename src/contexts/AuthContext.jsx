@@ -136,18 +136,33 @@ const AuthProvider = ({ children }) => {
     logger.info('Loading restaurant info...');
     await fetchRestaurantInfo(u.id);
     
-    // MIGRACIÓN AUTOMÁTICA: Si no hay restaurant, crear uno automáticamente (PROTECCIÓN REFORZADA)
-    if (!restaurant && !restaurantId && !window.migrationInProgress && !window.migrationCompleted) {
-      logger.info('🔧 Usuario sin restaurant detectado - ejecutando migración automática...');
-      window.migrationInProgress = true;
-      window.migrationCompleted = false;
+    // MIGRACIÓN AUTOMÁTICA: PROTECCIÓN ULTRARRÓFANA CON CHECK EN BD
+    const migrationKey = `migration_${u.id}`;
+    if (!restaurant && !restaurantId && !window[migrationKey]) {
+      // Marcar inmediatamente para evitar ejecuciones paralelas
+      window[migrationKey] = true;
+      
+      // Double-check: verificar si ya existe restaurant en BD
       try {
+        const { data: existingMapping } = await supabase
+          .from('user_restaurant_mapping')
+          .select('restaurant_id')
+          .eq('auth_user_id', u.id)
+          .limit(1)
+          .maybeSingle();
+          
+        if (existingMapping) {
+          logger.info('🔍 Restaurant ya existe en BD - saltando migración');
+          await fetchRestaurantInfo(u.id); // Re-cargar datos
+          return;
+        }
+        
+        logger.info('🔧 Usuario sin restaurant detectado - ejecutando migración automática...');
         await createRestaurantForOrphanUser(u);
-        window.migrationCompleted = true; // Marcar como completado para SIEMPRE
-      } finally {
-        setTimeout(() => {
-          window.migrationInProgress = false;
-        }, 2000); // Reset después de 2 segundos
+        
+      } catch (error) {
+        logger.error('💥 Error en migración:', error);
+        delete window[migrationKey]; // Reset en caso de error
       }
     }
     
