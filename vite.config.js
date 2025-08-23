@@ -20,7 +20,7 @@ export default defineConfig({
           'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-charts': ['recharts'],
           'vendor-utils': ['date-fns', 'clsx'],
-          'vendor-logging': ['winston', 'winston-daily-rotate-file']
+          // 'vendor-logging': ['winston', 'winston-daily-rotate-file'] // Removido por problemas en browser
         },
         chunkFileNames: (chunkInfo) => {
           if (chunkInfo.name && chunkInfo.name.startsWith('vendor-')) {
