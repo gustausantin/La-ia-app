@@ -408,9 +408,12 @@ export default function Dashboard() {
         }
     }, [restaurantId]);
 
-    // Función para cargar todos los datos
+    // Función para cargar todos los datos - SIN DEPENDENCIES QUE CAUSEN BUCLES
     const loadDashboardData = useCallback(async () => {
-        if (!restaurantId) return;
+        if (!restaurantId) {
+            logger.warn('📊 Dashboard: No restaurantId disponible');
+            return;
+        }
 
         // Solo prevenir carga múltiple si ya está cargando
         if (loadingState === LOADING_STATES.LOADING) {
@@ -451,7 +454,7 @@ export default function Dashboard() {
             setLoadingState(LOADING_STATES.ERROR);
             setIsLoading(false);
         }
-    }, [restaurantId, loadingState, fetchDashboardStats, fetchAgentConversations, fetchTodayReservations]);
+    }, [restaurantId]); // SOLO restaurantId - las otras funciones son estables
 
     // Función para refrescar datos
     const handleRefresh = useCallback(async () => {
@@ -468,7 +471,7 @@ export default function Dashboard() {
         });
     }, [loadDashboardData, addNotification]);
 
-    // Efecto para cargar datos iniciales automáticamente - SIMPLIFICADO Y ROBUSTO
+    // Efecto para cargar datos iniciales automáticamente - SIN BUCLES
     useEffect(() => {
         logger.info('🔄 Dashboard: Verificando condiciones de carga -', { 
             status, 
@@ -480,9 +483,30 @@ export default function Dashboard() {
         // Solo cargar si todas las condiciones se cumplen y no estamos ya cargando
         if (status === 'signed_in' && restaurantId && loadingState === LOADING_STATES.INITIAL) {
             logger.info('✅ Dashboard: Iniciando carga automática inmediata...');
-            loadDashboardData();
+            // Forzar reset del loading state para evitar bucles
+            setLoadingState(LOADING_STATES.LOADING);
+            setIsLoading(true);
+            
+            // Llamar carga de datos directamente para evitar dependency loop
+            (async () => {
+                try {
+                    const [statsResult, conversationsResult, reservationsResult] = await Promise.allSettled([
+                        fetchDashboardStats(),
+                        fetchAgentConversations(),
+                        fetchTodayReservations(),
+                    ]);
+
+                    logger.info('📊 Dashboard: Datos iniciales cargados');
+                    setLoadingState(LOADING_STATES.SUCCESS);
+                    setIsLoading(false);
+                } catch (error) {
+                    logger.error('❌ Dashboard: Error en carga inicial:', error);
+                    setLoadingState(LOADING_STATES.ERROR);
+                    setIsLoading(false);
+                }
+            })();
         }
-    }, [status, restaurantId, loadingState]); // Removido loadDashboardData de dependencies para evitar loops
+    }, [status, restaurantId]); // SOLO estas dos dependencies
 
     // Suscripción real-time a reservas
     useEffect(() => {

@@ -642,30 +642,31 @@ export default function Reservas() {
         return filtered;
     }, [reservations, filters]);
 
-    // Cargar datos inicial
+    // Cargar datos inicial - SIN DEPENDENCY LOOPS
     useEffect(() => {
-        if (isReady) {
+        if (isReady && restaurantId) {
+            setLoading(true);
             Promise.all([
                 loadReservations(),
                 loadTables(),
                 loadAgentInsights(),
-            ]);
+            ]).finally(() => setLoading(false));
         }
-    }, [isReady, loadReservations, loadTables, loadAgentInsights]);
+    }, [isReady, restaurantId]); // SOLO dependencies estables
 
-    // Recargar cuando cambien los filtros
+    // Recargar cuando cambien los filtros - SIN BUCLES
     useEffect(() => {
-        if (isReady) {
+        if (isReady && restaurantId && filters.period) {
             loadReservations();
         }
     }, [
         isReady,
-        loadReservations,
+        restaurantId,
         filters.period,
         filters.status,
         filters.channel,
         filters.source,
-    ]);
+    ]); // SIN loadReservations en dependencies
 
     // Funciones de selección
     const handleSelectReservation = useCallback((id, selected) => {
