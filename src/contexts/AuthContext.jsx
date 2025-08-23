@@ -136,10 +136,17 @@ const AuthProvider = ({ children }) => {
     logger.info('Loading restaurant info...');
     await fetchRestaurantInfo(u.id);
     
-    // MIGRACIÓN AUTOMÁTICA: Si no hay restaurant, crear uno automáticamente
-    if (!restaurant && !restaurantId) {
+    // MIGRACIÓN AUTOMÁTICA: Si no hay restaurant, crear uno automáticamente (solo si no se está ejecutando)
+    if (!restaurant && !restaurantId && !window.migrationInProgress) {
       logger.info('🔧 Usuario sin restaurant detectado - ejecutando migración automática...');
-      await createRestaurantForOrphanUser(u);
+      window.migrationInProgress = true;
+      try {
+        await createRestaurantForOrphanUser(u);
+      } finally {
+        setTimeout(() => {
+          window.migrationInProgress = false;
+        }, 5000); // Reset después de 5 segundos
+      }
     }
     
     logger.info('User and restaurant ready');
