@@ -667,103 +667,28 @@ export default function Clientes() {
             //     .eq("restaurant_id", restaurantId)
             //     .order("created_at", { ascending: false });
 
-            // Simular carga con datos enriquecidos
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            // EMPRESA: Sin simulaciones, datos reales únicamente
 
-            const mockCustomers = [
-                {
-                    id: 1,
-                    restaurant_id: restaurantId,
-                    name: "María García",
-                    phone: "+34 600 123 456",
-                    email: "maria@email.com",
-                    birthday: "1985-03-15",
-                    total_reservations: 28,
-                    total_no_shows: 1,
-                    last_visit: format(subDays(new Date(), 5), "yyyy-MM-dd"),
-                    vip_status: true,
-                    acquisition_channel: "whatsapp",
-                    preferred_channel: "whatsapp",
-                    ai_preferences: [
-                        "Mesa tranquila",
-                        "Vino tinto",
-                        "Menú degustación",
-                    ],
-                    last_ai_interaction: format(
-                        subDays(new Date(), 2),
-                        "yyyy-MM-dd",
-                    ),
-                    created_at: "2023-01-15",
-                    preferences: "Mesa junto a la ventana",
-                    dietary_restrictions: "Sin gluten",
-                    notes: "Cliente muy fiel, celebra todos los cumpleaños aquí",
-                },
-                {
-                    id: 2,
-                    restaurant_id: restaurantId,
-                    name: "Carlos Rodríguez",
-                    phone: "+34 611 234 567",
-                    email: "carlos@email.com",
-                    total_reservations: 15,
-                    total_no_shows: 2,
-                    last_visit: format(subDays(new Date(), 12), "yyyy-MM-dd"),
-                    vip_status: false,
-                    acquisition_channel: "vapi",
-                    preferred_channel: "phone",
-                    ai_preferences: ["Menú ejecutivo", "Mesa rápida"],
-                    last_ai_interaction: format(
-                        subDays(new Date(), 10),
-                        "yyyy-MM-dd",
-                    ),
-                    created_at: "2023-06-20",
-                },
-                {
-                    id: 3,
-                    restaurant_id: restaurantId,
-                    name: "Ana Martínez",
-                    phone: "+34 622 345 678",
-                    email: "ana@email.com",
-                    birthday: "1990-07-22",
-                    total_reservations: 3,
-                    total_no_shows: 0,
-                    last_visit: format(subDays(new Date(), 25), "yyyy-MM-dd"),
-                    vip_status: false,
-                    acquisition_channel: "instagram",
-                    preferred_channel: "instagram",
-                    ai_preferences: ["Platos veganos", "Terraza"],
-                    created_at: "2024-01-10",
-                },
-                {
-                    id: 4,
-                    restaurant_id: restaurantId,
-                    name: "Javier López",
-                    phone: "+34 633 456 789",
-                    total_reservations: 1,
-                    total_no_shows: 0,
-                    last_visit: format(subDays(new Date(), 3), "yyyy-MM-dd"),
-                    vip_status: false,
-                    acquisition_channel: "manual",
-                    created_at: format(subDays(new Date(), 3), "yyyy-MM-dd"),
-                },
-                {
-                    id: 5,
-                    restaurant_id: restaurantId,
-                    name: "Laura Sánchez",
-                    phone: "+34 644 567 890",
-                    email: "laura@email.com",
-                    total_reservations: 8,
-                    total_no_shows: 4,
-                    last_visit: format(subDays(new Date(), 70), "yyyy-MM-dd"),
-                    vip_status: false,
-                    acquisition_channel: "facebook",
-                    preferred_channel: "email",
-                    created_at: "2023-09-05",
-                    notes: "Alto ratio de no-shows, necesita recordatorios",
-                },
-            ];
+            // DATOS MOCK ELIMINADOS - Solo datos reales de Supabase
 
-            setCustomers(mockCustomers);
-            calculateStats(mockCustomers);
+            // Cargar datos reales desde Supabase
+            const { data: customersData, error } = await supabase
+                .from("customers")
+                .select("*")
+                .eq("restaurant_id", restaurantId)
+                .order("created_at", { ascending: false });
+
+            if (error) {
+                console.error("Error loading customers:", error);
+                // En caso de error, mostrar estado vacío
+                setCustomers([]);
+                calculateStats([]);
+                return;
+            }
+
+            const customers = customersData || [];
+            setCustomers(customers);
+            calculateStats(customers);
         } catch (error) {
             console.error("Error loading customers:", error);
             toast.error("Error al cargar los clientes");
