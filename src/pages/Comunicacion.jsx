@@ -1542,11 +1542,13 @@ export default function Comunicacion() {
         [selectedConversation, restaurant],
     );
 
-    const handleRefresh = useCallback(() => {
-        loadConversations();
+    const handleRefresh = useCallback(async () => {
+        setLoading(true);
+        await loadConversations();
         if (selectedConversation) {
-            loadMessages(selectedConversation.id);
+            await loadMessages(selectedConversation.id);
         }
+        setLoading(false);
         toast.success("Conversaciones actualizadas");
     }, [loadConversations, loadMessages, selectedConversation]);
 

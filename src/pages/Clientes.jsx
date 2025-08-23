@@ -642,6 +642,13 @@ export default function Clientes() {
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [selectedSegment, setSelectedSegment] = useState(null);
 
+    // Función para refrescar datos
+    const handleRefresh = useCallback(async () => {
+        setLoading(true);
+        await loadCustomers();
+        toast.success("Datos de clientes actualizados");
+    }, []);
+
     // Función para cargar clientes
     const loadCustomers = useCallback(async () => {
         if (!restaurantId) return;

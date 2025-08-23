@@ -881,11 +881,17 @@ export default function Reservas() {
                         </button>
 
                         <button
-                            onClick={() => {
-                                loadReservations();
-                                loadAgentInsights();
+                            onClick={async () => {
+                                setLoading(true);
+                                await Promise.all([
+                                    loadReservations(),
+                                    loadAgentInsights()
+                                ]);
+                                setLoading(false);
+                                toast.success("Datos de reservas actualizados");
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                            disabled={loading}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50"
                         >
                             <RefreshCw className="w-4 h-4" />
                             Actualizar

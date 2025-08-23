@@ -494,6 +494,13 @@ export default function Mesas() {
     // Subscription de real-time
     const [realtimeSubscription, setRealtimeSubscription] = useState(null);
 
+    // Función para refrescar datos
+    const handleRefresh = useCallback(async () => {
+        setLoading(true);
+        await Promise.all([loadTables(), loadTodayReservations()]);
+        toast.success("Datos de mesas actualizados");
+    }, []);
+
     // Función para cargar mesas
     const loadTables = useCallback(async () => {
         if (!restaurantId) return;
