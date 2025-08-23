@@ -490,7 +490,7 @@ const {
                 resolved_automatically: 1052,
                 escalated_to_human: 195,
                 avg_response_time: 3.2,
-                satisfaction_score: 92,
+                satisfaction_score: 0,
                 daily_stats: {
                     today: 47,
                     yesterday: 52,

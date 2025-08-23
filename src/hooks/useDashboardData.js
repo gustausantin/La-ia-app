@@ -42,35 +42,35 @@ export const useDashboardData = (restaurantId) => {
     if (!restaurantId) return;
 
     try {
-      // Simulación temporal con datos más realistas
-      const mockStats = {
-        total_reservations: 28,
-        total_covers: 95,
-        agent_reservations: 23,
-        manual_reservations: 5,
-        agent_success_rate: 82,
-        avg_response_time: 45,
-        whatsapp_reservations: 15,
-        vapi_reservations: 6,
-        web_reservations: 2,
-        instagram_reservations: 2,
+      // LIMPIO: Datos vacíos para nuevo restaurant
+      const emptyStats = {
+        total_reservations: 0,
+        total_covers: 0,
+        agent_reservations: 0,
+        manual_reservations: 0,
+        agent_success_rate: 0,
+        avg_response_time: 0,
+        whatsapp_reservations: 0,
+        vapi_reservations: 0,
+        web_reservations: 0,
+        instagram_reservations: 0,
         facebook_reservations: 0,
         hourly_reservations: Array.from({ length: 24 }, (_, i) => ({
           hour: `${i}:00`,
-          agent: Math.floor(Math.random() * 5) + (i >= 12 && i <= 14 ? 10 : 0) + (i >= 19 && i <= 22 ? 15 : 0),
-          manual: Math.floor(Math.random() * 2) + (i >= 12 && i <= 14 ? 3 : 0) + (i >= 19 && i <= 22 ? 5 : 0),
+          agent: 0,
+          manual: 0,
         })),
         channel_distribution: [
-          { name: "WhatsApp", value: 15, percentage: 54 },
-          { name: "Vapi", value: 6, percentage: 21 },
-          { name: "Web", value: 3, percentage: 11 },
-          { name: "Instagram", value: 2, percentage: 7 },
-          { name: "Manual", value: 2, percentage: 7 },
+          { name: "WhatsApp", value: 0, percentage: 0 },
+          { name: "Vapi", value: 0, percentage: 0 },
+          { name: "Web", value: 0, percentage: 0 },
+          { name: "Instagram", value: 0, percentage: 0 },
+          { name: "Manual", value: 0, percentage: 0 },
         ],
       };
 
-      setStats(mockStats);
-      return mockStats;
+      setStats(emptyStats);
+      return emptyStats;
     } catch (error) {
       logger.error("Error fetching stats", error);
       toast.error("Error al cargar estadísticas");
@@ -83,41 +83,11 @@ export const useDashboardData = (restaurantId) => {
     if (!restaurantId) return;
 
     try {
-      const mockConversations = [
-        {
-          id: 1,
-          customer_name: "María García",
-          phone: "+34 600 123 456",
-          channel: "whatsapp",
-          state: "active",
-          last_message: "¿Tenéis mesa para 4 esta noche?",
-          last_message_at: new Date(Date.now() - 1000 * 60 * 5),
-          resulted_in_reservation: false,
-        },
-        {
-          id: 2,
-          customer_name: "Carlos López",
-          phone: "+34 611 222 333",
-          channel: "vapi",
-          state: "resolved",
-          last_message: "Perfecto, nos vemos a las 21h",
-          last_message_at: new Date(Date.now() - 1000 * 60 * 15),
-          resulted_in_reservation: true,
-        },
-        {
-          id: 3,
-          customer_name: "Ana Martín",
-          phone: "+34 622 333 444",
-          channel: "instagram",
-          state: "active",
-          last_message: "Hola! Quisiera hacer una reserva para mañana",
-          last_message_at: new Date(Date.now() - 1000 * 60 * 30),
-          resulted_in_reservation: false,
-        },
-      ];
+      // LIMPIO: Array vacío hasta tener conversaciones reales
+      const emptyConversations = [];
 
-      setConversations(mockConversations);
-      return mockConversations;
+      setConversations(emptyConversations);
+      return emptyConversations;
     } catch (error) {
       logger.error("Error fetching conversations", error);
       toast.error("Error al cargar conversaciones");

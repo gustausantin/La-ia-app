@@ -392,7 +392,7 @@ export default function Reservas() {
         conversionRate: 0,
         avgResponseTime: "0s",
         peakChannel: "WhatsApp",
-        satisfaction: 95,
+        satisfaction: 0,
     });
     const [agentInsights, setAgentInsights] = useState([]);
 
@@ -539,22 +539,17 @@ export default function Reservas() {
         if (!restaurantId) return;
 
         try {
-            // Simular insights por ahora
-            const mockInsights = [
-                "El 80% de las reservas de WhatsApp son para 2 personas",
-                "Los viernes a las 21:00 es la hora más solicitada",
-                "Las reservas con solicitudes especiales tienen 95% de asistencia",
-                "El tiempo promedio de respuesta mejora un 40% después de las 18:00",
-            ];
+            // LIMPIO: Sin insights hasta tener datos reales
+            const emptyInsights = [];
 
-            setAgentInsights(mockInsights);
+            setAgentInsights(emptyInsights);
 
             // Simular estadísticas adicionales
             setAgentStats((prev) => ({
                 ...prev,
                 avgResponseTime: "3.2s",
                 peakChannel: "WhatsApp",
-                satisfaction: 94,
+                satisfaction: 0,
             }));
         } catch (error) {
             console.error("Error loading agent insights:", error);
