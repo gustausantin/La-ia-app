@@ -697,16 +697,7 @@ export default function Clientes() {
         }
     }, [restaurantId]);
 
-    // Carga inicial de datos
-    useEffect(() => {
-        if (restaurantId) {
-            setLoading(true);
-            Promise.all([
-                loadCustomers(),
-                loadStats()
-            ]).finally(() => setLoading(false));
-        }
-    }, [restaurantId]);
+    // ELIMINADO: useEffect duplicado - ya existe uno más abajo
 
     // Función para calcular estadísticas mejoradas
     const calculateStats = useCallback((customersData) => {
