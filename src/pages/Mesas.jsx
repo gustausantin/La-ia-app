@@ -1685,19 +1685,19 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
     const loadTableStats = async () => {
         setLoading(true);
         try {
-            // Simular estadísticas por ahora
-            const mockStats = {
-                totalReservations: 45,
-                avgOccupancy: 78,
-                avgTurnover: "1h 35min",
-                peakHours: ["13:00", "20:00", "21:00"],
-                avgPartySize: 3.2,
-                revenue: 4250,
-                agentAssignments: 38,
-                agentPercentage: 84,
+            // LIMPIO: Estadísticas vacías hasta tener datos reales
+            const emptyStats = {
+                totalReservations: 0,
+                avgOccupancy: 0,
+                avgTurnover: "0h 0min",
+                peakHours: [],
+                avgPartySize: 0,
+                revenue: 0,
+                agentAssignments: 0,
+                agentPercentage: 0,
             };
 
-            setStats(mockStats);
+            setStats(emptyStats);
         } catch (error) {
             console.error("Error loading table stats:", error);
             toast.error("Error al cargar estadísticas");

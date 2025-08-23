@@ -205,9 +205,9 @@ export default function Calendario() {
                 const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
                 
                 occupancySimData[dateStr] = {
-                    lunch: Math.floor(Math.random() * (isWeekend ? 90 : 70)) + 10,
-                    dinner: Math.floor(Math.random() * (isWeekend ? 95 : 80)) + 20,
-                    estimated_revenue: Math.floor(Math.random() * 3000) + 1000
+                    lunch: 0,
+                    dinner: 0,
+                    estimated_revenue: 0
                 };
             });
 

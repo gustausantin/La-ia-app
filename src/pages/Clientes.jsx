@@ -606,7 +606,7 @@ const LoadingState = () => (
                 Cargando CRM inteligente...
             </p>
             <p className="text-sm text-gray-600">
-                Analizando {Math.floor(Math.random() * 200 + 100)} perfiles de
+                Analizando perfiles de
                 clientes
             </p>
         </div>

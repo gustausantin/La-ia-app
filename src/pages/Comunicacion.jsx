@@ -274,7 +274,7 @@ const LoadingState = () => (
                 Cargando centro de comunicación...
             </p>
             <p className="text-sm text-gray-600">
-                Conectando con {Math.floor(Math.random() * 5 + 3)} canales
+                Conectando con tus canales
                 activos
             </p>
         </div>
@@ -310,7 +310,7 @@ const RealtimeStats = ({ conversations, messages }) => {
             aiHandled,
             escalated,
             avgResponseTime: Math.round(avgResponseTime / 60), // en minutos
-            satisfaction: 92, // simulado
+            satisfaction: 0, // LIMPIO: Sin datos hasta tener métricas reales
         };
     }, [conversations, messages]);
 

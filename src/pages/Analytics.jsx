@@ -342,7 +342,7 @@ const LoadingState = () => (
                 Analizando datos con IA...
             </p>
             <p className="text-sm text-gray-600">
-                Procesando {Math.floor(Math.random() * 1000 + 500)} conversaciones
+                Analizando datos de tu restaurante...
             </p>
         </div>
     </div>
@@ -361,34 +361,34 @@ export default function Analytics() {
 
     // Datos de analytics enfocados en IA
     const [aiMetrics, setAiMetrics] = useState({
-        // Métricas principales del agente
-        totalConversations: { current: 1247, previous: 892, trend: 39.8 },
-        successfulBookings: { current: 561, previous: 312, trend: 79.8 },
-        conversionRate: { current: 45, previous: 35, trend: 28.6 },
-        avgResponseTime: { current: 8, previous: 12, trend: -33.3 }, // segundos
+        // LIMPIO: Métricas en cero hasta tener datos reales
+        totalConversations: { current: 0, previous: 0, trend: 0 },
+        successfulBookings: { current: 0, previous: 0, trend: 0 },
+        conversionRate: { current: 0, previous: 0, trend: 0 },
+        avgResponseTime: { current: 0, previous: 0, trend: 0 },
 
         // Comparativa Manual vs IA
-        aiReservations: { current: 561, percentage: 68 },
-        manualReservations: { current: 263, percentage: 32 },
+        aiReservations: { current: 0, percentage: 0 },
+        manualReservations: { current: 0, percentage: 0 },
 
         // ROI del agente
-        costSavings: { current: 4280, previous: 2150, trend: 99.1 },
-        revenueGenerated: { current: 19635, previous: 10920, trend: 79.8 },
-        roi: { current: 358, previous: 280, trend: 27.9 }, // %
+        costSavings: { current: 0, previous: 0, trend: 0 },
+        revenueGenerated: { current: 0, previous: 0, trend: 0 },
+        roi: { current: 0, previous: 0, trend: 0 }, // %
 
         // Métricas por canal
         channelMetrics: {
-            whatsapp: { conversations: 521, bookings: 234, conversion: 44.9 },
-            vapi: { conversations: 287, bookings: 143, conversion: 49.8 },
-            instagram: { conversations: 198, bookings: 89, conversion: 44.9 },
-            facebook: { conversations: 156, bookings: 62, conversion: 39.7 },
-            email: { conversations: 85, bookings: 33, conversion: 38.8 },
+            whatsapp: { conversations: 0, bookings: 0, conversion: 0 },
+            vapi: { conversations: 0, bookings: 0, conversion: 0 },
+            instagram: { conversations: 0, bookings: 0, conversion: 0 },
+            facebook: { conversations: 0, bookings: 0, conversion: 0 },
+            email: { conversations: 0, bookings: 0, conversion: 0 },
         },
 
         // Satisfacción y calidad
-        customerSatisfaction: { current: 4.7, previous: 4.3, trend: 9.3 },
-        escalationRate: { current: 12, previous: 18, trend: -33.3 },
-        firstContactResolution: { current: 88, previous: 82, trend: 7.3 },
+        customerSatisfaction: { current: 0, previous: 0, trend: 0 },
+        escalationRate: { current: 0, previous: 0, trend: 0 },
+        firstContactResolution: { current: 0, previous: 0, trend: 0 },
     });
 
     // Datos temporales para gráficos
@@ -592,20 +592,20 @@ export default function Analytics() {
             else if (period === "7d") days = 7;
             else if (period === "90d") days = 90;
 
-            // Generar datos mockeados
-            setConversationTrends(generateConversationTrends(days));
-            setChannelDistribution(generateChannelDistribution());
-            setHourlyActivity(generateHourlyActivity());
-            setConversionFunnel(generateConversionFunnel());
-            setAiVsManualComparison(generateAiVsManualComparison());
+            // LIMPIO: Arrays vacíos hasta tener datos reales
+            setConversationTrends([]);
+            setChannelDistribution([]);
+            setHourlyActivity([]);
+            setConversionFunnel([]);
+            setAiVsManualComparison([]);
 
-            // Distribución de tiempos de respuesta
+            // LIMPIO: Distribución vacía
             setResponseTimeDistribution([
-                { range: "0-5s", count: 412, percentage: 33 },
-                { range: "5-10s", count: 523, percentage: 42 },
-                { range: "10-20s", count: 237, percentage: 19 },
-                { range: "20-30s", count: 62, percentage: 5 },
-                { range: "+30s", count: 13, percentage: 1 },
+                { range: "0-5s", count: 0, percentage: 0 },
+                { range: "5-10s", count: 0, percentage: 0 },
+                { range: "10-20s", count: 0, percentage: 0 },
+                { range: "20-30s", count: 0, percentage: 0 },
+                { range: "+30s", count: 0, percentage: 0 },
             ]);
 
             // TODO: Actualizar métricas basadas en datos reales
