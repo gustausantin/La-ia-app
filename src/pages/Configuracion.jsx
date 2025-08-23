@@ -174,7 +174,8 @@ const {
         restaurant, 
         restaurantId, 
         isReady,
-        agentStatus 
+        agentStatus,
+        user
     } = useAuthContext();
 
     const [loading, setLoading] = useState(true);
