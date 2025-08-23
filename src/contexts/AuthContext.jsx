@@ -74,15 +74,16 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // SIMPLE: loadUserData es 100% síncrono - NO ejecuta fetchRestaurantInfo
-  const loadUserData = (u) => {
+  // CORREGIDO: loadUserData carga usuario Y restaurant
+  const loadUserData = async (u) => {
     logger.info('Loading user data for', { email: u.email });
     setUser(u);
     setStatus('signed_in');
-    logger.info('User ready IMMEDIATELY - NO restaurant fetch');
     
-    // NO ejecutamos fetchRestaurantInfo aquí - la app funciona sin él
-    // Se puede llamar manualmente desde componentes si es necesario
+    // CRÍTICO: Cargar restaurant para que todas las páginas funcionen
+    logger.info('Loading restaurant info...');
+    await fetchRestaurantInfo(u.id);
+    logger.info('User and restaurant ready');
   };
 
   const initSession = async () => {
@@ -95,7 +96,7 @@ const AuthProvider = ({ children }) => {
 
       if (session?.user) {
         logger.info('Session found', { email: session.user.email });
-        loadUserData(session.user); // YA NO es async
+        await loadUserData(session.user); // AHORA es async
       } else {
         logger.info('No session found');
         setUser(null); 
@@ -139,7 +140,7 @@ const AuthProvider = ({ children }) => {
         }
         lastSignInRef.current = session.user.id;
         logger.info('User signed in', { email: session.user.email });
-        loadUserData(session.user); // YA NO es async
+        await loadUserData(session.user); // AHORA es async
       } else if (event === 'SIGNED_OUT') {
         lastSignInRef.current = null;
         setUser(null); 
