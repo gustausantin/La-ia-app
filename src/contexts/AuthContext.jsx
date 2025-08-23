@@ -24,6 +24,7 @@ const AuthProvider = ({ children }) => {
 
   const bootedRef = useRef(false);
   const lastSignInRef = useRef(null);
+  const loadUserDataRef = useRef(false); // NUEVA PROTECCIÓN CONTRA EJECUCIONES MÚLTIPLES
 
   // Función SIMPLIFICADA que falla rápido
   const fetchRestaurantInfo = async (userId) => {
@@ -126,24 +127,31 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // ENTERPRISE: loadUserData con migración automática para usuarios huérfanos
+  // ENTERPRISE: loadUserData con protección ABSOLUTA contra ejecuciones múltiples
   const loadUserData = async (u) => {
-    logger.info('Loading user data for', { email: u.email });
-    setUser(u);
-    setStatus('signed_in');
+    // PROTECCIÓN CRÍTICA: Solo permitir una ejecución por usuario por sesión
+    const userKey = `loadUserData_${u.id}`;
+    if (loadUserDataRef.current || window[userKey]) {
+      logger.warn('🛡️ loadUserData ya en progreso - ignorando ejecución duplicada');
+      return;
+    }
     
-    // CRÍTICO: Cargar restaurant para que todas las páginas funcionen
-    logger.info('Loading restaurant info...');
-    await fetchRestaurantInfo(u.id);
+    // Marcar como en progreso INMEDIATAMENTE
+    loadUserDataRef.current = true;
+    window[userKey] = true;
     
-    // MIGRACIÓN AUTOMÁTICA: PROTECCIÓN ULTRARRÓFANA CON CHECK EN BD
-    const migrationKey = `migration_${u.id}`;
-    if (!restaurant && !restaurantId && !window[migrationKey]) {
-      // Marcar inmediatamente para evitar ejecuciones paralelas
-      window[migrationKey] = true;
+    try {
+      logger.info('Loading user data for', { email: u.email });
+      setUser(u);
+      setStatus('signed_in');
       
-      // Double-check: verificar si ya existe restaurant en BD
-      try {
+      // CRÍTICO: Cargar restaurant para que todas las páginas funcionen
+      logger.info('Loading restaurant info...');
+      await fetchRestaurantInfo(u.id);
+      
+      // MIGRACIÓN AUTOMÁTICA: Solo si NO hay restaurant después de cargar
+      if (!restaurant && !restaurantId) {
+        // Double-check en BD antes de crear
         const { data: existingMapping } = await supabase
           .from('user_restaurant_mapping')
           .select('restaurant_id')
@@ -152,21 +160,25 @@ const AuthProvider = ({ children }) => {
           .maybeSingle();
           
         if (existingMapping) {
-          logger.info('🔍 Restaurant ya existe en BD - saltando migración');
-          await fetchRestaurantInfo(u.id); // Re-cargar datos
-          return;
+          logger.info('🔍 Restaurant ya existe en BD - re-cargando datos');
+          await fetchRestaurantInfo(u.id);
+        } else {
+          logger.info('🔧 Usuario sin restaurant detectado - ejecutando migración automática...');
+          await createRestaurantForOrphanUser(u);
         }
-        
-        logger.info('🔧 Usuario sin restaurant detectado - ejecutando migración automática...');
-        await createRestaurantForOrphanUser(u);
-        
-      } catch (error) {
-        logger.error('💥 Error en migración:', error);
-        delete window[migrationKey]; // Reset en caso de error
       }
+      
+      logger.info('User and restaurant ready');
+      
+    } catch (error) {
+      logger.error('💥 Error en loadUserData:', error);
+      // Reset flags en caso de error para permitir reintento
+      loadUserDataRef.current = false;
+      delete window[userKey];
+      throw error;
     }
     
-    logger.info('User and restaurant ready');
+    // NO resetear las flags aquí - mantener protección durante toda la sesión
   };
 
   const initSession = async () => {
