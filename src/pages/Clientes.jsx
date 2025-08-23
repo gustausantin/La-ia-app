@@ -647,7 +647,7 @@ export default function Clientes() {
         setLoading(true);
         await loadCustomers();
         toast.success("Datos de clientes actualizados");
-    }, []);
+    }, [loadCustomers]);
 
     // Función para cargar clientes
     const loadCustomers = useCallback(async () => {
@@ -769,6 +769,17 @@ export default function Clientes() {
             toast.error("Error al cargar los clientes");
         } finally {
             setLoading(false);
+        }
+    }, [restaurantId]);
+
+    // Carga inicial de datos
+    useEffect(() => {
+        if (restaurantId) {
+            setLoading(true);
+            Promise.all([
+                loadCustomers(),
+                loadStats()
+            ]).finally(() => setLoading(false));
         }
     }, [restaurantId]);
 

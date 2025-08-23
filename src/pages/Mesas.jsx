@@ -685,18 +685,19 @@ export default function Mesas() {
                 subscription.unsubscribe();
             }
         };
-    }, [restaurantId, loadTables, loadTodayReservations, addNotification]);
+    }, [restaurantId, addNotification]); // SIN funciones de carga en dependencies
 
-    // Cargar datos inicial
+    // Cargar datos inicial - SIN DEPENDENCY LOOPS
     useEffect(() => {
-        if (isReady) {
+        if (isReady && restaurantId) {
+            setLoading(true);
             Promise.all([
                 loadTables(),
                 loadTodayReservations(),
                 loadAgentPreferences(),
-            ]);
+            ]).finally(() => setLoading(false));
         }
-    }, [isReady, loadTables, loadTodayReservations, loadAgentPreferences]);
+    }, [isReady, restaurantId]); // SOLO dependencies estables
 
     // Función para obtener reserva de una mesa
     const getTableReservation = useCallback(

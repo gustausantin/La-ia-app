@@ -1383,12 +1383,12 @@ export default function Comunicacion() {
         // };
     }, [restaurantId, selectedConversation]);
 
-    // Cargar mensajes cuando cambia la conversación seleccionada
+    // Cargar mensajes cuando cambia la conversación seleccionada - SIN BUCLES
     useEffect(() => {
         if (selectedConversation) {
             loadMessages(selectedConversation.id);
         }
-    }, [selectedConversation, loadMessages]);
+    }, [selectedConversation]); // SIN loadMessages en dependencies
 
     // Filtrar conversaciones
     const filteredConversations = useMemo(() => {
