@@ -145,7 +145,7 @@ export default function Login() {
     setMessage("");
 
     try {
-      // 1. Crear usuario en Supabase Auth
+      // 1. Crear usuario en Supabase Auth (sin confirmación de email)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -155,6 +155,7 @@ export default function Login() {
             phone: phone,
             city: city,
           },
+          emailRedirectTo: undefined, // Sin confirmación de email
         },
       });
 
@@ -163,72 +164,61 @@ export default function Login() {
       }
 
       if (authData.user) {
-        // 2. Crear restaurante con configuración del agente
-        const { data: restaurantData, error: restaurantError } = await supabase
-          .from("restaurants")
-          .insert([
-            {
-              name: restaurantName.trim(),
-              email: email,
-              phone: phone || null,
-              city: city || null,
-              plan: "trial", // Trial de 14 días
-              active: true,
-              created_at: new Date().toISOString(),
-
-              // TODO: Descomentar cuando exista el campo agent_config en restaurants
-              /*
-              agent_config: {
-                name: agentName,
-                primary_channel: primaryChannel,
-                expected_volume: expectedVolume,
-                business_hours: {
-                  opening: openingTime,
-                  closing: closingTime,
-                },
-                enabled: true,
-                welcome_message: `¡Hola! Soy ${agentName}, el asistente virtual de ${restaurantName}. ¿En qué puedo ayudarte hoy?`,
-                channels: {
-                  whatsapp: primaryChannel === "whatsapp",
-                  vapi: primaryChannel === "vapi",
-                  web: true, // Siempre activo
-                  instagram: false,
-                  facebook: false,
-                },
+        // 2. Verificar si el usuario está confirmado
+        if (authData.user.email_confirmed_at) {
+          // Usuario confirmado - crear restaurante inmediatamente
+          const { data: restaurantData, error: restaurantError } = await supabase
+            .rpc('create_restaurant_securely', {
+              restaurant_data: {
+                name: restaurantName.trim(),
+                email: email,
+                phone: phone || null,
+                city: city || null,
+                plan: "trial",
+                active: true
               },
-              */
-            },
-          ])
-          .select()
-          .single();
+              user_profile: {
+                email: email,
+                full_name: restaurantName.trim()
+              }
+            });
 
-        if (restaurantError) {
-          console.error("Error creating restaurant:", restaurantError);
-          throw new Error("Error al crear el restaurante");
+          if (restaurantError) {
+            console.error("Error creating restaurant:", restaurantError);
+            throw new Error("Error al crear el restaurante");
+          }
+
+          console.log("✅ Restaurante creado - usuario confirmado:", restaurantData);
+          
+          // Redirigir al dashboard
+          setMessage("¡Registro completado! Redirigiendo al dashboard...");
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 2000);
+          
+        } else {
+          // Usuario no confirmado - guardar datos temporalmente y mostrar mensaje
+          localStorage.setItem('pendingRegistration', JSON.stringify({
+            restaurantName: restaurantName.trim(),
+            phone: phone || null,
+            city: city || null,
+            userId: authData.user.id,
+            timestamp: new Date().toISOString()
+          }));
+          
+          setMessage(`✅ ¡Registro exitoso! 
+          
+📧 Hemos enviado un email de confirmación a: ${email}
+
+🔗 Por favor, revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta.
+
+⏰ Una vez confirmado, podrás acceder a tu dashboard de La-IA.`);
+          setLoading(false);
+          return;
         }
 
-        // 3. Crear mapeo usuario-restaurante
-        const { error: mappingError } = await supabase
-          .from("user_restaurant_mapping")
-          .insert([
-            {
-              auth_user_id: authData.user.id,
-              restaurant_id: restaurantData.id,
-              role: "owner",
-              permissions: {
-                read: true,
-                write: true,
-                delete: true,
-                admin: true,
-              },
-              active: true,
-            },
-          ]);
-
-        if (mappingError) {
-          console.error("Error creating mapping:", mappingError);
-          throw new Error("Error al configurar permisos");
-        }
+        // 3. El mapeo usuario-restaurante ya se crea automáticamente en la función SQL
+        console.log("✅ Restaurante creado:", restaurantData);
 
         // TODO: Descomentar cuando exista la tabla onboarding_progress
         /*

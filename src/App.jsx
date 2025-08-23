@@ -15,6 +15,7 @@ logger.info('Starting React application...');
 // Lazy loading mejorado con preload y error boundaries
 const Layout = lazy(() => import('./components/Layout'));
 const Login = lazy(() => import('./pages/Login'));
+const Confirm = lazy(() => import('./pages/Confirm'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Reservas = lazy(() => import('./pages/Reservas'));
 const Clientes = lazy(() => import('./pages/Clientes'));
@@ -92,6 +93,7 @@ function AppContent() {
         {!isAuthenticated ? (
           <>
             <Route path="/login" element={<Login />} />
+            <Route path="/confirm" element={<Confirm />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </>
         ) : (
