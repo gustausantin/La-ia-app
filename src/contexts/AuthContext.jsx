@@ -115,6 +115,16 @@ const AuthProvider = ({ children }) => {
 
     // Inicializar inmediatamente
     initSession();
+    
+    // Escuchar evento personalizado de actualización de auth
+    const handleAuthUpdate = () => {
+      logger.info('Auth update event received, refreshing session...');
+      setTimeout(() => {
+        initSession();
+      }, 500);
+    };
+    
+    window.addEventListener('auth-updated', handleAuthUpdate);
 
     // Auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -140,7 +150,10 @@ const AuthProvider = ({ children }) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('auth-updated', handleAuthUpdate);
+    };
   }, []);
 
   // Helpers auth
