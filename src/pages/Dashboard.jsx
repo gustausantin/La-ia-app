@@ -28,6 +28,8 @@ import {
     PhoneCall,
     MessageCircle,
     Globe,
+    Plus,
+    Settings,
     Brain,
     Target,
     Sparkles,
@@ -793,9 +795,25 @@ export default function Dashboard() {
                                 </div>
                             ))
                         ) : (
-                            <div className="p-8 text-center text-gray-500">
-                                <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                                <p>No hay conversaciones activas</p>
+                            <div className="p-8 text-center">
+                                <div className="flex flex-col items-center">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-green-50 to-blue-50 rounded-full flex items-center justify-center mb-4">
+                                        <MessageSquare className="w-8 h-8 text-green-500" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                        Agente IA listo
+                                    </h3>
+                                    <p className="text-gray-500 text-center mb-4 max-w-md">
+                                        Tu agente IA está esperando las primeras conversaciones de clientes.
+                                    </p>
+                                    <button 
+                                        onClick={() => window.location.href = '/comunicacion'} 
+                                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                                    >
+                                        <Bot className="w-4 h-4 mr-2" />
+                                        Ver Agente IA
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -887,14 +905,34 @@ export default function Dashboard() {
                                 })}
                             </div>
                         ) : (
-                            <div className="p-8 text-center text-gray-500">
-                                <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                                <p className="text-lg font-medium">
-                                    No hay reservas para hoy
-                                </p>
-                                <p className="text-sm mt-1">
-                                    Las nuevas reservas aparecerán aquí automáticamente
-                                </p>
+                            <div className="p-8 text-center">
+                                <div className="flex flex-col items-center">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-blue-50 to-purple-50 rounded-full flex items-center justify-center mb-4">
+                                        <Calendar className="w-8 h-8 text-blue-500" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                        ¡Tu restaurante está listo!
+                                    </h3>
+                                    <p className="text-gray-500 text-center mb-4 max-w-md">
+                                        No hay reservas para hoy aún. Cuando los clientes empiecen a hacer reservas, aparecerán aquí automáticamente.
+                                    </p>
+                                    <div className="flex space-x-3">
+                                        <button 
+                                            onClick={() => window.location.href = '/reservas'} 
+                                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                                        >
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Crear Primera Reserva
+                                        </button>
+                                        <button 
+                                            onClick={() => window.location.href = '/configuracion'} 
+                                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                        >
+                                            <Settings className="w-4 h-4 mr-2" />
+                                            Configurar
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
