@@ -74,7 +74,59 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // CORREGIDO: loadUserData carga usuario Y restaurant
+  // ENTERPRISE: Función para crear restaurant automáticamente para usuarios huérfanos
+  const createRestaurantForOrphanUser = async (user) => {
+    try {
+      logger.info('🚀 Iniciando migración automática para usuario huérfano...', { userId: user.id, email: user.email });
+      
+      // Crear restaurant automáticamente usando los datos del usuario
+      const { data: restaurantData, error: restaurantError } = await supabase
+        .rpc('create_restaurant_securely', {
+          restaurant_data: {
+            name: `Restaurante de ${user.email.split('@')[0]}`, // Nombre basado en email
+            email: user.email,
+            phone: '+34 600 000 000', // Teléfono por defecto
+            city: 'Madrid', // Ciudad por defecto
+            plan: 'trial',
+            active: true
+          },
+          user_profile: {
+            email: user.email,
+            full_name: user.email.split('@')[0] // Nombre basado en email
+          }
+        });
+
+      if (restaurantError) {
+        logger.error('❌ Error en migración automática:', restaurantError);
+        throw restaurantError;
+      }
+
+      logger.info('✅ Migración automática completada:', restaurantData);
+      
+      // Actualizar estado inmediatamente
+      const restaurantInfo = {
+        id: restaurantData.restaurant_id,
+        name: restaurantData.restaurant_name || `Restaurante de ${user.email.split('@')[0]}`
+      };
+      
+      setRestaurant(restaurantInfo);
+      setRestaurantId(restaurantInfo.id);
+      
+      // Disparar evento para que otras partes de la app se actualicen
+      window.dispatchEvent(new CustomEvent('restaurant-created', { 
+        detail: { restaurant: restaurantInfo } 
+      }));
+      
+      logger.info('🎉 Usuario migrado exitosamente - restaurant disponible');
+      
+    } catch (error) {
+      logger.error('💥 Error crítico en migración automática:', error);
+      // No hacer throw para que la app siga funcionando, pero logear el error
+      toast.error('Error al configurar tu restaurante. Por favor, contacta con soporte.');
+    }
+  };
+
+  // ENTERPRISE: loadUserData con migración automática para usuarios huérfanos
   const loadUserData = async (u) => {
     logger.info('Loading user data for', { email: u.email });
     setUser(u);
@@ -83,6 +135,13 @@ const AuthProvider = ({ children }) => {
     // CRÍTICO: Cargar restaurant para que todas las páginas funcionen
     logger.info('Loading restaurant info...');
     await fetchRestaurantInfo(u.id);
+    
+    // MIGRACIÓN AUTOMÁTICA: Si no hay restaurant, crear uno automáticamente
+    if (!restaurant && !restaurantId) {
+      logger.info('🔧 Usuario sin restaurant detectado - ejecutando migración automática...');
+      await createRestaurantForOrphanUser(u);
+    }
+    
     logger.info('User and restaurant ready');
   };
 
