@@ -100,10 +100,13 @@ export default function Confirm() {
         setStatus('success');
         setMessage('🎉 ¡Email confirmado exitosamente! Redirigiendo al dashboard...');
         
-        // Redirigir al dashboard después de 3 segundos
+        // Forzar actualización del AuthContext enviando evento personalizado
+        window.dispatchEvent(new CustomEvent('auth-updated'));
+        
+        // Redirigir al dashboard después de 2 segundos
         setTimeout(() => {
           navigate('/dashboard');
-        }, 3000);
+        }, 2000);
 
       } catch (error) {
         console.error('Error confirming email:', error);
