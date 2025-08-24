@@ -1,0 +1,1 @@
+Force Vercel to rebuild and deploy - Timestamp: 2025-08-24 10:05
