@@ -243,7 +243,7 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
                             <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4" />
-                                <span>{formatTime(reservation.time)}</span>
+                                <span>{formatTime(reservation.reservation_time)}</span>
                             </div>
 
                             <div className="flex items-center gap-2">
@@ -457,41 +457,34 @@ export default function Reservas() {
 
             const dateRange = calculateDateRange(filters.period);
 
-            let query = supabase
-                .from("reservations")
-                .select(
-                    `
-                    *,
-                    customers (name, email),
-                    tables (name, zone)
-                `,
-                )
-                .eq("restaurant_id", restaurantId)
-                .gte("date", dateRange.start)
-                .lte("date", dateRange.end)
-                .order("date", { ascending: true })
-                .order("time", { ascending: true });
-
-            if (filters.status) {
-                query = query.eq("status", filters.status);
-            }
-
-            if (filters.channel) {
-                query = query.eq("channel", filters.channel);
-            }
-
-            if (filters.source) {
-                query = query.eq("source", filters.source);
-            }
-
-            const { data, error } = await query;
+            // Usar la función RPC que evita ambigüedad PGRST201
+            const { data, error } = await supabase.rpc("get_reservations_safe", {
+                p_restaurant_id: restaurantId,
+                p_start_date: dateRange.start,
+                p_end_date: dateRange.end
+            });
 
             if (error) throw error;
 
-            setReservations(data || []);
+            let reservations = data || [];
+
+            // Aplicar filtros adicionales en memoria
+            if (filters.status) {
+                reservations = reservations.filter(r => r.status === filters.status);
+            }
+
+            if (filters.channel) {
+                reservations = reservations.filter(r => r.channel === filters.channel);
+            }
+
+            if (filters.source) {
+                reservations = reservations.filter(r => r.source === filters.source);
+            }
+
+            setReservations(reservations);
 
             // Calcular estadísticas del agente
-            const agentReservations = (data || []).filter(
+            const agentReservations = reservations.filter(
                 (r) => r.source === "agent",
             );
             setAgentStats((prev) => ({
@@ -1265,8 +1258,8 @@ const ReservationFormModal = ({
         customer_name: reservation?.customer_name || "",
         customer_phone: reservation?.customer_phone || "",
         customer_email: reservation?.customer_email || "",
-        date: reservation?.date || format(new Date(), "yyyy-MM-dd"),
-        time: reservation?.time || "",
+        date: reservation?.reservation_date || format(new Date(), "yyyy-MM-dd"),
+        time: reservation?.reservation_time || "",
         party_size: reservation?.party_size || 2,
         table_id: reservation?.table_id || "",
         special_requests: reservation?.special_requests || "",
@@ -1308,12 +1301,18 @@ const ReservationFormModal = ({
         try {
             const reservationData = {
                 ...formData,
+                reservation_date: formData.date,
+                reservation_time: formData.time,
                 restaurant_id: restaurantId,
                 party_size: parseInt(formData.party_size),
                 source: "manual",
                 channel: "manual",
                 created_by: "user",
             };
+            
+            // Eliminar campos old que pueden confundir
+            delete reservationData.date;
+            delete reservationData.time;
 
             if (reservation) {
                 const { error } = await supabase
