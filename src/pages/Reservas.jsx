@@ -537,11 +537,11 @@ export default function Reservas() {
 
             setAgentInsights(emptyInsights);
 
-            // Simular estadísticas adicionales
+            // LIMPIO: Sin estadísticas simuladas
             setAgentStats((prev) => ({
                 ...prev,
-                avgResponseTime: "3.2s",
-                peakChannel: "WhatsApp",
+                avgResponseTime: "0s",
+                peakChannel: "N/A",
                 satisfaction: 0,
             }));
         } catch (error) {

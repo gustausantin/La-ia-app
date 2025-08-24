@@ -316,41 +316,10 @@ export default function Dashboard() {
         if (!restaurantId) return;
 
         try {
-            const mockConversations = [
-                {
-                    id: 1,
-                    customer_name: "María García",
-                    phone: "+34 600 123 456",
-                    channel: "whatsapp",
-                    state: "active",
-                    last_message: "¿Tenéis mesa para 4 esta noche?",
-                    last_message_at: new Date(Date.now() - 1000 * 60 * 5),
-                    resulted_in_reservation: false,
-                },
-                {
-                    id: 2,
-                    customer_name: "Carlos López",
-                    phone: "+34 611 222 333",
-                    channel: "vapi",
-                    state: "resolved",
-                    last_message: "Perfecto, nos vemos a las 21h",
-                    last_message_at: new Date(Date.now() - 1000 * 60 * 15),
-                    resulted_in_reservation: true,
-                },
-                {
-                    id: 3,
-                    customer_name: "Ana Martín",
-                    phone: "+34 622 333 444",
-                    channel: "instagram",
-                    state: "active",
-                    last_message: "Hola! Quisiera hacer una reserva para mañana",
-                    last_message_at: new Date(Date.now() - 1000 * 60 * 30),
-                    resulted_in_reservation: false,
-                },
-            ];
-
-            setConversations(mockConversations);
-            return mockConversations;
+            // LIMPIO: Sin conversaciones hasta tener datos reales
+            const emptyConversations = [];
+            setConversations(emptyConversations);
+            return emptyConversations;
         } catch (error) {
             logger.error("Error fetching conversations:", error);
             toast.error("Error al cargar conversaciones");
