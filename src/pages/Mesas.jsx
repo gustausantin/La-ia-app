@@ -508,22 +508,19 @@ export default function Mesas() {
         try {
             setLoading(true);
 
+            // TEMPORAL: Consulta simplificada para evitar errores de schema
             const { data, error } = await supabase
                 .from("tables")
-                .select("*")
-                .eq("restaurant_id", restaurantId)
-                .order("zone")
-                .order("table_number");
+                .select("id, restaurant_id, capacity, status, created_at")
+                .eq("restaurant_id", restaurantId);
 
             if (error) throw error;
 
             setTables(data || []);
 
-            // Extraer zonas únicas
-            const uniqueZones = [
-                ...new Set((data || []).map((table) => table.zone)),
-            ].filter(Boolean);
-            setZones(uniqueZones);
+            // TEMPORAL: Zonas por defecto hasta arreglar schema
+            const defaultZones = ["Principal", "Terraza"];
+            setZones(defaultZones);
         } catch (error) {
             console.error("Error loading tables:", error);
             toast.error("Error al cargar las mesas");
@@ -539,18 +536,23 @@ export default function Mesas() {
         try {
             const today = new Date().toISOString().split("T")[0];
 
-            const { data, error } = await supabase
-                .from("reservations")
-                .select("*")
-                .eq("restaurant_id", restaurantId)
-                .eq("date", today)
-                .in("status", ["confirmada", "sentada"]);
+            // TEMPORAL: Usar función RPC para evitar errores de schema
+            const { data, error } = await supabase.rpc("get_reservations_safe", {
+                p_restaurant_id: restaurantId,
+                p_start_date: today,
+                p_end_date: today
+            });
+
+            // Filtrar solo confirmadas y sentadas
+            const filteredData = (data || []).filter(r => 
+                ["confirmada", "sentada"].includes(r.status)
+            );
 
             if (error) throw error;
-            setReservations(data || []);
+            setReservations(filteredData);
 
             // Calcular estadísticas del agente
-            const agentReservations = (data || []).filter(
+            const agentReservations = filteredData.filter(
                 (r) => r.source === "agent",
             );
             setAgentStats((prev) => ({
