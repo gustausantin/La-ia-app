@@ -505,16 +505,41 @@ const {
     };
 
     const loadRealTimeStatus = async () => {
+        if (!restaurantId) return;
+        
         try {
-            // console.log removed for production
-setRealTimeStatus({
-                active_conversations: 3,
-                pending_reservations: 8,
-                system_health: "healthy",
+            // Obtener conversaciones activas reales de Supabase
+            const { data: conversations, error: convError } = await supabase
+                .from("agent_conversations")
+                .select("id")
+                .eq("restaurant_id", restaurantId)
+                .eq("status", "active");
+
+            // Obtener reservas pendientes reales de Supabase  
+            const { data: reservations, error: resError } = await supabase
+                .from("reservations")
+                .select("id")
+                .eq("restaurant_id", restaurantId)
+                .eq("status", "pendiente");
+
+            if (convError) console.error("Error loading conversations:", convError);
+            if (resError) console.error("Error loading reservations:", resError);
+
+            setRealTimeStatus({
+                active_conversations: conversations?.length || 0,
+                pending_reservations: reservations?.length || 0,
+                system_health: "healthy", // TODO: Implementar health check real
                 last_updated: new Date()
             });
         } catch (error) {
             console.error("Error loading real-time status:", error);
+            // En caso de error, mostrar valores cero
+            setRealTimeStatus({
+                active_conversations: 0,
+                pending_reservations: 0,
+                system_health: "error",
+                last_updated: new Date()
+            });
         }
     };
 

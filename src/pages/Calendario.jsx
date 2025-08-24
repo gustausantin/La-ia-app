@@ -2,6 +2,7 @@
 // src/pages/Calendario.jsx - Gestión PREMIUM de horarios y disponibilidad con IA
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import { 
     format, 
     parseISO, 
@@ -155,21 +156,30 @@ export default function Calendario() {
     }, [restaurantId]);
 
     const initializeData = async () => {
+        if (!restaurantId) return;
+        
         setLoading(true);
         try {
-            // Simular carga de datos
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Cargar horarios reales desde Supabase
+            const { data: scheduleData, error: scheduleError } = await supabase
+                .from("restaurant_schedule")
+                .select("*")
+                .eq("restaurant_id", restaurantId)
+                .order("day_of_week");
 
-            // Horarios semanales por defecto
-            const defaultSchedule = daysOfWeek.map(day => ({
-                day_of_week: day.id,
-                day_name: day.name,
-                is_open: day.id !== 1, // Cerrado los lunes
-                slots: [
-                    { name: 'Almuerzo', start: '12:00', end: '16:00', capacity: 40 },
-                    { name: 'Cena', start: '19:00', end: '23:30', capacity: 60 }
-                ]
-            }));
+            if (scheduleError) {
+                console.error("Error loading schedule:", scheduleError);
+            }
+
+            // Si no hay horarios guardados, crear estructura vacía
+            const loadedSchedule = scheduleData && scheduleData.length > 0 
+                ? scheduleData 
+                : daysOfWeek.map(day => ({
+                    day_of_week: day.id,
+                    day_name: day.name,
+                    is_open: false, // CERRADO por defecto hasta que configuren
+                    slots: [] // SIN slots hasta que configuren
+                }));
 
             // Configuración del agente por defecto
             const defaultAgentSchedule = {};
@@ -211,7 +221,7 @@ export default function Calendario() {
                 };
             });
 
-            setWeeklySchedule(defaultSchedule);
+            setWeeklySchedule(loadedSchedule);
             setAgentSchedule(defaultAgentSchedule);
             // DATOS MOCK ELIMINADOS - Estados vacíos
             setEvents([]);
