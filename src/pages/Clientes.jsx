@@ -60,34 +60,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-// TABLAS Y RPCs NECESARIAS PARA SUPABASE:
-// =========================================
-// TABLAS:
-// - customers: tabla principal con campos adicionales:
-//   - acquisition_channel (whatsapp, vapi, instagram, facebook, web, manual)
-//   - ai_score (puntuación predictiva del cliente)
-//   - predicted_ltv (valor de vida predicho)
-//   - churn_risk_score (riesgo de abandono)
-//   - preferred_channel (canal preferido de comunicación)
-//   - ai_segment (segmento asignado por IA)
-//
-// - customer_interactions: historial de interacciones con el agente
-//   - customer_id, type, channel, message, response, created_at
-//
-// - customer_preferences_ai: preferencias detectadas por IA
-//   - customer_id, preference_type, value, confidence_score
-//
-// - customer_campaigns: campañas enviadas a clientes
-//   - customer_id, campaign_id, sent_at, opened_at, converted_at
-//
-// RPCs:
-// - get_customer_analytics(restaurant_id)
-// - get_customer_predictions(customer_id)
-// - get_customer_lifetime_value(customer_id)
-// - get_segmentation_insights(restaurant_id)
-// - launch_ai_campaign(restaurant_id, segment, message, channel)
-
-// Segmentación mejorada con IA
+// Segmentación mejorada con IA - DEFINIDO AL PRINCIPIO
 const CUSTOMER_SEGMENTS = {
     new: {
         label: "Nuevo",
@@ -136,46 +109,59 @@ const CUSTOMER_SEGMENTS = {
     },
     inactive: {
         label: "Inactivo",
-        description: "Sin visitas >60 días",
-        color: "bg-gray-100 text-gray-800 border-gray-200",
+        description: "Sin visitas > 45 días",
+        color: "bg-gray-100 text-gray-800 border-gray-300",
         icon: "😴",
         aiAction: "Campaña de reactivación",
         criteria: (customer) => {
-            if (!customer.last_visit) return false;
-            const daysSinceLastVisit = differenceInDays(
-                new Date(),
-                parseISO(customer.last_visit),
-            );
-            return daysSinceLastVisit > 60;
+            if (!customer.last_visit) return true;
+            const daysSince = differenceInDays(new Date(), parseISO(customer.last_visit));
+            return daysSince > 45;
         },
     },
-    risk: {
+    at_risk: {
         label: "En Riesgo",
-        description: "Alto ratio de no-shows",
+        description: "Alto % no-shows",
         color: "bg-red-100 text-red-800 border-red-200",
         icon: "⚠️",
-        aiAction: "Intervención preventiva",
+        aiAction: "Prevenir abandono",
         criteria: (customer) => {
-            if (customer.total_reservations === 0) return false;
-            const noShowRate =
-                (customer.total_no_shows || 0) / customer.total_reservations;
+            const noShowRate = customer.total_reservations > 0 
+                ? (customer.total_no_shows || 0) / customer.total_reservations 
+                : 0;
             return noShowRate > 0.3;
         },
     },
-    birthday: {
-        label: "Cumpleaños",
-        description: "Cumpleaños este mes",
-        color: "bg-pink-100 text-pink-800 border-pink-200",
-        icon: "🎂",
-        aiAction: "Oferta de cumpleaños",
-        criteria: (customer) => {
-            if (!customer.birthday) return false;
-            const birthday = parseISO(customer.birthday);
-            const thisMonth = new Date().getMonth();
-            return birthday.getMonth() === thisMonth;
-        },
-    },
 };
+
+// TABLAS Y RPCs NECESARIAS PARA SUPABASE:
+// =========================================
+// TABLAS:
+// - customers: tabla principal con campos adicionales:
+//   - acquisition_channel (whatsapp, vapi, instagram, facebook, web, manual)
+//   - ai_score (puntuación predictiva del cliente)
+//   - predicted_ltv (valor de vida predicho)
+//   - churn_risk_score (riesgo de abandono)
+//   - preferred_channel (canal preferido de comunicación)
+//   - ai_segment (segmento asignado por IA)
+//
+// - customer_interactions: historial de interacciones con el agente
+//   - customer_id, type, channel, message, response, created_at
+//
+// - customer_preferences_ai: preferencias detectadas por IA
+//   - customer_id, preference_type, value, confidence_score
+//
+// - customer_campaigns: campañas enviadas a clientes
+//   - customer_id, campaign_id, sent_at, opened_at, converted_at
+//
+// RPCs:
+// - get_customer_analytics(restaurant_id)
+// - get_customer_predictions(customer_id)
+// - get_customer_lifetime_value(customer_id)
+// - get_segmentation_insights(restaurant_id)
+// - launch_ai_campaign(restaurant_id, segment, message, channel)
+
+// ELIMINADO: CUSTOMER_SEGMENTS ya declarado arriba
 
 // Colores para gráficos
 const CHART_COLORS = [
