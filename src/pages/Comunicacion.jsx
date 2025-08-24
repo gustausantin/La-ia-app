@@ -92,6 +92,18 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+// Colores para gráficos
+const CHART_COLORS = [
+    "#3B82F6",
+    "#10B981",
+    "#8B5CF6",
+    "#F59E0B",
+    "#EF4444",
+    "#EC4899",
+    "#06B6D4",
+    "#84CC16",
+];
+
 // TABLAS Y RPCs NECESARIAS PARA SUPABASE:
 // =========================================
 // TABLAS:
