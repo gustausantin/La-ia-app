@@ -630,7 +630,7 @@ export default function Dashboard() {
                         detail="Conversiones completadas"
                         icon={<Target className="w-6 h-6 text-green-600" />}
                         color="bg-green-50"
-                        trend={{ positive: true, value: "+5% vs ayer" }}
+                        trend={{ positive: false, value: "Sin datos" }}
                         loading={isLoading}
                     />
 
@@ -650,8 +650,8 @@ export default function Dashboard() {
 
                     <StatCard
                         title="Canales Activos"
-                        value="4/5"
-                        detail="WhatsApp, Vapi, Web, IG"
+                        value="0/5"
+                        detail="Ningún canal configurado"
                         icon={<Activity className="w-6 h-6 text-blue-600" />}
                         color="bg-blue-50"
                         loading={isLoading}

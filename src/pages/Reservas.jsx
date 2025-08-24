@@ -1678,29 +1678,9 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                             <Target className="w-5 h-5" />
                             Recomendaciones para optimizar
                         </h4>
-                        <ul className="space-y-2 text-sm text-purple-800">
-                            <li className="flex items-start gap-2">
-                                <ChevronRight className="w-4 h-4 mt-0.5" />
-                                <span>
-                                    Considera activar el canal de Instagram -
-                                    potencial de +15% más reservas
-                                </span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ChevronRight className="w-4 h-4 mt-0.5" />
-                                <span>
-                                    Los viernes a las 21:00 tienen alta demanda
-                                    - sugiere mesas alternativas
-                                </span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ChevronRight className="w-4 h-4 mt-0.5" />
-                                <span>
-                                    El agente resuelve mejor las consultas
-                                    después de las 18:00
-                                </span>
-                            </li>
-                        </ul>
+                        <div className="text-sm text-purple-800 text-center py-4">
+                            <span>No hay suficientes datos para generar recomendaciones</span>
+                        </div>
                     </div>
 
                     <div>
@@ -1711,16 +1691,8 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                             {Object.entries(CHANNELS)
                                 .filter(([key]) => key !== "manual")
                                 .map(([key, channel]) => {
-                                    const percentage =
-                                        key === "whatsapp"
-                                            ? 65
-                                            : key === "vapi"
-                                              ? 20
-                                              : key === "web"
-                                                ? 10
-                                                : key === "instagram"
-                                                  ? 5
-                                                  : 0;
+                                    // LIMPIO: Sin porcentajes simulados
+                                    const percentage = 0;
                                     return (
                                         <div
                                             key={key}

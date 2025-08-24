@@ -486,16 +486,17 @@ const {
         try {
             // console.log removed for production
 // Simular métricas del agente desde Supabase
+            // LIMPIO: Sin métricas simuladas del agente
             setAgentMetrics({
-                total_conversations: 1247,
-                resolved_automatically: 1052,
-                escalated_to_human: 195,
-                avg_response_time: 3.2,
+                total_conversations: 0,
+                resolved_automatically: 0,
+                escalated_to_human: 0,
+                avg_response_time: 0,
                 satisfaction_score: 0,
                 daily_stats: {
-                    today: 47,
-                    yesterday: 52,
-                    change_percent: -9.6
+                    today: 0,
+                    yesterday: 0,
+                    change_percent: 0
                 }
             });
         } catch (error) {
