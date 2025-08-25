@@ -68,7 +68,7 @@ export default function Layout() {
             name: "Comunicación",
             path: "/comunicacion",
             icon: MessageSquare,
-            badge: safeAgentStatus?.activeConversations || 0,
+            badge: null, // TODO: Implementar contador de mensajes no leídos
         },
         { name: "Clientes", path: "/clientes", icon: Users, badge: null },
         { name: "Mesas", path: "/mesas", icon: Briefcase, badge: null },
@@ -77,19 +77,13 @@ export default function Layout() {
             path: "/calendario",
             icon: Calendar,
             badge: null,
-        }, // ACTUALIZADO de Horarios a Calendario
-        { name: "Analytics", path: "/analytics", icon: BarChart2, badge: null },
-        {
-            name: "Agente IA",
-            path: "/configuracion",
-            icon: Bot,
-            badge: safeAgentStatus?.pendingActions || 0,
         },
+        { name: "Analytics", path: "/analytics", icon: BarChart2, badge: null },
         {
             name: "Configuración",
             path: "/configuracion",
             icon: Settings,
-            badge: null,
+            badge: null, // TODO: Implementar contador de alertas del sistema
         },
     ];
 
@@ -192,14 +186,7 @@ await signOut();
                                     <span className="font-medium">{item.name}</span>
                                 </div>
                                 {item.badge && item.badge > 0 && (
-                                    <span
-                                        className={`px-2 py-1 text-xs rounded-full font-medium ${
-                                            item.name === "Agente IA" &&
-                                            item.badge > 0
-                                                ? "bg-orange-100 text-orange-700"
-                                                : "bg-blue-100 text-blue-700 group-hover:bg-blue-200"
-                                        }`}
-                                    >
+                                    <span className="px-2 py-1 text-xs rounded-full font-medium bg-blue-100 text-blue-700 group-hover:bg-blue-200">
                                         {item.badge}
                                     </span>
                                 )}
