@@ -458,18 +458,20 @@ const {
         try {
             setLoading(true);
             // console.log removed for production
-// Cargar datos reales del contexto inmediatamente (no simular)
+// Cargar datos reales del registro/Supabase inmediatamente 
             setSettings((prev) => ({
                 ...prev,
-                name: restaurant?.name || "La-IA Restaurant",
-                email: user?.email || "contacto@la-ia.com",
-                phone: restaurant?.phone || "+34 666 123 456",
-                address: restaurant?.address || "Calle Principal 123",
-                city: restaurant?.city || "Madrid",
-                postal_code: restaurant?.postal_code || "28001",
+                // Datos del restaurante desde el registro
+                name: restaurant?.name || "",
+                email: restaurant?.email || user?.email || "",
+                phone: restaurant?.phone || "",
+                address: restaurant?.address || "",
+                city: restaurant?.city || "",
+                postal_code: restaurant?.postal_code || "",
+                cuisine_type: restaurant?.cuisine_type || "",
                 agent: {
                     ...prev.agent,
-                    name: "Asistente de " + (restaurant?.name || "La-IA"),
+                    name: restaurant?.name ? `Asistente de ${restaurant.name}` : "Asistente Virtual",
                 }
             }));
             

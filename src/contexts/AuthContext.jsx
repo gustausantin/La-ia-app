@@ -45,7 +45,7 @@ const AuthProvider = ({ children }) => {
       // Solo un intento - mapping table
       const { data: map, error: mapErr } = await supabase
         .from('user_restaurant_mapping')
-        .select('restaurant:restaurant_id(id, name)')
+        .select('restaurant:restaurant_id(id, name, email, phone, address, city, country, postal_code, cuisine_type, plan, active, created_at)')
         .eq('auth_user_id', userId)
         .abortSignal(controller.signal)
         .maybeSingle();
