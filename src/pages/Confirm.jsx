@@ -77,6 +77,9 @@ export default function Confirm() {
                 email: sessionData.user.email,
                 phone: pending.phone,
                 city: pending.city,
+                address: pending.address,
+                postal_code: pending.postalCode,
+                cuisine_type: pending.cuisineType,
                 plan: "trial",
                 active: true
               },

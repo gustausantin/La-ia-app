@@ -77,6 +77,9 @@ export default function Login() {
   const [restaurantName, setRestaurantName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
+  const [address, setAddress] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [cuisineType, setCuisineType] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // Estados para registro - Step 2 (Configuración del Agente)
@@ -154,6 +157,9 @@ export default function Login() {
             restaurant_name: restaurantName,
             phone: phone,
             city: city,
+            address: address,
+            postal_code: postalCode,
+            cuisine_type: cuisineType,
           },
           emailRedirectTo: `${window.location.origin}/confirm`, // CON confirmación de email
         },
@@ -169,6 +175,9 @@ export default function Login() {
           restaurantName: restaurantName.trim(),
           phone: phone || null,
           city: city || null,
+          address: address || null,
+          postalCode: postalCode || null,
+          cuisineType: cuisineType || null,
           userId: authData.user.id,
           email: email,
           timestamp: new Date().toISOString()
@@ -464,6 +473,70 @@ export default function Login() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                             placeholder="Madrid"
                           />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="address"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Dirección
+                        </label>
+                        <input
+                          id="address"
+                          type="text"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="Calle Principal 123"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label
+                            htmlFor="postal-code"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                          >
+                            Código Postal
+                          </label>
+                          <input
+                            id="postal-code"
+                            type="text"
+                            value={postalCode}
+                            onChange={(e) => setPostalCode(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                            placeholder="28001"
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="cuisine-type"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                          >
+                            Tipo de Cocina
+                          </label>
+                          <select
+                            id="cuisine-type"
+                            value={cuisineType}
+                            onChange={(e) => setCuisineType(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          >
+                            <option value="">Seleccionar...</option>
+                            <option value="mediterranea">Mediterránea</option>
+                            <option value="italiana">Italiana</option>
+                            <option value="japonesa">Japonesa</option>
+                            <option value="mexicana">Mexicana</option>
+                            <option value="argentina">Argentina</option>
+                            <option value="fusion">Fusión</option>
+                            <option value="tradicional">Tradicional</option>
+                            <option value="vegetariana">Vegetariana</option>
+                            <option value="mariscos">Mariscos</option>
+                            <option value="tapas">Tapas</option>
+                            <option value="otra">Otra</option>
+                          </select>
                         </div>
                       </div>
 
