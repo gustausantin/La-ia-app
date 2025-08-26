@@ -47,7 +47,6 @@ class ErrorBoundary extends React.Component {
   reportErrorToService = async (error, errorInfo, errorId) => {
     try {
       // Aquí podrías enviar a Sentry, LogRocket, etc.
-      console.error('Error reportado:', { errorId, error: error.message });
     } catch (reportError) {
       logger.error('Error al reportar error', reportError);
     }

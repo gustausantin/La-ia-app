@@ -1,4 +1,5 @@
 import { log } from '../utils/logger.js';
+import { mlEngine } from './MLEngine.js';
 import { supabase } from '../lib/supabase.js';
 
 class AnalyticsAI {
@@ -16,6 +17,107 @@ class AnalyticsAI {
       realtime: [],
       external: [],
     };
+  }
+
+  // === SEGMENTACIÓN INTELIGENTE DE CLIENTES ===
+  async segmentCustomers(customers) {
+    try {
+      log.info('🧠 Starting intelligent customer segmentation...');
+      
+      // Usar ML Engine para segmentación avanzada
+      const segmentedCustomers = await mlEngine.segmentCustomers(customers);
+      
+      // Analizar patrones de segmentación
+      const segmentAnalysis = this.analyzeSegmentationPatterns(segmentedCustomers);
+      
+      return {
+        customers: segmentedCustomers,
+        analysis: segmentAnalysis,
+        insights: await this.generateSegmentationInsights(segmentedCustomers)
+      };
+      
+    } catch (error) {
+      log.error('❌ Customer segmentation failed:', error);
+      throw error;
+    }
+  }
+
+  // === PREDICCIÓN DE DEMANDA AVANZADA ===
+  async predictDemandAdvanced(dateRange, factors = {}) {
+    try {
+      log.info('📈 Advanced demand prediction with ML...');
+      
+      // Usar ML Engine para predicción avanzada
+      const prediction = await mlEngine.predictDemand(dateRange, factors);
+      
+      // Enriquecer con análisis adicional
+      const enrichedPrediction = {
+        ...prediction,
+        businessImpact: this.calculateBusinessImpact(prediction),
+        recommendations: await this.generateDemandStrategies(prediction),
+        confidence: this.validatePredictionConfidence(prediction)
+      };
+      
+      return enrichedPrediction;
+      
+    } catch (error) {
+      log.error('❌ Advanced demand prediction failed:', error);
+      throw error;
+    }
+  }
+
+  // === OPTIMIZACIÓN AUTOMÁTICA DE MESAS ===
+  async optimizeTablesAI(reservations, tableLayout, preferences = {}) {
+    try {
+      log.info('🪑 AI-powered table optimization...');
+      
+      // Usar ML Engine para optimización
+      const optimization = await mlEngine.optimizeTables(
+        reservations, 
+        tableLayout, 
+        preferences
+      );
+      
+      // Análisis de impacto
+      const impact = this.calculateOptimizationImpact(optimization);
+      
+      return {
+        ...optimization,
+        impact,
+        savings: this.calculateCostSavings(optimization),
+        customerSatisfactionImpact: this.predictSatisfactionImpact(optimization)
+      };
+      
+    } catch (error) {
+      log.error('❌ AI table optimization failed:', error);
+      throw error;
+    }
+  }
+
+  // === INSIGHTS AUTOMÁTICOS ===
+  async generateAutoInsights(data) {
+    try {
+      log.info('💡 Generating automatic insights with AI...');
+      
+      // Usar ML Engine para insights
+      const mlInsights = await mlEngine.generateAutoInsights(data);
+      
+      // Combinar con análisis tradicional
+      const traditionalInsights = await this.generateInsights();
+      
+      // Fusionar y priorizar insights
+      const combinedInsights = this.combineInsights(mlInsights, traditionalInsights);
+      
+      return {
+        insights: combinedInsights,
+        summary: this.generateInsightSummary(combinedInsights),
+        actionItems: this.extractActionItems(combinedInsights)
+      };
+      
+    } catch (error) {
+      log.error('❌ Auto insights generation failed:', error);
+      throw error;
+    }
   }
 
   // === ANÁLISIS PREDICTIVO ===

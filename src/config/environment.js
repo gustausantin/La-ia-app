@@ -19,7 +19,6 @@ const loadEnvironmentConfig = async () => {
     const envModule = await import(`./environment.${environment}.js`);
     return envModule.config;
   } catch (error) {
-    console.warn(`⚠️ No se pudo cargar la configuración para ${environment}, usando valores por defecto`);
     return {
       SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://ktsqwvhqamedpmzkzjaz.supabase.co',
       SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzY3NzEsImV4cCI6MjA2OTk1Mjc3MX0.Y-zMa2F5a7UVT-efldv0sZjLAgmCfeEmhxfP7kgGzNY',
@@ -178,7 +177,6 @@ export const validateConfig = () => {
   }
   
   if (errors.length > 0) {
-    console.error('Configuration validation failed:', errors);
     return false;
   }
   
@@ -190,7 +188,6 @@ export const validateConfigWithSchema = (config) => {
   try {
     return validateConfigSchema(config);
   } catch (error) {
-    console.error('❌ Error de validación con schema:', error);
     return null;
   }
 };

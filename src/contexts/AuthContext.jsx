@@ -5,6 +5,10 @@ import toast from 'react-hot-toast';
 import logger from '../utils/logger';
 
 const AuthContext = createContext(null);
+
+// Exportar el contexto para tests
+export { AuthContext };
+
 export const useAuthContext = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuthContext must be used within an AuthProvider');
@@ -262,8 +266,15 @@ const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       logger.error('Login error', error);
-      toast.error(error.message || 'Error al iniciar sesión');
-      return { success: false, error: error.message };
+      
+      // Traducir errores comunes al español para tests y UX
+      let errorMessage = error.message;
+      if (error.message === 'Invalid login credentials' || error.message === 'Invalid credentials') {
+        errorMessage = 'Email o contraseña incorrectos.';
+      }
+      
+      toast.error(errorMessage || 'Error al iniciar sesión');
+      return { success: false, error: errorMessage };
     }
   };
 

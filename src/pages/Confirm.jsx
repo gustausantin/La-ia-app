@@ -18,9 +18,6 @@ export default function Confirm() {
         const refresh_token = searchParams.get('refresh_token');
         const token = searchParams.get('token'); // Formato alternativo
         const type = searchParams.get('type');
-        
-        console.log('Confirm params:', { access_token, refresh_token, token, type });
-        
         // Verificar si tenemos token en formato correcto
         if (!access_token && !token) {
           setStatus('error');
@@ -90,14 +87,11 @@ export default function Confirm() {
             });
 
           if (restaurantError) {
-            console.error("Error creating restaurant:", restaurantError);
             throw new Error("Error al crear el restaurante");
           }
 
           // Limpiar datos temporales
           localStorage.removeItem('pendingRegistration');
-          
-          console.log("✅ Restaurante creado tras confirmación:", restaurantData);
         }
 
         setStatus('success');
@@ -112,7 +106,6 @@ export default function Confirm() {
         }, 2000);
 
       } catch (error) {
-        console.error('Error confirming email:', error);
         setStatus('error');
         setMessage(`❌ Error al confirmar email: ${error.message}`);
       }

@@ -195,7 +195,6 @@ export default function Login() {
         return;
       }
     } catch (err) {
-      console.error("Registration error:", err);
       if (err.message.includes("already registered")) {
         setError("Este email ya está registrado. Intenta hacer login.");
       } else {
@@ -353,6 +352,8 @@ export default function Login() {
                     id="email"
                     type="email"
                     required
+                    pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                    title="Por favor ingresa un email válido"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -371,6 +372,7 @@ export default function Login() {
                     id="password"
                     type="password"
                     required
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -415,6 +417,8 @@ export default function Login() {
                           id="reg-email"
                           type="email"
                           required
+                          pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                          title="Por favor ingresa un email válido"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"

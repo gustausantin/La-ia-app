@@ -1007,8 +1007,6 @@ const CustomerInfoPanel = ({ conversation, onClose }) => {
 
 // Componente principal
 export default function Comunicacion() {
-    console.log('💬 Comunicacion component rendering...');
-    
     const { restaurant, restaurantId, isReady, addNotification } = useAuthContext();
 
     // Estados principales
@@ -1179,7 +1177,6 @@ export default function Comunicacion() {
             // Generar datos de analytics
             generateAnalyticsData();
         } catch (error) {
-            console.error("Error loading conversations:", error);
             toast.error("Error al cargar las conversaciones");
         } finally {
             setLoading(false);
@@ -1296,7 +1293,6 @@ export default function Comunicacion() {
                     });
                 }, 100);
             } catch (error) {
-                console.error("Error loading messages:", error);
                 toast.error("Error al cargar los mensajes");
             }
         },
@@ -1523,7 +1519,6 @@ export default function Comunicacion() {
 
                 toast.success("Mensaje enviado");
             } catch (error) {
-                console.error("Error sending message:", error);
                 toast.error("Error al enviar el mensaje");
             } finally {
                 setSendingMessage(false);

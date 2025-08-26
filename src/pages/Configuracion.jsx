@@ -478,7 +478,6 @@ const {
             setLoading(false);
             // console.log removed for production
 } catch (error) {
-            console.error("Error loading settings:", error);
             toast.error("Error al cargar la configuración");
             setLoading(false);
         }
@@ -502,7 +501,6 @@ const {
                 }
             });
         } catch (error) {
-            console.error("Error loading agent metrics:", error);
         }
     };
 
@@ -524,8 +522,8 @@ const {
                 .eq("restaurant_id", restaurantId)
                 .eq("status", "pendiente");
 
-            if (convError) console.error("Error loading conversations:", convError);
-            if (resError) console.error("Error loading reservations:", resError);
+            if (convError) // console.error("Error loading conversations:", convError);
+            if (resError) // console.error("Error loading reservations:", resError);
 
             setRealTimeStatus({
                 active_conversations: conversations?.length || 0,
@@ -534,7 +532,6 @@ const {
                 last_updated: new Date()
             });
         } catch (error) {
-            console.error("Error loading real-time status:", error);
             // En caso de error, mostrar valores cero
             setRealTimeStatus({
                 active_conversations: 0,
@@ -555,7 +552,6 @@ const {
             toast.success(`${section} actualizado correctamente`);
             // console.log removed for production
 } catch (error) {
-            console.error("Error saving settings:", error);
             toast.error("Error al guardar los cambios");
         } finally {
             setSaving(false);

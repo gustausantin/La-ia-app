@@ -493,7 +493,6 @@ export default function Reservas() {
                 conversionRate: agentReservations.length > 0 ? 85 : 0,
             }));
         } catch (error) {
-            console.error("Error loading reservations:", error);
             toast.error("Error al cargar las reservas");
         } finally {
             setLoading(false);
@@ -523,7 +522,6 @@ export default function Reservas() {
             if (error) throw error;
             setTables(data || []);
         } catch (error) {
-            console.error("Error loading tables:", error);
         }
     }, [restaurantId]);
 
@@ -545,7 +543,6 @@ export default function Reservas() {
                 satisfaction: 0,
             }));
         } catch (error) {
-            console.error("Error loading agent insights:", error);
         }
     }, [restaurantId]);
 
@@ -565,8 +562,6 @@ export default function Reservas() {
                     filter: `restaurant_id=eq.${restaurantId}`,
                 },
                 (payload) => {
-                    console.log("Cambio en reservations:", payload);
-
                     // Notificar si el agente creó una reserva
                     if (
                         payload.eventType === "INSERT" &&
@@ -742,7 +737,6 @@ export default function Reservas() {
                 });
                 loadReservations();
             } catch (error) {
-                console.error("Error updating reservation:", error);
                 toast.error("Error al actualizar la reserva");
             }
         },
@@ -802,7 +796,6 @@ export default function Reservas() {
                 setSelectedReservations(new Set());
                 loadReservations();
             } catch (error) {
-                console.error("Error with bulk action:", error);
                 toast.error("Error al actualizar las reservas");
             }
         },
@@ -1331,7 +1324,6 @@ const ReservationFormModal = ({
 
             onSave();
         } catch (error) {
-            console.error("Error saving reservation:", error);
             toast.error("Error al guardar la reserva");
         } finally {
             setLoading(false);

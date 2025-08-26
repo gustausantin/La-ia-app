@@ -168,7 +168,6 @@ export default function Calendario() {
                 .order("day_of_week");
 
             if (scheduleError) {
-                console.error("Error loading schedule:", scheduleError);
             }
 
             // Si no hay horarios guardados, crear estructura vacía
@@ -228,7 +227,6 @@ export default function Calendario() {
             setOccupancyData({});
 
         } catch (error) {
-            console.error('Error loading data:', error);
             toast.error('Error al cargar los datos del calendario');
         } finally {
             setLoading(false);
@@ -248,7 +246,6 @@ export default function Calendario() {
             );
             // TODO: Implementar guardado real en Supabase
         } catch (error) {
-            console.error('Error saving schedule:', error);
         }
     };
 
@@ -265,7 +262,6 @@ export default function Calendario() {
             );
             // TODO: Implementar guardado real en Supabase
         } catch (error) {
-            console.error('Error saving agent schedule:', error);
         }
     };
 

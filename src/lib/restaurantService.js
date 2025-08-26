@@ -34,7 +34,6 @@ export async function getMiRestaurante(authUser) {
       .single();
 
     if (error) {
-      console.error('Error fetching restaurant:', error);
       throw error;
     }
 
@@ -44,7 +43,6 @@ export async function getMiRestaurante(authUser) {
       permissions: data.permissions || []
     };
   } catch (error) {
-    console.error('Error in getMiRestaurante:', error);
     throw error;
   }
 }
@@ -100,7 +98,6 @@ export async function hasPermission(authUser, permission) {
     // Verificar en el array de permisos
     return data.permissions && data.permissions.includes(permission);
   } catch (error) {
-    console.error('Error checking permissions:', error);
     return false;
   }
 }
