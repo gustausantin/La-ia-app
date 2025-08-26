@@ -19,7 +19,6 @@ export const config = {
 // Helper para logs condicionales
 export const conditionalLog = (...args) => {
   if (config.enableConsoleLog) {
-    console.log(...args);
   }
 };
 

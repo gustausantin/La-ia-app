@@ -76,7 +76,6 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
       toast.success('Configuración guardada correctamente');
     } catch (error) {
       toast.error('Error al guardar la configuración');
-      console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }

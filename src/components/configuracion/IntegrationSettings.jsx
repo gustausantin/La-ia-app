@@ -58,7 +58,6 @@ const IntegrationSettings = React.memo(({ settings, onUpdate }) => {
       toast.success('Integraciones guardadas correctamente');
     } catch (error) {
       toast.error('Error al guardar las integraciones');
-      console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }

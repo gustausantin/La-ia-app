@@ -19,7 +19,6 @@ export default function InitializationTest() {
       const { restaurant } = await initSession();
       setRestaurant(restaurant ?? null);
     } catch (e) {
-      console.error(e);
       setError(e.message || String(e));
     } finally {
       setLoading(false);

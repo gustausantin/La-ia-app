@@ -123,12 +123,10 @@ export default function Layout() {
             // console.log removed for production
 await signOut();
         } catch (error) {
-            console.error('❌ Layout: Error during logout:', error);
             // Si el logout normal falla, usar forceLogout
             forceLogout();
         }
     };
-
 
     try {
         return (
@@ -316,7 +314,6 @@ await signOut();
             </div>
         );
     } catch (error) {
-        console.error('❌ Layout error:', error);
         return (
             <div className="min-h-screen flex items-center justify-center bg-red-50">
                 <div className="text-center p-8">

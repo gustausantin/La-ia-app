@@ -7,6 +7,7 @@ import { useAuthContext } from './contexts/AuthContext';
 import { Bot, RefreshCw } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 import ToastContainer from './components/ToastContainer';
+import PWAInstaller from './components/PWAInstaller';
 import logger from './utils/logger';
 
 // Debug logging
@@ -195,6 +196,7 @@ function App() {
       <BrowserRouter>
         <AppContent />
         <ToastContainer />
+        <PWAInstaller />
       </BrowserRouter>
     </ErrorBoundary>
   );

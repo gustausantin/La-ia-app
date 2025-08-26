@@ -30,7 +30,6 @@ export default function NotificationCenter({ restaurant }) {
       if (!isMounted) return;
 
       if (error) {
-        console.error("Notif error:", error);
         setNotifications([]);
       } else {
         setNotifications(Array.isArray(data) ? data : []);
@@ -52,7 +51,6 @@ export default function NotificationCenter({ restaurant }) {
         prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
       );
     } catch (error) {
-      console.error("Error marking notification as read:", error);
     }
   };
 

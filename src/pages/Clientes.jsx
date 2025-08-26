@@ -204,7 +204,6 @@ export default function Clientes() {
 
             setCustomers(customers);
         } catch (error) {
-            console.error("Error loading customers:", error);
             toast.error("Error al cargar los clientes");
         } finally {
             setLoading(false);

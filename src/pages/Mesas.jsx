@@ -457,8 +457,6 @@ const TableCard = ({
 
 // Componente principal
 export default function Mesas() {
-    console.log('🪑 Mesas component rendering...');
-
     const { restaurant, restaurantId, isReady, addNotification } =
         useAuthContext();
 
@@ -525,7 +523,6 @@ export default function Mesas() {
             ].filter(Boolean);
             setZones(uniqueZones);
         } catch (error) {
-            console.error("Error loading tables:", error);
             toast.error("Error al cargar las mesas");
         } finally {
             setLoading(false);
@@ -559,7 +556,6 @@ export default function Mesas() {
             }));
 
         } catch (error) {
-            console.error("Error loading reservations:", error);
             toast.error("Error al cargar las reservas");
         }
     }, [restaurantId]);
@@ -613,7 +609,6 @@ export default function Mesas() {
                 optimization: 92,
             }));
         } catch (error) {
-            console.error("Error loading agent preferences:", error);
         }
     }, [restaurantId]);
 
@@ -633,7 +628,6 @@ export default function Mesas() {
                     filter: `restaurant_id=eq.${restaurantId}`,
                 },
                 (payload) => {
-                    console.log("Cambio en tables:", payload);
                     loadTables();
                 },
             )
@@ -646,8 +640,6 @@ export default function Mesas() {
                     filter: `restaurant_id=eq.${restaurantId}`,
                 },
                 (payload) => {
-                    console.log("Cambio en reservations:", payload);
-
                     // Notificar si el agente asignó una mesa
                     if (
                         payload.eventType === "INSERT" &&
@@ -849,7 +841,6 @@ export default function Mesas() {
                 }
                 loadTables();
             } catch (error) {
-                console.error("Error deleting table:", error);
                 toast.error("Error al eliminar la mesa");
             }
         },
@@ -1341,7 +1332,6 @@ const TableModal = ({
 
             onSave();
         } catch (error) {
-            console.error("Error saving table:", error);
             toast.error("Error al guardar la mesa");
         } finally {
             setLoading(false);
@@ -1699,7 +1689,6 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
 
             setStats(emptyStats);
         } catch (error) {
-            console.error("Error loading table stats:", error);
             toast.error("Error al cargar estadísticas");
         } finally {
             setLoading(false);

@@ -34,7 +34,7 @@ export default async function handler(req, res) {
 
   try {
     // 1. VALIDACIÓN COMPLETA DE DATOS
-    console.log('Step 1: Validating input data...');
+    // Step 1: Validating input data
 
     if (!email || !password || !firstName || !lastName || !restaurantName ||
         !phone || !cuisineType || !address || !city || !postalCode) {
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     }
 
     // 2. CREAR USUARIO CON ADMIN API (FLUJO PROFESIONAL)
-    console.log('Step 2: Creating user account with admin API...');
+    // Step 2: Creating user account with admin API
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -82,8 +82,6 @@ export default async function handler(req, res) {
     const confirmationUrl = `${process.env.SITE_URL || 'https://7fa71e82-53a4-4e1e-8-replit.dev'}/confirm`;
 
     if (authError) {
-      console.error('Auth error:', authError);
-
       // Manejar específicamente el rate limit
       if (authError.code === 'over_email_send_rate_limit') {
         return res.status(429).json({
@@ -113,11 +111,7 @@ export default async function handler(req, res) {
     }
 
     const userId = authData.user.id;
-    console.log('User created successfully:', userId);
-
     // 3. CREAR RESTAURANTE
-    console.log('Step 3: Creating restaurant...');
-
     const restaurantData = {
       name: restaurantName,
       cuisine_type: cuisineType,
@@ -136,11 +130,7 @@ export default async function handler(req, res) {
       .single();
 
     if (restaurantError) {
-      console.error('Restaurant error:', restaurantError);
-
       // Si falla, el usuario ya existe pero sin datos completos
-      console.log('Usuario creado pero falló el restaurante');
-
       return res.status(400).json({
         error: 'Error creando restaurante',
         details: restaurantError.message
@@ -148,11 +138,7 @@ export default async function handler(req, res) {
     }
 
     const restaurantId = restaurant.id;
-    console.log('Restaurant created successfully:', restaurantId);
-
     // 4. CREAR RELACIÓN USUARIO-RESTAURANTE
-    console.log('Step 4: Creating user-restaurant mapping...');
-
     const mappingData = {
       auth_user_id: userId,
       restaurant_id: restaurantId,
@@ -167,8 +153,6 @@ export default async function handler(req, res) {
       .insert(mappingData);
 
     if (mappingError) {
-      console.error('Mapping error:', mappingError);
-
       // Si falla, eliminar el restaurante
       await supabaseAdmin.from('restaurants').delete().eq('id', restaurantId);
 
@@ -177,15 +161,8 @@ export default async function handler(req, res) {
         details: mappingError.message
       });
     }
-
-    console.log('User-restaurant mapping created successfully');
-
     // 5. SALTAMOS LA CREACIÓN DE PERFIL - No es necesaria para el funcionamiento básico
-    console.log('Step 5: Skipping profile creation (not required for basic functionality)');
-
     // 6. ENVIAR EMAIL DE CONFIRMACIÓN (CRÍTICO)
-    console.log('Step 6: Sending confirmation email...');
-
     try {
       // Intentar enviar email con el método admin.generateLink
       const { data: linkData, error: emailError } = await supabaseAdmin.auth.admin.generateLink({
@@ -197,28 +174,18 @@ export default async function handler(req, res) {
       });
 
       if (emailError) {
-        console.error('❌ Error enviando email con generateLink:', emailError.message);
-        
         // Fallback: Intentar con inviteUserByEmail
-        console.log('🔄 Intentando método alternativo...');
-        
         const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
           redirectTo: confirmationUrl
         });
 
         if (inviteError) {
-          console.error('❌ Error con método alternativo:', inviteError.message);
           throw new Error('No se pudo enviar el email de confirmación');
         } else {
-          console.log('✅ Email enviado exitosamente con método alternativo');
         }
       } else {
-        console.log('✅ Email de confirmación enviado exitosamente');
-        console.log('📧 Link de confirmación generado:', linkData?.properties?.action_link || 'Link generado');
       }
     } catch (emailErr) {
-      console.error('❌ Fallo crítico enviando email:', emailErr.message);
-      
       // Si es un rate limit, devolver error específico
       if (emailErr.message.includes('rate_limit') || emailErr.message.includes('over_email_send_rate_limit')) {
         return res.status(429).json({
@@ -230,12 +197,9 @@ export default async function handler(req, res) {
       }
       
       // Para otros errores, continuar pero avisar
-      console.warn('⚠️ Usuario creado pero email no enviado - usuario debe usar "reenviar"');
     }
 
     // 7. RESPUESTA EXITOSA
-    console.log('Step 7: Registration completed successfully');
-
     return res.status(200).json({
       success: true,
       message: 'Cuenta creada exitosamente. Revisa tu email para confirmar tu cuenta.',
@@ -249,7 +213,6 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Unexpected error:', error);
     return res.status(500).json({
       error: 'Error interno del servidor',
       details: error.message

@@ -105,7 +105,6 @@ const AgentConfiguration = React.memo(({ settings, onUpdate }) => {
       toast.success('Configuración del agente guardada');
     } catch (error) {
       toast.error('Error al guardar la configuración');
-      console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }

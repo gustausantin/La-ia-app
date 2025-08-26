@@ -2,6 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
+import { securityMiddleware } from './src/middleware/security.js';
 
 // CARGAR VARIABLES CORRECTAMENTE para ES6 modules
 config();
@@ -29,6 +30,9 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 const app = express();
+
+// 🛡️ SEGURIDAD EMPRESARIAL - Aplicar PRIMERO
+securityMiddleware(app);
 
 // Middleware
 app.use(cors());

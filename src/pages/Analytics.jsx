@@ -612,7 +612,6 @@ export default function Analytics() {
             // setAiMetrics(processAnalyticsData(analyticsData, agentData));
 
         } catch (error) {
-            console.error("Error loading analytics:", error);
             toast.error("Error al cargar los datos de analytics");
         } finally {
             setLoading(false);

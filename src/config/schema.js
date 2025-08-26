@@ -35,7 +35,6 @@ export function validateConfig(config) {
   try {
     return envSchema.parse(config);
   } catch (error) {
-    console.error('❌ Error de configuración:', error.errors);
     throw new Error(`Configuración inválida: ${error.errors.map(e => e.message).join(', ')}`);
   }
 }

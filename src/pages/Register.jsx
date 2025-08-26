@@ -70,8 +70,6 @@ export default function Register() {
       newErrors.postalCode = 'El código postal es requerido';
     }
 
-
-
     if (!formData.email) {
       newErrors.email = 'El email es requerido';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -114,8 +112,6 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      console.log('Iniciando registro controlado desde backend...');
-
       // Llamar al endpoint del backend que controla todo el flujo
       const response = await fetch('/api/register', {
         method: 'POST',
@@ -144,9 +140,6 @@ export default function Register() {
         const errorDetails = result || { message: 'Error en el registro' };
         throw new Error(JSON.stringify(errorDetails));
       }
-
-      console.log('Registro exitoso:', result);
-
       // Guardar el email para mostrar en el mensaje de éxito
       setRegisteredEmail(formData.email);
 
@@ -154,8 +147,6 @@ export default function Register() {
       setShowSuccess(true);
 
     } catch (error) {
-      console.error('Registration error:', error);
-
       let parsedError;
       try {
         parsedError = JSON.parse(error.message);
@@ -263,7 +254,6 @@ export default function Register() {
                       }
                     } catch (error) {
                       toast.dismiss(toastLoading);
-                      console.error('Error reenviando email:', error);
                       toast.error(`❌ Error al reenviar: ${error.message || 'Inténtalo más tarde'}`);
                     }
                   }}
@@ -562,8 +552,6 @@ export default function Register() {
                 </div>
               )}
             </div>
-
-
 
             {/* Email */}
             <div className="col-span-2">
