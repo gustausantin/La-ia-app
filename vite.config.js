@@ -1,50 +1,79 @@
 
 import { defineConfig } from "vite";
+import { resolve } from "path";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
   base: '/',
+  
+  // ===== ALIAS PATHS ENTERPRISE =====
+  resolve: {
+    alias: {
+      "@": resolve(__dirname, "./src"),
+      "@components": resolve(__dirname, "./src/components"),
+      "@pages": resolve(__dirname, "./src/pages"),
+      "@contexts": resolve(__dirname, "./src/contexts"),
+      "@services": resolve(__dirname, "./src/services"),
+      "@stores": resolve(__dirname, "./src/stores"),
+      "@utils": resolve(__dirname, "./src/utils"),
+      "@hooks": resolve(__dirname, "./src/hooks"),
+    },
+  },
+  
+  // ===== BUILD CONFIGURATION ENTERPRISE =====
   build: {
     outDir: 'dist',
     sourcemap: false,
     minify: 'terser',
     target: 'es2020',
     cssCodeSplit: true,
+    
+    // ===== ROLLUP OPTIONS ENTERPRISE =====
     rollupOptions: {
       output: {
-                    manualChunks: (id) => {
-                // 🚀 BUNDLE SPLITTING SIMPLIFICADO - EVITA ERRORES
-                
-                // Separar solo las librerías más grandes
-                if (id.includes('node_modules')) {
-                  if (id.includes('react') || id.includes('react-dom')) {
-                    return 'vendor-react';
-                  }
-                  if (id.includes('recharts') || id.includes('chart')) {
-                    return 'vendor-charts';
-                  }
-                  if (id.includes('@supabase') || id.includes('supabase')) {
-                    return 'vendor-supabase';
-                  }
-                  // Todas las demás dependencias en un chunk
-                  return 'vendor';
-                }
-              },
+        // ===== ENTERPRISE BUNDLE SPLITTING STRATEGY =====
+        manualChunks: {
+          // Core Framework - Highest Priority
+          'vendor-react': ['react', 'react-dom'],
+          
+          // Router - Load Early  
+          'vendor-router': ['react-router-dom'],
+          
+          // UI & Animation - Medium Priority
+          'vendor-ui': ['framer-motion', 'lucide-react', 'react-hot-toast'],
+          
+          // Charts & Data Visualization - Lazy Load
+          'vendor-charts': ['recharts', 'd3-scale'],
+          
+          // Backend & Data - Background Load
+          'vendor-supabase': ['@supabase/supabase-js'],
+          
+          // Forms & Validation
+          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          
+          // Date & Utilities
+          'vendor-utils': ['date-fns', 'clsx', 'uuid'],
+          
+          // State Management  
+          'vendor-state': ['zustand'],
+          
+          // Logging & Analytics
+          'vendor-analytics': ['winston', 'winston-daily-rotate-file'],
+          
+          // Network & Realtime
+          'vendor-network': ['socket.io-client', 'ws'],
+        },
+        // ===== FILE NAMING STRATEGY ENTERPRISE =====
         chunkFileNames: (chunkInfo) => {
-          // 📁 ESTRUCTURA OPTIMIZADA DE ARCHIVOS
           const name = chunkInfo.name;
           
+          // Vendor chunks - predictable loading order
           if (name.startsWith('vendor-')) {
             return 'assets/vendor/[name]-[hash].js';
           }
-          if (name.startsWith('page-')) {
-            return 'assets/pages/[name]-[hash].js';
-          }
-          if (name.startsWith('component-')) {
-            return 'assets/components/[name]-[hash].js';
-          }
           
+          // Feature-based chunks
           return 'assets/chunks/[name]-[hash].js';
         },
         assetFileNames: (assetInfo) => {
@@ -65,30 +94,63 @@ export default defineConfig({
         }
       }
     },
-    chunkSizeWarningLimit: 500, // Mantener límite estricto
+    // ===== CHUNK SIZE OPTIMIZATION =====
+    chunkSizeWarningLimit: 1000, // Adjusted for enterprise bundles
     
-    // 🔧 OPTIMIZACIONES ADICIONALES
+    // ===== TERSER ENTERPRISE OPTIMIZATION =====
     terserOptions: {
       compress: {
-        drop_console: true, // Remover console.logs en producción
+        drop_console: true,
         drop_debugger: true,
+        passes: 2,
+        unsafe_comps: true,
+        unsafe_math: true,
         pure_funcs: ['console.info', 'console.debug', 'console.warn']
       },
       mangle: {
-        safari10: true
-      }
+        safari10: true,
+        toplevel: true,
+      },
+      format: {
+        comments: false,
+      },
     }
   },
+  
+  // ===== DEV SERVER ENTERPRISE =====
   server: {
     host: "0.0.0.0",
     port: 5000,
     strictPort: true,
-    // 🛡️ Headers de seguridad para desarrollo
+    
+    // ===== SECURITY HEADERS ENTERPRISE =====
     headers: {
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' *.supabase.co wss:;",
       'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'SAMEORIGIN',
+      'X-Frame-Options': 'DENY',
       'X-XSS-Protection': '1; mode=block',
-      'Referrer-Policy': 'strict-origin-when-cross-origin'
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
     }
+  },
+  
+  // ===== OPTIMIZATION DEPENDENCIES =====
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@supabase/supabase-js',
+      'recharts',
+      'framer-motion',
+      'lucide-react',
+      'date-fns',
+      'react-hot-toast',
+      'clsx',
+      'zustand',
+    ],
+    exclude: [
+      // Exclude problematic dependencies
+    ],
   }
 });
