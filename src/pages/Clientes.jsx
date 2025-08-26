@@ -194,10 +194,16 @@ export default function Clientes() {
 
     // Load customers
     const loadCustomers = useCallback(async () => {
-        if (!restaurantId) return;
-
         try {
             setLoading(true);
+
+            // TEMPORAL: Funcionar sin restaurantId hasta que se cree automáticamente
+            if (!restaurantId) {
+                console.log('📋 Clientes: Sin restaurantId, mostrando estado vacío');
+                setCustomers([]);
+                setLoading(false);
+                return;
+            }
 
             // Por ahora, devolver lista vacía - sin datos mock
             const customers = [];
@@ -280,10 +286,11 @@ export default function Clientes() {
 
     // Load data on mount
     useEffect(() => {
-        if (isReady && restaurantId) {
+        if (isReady) {
+            // TEMPORAL: Cargar aunque no haya restaurantId para evitar bucle infinito
             loadCustomers();
         }
-    }, [isReady, restaurantId, loadCustomers]);
+    }, [isReady, loadCustomers]);
 
     // Calculate stats when customers change
     useEffect(() => {
