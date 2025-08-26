@@ -153,7 +153,12 @@ const AuthProvider = ({ children }) => {
       logger.info('Loading restaurant info...');
       await fetchRestaurantInfo(u.id);
       
-      // ENTERPRISE: Migración automática DETERMINÍSTICA
+      // ENTERPRISE: Migración automática con DELAY CRÍTICO para auth sync
+      logger.info('🔍 Esperando sincronización de auth antes de verificar migración...');
+      
+      // DELAY CRÍTICO: Esperar 2 segundos para que Supabase sincronice auth
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       logger.info('🔍 Verificando si usuario necesita migración automática...');
       
       const { data: userMapping, error: mappingError } = await supabase
@@ -168,6 +173,13 @@ const AuthProvider = ({ children }) => {
         logger.info('🚀 EJECUTANDO MIGRACIÓN AUTOMÁTICA - Usuario sin restaurant detectado');
         
         try {
+          // DOUBLE-CHECK: Verificar auth context antes de ejecutar
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.user) {
+            throw new Error('Sesión no disponible para migración');
+          }
+          
+          logger.info('✅ Sesión verificada, ejecutando migración...');
           await createRestaurantForOrphanUser(u);
           logger.info('✅ MIGRACIÓN AUTOMÁTICA COMPLETADA');
           
@@ -179,10 +191,17 @@ const AuthProvider = ({ children }) => {
           logger.error('💥 ERROR CRÍTICO EN MIGRACIÓN AUTOMÁTICA:', migrationError);
           toast.error('Error configurando tu restaurant. Intentando de nuevo...');
           
-          // Retry con backoff exponencial
+          // Retry con backoff exponencial MAYOR
           setTimeout(async () => {
             try {
               logger.info('🔄 RETRY: Intentando migración automática nuevamente...');
+              
+              // VERIFICAR AUTH OTRA VEZ
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session?.user) {
+                throw new Error('Sesión aún no disponible en retry');
+              }
+              
               await createRestaurantForOrphanUser(u);
               await fetchRestaurantInfo(u.id);
               logger.info('✅ RETRY EXITOSO: Migración completada');
@@ -190,7 +209,7 @@ const AuthProvider = ({ children }) => {
               logger.error('💥 RETRY FALLIDO:', retryError);
               toast.error('Error persistente. Por favor, recarga la página.');
             }
-          }, 3000);
+          }, 5000); // 5 segundos en retry
         }
       } else {
         logger.info('✅ Usuario ya tiene restaurant asociado - migración no necesaria');
