@@ -307,6 +307,7 @@ await signOut();
                 <NotificationCenter
                     isOpen={showNotifications}
                     onClose={() => setShowNotifications(false)}
+                    restaurant={restaurant}
                 />
 
                 {/* Acciones de Emergencia - NUEVO */}
