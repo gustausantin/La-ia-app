@@ -5,7 +5,9 @@ import { supabase } from "../lib/supabase";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
-export default function NotificationCenter({ restaurant }) {
+export default function NotificationCenter({ isOpen, onClose, restaurant }) {
+  // No renderizar si no está abierto
+  if (!isOpen) return null;
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
 
@@ -103,10 +105,31 @@ export default function NotificationCenter({ restaurant }) {
   const read = list.filter(n => n && n.read);
 
   return (
-    <div>
-      <h3>Notificaciones ({unread.length} sin leer)</h3>
-      <div className="flex-1 p-6">
-        {notifications && notifications.length > 0 ? (
+    <>
+      {/* Overlay para cerrar al hacer click fuera */}
+      <div 
+        className="fixed inset-0 z-40" 
+        onClick={onClose}
+      />
+      
+      {/* Panel de notificaciones */}
+      <div className="absolute top-12 right-0 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900">
+              Notificaciones ({unread.length} sin leer)
+            </h3>
+            <button 
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+        
+        <div className="max-h-96 overflow-y-auto p-4">
+          {notifications && notifications.length > 0 ? (
           <div className="space-y-3">
             {notifications.slice(0, 10).map((notification) => {
               const Icon = getNotificationIcon(notification.type);
@@ -157,7 +180,8 @@ export default function NotificationCenter({ restaurant }) {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
