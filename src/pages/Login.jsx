@@ -352,7 +352,7 @@ export default function Login() {
                     id="email"
                     type="email"
                     required
-                    pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                    pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
                     title="Por favor ingresa un email válido"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -417,7 +417,7 @@ export default function Login() {
                           id="reg-email"
                           type="email"
                           required
-                          pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                          pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
                           title="Por favor ingresa un email válido"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}

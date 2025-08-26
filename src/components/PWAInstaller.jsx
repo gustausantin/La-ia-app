@@ -19,7 +19,8 @@ const PWAInstaller = () => {
     // Detectar evento de instalación PWA
     const handleBeforeInstallPrompt = (e) => {
       console.log('📱 PWA: Evento beforeinstallprompt detectado');
-      e.preventDefault();
+      // NO llamar e.preventDefault() inmediatamente para evitar warning
+      // Solo prevenir si vamos a usar el prompt
       setDeferredPrompt(e);
       setIsInstallable(true);
     };
@@ -122,7 +123,8 @@ const PWAInstaller = () => {
     try {
       console.log('📱 PWA: Mostrando prompt de instalación...');
       
-      // Mostrar prompt de instalación
+      // Prevenir comportamiento por defecto y mostrar prompt
+      deferredPrompt.preventDefault();
       deferredPrompt.prompt();
       
       // Esperar respuesta del usuario
