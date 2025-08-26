@@ -457,8 +457,40 @@ const {
     const loadSettings = async () => {
         try {
             setLoading(true);
-            // console.log removed for production
-// Cargar datos reales del registro/Supabase inmediatamente 
+            
+            // Si no hay restaurant, intentar crear uno automáticamente
+            if (!restaurant && user?.id) {
+                toast.info('Configurando tu restaurante...');
+                try {
+                    const { data: restaurantData, error: restaurantError } = await supabase
+                        .rpc('create_restaurant_securely', {
+                            restaurant_data: {
+                                name: `Restaurante de ${user.email.split('@')[0]}`,
+                                email: user.email,
+                                phone: '+34 600 000 000',
+                                city: 'Madrid',
+                                plan: 'trial',
+                                active: true
+                            }
+                        });
+
+                    if (restaurantError) {
+                        throw restaurantError;
+                    }
+
+                    if (restaurantData?.success) {
+                        toast.success('¡Restaurante configurado correctamente!');
+                        // Forzar recarga de página para actualizar AuthContext
+                        setTimeout(() => window.location.reload(), 1000);
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error configurando restaurant:', error);
+                    toast.error('Error al configurar restaurante automáticamente');
+                }
+            }
+            
+            // Cargar datos reales del registro/Supabase inmediatamente 
             setSettings((prev) => ({
                 ...prev,
                 // Datos del restaurante desde el registro
@@ -476,8 +508,8 @@ const {
             }));
             
             setLoading(false);
-            // console.log removed for production
-} catch (error) {
+            
+        } catch (error) {
             toast.error("Error al cargar la configuración");
             setLoading(false);
         }

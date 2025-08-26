@@ -154,23 +154,21 @@ const AuthProvider = ({ children }) => {
       await fetchRestaurantInfo(u.id);
       
       // MIGRACIÓN AUTOMÁTICA: Solo si NO hay restaurant después de cargar
-      if (!restaurant && !restaurantId) {
-        // Double-check en BD antes de crear
-        const { data: existingMapping } = await supabase
-          .from('user_restaurant_mapping')
-          .select('restaurant_id')
-          .eq('auth_user_id', u.id)
-          .limit(1)
-          .maybeSingle();
+      // Usar timeout para evitar estado de restaurant que puede cambiar
+      setTimeout(async () => {
+        try {
+          // Double-check estado actual
+          const currentRestaurant = restaurant || null;
+          const currentRestaurantId = restaurantId || null;
           
-        if (existingMapping) {
-          logger.info('🔍 Restaurant ya existe en BD - re-cargando datos');
-          await fetchRestaurantInfo(u.id);
-        } else {
-          logger.info('🔧 Usuario sin restaurant detectado - ejecutando migración automática...');
-          await createRestaurantForOrphanUser(u);
+          if (!currentRestaurant && !currentRestaurantId) {
+            logger.info('🔧 Usuario sin restaurant detectado - ejecutando migración automática...');
+            await createRestaurantForOrphanUser(u);
+          }
+        } catch (error) {
+          logger.error('Error en migración automática:', error);
         }
-      }
+      }, 1000); // Dar tiempo para que se actualice el estado
       
       logger.info('User and restaurant ready');
       
