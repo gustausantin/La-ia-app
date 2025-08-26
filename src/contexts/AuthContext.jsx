@@ -153,14 +153,11 @@ const AuthProvider = ({ children }) => {
       logger.info('Loading restaurant info...');
       await fetchRestaurantInfo(u.id);
       
-      // ENTERPRISE: Migración automática con DELAY CRÍTICO para auth sync
-      logger.info('🔍 Esperando sincronización de auth antes de verificar migración...');
+      // ENTERPRISE ARCHITECTURE: Restaurant creation handled by PostgreSQL trigger
+      // NO JavaScript migration needed - trigger guarantees restaurant exists
+      logger.info('🏗️ ENTERPRISE: Arquitectura trigger-based, no migration needed');
       
-      // DELAY CRÍTICO: Esperar 2 segundos para que Supabase sincronice auth
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      logger.info('🔍 Verificando si usuario necesita migración automática...');
-      
+      // Simple verification: Restaurant should exist due to trigger
       const { data: userMapping, error: mappingError } = await supabase
         .from('user_restaurant_mapping')
         .select('restaurant_id')
@@ -170,49 +167,19 @@ const AuthProvider = ({ children }) => {
       if (mappingError) {
         logger.error('❌ Error verificando mapping de usuario:', mappingError);
       } else if (!userMapping?.restaurant_id) {
-        logger.info('🚀 EJECUTANDO MIGRACIÓN AUTOMÁTICA - Usuario sin restaurant detectado');
+        logger.warn('🚨 ENTERPRISE ALERT: Trigger failure detected - running emergency fallback');
         
+        // EMERGENCY FALLBACK: Only if trigger failed
         try {
-          // DOUBLE-CHECK: Verificar auth context antes de ejecutar
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session?.user) {
-            throw new Error('Sesión no disponible para migración');
-          }
-          
-          logger.info('✅ Sesión verificada, ejecutando migración...');
           await createRestaurantForOrphanUser(u);
-          logger.info('✅ MIGRACIÓN AUTOMÁTICA COMPLETADA');
-          
-          // Re-cargar información después de crear restaurant
-          logger.info('🔄 Recargando información de restaurant...');
+          logger.info('✅ EMERGENCY FALLBACK: Restaurant created successfully');
           await fetchRestaurantInfo(u.id);
-          
-        } catch (migrationError) {
-          logger.error('💥 ERROR CRÍTICO EN MIGRACIÓN AUTOMÁTICA:', migrationError);
-          toast.error('Error configurando tu restaurant. Intentando de nuevo...');
-          
-          // Retry con backoff exponencial MAYOR
-          setTimeout(async () => {
-            try {
-              logger.info('🔄 RETRY: Intentando migración automática nuevamente...');
-              
-              // VERIFICAR AUTH OTRA VEZ
-              const { data: { session } } = await supabase.auth.getSession();
-              if (!session?.user) {
-                throw new Error('Sesión aún no disponible en retry');
-              }
-              
-              await createRestaurantForOrphanUser(u);
-              await fetchRestaurantInfo(u.id);
-              logger.info('✅ RETRY EXITOSO: Migración completada');
-            } catch (retryError) {
-              logger.error('💥 RETRY FALLIDO:', retryError);
-              toast.error('Error persistente. Por favor, recarga la página.');
-            }
-          }, 5000); // 5 segundos en retry
+        } catch (fallbackError) {
+          logger.error('💥 EMERGENCY FALLBACK FAILED:', fallbackError);
+          toast.error('Error crítico del sistema. Contactar soporte técnico.');
         }
       } else {
-        logger.info('✅ Usuario ya tiene restaurant asociado - migración no necesaria');
+        logger.info('✅ ENTERPRISE: Restaurant found via trigger architecture');
       }
       
       logger.info('User and restaurant ready');
