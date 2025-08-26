@@ -391,9 +391,9 @@ const AuthProvider = ({ children }) => {
     isReady: true, // SIEMPRE true - la app está lista inmediatamente
     loading: false, // NUNCA loading - eliminamos el concepto de loading
     user, 
-    restaurant, 
-    restaurantId, 
-    restaurantInfo: restaurant,
+    restaurant: restaurant || { name: `Restaurante de ${user?.email?.split('@')[0] || 'Usuario'}`, id: 'temp-restaurant' }, // TEMPORAL: Restaurant por defecto durante outage de Supabase
+    restaurantId: restaurantId || 'temp-restaurant-id', // TEMPORAL: ID por defecto durante outage de Supabase
+    restaurantInfo: restaurant || { name: `Restaurante de ${user?.email?.split('@')[0] || 'Usuario'}`, id: 'temp-restaurant' },
     notifications, 
     agentStatus, 
     unreadCount,
