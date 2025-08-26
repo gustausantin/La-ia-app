@@ -93,12 +93,18 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    console.log('🎯 DEBUG: handleLogin ejecutado!');
+    console.log('🎯 DEBUG: email:', email);
+    console.log('🎯 DEBUG: password length:', password?.length);
+    
     setLoading(true);
     setError("");
     setMessage("");
 
     try {
+      console.log('🎯 DEBUG: Llamando a login...');
       const result = await login(email, password);
+      console.log('🎯 DEBUG: Resultado login:', result);
 
       if (!result.success) {
         if (result.error?.includes("Email not confirmed")) {
@@ -112,6 +118,7 @@ export default function Login() {
         }
       }
     } catch (err) {
+      console.log('🎯 DEBUG: Error en handleLogin:', err);
       setError("Error inesperado. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
