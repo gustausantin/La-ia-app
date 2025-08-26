@@ -283,13 +283,25 @@ const AuthProvider = ({ children }) => {
   // Helpers auth
   const login = async (email, password) => {
     try {
+      logger.info('🔑 INICIANDO LOGIN:', { email });
+      
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
+      logger.info('✅ LOGIN EXITOSO:', { user: data.user?.email });
       toast.success('¡Bienvenido de vuelta!');
+      
+      // ENTERPRISE DEBUG: Forzar verificación de estado inmediata
+      setTimeout(() => {
+        logger.info('🔄 VERIFICANDO ESTADO POST-LOGIN...');
+        logger.info('Status actual:', status);
+        logger.info('Usuario actual:', user?.email || 'NO USER');
+        logger.info('Restaurant actual:', restaurant?.name || 'NO RESTAURANT');
+      }, 1000);
+      
       return { success: true };
     } catch (error) {
-      logger.error('Login error', error);
+      logger.error('❌ LOGIN ERROR:', error);
       
       // Traducir errores comunes al español para tests y UX
       let errorMessage = error.message;
