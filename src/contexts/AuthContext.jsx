@@ -153,22 +153,31 @@ const AuthProvider = ({ children }) => {
       logger.info('Loading restaurant info...');
       await fetchRestaurantInfo(u.id);
       
-      // MIGRACIÓN AUTOMÁTICA: Solo si NO hay restaurant después de cargar
-      // Usar timeout para evitar estado de restaurant que puede cambiar
-      setTimeout(async () => {
+      // MIGRACIÓN AUTOMÁTICA: Verificar estado actual INMEDIATAMENTE
+      // Usar una función que acceda al estado más reciente
+      const checkAndCreateRestaurant = async () => {
         try {
-          // Double-check estado actual
-          const currentRestaurant = restaurant || null;
-          const currentRestaurantId = restaurantId || null;
+          // Re-verificar el estado actual haciendo una consulta fresh
+          const { data: freshMap, error: freshError } = await supabase
+            .from('user_restaurant_mapping')
+            .select('restaurant_id')
+            .eq('auth_user_id', u.id)
+            .maybeSingle();
           
-          if (!currentRestaurant && !currentRestaurantId) {
-            logger.info('🔧 Usuario sin restaurant detectado - ejecutando migración automática...');
+          // Si NO hay mapping, crear restaurant
+          if (!freshMap?.restaurant_id) {
+            logger.info('🔧 Usuario sin restaurant confirmado - ejecutando migración automática...');
             await createRestaurantForOrphanUser(u);
+          } else {
+            logger.info('✅ Restaurant ya existe, migración no necesaria');
           }
         } catch (error) {
-          logger.error('Error en migración automática:', error);
+          logger.error('Error en verificación de migración automática:', error);
         }
-      }, 1000); // Dar tiempo para que se actualice el estado
+      };
+      
+      // Ejecutar después de que fetchRestaurantInfo complete
+      setTimeout(checkAndCreateRestaurant, 1500);
       
       logger.info('User and restaurant ready');
       
