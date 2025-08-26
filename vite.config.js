@@ -13,70 +13,24 @@ export default defineConfig({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // 🚀 OPTIMIZACIÓN AVANZADA DE CHUNKS
-          
-          // Vendor libraries críticas - cargar primero
-          if (id.includes('react') || id.includes('react-dom')) {
-            return 'vendor-react-core';
-          }
-          
-          // Router y navegación
-          if (id.includes('react-router')) {
-            return 'vendor-navigation';
-          }
-          
-          // Charts y visualización - lazy load
-          if (id.includes('recharts') || id.includes('chart.js') || id.includes('d3')) {
-            return 'vendor-charts';
-          }
-          
-          // UI y animaciones
-          if (id.includes('framer-motion') || id.includes('lucide-react') || id.includes('react-hot-toast')) {
-            return 'vendor-ui-animations';
-          }
-          
-          // Formularios y validación
-          if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) {
-            return 'vendor-forms';
-          }
-          
-          // Supabase y networking
-          if (id.includes('@supabase') || id.includes('supabase')) {
-            return 'vendor-supabase';
-          }
-          
-          // Utilidades de fecha y formato
-          if (id.includes('date-fns') || id.includes('clsx') || id.includes('classnames')) {
-            return 'vendor-utils';
-          }
-          
-          // Analytics y IA (lazy load)
-          if (id.includes('analytics') || id.includes('ai') || id.includes('tensorflow')) {
-            return 'vendor-ai';
-          }
-          
-          // Componentes grandes - separar en chunks independientes
-          if (id.includes('/pages/Analytics')) return 'page-analytics';
-          if (id.includes('/pages/Comunicacion')) return 'page-comunicacion';
-          if (id.includes('/pages/Dashboard')) return 'page-dashboard';
-          if (id.includes('/pages/Mesas')) return 'page-mesas';
-          if (id.includes('/pages/Reservas')) return 'page-reservas';
-          
-          // Componentes de comunicación
-          if (id.includes('/components/comunicacion')) return 'component-comunicacion';
-          if (id.includes('/components/analytics')) return 'component-analytics';
-          
-          // Node modules genéricos
-          if (id.includes('node_modules')) {
-            return 'vendor-misc';
-          }
-          
-          // Chunks por feature
-          if (id.includes('/stores/')) return 'stores';
-          if (id.includes('/hooks/')) return 'hooks';
-          if (id.includes('/utils/')) return 'utils';
-        },
+                    manualChunks: (id) => {
+                // 🚀 BUNDLE SPLITTING SIMPLIFICADO - EVITA ERRORES
+                
+                // Separar solo las librerías más grandes
+                if (id.includes('node_modules')) {
+                  if (id.includes('react') || id.includes('react-dom')) {
+                    return 'vendor-react';
+                  }
+                  if (id.includes('recharts') || id.includes('chart')) {
+                    return 'vendor-charts';
+                  }
+                  if (id.includes('@supabase') || id.includes('supabase')) {
+                    return 'vendor-supabase';
+                  }
+                  // Todas las demás dependencias en un chunk
+                  return 'vendor';
+                }
+              },
         chunkFileNames: (chunkInfo) => {
           // 📁 ESTRUCTURA OPTIMIZADA DE ARCHIVOS
           const name = chunkInfo.name;
