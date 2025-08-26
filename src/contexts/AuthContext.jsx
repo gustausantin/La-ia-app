@@ -153,31 +153,48 @@ const AuthProvider = ({ children }) => {
       logger.info('Loading restaurant info...');
       await fetchRestaurantInfo(u.id);
       
-      // MIGRACIÓN AUTOMÁTICA: Verificar estado actual INMEDIATAMENTE
-      // Usar una función que acceda al estado más reciente
-      const checkAndCreateRestaurant = async () => {
-        try {
-          // Re-verificar el estado actual haciendo una consulta fresh
-          const { data: freshMap, error: freshError } = await supabase
-            .from('user_restaurant_mapping')
-            .select('restaurant_id')
-            .eq('auth_user_id', u.id)
-            .maybeSingle();
-          
-          // Si NO hay mapping, crear restaurant
-          if (!freshMap?.restaurant_id) {
-            logger.info('🔧 Usuario sin restaurant confirmado - ejecutando migración automática...');
-            await createRestaurantForOrphanUser(u);
-          } else {
-            logger.info('✅ Restaurant ya existe, migración no necesaria');
-          }
-        } catch (error) {
-          logger.error('Error en verificación de migración automática:', error);
-        }
-      };
+      // ENTERPRISE: Migración automática DETERMINÍSTICA
+      logger.info('🔍 Verificando si usuario necesita migración automática...');
       
-      // Ejecutar después de que fetchRestaurantInfo complete
-      setTimeout(checkAndCreateRestaurant, 1500);
+      const { data: userMapping, error: mappingError } = await supabase
+        .from('user_restaurant_mapping')
+        .select('restaurant_id')
+        .eq('auth_user_id', u.id)
+        .maybeSingle();
+      
+      if (mappingError) {
+        logger.error('❌ Error verificando mapping de usuario:', mappingError);
+      } else if (!userMapping?.restaurant_id) {
+        logger.info('🚀 EJECUTANDO MIGRACIÓN AUTOMÁTICA - Usuario sin restaurant detectado');
+        
+        try {
+          await createRestaurantForOrphanUser(u);
+          logger.info('✅ MIGRACIÓN AUTOMÁTICA COMPLETADA');
+          
+          // Re-cargar información después de crear restaurant
+          logger.info('🔄 Recargando información de restaurant...');
+          await fetchRestaurantInfo(u.id);
+          
+        } catch (migrationError) {
+          logger.error('💥 ERROR CRÍTICO EN MIGRACIÓN AUTOMÁTICA:', migrationError);
+          toast.error('Error configurando tu restaurant. Intentando de nuevo...');
+          
+          // Retry con backoff exponencial
+          setTimeout(async () => {
+            try {
+              logger.info('🔄 RETRY: Intentando migración automática nuevamente...');
+              await createRestaurantForOrphanUser(u);
+              await fetchRestaurantInfo(u.id);
+              logger.info('✅ RETRY EXITOSO: Migración completada');
+            } catch (retryError) {
+              logger.error('💥 RETRY FALLIDO:', retryError);
+              toast.error('Error persistente. Por favor, recarga la página.');
+            }
+          }, 3000);
+        }
+      } else {
+        logger.info('✅ Usuario ya tiene restaurant asociado - migración no necesaria');
+      }
       
       logger.info('User and restaurant ready');
       
