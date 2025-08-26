@@ -90,10 +90,6 @@ export default function Login() {
   const [closingTime, setClosingTime] = useState("23:00");
 
   const { login } = useAuthContext();
-  
-  // DEBUG: Verificar que login existe
-  console.log('🔧 DEBUG: login function:', typeof login);
-  console.log('🔧 DEBUG: AuthContext:', useAuthContext());
 
   const handleLogin = async (e) => {
     e.preventDefault();
