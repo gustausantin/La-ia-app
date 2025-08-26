@@ -90,6 +90,10 @@ export default function Login() {
   const [closingTime, setClosingTime] = useState("23:00");
 
   const { login } = useAuthContext();
+  
+  // DEBUG: Verificar que login existe
+  console.log('🔧 DEBUG: login function:', typeof login);
+  console.log('🔧 DEBUG: AuthContext:', useAuthContext());
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -105,6 +109,8 @@ export default function Login() {
       console.log('🎯 DEBUG: Llamando a login...');
       const result = await login(email, password);
       console.log('🎯 DEBUG: Resultado login:', result);
+      console.log('🎯 DEBUG: result.success:', result?.success);
+      console.log('🎯 DEBUG: result.error:', result?.error);
 
       if (!result.success) {
         if (result.error?.includes("Email not confirmed")) {
