@@ -30,8 +30,24 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error("Supabase credentials are missing");
 }
 
-// Cliente simple
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Cliente con configuración enterprise
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    // Configuración enterprise para tokens
+    storageKey: 'la-ia-auth-token',
+    flowType: 'pkce',
+    // Evitar errores de refresh en production
+    debug: false
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  }
+});
 
 // Verificación silenciosa de conexión
 supabase
