@@ -12,7 +12,7 @@ import {
   Clock,
   Zap,
   BarChart3,
-  PieChart,
+  PieChart as PieIcon,
   Activity,
   Sparkles,
   RefreshCw,
@@ -24,25 +24,14 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, BarElement } from 'chart.js';
-import { Line, Pie, Bar } from 'react-chartjs-2';
+import { LineChart, Line, PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { Card, Button, SkeletonChart } from '../ui/index.js';
 import { analyticsAI } from '../../services/analyticsAI.js';
 import { useAnalyticsStore } from '../../stores/analyticsStore.js';
 import { log } from '../../utils/logger.js';
 
-// Registrar componentes de Chart.js
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+// Colores para gráficos Recharts
+const CHART_COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
 // Dashboard principal de IA
 const AIInsightsDashboard = ({ className = '' }) => {
