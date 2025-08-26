@@ -447,10 +447,15 @@ const {
 
     // Cargar configuración
     useEffect(() => {
-        if (isReady && restaurantId) {
+        if (isReady) {
+            // SIEMPRE cargar settings, incluso sin restaurantId
             loadSettings();
-            loadAgentMetrics();
-            loadRealTimeStatus();
+            
+            // Solo cargar métricas si hay restaurantId
+            if (restaurantId) {
+                loadAgentMetrics();
+                loadRealTimeStatus();
+            }
         }
     }, [isReady, restaurantId]);
 
