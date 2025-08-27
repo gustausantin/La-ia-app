@@ -225,31 +225,28 @@ const AuthProvider = ({ children }) => {
 
     // Inicializar inmediatamente
     initSession();
-    
-    // Escuchar evento personalizado de actualización de auth
-    const handleAuthUpdate = () => {
-      logger.info('Auth update event received, refreshing session...');
-      setTimeout(() => {
-        initSession();
-      }, 500);
-    };
-    
-    window.addEventListener('auth-updated', handleAuthUpdate);
 
-    // Auth state listener
+    // Auth state listener SIMPLIFICADO - solo escucha cambios esenciales
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       logger.debug('Auth state changed', { event });
 
+      // IGNORAR eventos que causan bucles
       if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
 
       if (event === 'SIGNED_IN' && session?.user) {
+        // Prevenir duplicados
         if (lastSignInRef.current === session.user.id) {
           logger.debug('SIGNED_IN duplicado ignorado'); 
           return;
         }
         lastSignInRef.current = session.user.id;
-        logger.info('User signed in', { email: session.user.email });
-        await loadUserData(session.user); // AHORA es async
+        logger.info('User signed in - activación email', { email: session.user.email });
+        
+        // DELAY para activación de email - evita bucles
+        setTimeout(async () => {
+          await loadUserData(session.user);
+        }, 1000); // 1 segundo delay
+        
       } else if (event === 'SIGNED_OUT') {
         lastSignInRef.current = null;
         setUser(null); 
@@ -262,7 +259,6 @@ const AuthProvider = ({ children }) => {
 
     return () => {
       subscription.unsubscribe();
-      window.removeEventListener('auth-updated', handleAuthUpdate);
     };
   }, []);
 

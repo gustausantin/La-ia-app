@@ -501,22 +501,39 @@ const {
             console.log("🏙️ Ciudad:", restaurant?.city);
             console.log("📮 CP:", restaurant?.postal_code);
             
+            // Si no tenemos restaurant desde AuthContext, cargar directamente desde BD
+            let restaurantData = restaurant;
+            
+            if (!restaurant && restaurantId) {
+                console.log("🔄 Restaurant no en context, cargando desde BD...");
+                const { data: dbRestaurant, error: dbError } = await supabase
+                    .from("restaurants")
+                    .select("*")
+                    .eq("id", restaurantId)
+                    .single();
+                
+                if (dbError) {
+                    console.error("❌ Error cargando restaurant desde BD:", dbError);
+                } else {
+                    restaurantData = dbRestaurant;
+                    console.log("✅ Restaurant cargado desde BD:", restaurantData);
+                }
+            }
+            
             // Cargar datos reales del registro/Supabase inmediatamente 
             setSettings((prev) => ({
                 ...prev,
                 // Datos del restaurante desde el registro - PREFILL AUTOMÁTICO MEJORADO
-                name: restaurant?.restaurant_name || restaurant?.name || "",
-                email: restaurant?.email || user?.email || "",
-                phone: restaurant?.phone || "",
-                address: restaurant?.address || "",
-                city: restaurant?.city || "",
-                postal_code: restaurant?.postal_code || "",
-                cuisine_type: restaurant?.cuisine_type || "",
-                website: restaurant?.website || "",
-                description: restaurant?.description || "",
+                name: restaurantData?.name || "",
+                email: restaurantData?.email || user?.email || "",
+                phone: restaurantData?.phone || "",
+                address: restaurantData?.address || "",
+                city: restaurantData?.city || "",
+                postal_code: restaurantData?.postal_code || "",
+                cuisine_type: restaurantData?.cuisine_type || "",
                 agent: {
                     ...prev.agent,
-                    name: restaurant?.restaurant_name || restaurant?.name ? `Asistente de ${restaurant.restaurant_name || restaurant.name}` : "Asistente Virtual",
+                    name: restaurantData?.name ? `Asistente de ${restaurantData.name}` : "Asistente Virtual",
                 }
             }));
             
@@ -615,6 +632,11 @@ const {
             if (error) {
                 console.error("❌ Error guardando:", error);
                 throw error;
+            }
+
+            // Actualizar el contexto con los nuevos datos
+            if (window.dispatchEvent) {
+                window.dispatchEvent(new CustomEvent('restaurant-updated'));
             }
 
             toast.success(`✅ ${section} actualizado correctamente`);
