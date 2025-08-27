@@ -617,12 +617,26 @@ const {
             setSaving(true);
             console.log("💾 GUARDANDO - Datos a guardar:", settings);
 
+            // 🛡️ VALIDACIONES PREVENTIVAS
+            if (!restaurantId) {
+                throw new Error("ID del restaurante no encontrado");
+            }
+            
+            if (!settings.name?.trim()) {
+                throw new Error("El nombre del restaurante es obligatorio");
+            }
+
             // 1. Primero obtener settings actuales
-            const { data: currentData } = await supabase
+            const { data: currentData, error: fetchError } = await supabase
                 .from("restaurants")
                 .select("settings")
                 .eq("id", restaurantId)
                 .single();
+                
+            if (fetchError) {
+                console.error("❌ Error obteniendo settings:", fetchError);
+                throw new Error("No se pudo acceder a la configuración actual");
+            }
             
             const currentSettings = currentData?.settings || {};
             
