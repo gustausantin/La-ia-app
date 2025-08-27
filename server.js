@@ -89,7 +89,7 @@ const findAvailablePort = (startPort) => {
 };
 
 // Iniciar servidor en puerto fijo
-const PORT = 5001;
+const PORT = 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ API Server running on http://0.0.0.0:${PORT}`);
