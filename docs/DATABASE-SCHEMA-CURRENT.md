@@ -17,11 +17,11 @@ git commit -m "📊 UPDATE: Esquema de BD actualizado"
 
 ---
 
-## 📋 **ESTRUCTURA REAL CONFIRMADA (Auditoría ejecutada - 25 Agosto 2025):**
+## 📋 **ESTRUCTURA REAL CONFIRMADA (Auditoría ejecutada - 28 Enero 2025):**
 
-> **17 TABLAS TOTALES** - Todas con RLS habilitado y políticas optimizadas  
+> **23+ TABLAS TOTALES** - Todas con RLS habilitado y políticas optimizadas  
 > **SEGURIDAD:** Enterprise Grade 8.5/10  
-> **ESTADO:** Auditado y certificado
+> **ESTADO:** Auditado y certificado - Incluye tablas de IA
 
 ---
 
@@ -441,6 +441,139 @@ timestamp        TIMESTAMP DEFAULT NOW()
 
 ## 📝 **NOTAS:**
 
-**Última actualización:** [PENDIENTE - Ejecutar auditoría]  
-**Por:** [USUARIO]  
-**Cambios:** [DESCRIPCIÓN]
+---
+
+## 🤖 **TABLAS DE IA AVANZADA**
+
+> **NUEVAS TABLAS DETECTADAS EN INTERFAZ SUPABASE**
+
+### **🤖 `agent_conversations`** (IA Conversacional)
+```sql
+id               UUID PRIMARY KEY
+restaurant_id    UUID → restaurants(id)
+customer_phone   VARCHAR(20)
+channel          VARCHAR(50) ('whatsapp','vapi','email')
+status           VARCHAR(20) ('active','completed','pending')
+conversation_data JSONB
+ai_insights      JSONB
+created_at       TIMESTAMP DEFAULT NOW()
+```
+**🔒 RLS:** ⚠️ Unrestricted | **📋 Políticas:** Pendiente configurar  
+**🎯 Función:** Gestión de conversaciones IA multicanal
+
+### **🧠 `agent_insights`** (Insights IA)
+```sql
+id               UUID PRIMARY KEY
+restaurant_id    UUID → restaurants(id)
+insight_type     VARCHAR(50)
+insight_data     JSONB
+confidence_score DECIMAL(3,2)
+generated_at     TIMESTAMP DEFAULT NOW()
+```
+**🔒 RLS:** ⚠️ Unrestricted | **📋 Políticas:** Pendiente configurar  
+**🎯 Función:** Insights automáticos generados por IA
+
+### **📊 `agent_metrics`** (Métricas IA)
+```sql
+id               UUID PRIMARY KEY
+restaurant_id    UUID → restaurants(id)
+date             DATE NOT NULL
+total_conversations INTEGER DEFAULT 0
+successful_bookings INTEGER DEFAULT 0
+avg_response_time  DECIMAL(5,2)
+conversion_rate    DECIMAL(5,2)
+satisfaction_score DECIMAL(3,2)
+created_at       TIMESTAMP DEFAULT NOW()
+```
+**🔒 RLS:** ⚠️ Unrestricted | **📋 Políticas:** Pendiente configurar  
+**🎯 Función:** Métricas de performance del agente IA
+
+### **📈 `channel_performance`** (Performance por Canal)
+```sql
+id               UUID PRIMARY KEY
+restaurant_id    UUID → restaurants(id)
+channel          VARCHAR(50) ('whatsapp','vapi','email')
+date             DATE NOT NULL
+conversations    INTEGER DEFAULT 0
+bookings         INTEGER DEFAULT 0
+conversion_rate  DECIMAL(5,2)
+avg_response_time DECIMAL(5,2)
+satisfaction_score DECIMAL(3,2)
+created_at       TIMESTAMP DEFAULT NOW()
+```
+**🔒 RLS:** ⚠️ Unrestricted | **📋 Políticas:** Pendiente configurar  
+**🎯 Función:** Analytics por canal de comunicación
+
+### **💬 `conversation_analytics`** (Analytics Conversaciones)
+```sql
+id               UUID PRIMARY KEY
+restaurant_id    UUID → restaurants(id)
+conversation_id  UUID
+customer_intent  VARCHAR(100)
+sentiment_score  DECIMAL(3,2)
+topics_detected  JSONB
+resolution_time  INTEGER
+success_outcome  BOOLEAN
+created_at       TIMESTAMP DEFAULT NOW()
+```
+**🔒 RLS:** ⚠️ Unrestricted | **📋 Políticas:** Pendiente configurar  
+**🎯 Función:** Analytics avanzados de conversaciones
+
+### **🏪 `restaurant_business_config`** (Configuración Negocio)
+```sql
+id               UUID PRIMARY KEY
+restaurant_id    UUID → restaurants(id) UNIQUE
+business_hours   JSONB
+peak_hours       JSONB
+seasonal_config  JSONB
+pricing_strategy JSONB
+target_metrics   JSONB
+ai_preferences   JSONB
+created_at       TIMESTAMP DEFAULT NOW()
+updated_at       TIMESTAMP DEFAULT NOW()
+```
+**🔒 RLS:** ⚠️ Unrestricted | **📋 Políticas:** Pendiente configurar  
+**🎯 Función:** Configuración avanzada del negocio para IA
+
+### **📅 `reservations_with_customer`** (Vista Reservas + Cliente)
+```sql
+-- Esta podría ser una VIEW o tabla materializada
+reservation_id   UUID
+customer_id      UUID
+restaurant_id    UUID
+combined_data    JSONB
+last_updated     TIMESTAMP DEFAULT NOW()
+```
+**🔒 RLS:** ⚠️ Unrestricted | **📋 Políticas:** Pendiente configurar  
+**🎯 Función:** Vista combinada reservas con datos de cliente
+
+---
+
+## ⚠️ **ACCIONES REQUERIDAS - SEGURIDAD IA**
+
+### **🔒 CONFIGURAR RLS EN TABLAS IA:**
+```sql
+-- PENDIENTE: Habilitar RLS en tablas de IA
+ALTER TABLE agent_conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE agent_insights ENABLE ROW LEVEL SECURITY;
+ALTER TABLE agent_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE channel_performance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversation_analytics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE restaurant_business_config ENABLE ROW LEVEL SECURITY;
+```
+
+### **🛡️ CREAR POLÍTICAS DE SEGURIDAD:**
+```sql
+-- PENDIENTE: Crear políticas RLS para cada tabla IA
+-- Basadas en restaurant_id como las demás tablas
+```
+
+---
+
+## 📝 **NOTAS ACTUALIZADAS:**
+
+**Última actualización:** 28 Enero 2025  
+**Por:** Sistema de Auditoría  
+**Cambios:** Añadidas 7 tablas de IA detectadas en interfaz Supabase  
+**Estado:** Tablas IA funcionando pero SIN RLS (Unrestricted)  
+**Prioridad:** Configurar seguridad en tablas IA
