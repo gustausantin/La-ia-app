@@ -495,20 +495,28 @@ const {
                 }
             }
             
+            // DEBUG: Verificar datos del restaurante
+            console.log("🏪 PREFILL DEBUG - Datos del restaurante:", restaurant);
+            console.log("📍 Dirección:", restaurant?.address);
+            console.log("🏙️ Ciudad:", restaurant?.city);
+            console.log("📮 CP:", restaurant?.postal_code);
+            
             // Cargar datos reales del registro/Supabase inmediatamente 
             setSettings((prev) => ({
                 ...prev,
-                // Datos del restaurante desde el registro
-                name: restaurant?.name || "",
+                // Datos del restaurante desde el registro - PREFILL AUTOMÁTICO MEJORADO
+                name: restaurant?.restaurant_name || restaurant?.name || "",
                 email: restaurant?.email || user?.email || "",
                 phone: restaurant?.phone || "",
                 address: restaurant?.address || "",
                 city: restaurant?.city || "",
                 postal_code: restaurant?.postal_code || "",
                 cuisine_type: restaurant?.cuisine_type || "",
+                website: restaurant?.website || "",
+                description: restaurant?.description || "",
                 agent: {
                     ...prev.agent,
-                    name: restaurant?.name ? `Asistente de ${restaurant.name}` : "Asistente Virtual",
+                    name: restaurant?.restaurant_name || restaurant?.name ? `Asistente de ${restaurant.restaurant_name || restaurant.name}` : "Asistente Virtual",
                 }
             }));
             
@@ -580,15 +588,42 @@ const {
     };
 
     const handleSave = async (section) => {
+        if (!restaurantId) {
+            toast.error("No se encontró el ID del restaurante");
+            return;
+        }
+
         try {
             setSaving(true);
-            // console.log removed for production
-// Simular guardado en Supabase
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            console.log("💾 GUARDANDO - Datos a guardar:", settings);
 
-            toast.success(`${section} actualizado correctamente`);
-            // console.log removed for production
-} catch (error) {
+            // Guardar REALMENTE en Supabase (sin campos que no existen)
+            const { data, error } = await supabase
+                .from("restaurants")
+                .update({
+                    restaurant_name: settings.name,
+                    email: settings.email,
+                    phone: settings.phone,
+                    address: settings.address,
+                    city: settings.city,
+                    postal_code: settings.postal_code,
+                    cuisine_type: settings.cuisine_type,
+                    // website: settings.website,  // Si no existe la columna
+                    // description: settings.description,  // Si no existe la columna
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", restaurantId);
+
+            if (error) {
+                console.error("❌ Error guardando:", error);
+                throw error;
+            }
+
+            toast.success(`✅ ${section} actualizado correctamente`);
+            console.log("✅ GUARDADO EXITOSO:", data);
+
+        } catch (error) {
+            console.error("❌ Error al guardar:", error);
             toast.error("Error al guardar los cambios");
         } finally {
             setSaving(false);
