@@ -1,5 +1,3 @@
-// Login.jsx - Versión ORIGINAL con solo 1 error corregido
-
 import { useState } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -16,48 +14,47 @@ import {
   Clock,
   TrendingUp,
   Sparkles,
+  Users,
+  Heart,
 } from "lucide-react";
 
-// DATOS NECESARIOS DE SUPABASE:
-// - tabla: restaurants (ya existe)
-// - tabla: user_restaurant_mapping (ya existe)
-// - tabla: agent_settings (configuración inicial del agente)
-// - tabla: onboarding_progress (seguimiento del onboarding)
-// - RPC: create_restaurant_with_agent(data)
-
-// Componente de feature card
+// Componente de feature card REDISEÑADO
 const FeatureCard = ({ icon, title, description }) => (
-  <div className="flex items-start gap-3">
-    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-      {icon}
-    </div>
-    <div>
-      <h4 className="font-semibold text-gray-900">{title}</h4>
-      <p className="text-sm text-gray-900 mt-1">{description}</p>
+  <div className="group relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <div className="relative z-10">
+      <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+        {icon}
+      </div>
+      <h4 className="font-bold text-white text-lg mb-2">{title}</h4>
+      <p className="text-white/90 text-sm leading-relaxed font-medium">{description}</p>
     </div>
   </div>
 );
 
-// Componente de testimonial
+// Componente de testimonial REDISEÑADO
 const TestimonialCard = ({ quote, author, restaurant, savings }) => (
-  <div className="bg-white/50 backdrop-blur p-4 rounded-lg border border-purple-100">
-    <div className="flex gap-1 mb-2">
-      {[...Array(5)].map((_, i) => (
-        <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-      ))}
-    </div>
-    <p className="text-sm text-gray-700 italic mb-3">"{quote}"</p>
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="font-semibold text-sm text-gray-900">{author}</p>
-        <p className="text-xs text-gray-600">{restaurant}</p>
+  <div className="relative overflow-hidden bg-white/15 backdrop-blur-xl border border-white/30 rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 group">
+    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <div className="relative z-10">
+      <div className="flex gap-1 mb-3">
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400 animate-pulse" style={{animationDelay: `${i * 0.1}s`}} />
+        ))}
       </div>
-      {savings && (
-        <div className="text-right">
-          <p className="text-xs text-gray-600">Ahorro mensual</p>
-          <p className="font-bold text-green-600">€{savings}</p>
+      <p className="text-white/95 text-sm italic mb-4 font-medium leading-relaxed">"{quote}"</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="font-bold text-white text-sm">{author}</p>
+          <p className="text-white/70 text-xs">{restaurant}</p>
         </div>
-      )}
+        {savings && (
+          <div className="text-right bg-green-500/20 backdrop-blur rounded-lg px-3 py-1">
+            <p className="text-white/70 text-xs">Ahorro mensual</p>
+            <p className="font-bold text-green-300 text-sm">€{savings}</p>
+          </div>
+        )}
+      </div>
     </div>
   </div>
 );
@@ -67,7 +64,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [currentStep, setCurrentStep] = useState(1); // Para registro multi-step
+  const [currentStep, setCurrentStep] = useState(1);
 
   // Estados para login
   const [email, setEmail] = useState("");
@@ -82,7 +79,7 @@ export default function Login() {
   const [cuisineType, setCuisineType] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Estados para registro - Step 2 (Configuración del Agente)
+  // Estados para registro - Step 2
   const [agentName, setAgentName] = useState("Sofia");
   const [primaryChannel, setPrimaryChannel] = useState("whatsapp");
   const [expectedVolume, setExpectedVolume] = useState("medium");
@@ -93,26 +90,16 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    console.log('🎯 DEBUG: handleLogin ejecutado!');
-    console.log('🎯 DEBUG: email:', email);
-    console.log('🎯 DEBUG: password length:', password?.length);
-    
     setLoading(true);
     setError("");
     setMessage("");
 
     try {
-      console.log('🎯 DEBUG: Llamando a login...');
       const result = await login(email, password);
-      console.log('🎯 DEBUG: Resultado login:', result);
-      console.log('🎯 DEBUG: result.success:', result?.success);
-      console.log('🎯 DEBUG: result.error:', result?.error);
 
       if (!result.success) {
         if (result.error?.includes("Email not confirmed")) {
-          setError(
-            "Por favor confirma tu email antes de hacer login. Revisa tu bandeja de entrada.",
-          );
+          setError("Por favor confirma tu email antes de hacer login. Revisa tu bandeja de entrada.");
         } else if (result.error?.includes("Invalid login credentials")) {
           setError("Email o contraseña incorrectos.");
         } else {
@@ -120,7 +107,6 @@ export default function Login() {
         }
       }
     } catch (err) {
-      console.log('🎯 DEBUG: Error en handleLogin:', err);
       setError("Error inesperado. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
@@ -130,7 +116,6 @@ export default function Login() {
   const handleNextStep = (e) => {
     e.preventDefault();
 
-    // Validaciones Step 1
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden");
       return;
@@ -157,7 +142,6 @@ export default function Login() {
     setMessage("");
 
     try {
-      // 1. Crear usuario en Supabase Auth (CON confirmación de email)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -170,7 +154,7 @@ export default function Login() {
             postal_code: postalCode,
             cuisine_type: cuisineType,
           },
-          emailRedirectTo: `${window.location.origin}/confirm`, // CON confirmación de email
+          emailRedirectTo: `${window.location.origin}/confirm`,
         },
       });
 
@@ -179,7 +163,6 @@ export default function Login() {
       }
 
       if (authData.user) {
-        // CON CONFIRMACIÓN DE EMAIL - siempre guardar datos temporalmente
         localStorage.setItem('pendingRegistration', JSON.stringify({
           restaurantName: restaurantName.trim(),
           phone: phone || null,
@@ -207,571 +190,567 @@ export default function Login() {
       if (err.message.includes("already registered")) {
         setError("Este email ya está registrado. Intenta hacer login.");
       } else {
-        setError(
-          err.message || "Error al crear la cuenta. Inténtalo de nuevo.",
-        );
+        setError(err.message || "Error al crear la cuenta. Inténtalo de nuevo.");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Componente de beneficios del agente
+  // Componente principal de beneficios - COMPLETAMENTE REDISEÑADO
   const AgentBenefits = () => (
-    <div className="lg:block hidden">
-      <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-8 rounded-2xl text-white h-full">
-        <div className="flex items-center gap-3 mb-6">
-          <Bot className="w-10 h-10" />
-          <div>
-            <h2 className="text-2xl font-bold">Tu Agente IA 24/7</h2>
-            <p className="text-purple-100">Recepcionista virtual inteligente</p>
+    <div className="lg:block hidden relative">
+      <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 p-8 rounded-3xl text-white h-full min-h-screen">
+        {/* Elementos decorativos de fondo */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30" />
+        <div className="absolute top-20 right-20 w-32 h-32 bg-white/10 rounded-full blur-xl" />
+        <div className="absolute bottom-20 left-20 w-24 h-24 bg-blue-300/20 rounded-full blur-lg" />
+        
+        <div className="relative z-10">
+          {/* Header mejorado */}
+          <div className="flex items-center gap-4 mb-8">
+            <div className="relative">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center">
+                <Bot className="w-8 h-8 text-white" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-400 rounded-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              </div>
+            </div>
+            <div>
+              <h2 className="text-3xl font-black bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
+                Tu Agente IA 24/7
+              </h2>
+              <p className="text-white/90 font-semibold text-lg">Recepcionista virtual inteligente</p>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-6 mb-8">
-          <FeatureCard
-            icon={<MessageCircle className="w-5 h-5 text-purple-600" />}
-            title="Multi-Canal"
-            description="WhatsApp, llamadas, Instagram, web. Un agente, todos los canales."
-          />
-          <FeatureCard
-            icon={<Zap className="w-5 h-5 text-purple-600" />}
-            title="Respuesta Instantánea"
-            description="0 segundos de espera. Tu agente responde al instante, siempre."
-          />
-          <FeatureCard
-            icon={<TrendingUp className="w-5 h-5 text-purple-600" />}
-            title="Más Reservas"
-            description="Aumenta tus reservas un 35% capturando clientes 24/7."
-          />
-          <FeatureCard
-            icon={<Shield className="w-5 h-5 text-purple-600" />}
-            title="Sin Errores"
-            description="Olvídate de reservas duplicadas o errores de comunicación."
-          />
-        </div>
+          {/* Features grid rediseñado */}
+          <div className="grid grid-cols-1 gap-4 mb-8">
+            <FeatureCard
+              icon={<MessageCircle className="w-6 h-6 text-white" />}
+              title="Multi-Canal"
+              description="WhatsApp, llamadas, Instagram, web. Un agente, todos los canales."
+            />
+            <FeatureCard
+              icon={<Zap className="w-6 h-6 text-white" />}
+              title="Respuesta Instantánea"
+              description="0 segundos de espera. Tu agente responde al instante, siempre."
+            />
+            <FeatureCard
+              icon={<TrendingUp className="w-6 h-6 text-white" />}
+              title="Más Reservas"
+              description="Aumenta tus reservas un 35% capturando clientes 24/7."
+            />
+            <FeatureCard
+              icon={<Shield className="w-6 h-6 text-white" />}
+              title="Sin Errores"
+              description="Olvídate de reservas duplicadas o errores de comunicación."
+            />
+          </div>
 
-        <div className="space-y-4">
-          <h3 className="font-semibold text-lg mb-3">
-            Lo que dicen nuestros clientes
-          </h3>
-          <TestimonialCard
-            quote="En 2 meses hemos aumentado las reservas un 40%. El agente nunca duerme."
-            author="Carlos Mendoza"
-            restaurant="La Brasería Madrid"
-            savings="1,200"
-          />
-          <TestimonialCard
-            quote="Ya no pierdo reservas por no contestar el WhatsApp. ¡Es increíble!"
-            author="María García"
-            restaurant="Sushi Kyoto Barcelona"
-            savings="800"
-          />
-        </div>
+          {/* Testimonials rediseñados */}
+          <div className="space-y-4 mb-8">
+            <h3 className="font-black text-xl mb-6 flex items-center gap-2">
+              <Heart className="w-5 h-5 text-pink-300 fill-pink-300" />
+              Lo que dicen nuestros clientes
+            </h3>
+            <TestimonialCard
+              quote="En 2 meses hemos aumentado las reservas un 40%. El agente nunca duerme."
+              author="Carlos Mendoza"
+              restaurant="La Brasería Madrid"
+              savings="1,200"
+            />
+            <TestimonialCard
+              quote="Ya no pierdo reservas por no contestar el WhatsApp. ¡Es increíble!"
+              author="María García"
+              restaurant="Sushi Kyoto Barcelona"
+              savings="800"
+            />
+          </div>
 
-        <div className="mt-8 p-4 bg-white/10 backdrop-blur rounded-lg">
-          <p className="text-sm font-medium mb-2">🎁 Oferta especial</p>
-          <p className="text-2xl font-bold">14 días GRATIS</p>
-          <p className="text-sm text-purple-100">Sin tarjeta de crédito</p>
+          {/* Oferta especial rediseñada */}
+          <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400/20 to-orange-400/20 backdrop-blur-xl border border-yellow-300/30 rounded-2xl p-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-300/10 to-transparent" />
+            <div className="relative z-10 text-center">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Sparkles className="w-6 h-6 text-yellow-300" />
+                <p className="text-yellow-100 font-bold text-lg">🎁 Oferta especial</p>
+              </div>
+              <p className="text-4xl font-black text-white mb-2">14 días GRATIS</p>
+              <p className="text-white/90 font-semibold">Sin tarjeta de crédito</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex">
-      {/* Panel izquierdo - Formularios */}
-      <div className="flex-1 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/30 flex relative overflow-hidden">
+      {/* Elementos decorativos de fondo */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill-rule="evenodd"%3E%3Cg fill="%23a855f7" fill-opacity="0.03"%3E%3Cpath d="M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40" />
+      
+      {/* Panel izquierdo - Formularios REDISEÑADO */}
+      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
         <div className="max-w-md w-full space-y-8">
+          {/* Header principal rediseñado */}
           <div className="text-center">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Bot className="w-10 h-10 text-purple-600" />
-              <h1 className="text-4xl font-bold text-gray-900">La-IA</h1>
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl">
+                  <Bot className="w-8 h-8 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-400 rounded-full flex items-center justify-center shadow-lg">
+                  <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                </div>
+              </div>
+              <div className="text-left">
+                <h1 className="text-5xl font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  La-IA
+                </h1>
+                <p className="text-gray-600 text-sm font-semibold">Powered by AI</p>
+              </div>
             </div>
-            <p className="text-gray-600 text-lg">
-              Sistema Inteligente de Reservas con IA
+            <p className="text-gray-700 text-xl font-bold mb-2">
+              Sistema Inteligente de Reservas
+            </p>
+            <p className="text-gray-500 text-sm font-medium">
+              Automatiza tu restaurante con IA avanzada
             </p>
             {!isLogin && currentStep === 2 && (
-              <p className="text-purple-600 font-medium mt-2">
+              <div className="mt-4 inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm font-bold">
+                <Sparkles className="w-4 h-4" />
                 Paso 2: Configura tu Agente IA
-              </p>
+              </div>
             )}
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            {/* Toggle Login/Registro */}
-            {currentStep === 1 && (
-              <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(true);
-                    setError("");
-                    setMessage("");
-                  }}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                    isLogin
-                      ? "bg-white text-purple-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Iniciar Sesión
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(false);
-                    setError("");
-                    setMessage("");
-                  }}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                    !isLogin
-                      ? "bg-white text-purple-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Crear Cuenta
-                </button>
-              </div>
-            )}
 
-            {/* Mensajes */}
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-red-600 text-sm">{error}</p>
-              </div>
-            )}
-
-            {message && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-                <p className="text-green-600 text-sm">{message}</p>
-              </div>
-            )}
-
-            {/* Formulario de Login */}
-            {isLogin ? (
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+          {/* Contenedor principal del formulario */}
+          <div className="relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl p-8">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-blue-50/30" />
+            <div className="relative z-10">
+              
+              {/* Toggle Login/Registro REDISEÑADO */}
+              {currentStep === 1 && (
+                <div className="flex mb-8 bg-gradient-to-r from-purple-100 to-blue-100 rounded-2xl p-1.5 shadow-inner">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsLogin(true);
+                      setError("");
+                      setMessage("");
+                    }}
+                    className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300 ${
+                      isLogin
+                        ? "bg-white text-purple-600 shadow-lg transform scale-105"
+                        : "text-purple-500 hover:text-purple-700"
+                    }`}
                   >
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
-                    title="Por favor ingresa un email válido"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="tu@email.com"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    Iniciar Sesión
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsLogin(false);
+                      setError("");
+                      setMessage("");
+                    }}
+                    className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300 ${
+                      !isLogin
+                        ? "bg-white text-purple-600 shadow-lg transform scale-105"
+                        : "text-purple-500 hover:text-purple-700"
+                    }`}
                   >
-                    Contraseña
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    required
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="••••••••"
-                  />
+                    Crear Cuenta
+                  </button>
                 </div>
+              )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-                >
-                  {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
-                </button>
+              {/* Mensajes rediseñados */}
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-xl">
+                  <p className="text-red-700 text-sm font-semibold">{error}</p>
+                </div>
+              )}
 
-                {/* ========================================================== */}
-                {/* || ÚNICO CAMBIO REALIZADO: Arreglada la etiqueta <a>   || */}
-                {/* ========================================================== */}
-                <div className="text-center">
-                  <a
-                    href="#"
-                    className="text-sm text-purple-600 hover:text-purple-700"
+              {message && (
+                <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-xl">
+                  <p className="text-green-700 text-sm font-semibold whitespace-pre-line">{message}</p>
+                </div>
+              )}
+
+              {/* Formulario de Login REDISEÑADO */}
+              {isLogin ? (
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2">
+                      Email
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                      placeholder="tu@email.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-bold text-gray-700 mb-2">
+                      Contraseña
+                    </label>
+                    <input
+                      id="password"
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                      placeholder="••••••••"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-105"
                   >
-                    ¿Olvidaste tu contraseña?
-                  </a>
-                </div>
-              </form>
-            ) : (
-              /* Formulario de Registro Multi-Step */
-              <>
-                {currentStep === 1 ? (
-                  <form onSubmit={handleNextStep} className="space-y-4">
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label
-                          htmlFor="reg-email"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Email *
-                        </label>
-                        <input
-                          id="reg-email"
-                          type="email"
-                          required
-                          pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
-                          title="Por favor ingresa un email válido"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                          placeholder="tu@email.com"
-                        />
-                      </div>
+                    {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                  </button>
 
-                      <div>
-                        <label
-                          htmlFor="restaurant-name"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Nombre del Restaurante *
-                        </label>
-                        <input
-                          id="restaurant-name"
-                          type="text"
-                          required
-                          value={restaurantName}
-                          onChange={(e) => setRestaurantName(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                          placeholder="Mi Restaurante"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center">
+                    <a href="#" className="text-sm text-purple-600 hover:text-purple-700 font-semibold">
+                      ¿Olvidaste tu contraseña?
+                    </a>
+                  </div>
+                </form>
+              ) : (
+                /* Formulario de Registro Multi-Step REDISEÑADO */
+                <>
+                  {currentStep === 1 ? (
+                    <form onSubmit={handleNextStep} className="space-y-4">
+                      <div className="grid grid-cols-1 gap-4">
                         <div>
-                          <label
-                            htmlFor="phone"
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                          >
-                            Teléfono
+                          <label htmlFor="reg-email" className="block text-sm font-bold text-gray-700 mb-2">
+                            Email *
                           </label>
                           <input
-                            id="phone"
-                            type="tel"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            placeholder="+34 600 000 000"
+                            id="reg-email"
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                            placeholder="tu@email.com"
                           />
                         </div>
 
                         <div>
-                          <label
-                            htmlFor="city"
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                          >
-                            Ciudad
+                          <label htmlFor="restaurant-name" className="block text-sm font-bold text-gray-700 mb-2">
+                            Nombre del Restaurante *
                           </label>
                           <input
-                            id="city"
+                            id="restaurant-name"
                             type="text"
-                            value={city}
-                            onChange={(e) => setCity(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            placeholder="Madrid"
+                            required
+                            value={restaurantName}
+                            onChange={(e) => setRestaurantName(e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                            placeholder="Mi Restaurante"
                           />
                         </div>
-                      </div>
 
-                      <div>
-                        <label
-                          htmlFor="address"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Dirección
-                        </label>
-                        <input
-                          id="address"
-                          type="text"
-                          value={address}
-                          onChange={(e) => setAddress(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                          placeholder="Calle Principal 123"
-                        />
-                      </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label htmlFor="phone" className="block text-sm font-bold text-gray-700 mb-2">
+                              Teléfono
+                            </label>
+                            <input
+                              id="phone"
+                              type="tel"
+                              value={phone}
+                              onChange={(e) => setPhone(e.target.value)}
+                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                              placeholder="+34 600 000 000"
+                            />
+                          </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label htmlFor="city" className="block text-sm font-bold text-gray-700 mb-2">
+                              Ciudad
+                            </label>
+                            <input
+                              id="city"
+                              type="text"
+                              value={city}
+                              onChange={(e) => setCity(e.target.value)}
+                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                              placeholder="Madrid"
+                            />
+                          </div>
+                        </div>
+
                         <div>
-                          <label
-                            htmlFor="postal-code"
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                          >
-                            Código Postal
+                          <label htmlFor="address" className="block text-sm font-bold text-gray-700 mb-2">
+                            Dirección
                           </label>
                           <input
-                            id="postal-code"
+                            id="address"
                             type="text"
-                            value={postalCode}
-                            onChange={(e) => setPostalCode(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            placeholder="28001"
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                            placeholder="Calle Principal 123"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label htmlFor="postal-code" className="block text-sm font-bold text-gray-700 mb-2">
+                              Código Postal
+                            </label>
+                            <input
+                              id="postal-code"
+                              type="text"
+                              value={postalCode}
+                              onChange={(e) => setPostalCode(e.target.value)}
+                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                              placeholder="28001"
+                            />
+                          </div>
+
+                          <div>
+                            <label htmlFor="cuisine-type" className="block text-sm font-bold text-gray-700 mb-2">
+                              Tipo de Cocina
+                            </label>
+                            <select
+                              id="cuisine-type"
+                              value={cuisineType}
+                              onChange={(e) => setCuisineType(e.target.value)}
+                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                            >
+                              <option value="">Seleccionar...</option>
+                              <option value="mediterranea">Mediterránea</option>
+                              <option value="italiana">Italiana</option>
+                              <option value="japonesa">Japonesa</option>
+                              <option value="mexicana">Mexicana</option>
+                              <option value="argentina">Argentina</option>
+                              <option value="fusion">Fusión</option>
+                              <option value="tradicional">Tradicional</option>
+                              <option value="vegetariana">Vegetariana</option>
+                              <option value="mariscos">Mariscos</option>
+                              <option value="tapas">Tapas</option>
+                              <option value="otra">Otra</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label htmlFor="reg-password" className="block text-sm font-bold text-gray-700 mb-2">
+                            Contraseña *
+                          </label>
+                          <input
+                            id="reg-password"
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                            placeholder="Mínimo 6 caracteres"
                           />
                         </div>
 
                         <div>
-                          <label
-                            htmlFor="cuisine-type"
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                          >
-                            Tipo de Cocina
+                          <label htmlFor="confirm-password" className="block text-sm font-bold text-gray-700 mb-2">
+                            Confirmar Contraseña *
                           </label>
-                          <select
-                            id="cuisine-type"
-                            value={cuisineType}
-                            onChange={(e) => setCuisineType(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                          >
-                            <option value="">Seleccionar...</option>
-                            <option value="mediterranea">Mediterránea</option>
-                            <option value="italiana">Italiana</option>
-                            <option value="japonesa">Japonesa</option>
-                            <option value="mexicana">Mexicana</option>
-                            <option value="argentina">Argentina</option>
-                            <option value="fusion">Fusión</option>
-                            <option value="tradicional">Tradicional</option>
-                            <option value="vegetariana">Vegetariana</option>
-                            <option value="mariscos">Mariscos</option>
-                            <option value="tapas">Tapas</option>
-                            <option value="otra">Otra</option>
-                          </select>
+                          <input
+                            id="confirm-password"
+                            type="password"
+                            required
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                            placeholder="Repite la contraseña"
+                          />
                         </div>
                       </div>
 
-                      <div>
-                        <label
-                          htmlFor="reg-password"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Contraseña *
-                        </label>
-                        <input
-                          id="reg-password"
-                          type="password"
-                          required
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                          placeholder="Mínimo 6 caracteres"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="confirm-password"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Confirmar Contraseña *
-                        </label>
-                        <input
-                          id="confirm-password"
-                          type="password"
-                          required
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                          placeholder="Repite la contraseña"
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors font-medium flex items-center justify-center gap-2"
-                    >
-                      Siguiente: Configurar Agente
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </form>
-                ) : (
-                  /* Step 2: Configuración del Agente */
-                  <form onSubmit={handleRegister} className="space-y-4">
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-5 h-5 text-purple-600" />
-                        <h3 className="font-semibold text-gray-900">
-                          Personaliza tu Agente IA
-                        </h3>
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        Tu agente empezará a trabajar inmediatamente después del
-                        registro
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="agent-name"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Nombre del Agente
-                      </label>
-                      <input
-                        id="agent-name"
-                        type="text"
-                        value={agentName}
-                        onChange={(e) => setAgentName(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="Sofia, Carlos, Luna..."
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Este es el nombre que usará al presentarse a tus
-                        clientes
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Canal Principal
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <label
-                          className={`relative flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-all ${
-                            primaryChannel === "whatsapp"
-                              ? "border-purple-500 bg-purple-50"
-                              : "border-gray-300 hover:border-gray-400"
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="channel"
-                            value="whatsapp"
-                            checked={primaryChannel === "whatsapp"}
-                            onChange={(e) => setPrimaryChannel(e.target.value)}
-                            className="sr-only"
-                          />
-                          <MessageCircle className="w-5 h-5 mr-2 text-green-600" />
-                          <span className="text-sm font-medium">WhatsApp</span>
-                        </label>
-                        <label
-                          className={`relative flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-all ${
-                            primaryChannel === "vapi"
-                              ? "border-purple-500 bg-purple-50"
-                              : "border-gray-300 hover:border-gray-400"
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="channel"
-                            value="vapi"
-                            checked={primaryChannel === "vapi"}
-                            onChange={(e) => setPrimaryChannel(e.target.value)}
-                            className="sr-only"
-                          />
-                          <Phone className="w-5 h-5 mr-2 text-orange-600" />
-                          <span className="text-sm font-medium">Llamadas</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Volumen esperado de reservas
-                      </label>
-                      <select
-                        value={expectedVolume}
-                        onChange={(e) => setExpectedVolume(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                      >
-                        <option value="low">Bajo (0-10 al día)</option>
-                        <option value="medium">Medio (10-30 al día)</option>
-                        <option value="high">Alto (30-50 al día)</option>
-                        <option value="very-high">Muy Alto (+50 al día)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Horario del Restaurante
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label
-                            htmlFor="opening"
-                            className="block text-xs text-gray-600 mb-1"
-                          >
-                            Apertura
-                          </label>
-                          <input
-                            id="opening"
-                            type="time"
-                            value={openingTime}
-                            onChange={(e) => setOpeningTime(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                          />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="closing"
-                            className="block text-xs text-gray-600 mb-1"
-                          >
-                            Cierre
-                          </label>
-                          <input
-                            id="closing"
-                            type="time"
-                            value={closingTime}
-                            onChange={(e) => setClosingTime(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(1)}
-                        className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors font-medium"
-                      >
-                        Atrás
-                      </button>
                       <button
                         type="submit"
-                        disabled={loading}
-                        className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+                        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 transition-all duration-300 font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-3"
                       >
-                        {loading ? (
-                          "Creando tu agente..."
-                        ) : (
-                          <>
-                            <CheckCircle2 className="w-4 h-4" />
-                            Crear Cuenta
-                          </>
-                        )}
+                        Siguiente: Configurar Agente
+                        <ArrowRight className="w-5 h-5" />
                       </button>
-                    </div>
+                    </form>
+                  ) : (
+                    /* Step 2: Configuración del Agente REDISEÑADO */
+                    <form onSubmit={handleRegister} className="space-y-6">
+                      <div className="mb-6 text-center">
+                        <div className="flex items-center justify-center gap-3 mb-3">
+                          <Sparkles className="w-6 h-6 text-purple-600" />
+                          <h3 className="font-black text-gray-900 text-xl">
+                            Personaliza tu Agente IA
+                          </h3>
+                        </div>
+                        <p className="text-gray-600 font-medium">
+                          Tu agente empezará a trabajar inmediatamente después del registro
+                        </p>
+                      </div>
 
-                    <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-                      <p className="text-xs text-purple-700 text-center">
-                        ✨ Tu agente {agentName} empezará a recibir reservas
-                        inmediatamente
-                      </p>
-                    </div>
-                  </form>
-                )}
-              </>
-            )}
+                      <div>
+                        <label htmlFor="agent-name" className="block text-sm font-bold text-gray-700 mb-2">
+                          Nombre del Agente
+                        </label>
+                        <input
+                          id="agent-name"
+                          type="text"
+                          value={agentName}
+                          onChange={(e) => setAgentName(e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                          placeholder="Sofia, Carlos, Luna..."
+                        />
+                        <p className="text-xs text-gray-500 mt-2 font-medium">
+                          Este es el nombre que usará al presentarse a tus clientes
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-3">
+                          Canal Principal
+                        </label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <label
+                            className={`relative flex items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                              primaryChannel === "whatsapp"
+                                ? "border-purple-500 bg-purple-50 shadow-lg transform scale-105"
+                                : "border-gray-300 hover:border-purple-300 hover:bg-purple-50/50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="channel"
+                              value="whatsapp"
+                              checked={primaryChannel === "whatsapp"}
+                              onChange={(e) => setPrimaryChannel(e.target.value)}
+                              className="sr-only"
+                            />
+                            <MessageCircle className="w-6 h-6 mr-3 text-green-600" />
+                            <span className="font-bold text-sm">WhatsApp</span>
+                          </label>
+                          <label
+                            className={`relative flex items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                              primaryChannel === "vapi"
+                                ? "border-purple-500 bg-purple-50 shadow-lg transform scale-105"
+                                : "border-gray-300 hover:border-purple-300 hover:bg-purple-50/50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="channel"
+                              value="vapi"
+                              checked={primaryChannel === "vapi"}
+                              onChange={(e) => setPrimaryChannel(e.target.value)}
+                              className="sr-only"
+                            />
+                            <Phone className="w-6 h-6 mr-3 text-orange-600" />
+                            <span className="font-bold text-sm">Llamadas</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Volumen esperado de reservas
+                        </label>
+                        <select
+                          value={expectedVolume}
+                          onChange={(e) => setExpectedVolume(e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                        >
+                          <option value="low">Bajo (0-10 al día)</option>
+                          <option value="medium">Medio (10-30 al día)</option>
+                          <option value="high">Alto (30-50 al día)</option>
+                          <option value="very-high">Muy Alto (+50 al día)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-3">
+                          Horario del Restaurante
+                        </label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label htmlFor="opening" className="block text-xs text-gray-600 mb-2 font-semibold">
+                              Apertura
+                            </label>
+                            <input
+                              id="opening"
+                              type="time"
+                              value={openingTime}
+                              onChange={(e) => setOpeningTime(e.target.value)}
+                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="closing" className="block text-xs text-gray-600 mb-2 font-semibold">
+                              Cierre
+                            </label>
+                            <input
+                              id="closing"
+                              type="time"
+                              value={closingTime}
+                              onChange={(e) => setClosingTime(e.target.value)}
+                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(1)}
+                          className="flex-1 bg-gray-200 text-gray-700 py-3 px-6 rounded-xl hover:bg-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-300 font-bold"
+                        >
+                          Atrás
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-2"
+                        >
+                          {loading ? (
+                            "Creando tu agente..."
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-5 h-5" />
+                              Crear Cuenta
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="mt-6 p-4 bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl border border-purple-200">
+                        <p className="text-sm text-purple-700 text-center font-bold">
+                          ✨ Tu agente {agentName} empezará a recibir reservas inmediatamente
+                        </p>
+                      </div>
+                    </form>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-          {/* Info adicional */}
+
+          {/* Info adicional rediseñada */}
           {isLogin && (
-            <div className="text-center space-y-2">
-              <p className="text-sm text-gray-600">
+            <div className="text-center space-y-4">
+              <p className="text-gray-600 font-medium">
                 ¿No tienes cuenta?
                 <button
                   onClick={() => {
@@ -779,32 +758,35 @@ export default function Login() {
                     setError("");
                     setMessage("");
                   }}
-                  className="text-purple-600 hover:text-purple-700 font-medium ml-1"
+                  className="text-purple-600 hover:text-purple-700 font-bold ml-2 hover:underline"
                 >
                   Prueba 14 días gratis
                 </button>
               </p>
-              <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-green-500" />
-                  Sin tarjeta
+              <div className="flex items-center justify-center gap-6 text-xs text-gray-500">
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span className="font-semibold">Sin tarjeta</span>
                 </span>
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-green-500" />
-                  Configuración en 2 min
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span className="font-semibold">Setup en 2 min</span>
                 </span>
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-green-500" />
-                  Cancela cuando quieras
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span className="font-semibold">Cancela cuando quieras</span>
                 </span>
               </div>
             </div>
           )}
-          <div className="text-center text-sm text-gray-500">
+
+          {/* Footer */}
+          <div className="text-center text-sm text-gray-500 font-medium">
             <p>© 2024 La-IA. Sistema de Inteligencia para Restaurantes</p>
           </div>
         </div>
       </div>
+
       {/* Panel derecho - Beneficios (solo desktop) */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-2/5">
         <AgentBenefits />
