@@ -29,13 +29,7 @@ const Comunicacion = lazy(() =>
     return module;
   })
 );
-const Analytics = lazy(() => 
-  import('./pages/Analytics').then(module => {
-    // Preload componentes relacionados
-    import('./components/analytics');
-    return module;
-  })
-);
+const Analytics = lazy(() => import('./pages/Analytics'));
 const Configuracion = lazy(() => import('./pages/Configuracion'));
 
 // Componente de carga mejorado
