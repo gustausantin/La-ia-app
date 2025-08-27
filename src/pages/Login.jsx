@@ -25,15 +25,15 @@ import {
 // - tabla: onboarding_progress (seguimiento del onboarding)
 // - RPC: create_restaurant_with_agent(data)
 
-// Componente de feature card - MEJORADO para mejor legibilidad
+// Componente de feature card
 const FeatureCard = ({ icon, title, description }) => (
   <div className="flex items-start gap-3">
-    <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center flex-shrink-0">
+    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
       {icon}
     </div>
     <div>
-      <h4 className="font-semibold text-white">{title}</h4>
-      <p className="text-sm text-white/90 mt-1 leading-relaxed">{description}</p>
+      <h4 className="font-semibold text-gray-900">{title}</h4>
+      <p className="text-sm text-white mt-1">{description}</p>
     </div>
   </div>
 );
@@ -224,28 +224,28 @@ export default function Login() {
           <Bot className="w-10 h-10" />
           <div>
             <h2 className="text-2xl font-bold">Tu Agente IA 24/7</h2>
-            <p className="text-white/95 font-medium">Recepcionista virtual inteligente</p>
+            <p className="text-purple-100">Recepcionista virtual inteligente</p>
           </div>
         </div>
 
         <div className="space-y-6 mb-8">
           <FeatureCard
-            icon={<MessageCircle className="w-5 h-5 text-white" />}
+            icon={<MessageCircle className="w-5 h-5 text-purple-600" />}
             title="Multi-Canal"
             description="WhatsApp, llamadas, Instagram, web. Un agente, todos los canales."
           />
           <FeatureCard
-            icon={<Zap className="w-5 h-5 text-white" />}
+            icon={<Zap className="w-5 h-5 text-purple-600" />}
             title="Respuesta Instantánea"
             description="0 segundos de espera. Tu agente responde al instante, siempre."
           />
           <FeatureCard
-            icon={<TrendingUp className="w-5 h-5 text-white" />}
+            icon={<TrendingUp className="w-5 h-5 text-purple-600" />}
             title="Más Reservas"
             description="Aumenta tus reservas un 35% capturando clientes 24/7."
           />
           <FeatureCard
-            icon={<Shield className="w-5 h-5 text-white" />}
+            icon={<Shield className="w-5 h-5 text-purple-600" />}
             title="Sin Errores"
             description="Olvídate de reservas duplicadas o errores de comunicación."
           />
@@ -272,7 +272,7 @@ export default function Login() {
         <div className="mt-8 p-4 bg-white/10 backdrop-blur rounded-lg">
           <p className="text-sm font-medium mb-2">🎁 Oferta especial</p>
           <p className="text-2xl font-bold">14 días GRATIS</p>
-          <p className="text-sm text-white/95 font-medium">Sin tarjeta de crédito</p>
+          <p className="text-sm text-purple-100">Sin tarjeta de crédito</p>
         </div>
       </div>
     </div>

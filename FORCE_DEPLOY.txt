@@ -1,9 +1,0 @@
-MEJORAS DE LEGIBILIDAD IMPLEMENTADAS - 2025-01-27
-
-Cambios realizados:
-- Mejorado contraste en página Login
-- Subtítulos multicanal ahora legibles
-- Sistema de accesibilidad implementado
-- Iconos con mejor contraste
-
-Deploy timestamp: 2025-01-27 16:00 - FORCING LEGIBILITY CHANGES
