@@ -1,6 +1,6 @@
 // Service Worker para La-IA PWA
 // Versión del cache - cambiar para forzar actualización
-const CACHE_NAME = 'la-ia-pwa-v1.0.0';
+const CACHE_NAME = 'la-ia-pwa-v1.0.1';
 const OFFLINE_URL = '/offline.html';
 
 // Archivos esenciales para funcionalidad offline
@@ -192,10 +192,15 @@ async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE_NAME);
   const cachedResponse = await cache.match(request);
   
-  // Fetch en background para actualizar cache
+  // Fetch en background para actualizar cache con manejo de errores
   const fetchPromise = fetch(request).then((networkResponse) => {
-    cache.put(request, networkResponse.clone());
+    if (networkResponse.ok) {
+      cache.put(request, networkResponse.clone());
+    }
     return networkResponse;
+  }).catch((error) => {
+    console.warn('SW: Network fetch failed, using cache if available');
+    return cachedResponse;
   });
   
   // Devolver cache inmediatamente si existe, sino esperar network
