@@ -531,6 +531,9 @@ const {
                 city: restaurantData?.city || "",
                 postal_code: restaurantData?.postal_code || "",
                 cuisine_type: restaurantData?.cuisine_type || "",
+                // Cargar website y description desde settings JSONB
+                website: restaurantData?.settings?.website || "",
+                description: restaurantData?.settings?.description || "",
                 agent: {
                     ...prev.agent,
                     name: restaurantData?.name ? `Asistente de ${restaurantData.name}` : "Asistente Virtual",
@@ -614,17 +617,32 @@ const {
             setSaving(true);
             console.log("💾 GUARDANDO - Datos a guardar:", settings);
 
-            // Guardar directamente - solo campos que existen
+            // 1. Primero obtener settings actuales
+            const { data: currentData } = await supabase
+                .from("restaurants")
+                .select("settings")
+                .eq("id", restaurantId)
+                .single();
+            
+            const currentSettings = currentData?.settings || {};
+            
+            // 2. Guardar campos básicos + website/description en settings JSONB
             const { data, error } = await supabase
                 .from("restaurants")
                 .update({
-                    name: settings.name,  // Cambié restaurant_name por name
+                    name: settings.name,
                     email: settings.email,
                     phone: settings.phone,
                     address: settings.address,
                     city: settings.city,
                     postal_code: settings.postal_code,
                     cuisine_type: settings.cuisine_type,
+                    // Combinar settings existentes con nuevos valores
+                    settings: {
+                        ...currentSettings,
+                        website: settings.website || "",
+                        description: settings.description || ""
+                    },
                     updated_at: new Date().toISOString()
                 })
                 .eq("id", restaurantId);
