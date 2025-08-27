@@ -597,20 +597,20 @@ const {
             setSaving(true);
             console.log("💾 GUARDANDO - Datos a guardar:", settings);
 
-            // Guardar usando RPC para evitar problemas de RLS
+            // Guardar directamente - solo campos que existen
             const { data, error } = await supabase
-                .rpc('update_restaurant_settings', {
-                    restaurant_id: restaurantId,
-                    settings: {
-                        restaurant_name: settings.name,
-                        email: settings.email,
-                        phone: settings.phone,
-                        address: settings.address,
-                        city: settings.city,
-                        postal_code: settings.postal_code,
-                        cuisine_type: settings.cuisine_type
-                    }
-                });
+                .from("restaurants")
+                .update({
+                    name: settings.name,  // Cambié restaurant_name por name
+                    email: settings.email,
+                    phone: settings.phone,
+                    address: settings.address,
+                    city: settings.city,
+                    postal_code: settings.postal_code,
+                    cuisine_type: settings.cuisine_type,
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", restaurantId);
 
             if (error) {
                 console.error("❌ Error guardando:", error);
