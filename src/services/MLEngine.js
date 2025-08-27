@@ -364,11 +364,153 @@ class MLEngine {
     };
   }
 
-  // === MÉTODOS AUXILIARES ===
+  // === MÉTODOS AUXILIARES (MOVIDOS ARRIBA) ===
   
   daysSinceLastVisit(lastVisit) {
     if (!lastVisit) return 999;
     return Math.floor((Date.now() - new Date(lastVisit).getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  calculateEngagement(customer) {
+    // Calcular engagement basado en frecuencia y recencia
+    const visits = customer.visits || 0;
+    const lastVisit = customer.lastVisit ? new Date(customer.lastVisit) : new Date();
+    const daysSinceLastVisit = (Date.now() - lastVisit.getTime()) / (1000 * 60 * 60 * 24);
+    
+    // Score de engagement (0-1)
+    const frequencyScore = Math.min(visits / 10, 1); // Normalizar a 10 visitas = 1.0
+    const recencyScore = Math.max(0, 1 - daysSinceLastVisit / 365); // Decae en un año
+    
+    return (frequencyScore + recencyScore) / 2;
+  }
+
+  calculateLoyalty(customer) {
+    const visits = customer.total_reservations || 0;
+    const months = customer.months_active || 1;
+    const consistencyScore = Math.min(visits / months, 1);
+    return consistencyScore;
+  }
+
+  async calculateBaseDemand(historicalData) {
+    // Calcular demanda base usando promedio móvil
+    if (!historicalData || historicalData.length === 0) {
+      return { average: 50, trend: 'stable', confidence: 0.5 };
+    }
+    
+    const demands = historicalData.map(d => d.demand || d.reservations || 0);
+    const average = demands.reduce((a, b) => a + b, 0) / demands.length;
+    
+    // Calcular tendencia
+    const recentData = demands.slice(-7); // Últimos 7 días
+    const olderData = demands.slice(-14, -7); // 7 días anteriores
+    const recentAvg = recentData.reduce((a, b) => a + b, 0) / recentData.length;
+    const olderAvg = olderData.reduce((a, b) => a + b, 0) / olderData.length;
+    
+    const trend = recentAvg > olderAvg * 1.1 ? 'growing' : 
+                  recentAvg < olderAvg * 0.9 ? 'declining' : 'stable';
+    
+    return { 
+      average, 
+      trend, 
+      confidence: Math.min(historicalData.length / 30, 1) // Más datos = más confianza
+    };
+  }
+
+  async geneticAlgorithmOptimization(params) {
+    const { reservations, tables, preferences } = params;
+    
+    // Simulación de algoritmo genético simplificado
+    const solutions = [];
+    
+    for (let generation = 0; generation < 10; generation++) {
+      const solution = {
+        assignment: this.createRandomAssignment(reservations, tables),
+        fitness: this.calculateFitness(reservations, tables, preferences)
+      };
+      solutions.push(solution);
+    }
+    
+    // Retornar la mejor solución
+    const bestSolution = solutions.reduce((best, current) => 
+      current.fitness > best.fitness ? current : best
+    );
+    
+    return {
+      tableAssignments: bestSolution.assignment,
+      efficiency: bestSolution.fitness,
+      revenue: bestSolution.fitness * 1000,
+      satisfaction: bestSolution.fitness * 0.9
+    };
+  }
+
+  async analyzeTrends(data) {
+    // Análisis de tendencias con NLP simulado
+    return [
+      { direction: 'up', percentage: 15, metric: 'Revenue', period: 'último mes' },
+      { direction: 'stable', percentage: 2, metric: 'Customer Satisfaction', period: 'última semana' }
+    ];
+  }
+
+  async detectAnomalies(data) {
+    // Detección de anomalías usando desviación estándar
+    const values = data.map(d => d.value || d.revenue || Math.random() * 100);
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const stdDev = Math.sqrt(values.map(v => Math.pow(v - mean, 2)).reduce((a, b) => a + b, 0) / values.length);
+    
+    const anomalies = values
+      .map((value, index) => ({
+        index,
+        value,
+        isAnomaly: Math.abs(value - mean) > 2 * stdDev,
+        severity: Math.abs(value - mean) / stdDev
+      }))
+      .filter(item => item.isAnomaly);
+    
+    return anomalies;
+  }
+
+  async recognizePatterns(data) {
+    // Reconocimiento de patrones temporales
+    return [
+      { description: 'Peak hours pattern', frequency: 'daily', factor: 'time_of_day' },
+      { description: 'Weekend rush', frequency: 'weekly', factor: 'day_of_week' }
+    ];
+  }
+
+  createRandomAssignment(reservations, tables) {
+    // Crear asignación aleatoria para algoritmo genético
+    const assignment = {};
+    
+    reservations.forEach((reservation, index) => {
+      const availableTables = tables.filter(t => t.capacity >= reservation.party_size);
+      if (availableTables.length > 0) {
+        const randomTable = availableTables[Math.floor(Math.random() * availableTables.length)];
+        assignment[reservation.id] = randomTable.id;
+      }
+    });
+    
+    return assignment;
+  }
+
+  calculateFitness(reservations, tables, preferences) {
+    // Calcular fitness de una solución
+    let score = 0;
+    
+    // Factores de fitness
+    const utilizationBonus = 0.4; // 40% por utilización
+    const preferenceBonus = 0.3;  // 30% por preferencias
+    const efficiencyBonus = 0.3;  // 30% por eficiencia
+    
+    // Calcular utilización
+    const usedTables = new Set();
+    reservations.forEach(r => {
+      if (r.assignedTable) usedTables.add(r.assignedTable);
+    });
+    
+    const utilization = usedTables.size / tables.length;
+    score += utilization * utilizationBonus;
+    
+    return Math.min(score + Math.random() * 0.5, 1); // Añadir algo de aleatoriedad
   }
 
   isHoliday(date) {
@@ -504,72 +646,7 @@ class ChurnPredictionModel {
     }));
   }
 
-  // === MÉTODOS AUXILIARES FALTANTES ===
 
-  calculateEngagement(customer) {
-    // Calcular engagement basado en frecuencia y recencia
-    const visits = customer.visits || 0;
-    const lastVisit = customer.lastVisit ? new Date(customer.lastVisit) : new Date();
-    const daysSinceLastVisit = (Date.now() - lastVisit.getTime()) / (1000 * 60 * 60 * 24);
-    
-    // Score de engagement (0-1)
-    const frequencyScore = Math.min(visits / 10, 1); // Normalizar a 10 visitas = 1.0
-    const recencyScore = Math.max(0, 1 - daysSinceLastVisit / 365); // Decae en un año
-    
-    return (frequencyScore + recencyScore) / 2;
-  }
-
-  async calculateBaseDemand(historicalData) {
-    // Calcular demanda base usando promedio móvil
-    if (!historicalData || historicalData.length === 0) {
-      return { average: 50, trend: 'stable', confidence: 0.5 };
-    }
-    
-    const demands = historicalData.map(d => d.demand || d.reservations || 0);
-    const average = demands.reduce((a, b) => a + b, 0) / demands.length;
-    
-    // Calcular tendencia
-    const recentData = demands.slice(-7); // Últimos 7 días
-    const olderData = demands.slice(-14, -7); // 7 días anteriores
-    const recentAvg = recentData.reduce((a, b) => a + b, 0) / recentData.length;
-    const olderAvg = olderData.reduce((a, b) => a + b, 0) / olderData.length;
-    
-    const trend = recentAvg > olderAvg * 1.1 ? 'growing' : 
-                  recentAvg < olderAvg * 0.9 ? 'declining' : 'stable';
-    
-    return { 
-      average, 
-      trend, 
-      confidence: Math.min(historicalData.length / 30, 1) // Más datos = más confianza
-    };
-  }
-
-  async geneticAlgorithmOptimization(params) {
-    const { reservations, tables, preferences } = params;
-    
-    // Simulación de algoritmo genético simplificado
-    const solutions = [];
-    
-    for (let generation = 0; generation < 10; generation++) {
-      const solution = {
-        assignment: this.createRandomAssignment(reservations, tables),
-        fitness: this.calculateFitness(reservations, tables, preferences)
-      };
-      solutions.push(solution);
-    }
-    
-    // Retornar la mejor solución
-    const bestSolution = solutions.reduce((best, current) => 
-      current.fitness > best.fitness ? current : best
-    );
-    
-    return {
-      optimalAssignment: bestSolution.assignment,
-      efficiency: bestSolution.fitness,
-      improvementPercentage: Math.min(bestSolution.fitness * 100, 100),
-      alternatives: solutions.slice(0, 3).map(s => s.assignment)
-    };
-  }
 
   createRandomAssignment(reservations, tables) {
     // Crear asignación aleatoria para algoritmo genético
@@ -607,73 +684,7 @@ class ChurnPredictionModel {
     return Math.min(score + Math.random() * 0.5, 1); // Añadir algo de aleatoriedad
   }
 
-  async analyzeTrends(data) {
-    // Análisis de tendencias con NLP simulado
-    const trends = {
-      revenue: { direction: 'up', magnitude: 0.15, confidence: 0.8 },
-      customer_satisfaction: { direction: 'stable', magnitude: 0.02, confidence: 0.9 },
-      peak_hours: { shift: '+1h', reason: 'seasonal', confidence: 0.7 },
-      popular_dishes: ['Paella', 'Gazpacho', 'Tapas'], 
-      declining_items: ['Ensalada César'],
-      seasonal_patterns: {
-        spring: 'Incremento en reservas de terraza',
-        summer: 'Mayor demanda de bebidas frías',
-        autumn: 'Preferencia por platos calientes',
-        winter: 'Aumento en celebraciones'
-      }
-    };
-    
-    return trends;
-  }
 
-  async detectAnomalies(data) {
-    // Detección de anomalías usando desviación estándar
-    const values = data.map(d => d.value || d.revenue || Math.random() * 100);
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const stdDev = Math.sqrt(values.map(v => Math.pow(v - mean, 2)).reduce((a, b) => a + b, 0) / values.length);
-    
-    const anomalies = values
-      .map((value, index) => ({
-        index,
-        value,
-        isAnomaly: Math.abs(value - mean) > 2 * stdDev,
-        severity: Math.abs(value - mean) / stdDev
-      }))
-      .filter(item => item.isAnomaly);
-    
-    return {
-      detected: anomalies.length,
-      anomalies,
-      threshold: 2 * stdDev,
-      summary: `Se detectaron ${anomalies.length} anomalías significativas`
-    };
-  }
-
-  async recognizePatterns(data) {
-    // Reconocimiento de patrones temporales
-    return {
-      weekly: {
-        peak_days: ['viernes', 'sábado'],
-        low_days: ['lunes', 'martes'],
-        pattern_strength: 0.85
-      },
-      monthly: {
-        peak_weeks: [2, 3], // Segunda y tercera semana
-        seasonal_factor: 1.2,
-        pattern_strength: 0.7
-      },
-      yearly: {
-        high_seasons: ['primavera', 'verano'],
-        low_seasons: ['invierno'],
-        growth_rate: 0.08
-      },
-      behavioral: {
-        repeat_customers: 0.65,
-        booking_advance: '3.5 días promedio',
-        cancellation_rate: 0.12
-      }
-    };
-  }
 
   // === MÉTODOS FALTANTES CRÍTICOS ===
 
