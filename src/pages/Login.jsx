@@ -24,8 +24,8 @@ const FeatureCard = ({ icon, title, description }) => (
     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     <div className="relative z-10">
       <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-        {icon}
-      </div>
+      {icon}
+    </div>
       <h4 className="font-bold text-white text-lg mb-2">{title}</h4>
       <p className="text-white/90 text-sm leading-relaxed font-medium">{description}</p>
     </div>
@@ -38,22 +38,22 @@ const TestimonialCard = ({ quote, author, restaurant, savings }) => (
     <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     <div className="relative z-10">
       <div className="flex gap-1 mb-3">
-        {[...Array(5)].map((_, i) => (
+      {[...Array(5)].map((_, i) => (
           <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400 animate-pulse" style={{animationDelay: `${i * 0.1}s`}} />
-        ))}
-      </div>
+      ))}
+    </div>
       <p className="text-white/95 text-sm italic mb-4 font-medium leading-relaxed">"{quote}"</p>
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="flex items-center justify-between">
+      <div>
           <p className="font-bold text-white text-sm">{author}</p>
           <p className="text-white/70 text-xs">{restaurant}</p>
-        </div>
-        {savings && (
+      </div>
+      {savings && (
           <div className="text-right bg-green-500/20 backdrop-blur rounded-lg px-3 py-1">
             <p className="text-white/70 text-xs">Ahorro mensual</p>
             <p className="font-bold text-green-300 text-sm">€{savings}</p>
-          </div>
-        )}
+        </div>
+      )}
       </div>
     </div>
   </div>
@@ -202,7 +202,11 @@ export default function Login() {
     <div className="lg:block hidden relative">
       <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 p-8 rounded-3xl text-white h-full min-h-screen">
         {/* Elementos decorativos de fondo */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30" />
+        <div className="absolute inset-0 opacity-30">
+          <div className="w-full h-full bg-white/5" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+          }} />
+        </div>
         <div className="absolute top-20 right-20 w-32 h-32 bg-white/10 rounded-full blur-xl" />
         <div className="absolute bottom-20 left-20 w-24 h-24 bg-blue-300/20 rounded-full blur-lg" />
         
@@ -217,57 +221,57 @@ export default function Login() {
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
               </div>
             </div>
-            <div>
+          <div>
               <h2 className="text-3xl font-black bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
                 Tu Agente IA 24/7
               </h2>
               <p className="text-white/90 font-semibold text-lg">Recepcionista virtual inteligente</p>
             </div>
-          </div>
+        </div>
 
           {/* Features grid rediseñado */}
           <div className="grid grid-cols-1 gap-4 mb-8">
-            <FeatureCard
+          <FeatureCard
               icon={<MessageCircle className="w-6 h-6 text-white" />}
-              title="Multi-Canal"
-              description="WhatsApp, llamadas, Instagram, web. Un agente, todos los canales."
-            />
-            <FeatureCard
+            title="Multi-Canal"
+            description="WhatsApp, llamadas, Instagram, web. Un agente, todos los canales."
+          />
+          <FeatureCard
               icon={<Zap className="w-6 h-6 text-white" />}
-              title="Respuesta Instantánea"
-              description="0 segundos de espera. Tu agente responde al instante, siempre."
-            />
-            <FeatureCard
+            title="Respuesta Instantánea"
+            description="0 segundos de espera. Tu agente responde al instante, siempre."
+          />
+          <FeatureCard
               icon={<TrendingUp className="w-6 h-6 text-white" />}
-              title="Más Reservas"
-              description="Aumenta tus reservas un 35% capturando clientes 24/7."
-            />
-            <FeatureCard
+            title="Más Reservas"
+            description="Aumenta tus reservas un 35% capturando clientes 24/7."
+          />
+          <FeatureCard
               icon={<Shield className="w-6 h-6 text-white" />}
-              title="Sin Errores"
-              description="Olvídate de reservas duplicadas o errores de comunicación."
-            />
-          </div>
+            title="Sin Errores"
+            description="Olvídate de reservas duplicadas o errores de comunicación."
+          />
+        </div>
 
           {/* Testimonials rediseñados */}
           <div className="space-y-4 mb-8">
             <h3 className="font-black text-xl mb-6 flex items-center gap-2">
               <Heart className="w-5 h-5 text-pink-300 fill-pink-300" />
-              Lo que dicen nuestros clientes
-            </h3>
-            <TestimonialCard
-              quote="En 2 meses hemos aumentado las reservas un 40%. El agente nunca duerme."
-              author="Carlos Mendoza"
-              restaurant="La Brasería Madrid"
-              savings="1,200"
-            />
-            <TestimonialCard
-              quote="Ya no pierdo reservas por no contestar el WhatsApp. ¡Es increíble!"
-              author="María García"
-              restaurant="Sushi Kyoto Barcelona"
-              savings="800"
-            />
-          </div>
+            Lo que dicen nuestros clientes
+          </h3>
+          <TestimonialCard
+            quote="En 2 meses hemos aumentado las reservas un 40%. El agente nunca duerme."
+            author="Carlos Mendoza"
+            restaurant="La Brasería Madrid"
+            savings="1,200"
+          />
+          <TestimonialCard
+            quote="Ya no pierdo reservas por no contestar el WhatsApp. ¡Es increíble!"
+            author="María García"
+            restaurant="Sushi Kyoto Barcelona"
+            savings="800"
+          />
+        </div>
 
           {/* Oferta especial rediseñada */}
           <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400/20 to-orange-400/20 backdrop-blur-xl border border-yellow-300/30 rounded-2xl p-6">
@@ -289,7 +293,9 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/30 flex relative overflow-hidden">
       {/* Elementos decorativos de fondo */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill-rule="evenodd"%3E%3Cg fill="%23a855f7" fill-opacity="0.03"%3E%3Cpath d="M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40" />
+      <div className="absolute inset-0 opacity-40" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23a855f7' fill-opacity='0.03'%3E%3Ccircle cx='20' cy='20' r='2'/%3E%3C/g%3E%3C/svg%3E")`
+      }} />
       
       {/* Panel izquierdo - Formularios REDISEÑADO */}
       <div className="flex-1 flex items-center justify-center p-6 relative z-10">
@@ -332,419 +338,419 @@ export default function Login() {
             <div className="relative z-10">
               
               {/* Toggle Login/Registro REDISEÑADO */}
-              {currentStep === 1 && (
+            {currentStep === 1 && (
                 <div className="flex mb-8 bg-gradient-to-r from-purple-100 to-blue-100 rounded-2xl p-1.5 shadow-inner">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLogin(true);
-                      setError("");
-                      setMessage("");
-                    }}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(true);
+                    setError("");
+                    setMessage("");
+                  }}
                     className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300 ${
-                      isLogin
+                    isLogin
                         ? "bg-white text-purple-600 shadow-lg transform scale-105"
                         : "text-purple-500 hover:text-purple-700"
-                    }`}
-                  >
-                    Iniciar Sesión
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLogin(false);
-                      setError("");
-                      setMessage("");
-                    }}
+                  }`}
+                >
+                  Iniciar Sesión
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(false);
+                    setError("");
+                    setMessage("");
+                  }}
                     className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300 ${
-                      !isLogin
+                    !isLogin
                         ? "bg-white text-purple-600 shadow-lg transform scale-105"
                         : "text-purple-500 hover:text-purple-700"
-                    }`}
-                  >
-                    Crear Cuenta
-                  </button>
-                </div>
-              )}
+                  }`}
+                >
+                  Crear Cuenta
+                </button>
+              </div>
+            )}
 
               {/* Mensajes rediseñados */}
-              {error && (
+            {error && (
                 <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-xl">
                   <p className="text-red-700 text-sm font-semibold">{error}</p>
-                </div>
-              )}
+              </div>
+            )}
 
-              {message && (
+            {message && (
                 <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-xl">
                   <p className="text-green-700 text-sm font-semibold whitespace-pre-line">{message}</p>
-                </div>
-              )}
+              </div>
+            )}
 
               {/* Formulario de Login REDISEÑADO */}
-              {isLogin ? (
+            {isLogin ? (
                 <form onSubmit={handleLogin} className="space-y-6">
-                  <div>
+                <div>
                     <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                       className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                      placeholder="tu@email.com"
-                    />
-                  </div>
+                    placeholder="tu@email.com"
+                  />
+                </div>
 
-                  <div>
+                <div>
                     <label htmlFor="password" className="block text-sm font-bold text-gray-700 mb-2">
-                      Contraseña
-                    </label>
-                    <input
-                      id="password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                    Contraseña
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                       className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                      placeholder="••••••••"
-                    />
-                  </div>
+                    placeholder="••••••••"
+                  />
+                </div>
 
-                  <button
-                    type="submit"
-                    disabled={loading}
+                <button
+                  type="submit"
+                  disabled={loading}
                     className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-105"
-                  >
-                    {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
-                  </button>
+                >
+                  {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                </button>
 
-                  <div className="text-center">
+                <div className="text-center">
                     <a href="#" className="text-sm text-purple-600 hover:text-purple-700 font-semibold">
-                      ¿Olvidaste tu contraseña?
-                    </a>
-                  </div>
-                </form>
-              ) : (
+                    ¿Olvidaste tu contraseña?
+                  </a>
+                </div>
+              </form>
+            ) : (
                 /* Formulario de Registro Multi-Step REDISEÑADO */
-                <>
-                  {currentStep === 1 ? (
-                    <form onSubmit={handleNextStep} className="space-y-4">
-                      <div className="grid grid-cols-1 gap-4">
-                        <div>
+              <>
+                {currentStep === 1 ? (
+                  <form onSubmit={handleNextStep} className="space-y-4">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
                           <label htmlFor="reg-email" className="block text-sm font-bold text-gray-700 mb-2">
-                            Email *
-                          </label>
-                          <input
-                            id="reg-email"
-                            type="email"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                          Email *
+                        </label>
+                        <input
+                          id="reg-email"
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
                             className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                            placeholder="tu@email.com"
-                          />
-                        </div>
+                          placeholder="tu@email.com"
+                        />
+                      </div>
 
-                        <div>
+                      <div>
                           <label htmlFor="restaurant-name" className="block text-sm font-bold text-gray-700 mb-2">
-                            Nombre del Restaurante *
-                          </label>
-                          <input
-                            id="restaurant-name"
-                            type="text"
-                            required
-                            value={restaurantName}
-                            onChange={(e) => setRestaurantName(e.target.value)}
+                          Nombre del Restaurante *
+                        </label>
+                        <input
+                          id="restaurant-name"
+                          type="text"
+                          required
+                          value={restaurantName}
+                          onChange={(e) => setRestaurantName(e.target.value)}
                             className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                            placeholder="Mi Restaurante"
-                          />
-                        </div>
+                          placeholder="Mi Restaurante"
+                        />
+                      </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
                             <label htmlFor="phone" className="block text-sm font-bold text-gray-700 mb-2">
-                              Teléfono
-                            </label>
-                            <input
-                              id="phone"
-                              type="tel"
-                              value={phone}
-                              onChange={(e) => setPhone(e.target.value)}
+                            Teléfono
+                          </label>
+                          <input
+                            id="phone"
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
                               className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                              placeholder="+34 600 000 000"
-                            />
-                          </div>
+                            placeholder="+34 600 000 000"
+                          />
+                        </div>
 
-                          <div>
+                        <div>
                             <label htmlFor="city" className="block text-sm font-bold text-gray-700 mb-2">
-                              Ciudad
-                            </label>
-                            <input
-                              id="city"
-                              type="text"
-                              value={city}
-                              onChange={(e) => setCity(e.target.value)}
-                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                              placeholder="Madrid"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label htmlFor="address" className="block text-sm font-bold text-gray-700 mb-2">
-                            Dirección
+                            Ciudad
                           </label>
                           <input
-                            id="address"
+                            id="city"
                             type="text"
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                            placeholder="Calle Principal 123"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label htmlFor="postal-code" className="block text-sm font-bold text-gray-700 mb-2">
-                              Código Postal
-                            </label>
-                            <input
-                              id="postal-code"
-                              type="text"
-                              value={postalCode}
-                              onChange={(e) => setPostalCode(e.target.value)}
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
                               className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                              placeholder="28001"
-                            />
-                          </div>
-
-                          <div>
-                            <label htmlFor="cuisine-type" className="block text-sm font-bold text-gray-700 mb-2">
-                              Tipo de Cocina
-                            </label>
-                            <select
-                              id="cuisine-type"
-                              value={cuisineType}
-                              onChange={(e) => setCuisineType(e.target.value)}
-                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                            >
-                              <option value="">Seleccionar...</option>
-                              <option value="mediterranea">Mediterránea</option>
-                              <option value="italiana">Italiana</option>
-                              <option value="japonesa">Japonesa</option>
-                              <option value="mexicana">Mexicana</option>
-                              <option value="argentina">Argentina</option>
-                              <option value="fusion">Fusión</option>
-                              <option value="tradicional">Tradicional</option>
-                              <option value="vegetariana">Vegetariana</option>
-                              <option value="mariscos">Mariscos</option>
-                              <option value="tapas">Tapas</option>
-                              <option value="otra">Otra</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label htmlFor="reg-password" className="block text-sm font-bold text-gray-700 mb-2">
-                            Contraseña *
-                          </label>
-                          <input
-                            id="reg-password"
-                            type="password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                            placeholder="Mínimo 6 caracteres"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="confirm-password" className="block text-sm font-bold text-gray-700 mb-2">
-                            Confirmar Contraseña *
-                          </label>
-                          <input
-                            id="confirm-password"
-                            type="password"
-                            required
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                            placeholder="Repite la contraseña"
+                            placeholder="Madrid"
                           />
                         </div>
                       </div>
 
-                      <button
-                        type="submit"
+                      <div>
+                          <label htmlFor="address" className="block text-sm font-bold text-gray-700 mb-2">
+                          Dirección
+                        </label>
+                        <input
+                          id="address"
+                          type="text"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                          placeholder="Calle Principal 123"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label htmlFor="postal-code" className="block text-sm font-bold text-gray-700 mb-2">
+                            Código Postal
+                          </label>
+                          <input
+                            id="postal-code"
+                            type="text"
+                            value={postalCode}
+                            onChange={(e) => setPostalCode(e.target.value)}
+                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                            placeholder="28001"
+                          />
+                        </div>
+
+                        <div>
+                            <label htmlFor="cuisine-type" className="block text-sm font-bold text-gray-700 mb-2">
+                            Tipo de Cocina
+                          </label>
+                          <select
+                            id="cuisine-type"
+                            value={cuisineType}
+                            onChange={(e) => setCuisineType(e.target.value)}
+                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                          >
+                            <option value="">Seleccionar...</option>
+                            <option value="mediterranea">Mediterránea</option>
+                            <option value="italiana">Italiana</option>
+                            <option value="japonesa">Japonesa</option>
+                            <option value="mexicana">Mexicana</option>
+                            <option value="argentina">Argentina</option>
+                            <option value="fusion">Fusión</option>
+                            <option value="tradicional">Tradicional</option>
+                            <option value="vegetariana">Vegetariana</option>
+                            <option value="mariscos">Mariscos</option>
+                            <option value="tapas">Tapas</option>
+                            <option value="otra">Otra</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                          <label htmlFor="reg-password" className="block text-sm font-bold text-gray-700 mb-2">
+                          Contraseña *
+                        </label>
+                        <input
+                          id="reg-password"
+                          type="password"
+                          required
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                          placeholder="Mínimo 6 caracteres"
+                        />
+                      </div>
+
+                      <div>
+                          <label htmlFor="confirm-password" className="block text-sm font-bold text-gray-700 mb-2">
+                          Confirmar Contraseña *
+                        </label>
+                        <input
+                          id="confirm-password"
+                          type="password"
+                          required
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                          placeholder="Repite la contraseña"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
                         className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 transition-all duration-300 font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-3"
-                      >
-                        Siguiente: Configurar Agente
+                    >
+                      Siguiente: Configurar Agente
                         <ArrowRight className="w-5 h-5" />
-                      </button>
-                    </form>
-                  ) : (
+                    </button>
+                  </form>
+                ) : (
                     /* Step 2: Configuración del Agente REDISEÑADO */
                     <form onSubmit={handleRegister} className="space-y-6">
                       <div className="mb-6 text-center">
                         <div className="flex items-center justify-center gap-3 mb-3">
                           <Sparkles className="w-6 h-6 text-purple-600" />
                           <h3 className="font-black text-gray-900 text-xl">
-                            Personaliza tu Agente IA
-                          </h3>
-                        </div>
+                          Personaliza tu Agente IA
+                        </h3>
+                      </div>
                         <p className="text-gray-600 font-medium">
                           Tu agente empezará a trabajar inmediatamente después del registro
-                        </p>
-                      </div>
+                      </p>
+                    </div>
 
-                      <div>
+                    <div>
                         <label htmlFor="agent-name" className="block text-sm font-bold text-gray-700 mb-2">
-                          Nombre del Agente
-                        </label>
-                        <input
-                          id="agent-name"
-                          type="text"
-                          value={agentName}
-                          onChange={(e) => setAgentName(e.target.value)}
+                        Nombre del Agente
+                      </label>
+                      <input
+                        id="agent-name"
+                        type="text"
+                        value={agentName}
+                        onChange={(e) => setAgentName(e.target.value)}
                           className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                          placeholder="Sofia, Carlos, Luna..."
-                        />
+                        placeholder="Sofia, Carlos, Luna..."
+                      />
                         <p className="text-xs text-gray-500 mt-2 font-medium">
                           Este es el nombre que usará al presentarse a tus clientes
-                        </p>
-                      </div>
+                      </p>
+                    </div>
 
-                      <div>
+                    <div>
                         <label className="block text-sm font-bold text-gray-700 mb-3">
-                          Canal Principal
-                        </label>
+                        Canal Principal
+                      </label>
                         <div className="grid grid-cols-2 gap-4">
-                          <label
+                        <label
                             className={`relative flex items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                              primaryChannel === "whatsapp"
+                            primaryChannel === "whatsapp"
                                 ? "border-purple-500 bg-purple-50 shadow-lg transform scale-105"
                                 : "border-gray-300 hover:border-purple-300 hover:bg-purple-50/50"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="channel"
-                              value="whatsapp"
-                              checked={primaryChannel === "whatsapp"}
-                              onChange={(e) => setPrimaryChannel(e.target.value)}
-                              className="sr-only"
-                            />
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="channel"
+                            value="whatsapp"
+                            checked={primaryChannel === "whatsapp"}
+                            onChange={(e) => setPrimaryChannel(e.target.value)}
+                            className="sr-only"
+                          />
                             <MessageCircle className="w-6 h-6 mr-3 text-green-600" />
                             <span className="font-bold text-sm">WhatsApp</span>
-                          </label>
-                          <label
+                        </label>
+                        <label
                             className={`relative flex items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                              primaryChannel === "vapi"
+                            primaryChannel === "vapi"
                                 ? "border-purple-500 bg-purple-50 shadow-lg transform scale-105"
                                 : "border-gray-300 hover:border-purple-300 hover:bg-purple-50/50"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="channel"
-                              value="vapi"
-                              checked={primaryChannel === "vapi"}
-                              onChange={(e) => setPrimaryChannel(e.target.value)}
-                              className="sr-only"
-                            />
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="channel"
+                            value="vapi"
+                            checked={primaryChannel === "vapi"}
+                            onChange={(e) => setPrimaryChannel(e.target.value)}
+                            className="sr-only"
+                          />
                             <Phone className="w-6 h-6 mr-3 text-orange-600" />
                             <span className="font-bold text-sm">Llamadas</span>
-                          </label>
-                        </div>
+                        </label>
                       </div>
+                    </div>
 
-                      <div>
+                    <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">
-                          Volumen esperado de reservas
-                        </label>
-                        <select
-                          value={expectedVolume}
-                          onChange={(e) => setExpectedVolume(e.target.value)}
+                        Volumen esperado de reservas
+                      </label>
+                      <select
+                        value={expectedVolume}
+                        onChange={(e) => setExpectedVolume(e.target.value)}
                           className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                        >
-                          <option value="low">Bajo (0-10 al día)</option>
-                          <option value="medium">Medio (10-30 al día)</option>
-                          <option value="high">Alto (30-50 al día)</option>
-                          <option value="very-high">Muy Alto (+50 al día)</option>
-                        </select>
-                      </div>
+                      >
+                        <option value="low">Bajo (0-10 al día)</option>
+                        <option value="medium">Medio (10-30 al día)</option>
+                        <option value="high">Alto (30-50 al día)</option>
+                        <option value="very-high">Muy Alto (+50 al día)</option>
+                      </select>
+                    </div>
 
-                      <div>
+                    <div>
                         <label className="block text-sm font-bold text-gray-700 mb-3">
-                          Horario del Restaurante
-                        </label>
+                        Horario del Restaurante
+                      </label>
                         <div className="grid grid-cols-2 gap-4">
-                          <div>
+                        <div>
                             <label htmlFor="opening" className="block text-xs text-gray-600 mb-2 font-semibold">
-                              Apertura
-                            </label>
-                            <input
-                              id="opening"
-                              type="time"
-                              value={openingTime}
-                              onChange={(e) => setOpeningTime(e.target.value)}
+                            Apertura
+                          </label>
+                          <input
+                            id="opening"
+                            type="time"
+                            value={openingTime}
+                            onChange={(e) => setOpeningTime(e.target.value)}
                               className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                            />
-                          </div>
-                          <div>
-                            <label htmlFor="closing" className="block text-xs text-gray-600 mb-2 font-semibold">
-                              Cierre
-                            </label>
-                            <input
-                              id="closing"
-                              type="time"
-                              value={closingTime}
-                              onChange={(e) => setClosingTime(e.target.value)}
-                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
-                            />
-                          </div>
+                          />
                         </div>
+                        <div>
+                            <label htmlFor="closing" className="block text-xs text-gray-600 mb-2 font-semibold">
+                            Cierre
+                          </label>
+                          <input
+                            id="closing"
+                            type="time"
+                            value={closingTime}
+                            onChange={(e) => setClosingTime(e.target.value)}
+                              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white/50 backdrop-blur"
+                          />
+                          </div>
                       </div>
+                    </div>
 
                       <div className="flex gap-4">
-                        <button
-                          type="button"
-                          onClick={() => setCurrentStep(1)}
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(1)}
                           className="flex-1 bg-gray-200 text-gray-700 py-3 px-6 rounded-xl hover:bg-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-300 font-bold"
-                        >
-                          Atrás
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={loading}
+                      >
+                        Atrás
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
                           className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-2"
-                        >
-                          {loading ? (
-                            "Creando tu agente..."
-                          ) : (
-                            <>
+                      >
+                        {loading ? (
+                          "Creando tu agente..."
+                        ) : (
+                          <>
                               <CheckCircle2 className="w-5 h-5" />
-                              Crear Cuenta
-                            </>
-                          )}
-                        </button>
-                      </div>
+                            Crear Cuenta
+                          </>
+                        )}
+                      </button>
+                    </div>
 
                       <div className="mt-6 p-4 bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl border border-purple-200">
                         <p className="text-sm text-purple-700 text-center font-bold">
                           ✨ Tu agente {agentName} empezará a recibir reservas inmediatamente
-                        </p>
-                      </div>
-                    </form>
-                  )}
-                </>
-              )}
-            </div>
+                      </p>
+                    </div>
+                  </form>
+                )}
+              </>
+            )}
+          </div>
           </div>
 
           {/* Info adicional rediseñada */}
