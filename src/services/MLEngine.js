@@ -674,6 +674,160 @@ class ChurnPredictionModel {
       }
     };
   }
+
+  // === MÉTODOS FALTANTES CRÍTICOS ===
+
+  calculateSeasonalityImpact(dateRange) {
+    // Calcular impacto estacional
+    const month = new Date(dateRange.start).getMonth();
+    const seasonFactors = {
+      // Invierno: 0,1,2,11
+      0: 0.8, 1: 0.9, 2: 1.0, 11: 0.85,
+      // Primavera: 3,4,5  
+      3: 1.1, 4: 1.2, 5: 1.3,
+      // Verano: 6,7,8
+      6: 1.4, 7: 1.5, 8: 1.3,
+      // Otoño: 9,10
+      9: 1.1, 10: 1.0
+    };
+    return seasonFactors[month] || 1.0;
+  }
+
+  calculateWeatherImpact(weather) {
+    // Calcular impacto del clima
+    const weatherFactors = {
+      'excellent': 1.3, 'good': 1.1, 'normal': 1.0,
+      'cloudy': 0.95, 'rainy': 0.8, 'stormy': 0.6,
+      'very_cold': 0.75, 'very_hot': 0.85
+    };
+    return weatherFactors[weather] || 1.0;
+  }
+
+  calculateEventsImpact(events) {
+    if (!events || events.length === 0) return 1.0;
+    let impact = 1.0;
+    events.forEach(event => {
+      switch(event.type) {
+        case 'concert': impact += 0.4; break;
+        case 'festival': impact += 0.6; break;
+        case 'sports': impact += 0.3; break;
+        case 'holiday': impact += 0.5; break;
+        default: impact += 0.1;
+      }
+    });
+    return Math.min(impact, 2.0);
+  }
+
+  calculatePromotionsImpact(promotions) {
+    if (!promotions || promotions.length === 0) return 1.0;
+    let impact = 1.0;
+    promotions.forEach(promo => {
+      switch(promo.type) {
+        case 'discount': impact += promo.value * 0.01; break;
+        case 'happy_hour': impact += 0.3; break;
+        case 'menu_special': impact += 0.15; break;
+        default: impact += 0.05;
+      }
+    });
+    return Math.min(impact, 1.8);
+  }
+
+  predictTimeSlotDemand(prediction) {
+    const totalDemand = prediction.reservations || 50;
+    const timeSlots = [];
+    const hourlyDistribution = {
+      '12:00': 0.15, '13:00': 0.25, '14:00': 0.20, '15:00': 0.10,
+      '19:00': 0.05, '20:00': 0.15, '21:00': 0.25, '22:00': 0.20, '23:00': 0.10
+    };
+    
+    Object.entries(hourlyDistribution).forEach(([hour, percentage]) => {
+      timeSlots.push({
+        time: hour,
+        expectedReservations: Math.round(totalDemand * percentage),
+        confidence: prediction.confidence * (0.8 + Math.random() * 0.2)
+      });
+    });
+    return timeSlots;
+  }
+
+  generateDemandRecommendations(prediction) {
+    const recommendations = [];
+    const demand = prediction.reservations || 50;
+    
+    if (demand > 80) {
+      recommendations.push({
+        type: 'staffing', message: 'Aumentar personal para alta demanda', priority: 'high'
+      });
+    } else if (demand < 30) {
+      recommendations.push({
+        type: 'promotion', message: 'Activar promociones', priority: 'high'
+      });
+    }
+    return recommendations;
+  }
+
+  predictCustomerLifespan(customer) {
+    const visits = customer.total_reservations || 0;
+    const engagementScore = this.calculateEngagement(customer);
+    let lifespan = 365; // Base 1 año
+    lifespan *= (1 + engagementScore);
+    if (visits > 10) lifespan *= 1.5;
+    return Math.min(lifespan, 365 * 5); // Max 5 años
+  }
+
+  calculateLoyalty(customer) {
+    const visits = customer.total_reservations || 0;
+    const months = customer.months_active || 1;
+    const consistencyScore = Math.min(visits / months, 1);
+    return consistencyScore;
+  }
+
+  generateLayoutRecommendations(optimization) {
+    return ['Optimizar disposición de mesas según demanda'];
+  }
+
+  generateTimingRecommendations(optimization) {
+    return ['Ajustar horarios de apertura según patrones'];
+  }
+
+  generateStaffingRecommendations(optimization) {
+    return ['Programar personal adicional en horas pico'];
+  }
+
+  prioritizeInsights(insights) {
+    return insights.sort((a, b) => (b.impact * b.confidence) - (a.impact * a.confidence));
+  }
+
+  determineAdvancedSegment(params) {
+    const { baseSegment, behaviorScore, valueScore, churnRisk } = params;
+    let confidence = 0.8;
+    
+    if (behaviorScore > 80 && valueScore > 80) {
+      return { name: 'Champion', confidence, actions: ['Programa VIP', 'Ofertas exclusivas'] };
+    }
+    if (valueScore > 70 && churnRisk < 30) {
+      return { name: 'Loyal Customer', confidence, actions: ['Programa lealtad', 'Comunicación personalizada'] };
+    }
+    if (churnRisk > 70) {
+      return { name: 'At Risk', confidence, actions: ['Campaña retención', 'Oferta especial'] };
+    }
+    
+    return { name: baseSegment, confidence: 0.6, actions: ['Seguimiento estándar'] };
+  }
+
+  calculateNextVisitProbability(customer) {
+    const daysSince = this.daysSinceLastVisit(customer.last_visit);
+    const avgInterval = customer.avg_visit_interval || 30;
+    return Math.max(0, 1 - (daysSince / (avgInterval * 2)));
+  }
+
+  async simulateCompetitiveAnalysis(data) {
+    return {
+      market_position: 'strong',
+      competitive_advantages: ['Servicio personalizado', 'Ubicación privilegiada'],
+      opportunities: ['Expansión digital', 'Nuevos segmentos']
+    };
+  }
 }
 
 // Instancia singleton

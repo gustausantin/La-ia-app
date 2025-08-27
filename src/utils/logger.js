@@ -14,16 +14,20 @@ const formatLog = (level, message, meta) => {
 const logger = {
   debug: (message, meta = {}) => {
     if (isDevelopment) {
+      console.log(formatLog('debug', message, meta));
     }
   },
   
   info: (message, meta = {}) => {
+    console.info(formatLog('info', message, meta));
   },
   
   warn: (message, meta = {}) => {
+    console.warn(formatLog('warn', message, meta));
   },
   
   error: (message, meta = {}) => {
+    console.error(formatLog('error', message, meta));
   }
 };
 
