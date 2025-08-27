@@ -1,0 +1,3 @@
+DEPLOY URGENTE - Fix error 400 Supabase
+RPC function implemented
+Timestamp: 2025-01-27 16:28
