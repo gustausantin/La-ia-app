@@ -7,6 +7,7 @@
 @tailwind utilities;
 
 /* Importar sistema de design corporativo */
+@import './styles/accessibility.css';
 
 
 /* Variables CSS personalizadas para el tema Son-IA */
@@ -357,4 +358,23 @@ input[type="checkbox"]:checked {
 
 .channel-web {
   @apply bg-purple-100 text-purple-700;
+}
+
+/* ===== FORCE FIX LEGIBILIDAD LOGIN ===== */
+/* Sobreescribir TODOS los textos problemáticos */
+.bg-gradient-to-br .text-sm,
+.bg-gradient-to-br p {
+  color: white !important;
+  font-weight: 500 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.bg-gradient-to-br h4 {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.bg-gradient-to-br .text-purple-100 {
+  color: white !important;
+  font-weight: 500 !important;
 }
