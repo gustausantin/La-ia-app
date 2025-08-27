@@ -1,3 +1,0 @@
-FORCE DEPLOY - Fix SVG build error
-Login rediseñado - versión mundial
-Timestamp: 2025-01-27 15:48
