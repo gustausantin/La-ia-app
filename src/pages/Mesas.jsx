@@ -1331,8 +1331,10 @@ const TableModal = ({
             }
 
             onSave();
+            toast.success(table ? "Mesa actualizada correctamente" : "Mesa creada correctamente");
         } catch (error) {
-            toast.error("Error al guardar la mesa");
+            console.error("Error saving table:", error);
+            toast.error(`Error al guardar la mesa: ${error.message || error.hint || 'Error desconocido'}`);
         } finally {
             setLoading(false);
         }

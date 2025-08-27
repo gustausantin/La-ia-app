@@ -483,6 +483,188 @@ export default function Clientes() {
                     <EmptyState onCreateCustomer={() => setShowCreateModal(true)} />
                 )}
             </div>
+
+            {/* Modal de crear cliente */}
+            {showCreateModal && (
+                <CustomerModal
+                    isOpen={showCreateModal}
+                    onClose={() => setShowCreateModal(false)}
+                    onSave={loadCustomers}
+                    restaurantId={restaurantId}
+                />
+            )}
         </div>
     );
 }
+
+// Modal de crear/editar cliente
+const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null }) => {
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        name: customer?.name || "",
+        email: customer?.email || "",
+        phone: customer?.phone || "",
+        notes: customer?.notes || "",
+    });
+    const [errors, setErrors] = useState({});
+
+    const validateForm = () => {
+        const newErrors = {};
+
+        if (!formData.name.trim()) {
+            newErrors.name = "El nombre es obligatorio";
+        }
+
+        if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = "Email no válido";
+        }
+
+        if (!formData.phone.trim()) {
+            newErrors.phone = "El teléfono es obligatorio";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!validateForm()) return;
+
+        setLoading(true);
+
+        try {
+            const customerData = {
+                ...formData,
+                restaurant_id: restaurantId,
+            };
+
+            if (customer) {
+                // Actualizar
+                const { error } = await supabase
+                    .from("customers")
+                    .update(customerData)
+                    .eq("id", customer.id);
+
+                if (error) throw error;
+            } else {
+                // Crear
+                const { error } = await supabase
+                    .from("customers")
+                    .insert([customerData]);
+
+                if (error) throw error;
+            }
+
+            onSave();
+            onClose();
+            toast.success(customer ? "Cliente actualizado correctamente" : "Cliente creado correctamente");
+        } catch (error) {
+            console.error("Error saving customer:", error);
+            toast.error(`Error al guardar el cliente: ${error.message || error.hint || 'Error desconocido'}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-lg w-full">
+                <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-xl font-semibold text-gray-900">
+                        {customer ? "Editar Cliente" : "Nuevo Cliente"}
+                    </h3>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Nombre completo *
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                                errors.name ? "border-red-300" : "border-gray-300"
+                            }`}
+                            placeholder="Juan Pérez"
+                        />
+                        {errors.name && (
+                            <p className="text-xs text-red-600 mt-1">{errors.name}</p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                                errors.email ? "border-red-300" : "border-gray-300"
+                            }`}
+                            placeholder="juan@ejemplo.com"
+                        />
+                        {errors.email && (
+                            <p className="text-xs text-red-600 mt-1">{errors.email}</p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Teléfono *
+                        </label>
+                        <input
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                                errors.phone ? "border-red-300" : "border-gray-300"
+                            }`}
+                            placeholder="123 456 789"
+                        />
+                        {errors.phone && (
+                            <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Notas
+                        </label>
+                        <textarea
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            rows="3"
+                            placeholder="Preferencias, alergias, etc..."
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        >
+                            {loading ? "Guardando..." : customer ? "Actualizar" : "Crear"} Cliente
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};

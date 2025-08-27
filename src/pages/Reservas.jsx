@@ -1272,7 +1272,7 @@ const ReservationFormModal = ({
             newErrors.customer_phone = "El teléfono es obligatorio";
         }
 
-        if (!formData.time) {
+        if (!formData.time || formData.time.trim() === "") {
             newErrors.time = "La hora es obligatoria";
         }
 
@@ -1323,8 +1323,11 @@ const ReservationFormModal = ({
             }
 
             onSave();
+            onClose();
+            toast.success(reservation ? "Reserva actualizada correctamente" : "Reserva creada correctamente");
         } catch (error) {
-            toast.error("Error al guardar la reserva");
+            console.error("Error saving reservation:", error);
+            toast.error(`Error al guardar la reserva: ${error.message || error.hint || 'Error desconocido'}`);
         } finally {
             setLoading(false);
         }

@@ -287,11 +287,23 @@ export default function Calendario() {
     // Actualizar horario semanal
     const updateDaySchedule = (dayId, field, value) => {
         setWeeklySchedule(prev => 
-            prev.map(day => 
-                day.day_of_week === dayId 
-                    ? { ...day, [field]: value }
-                    : day
-            )
+            prev.map(day => {
+                if (day.day_of_week === dayId) {
+                    const updatedDay = { ...day, [field]: value };
+                    
+                    // Si abrimos el día y no tiene slots, agregar horario de ejemplo
+                    if (field === 'is_open' && value === true && (!day.slots || day.slots.length === 0)) {
+                        updatedDay.slots = [
+                            { name: 'Almuerzo', start: '12:00', end: '16:00', capacity: 30 },
+                            { name: 'Cena', start: '19:00', end: '23:00', capacity: 40 }
+                        ];
+                        toast.success(`✅ ${day.day_name} configurado con horarios de ejemplo. ¡Puedes editarlos!`);
+                    }
+                    
+                    return updatedDay;
+                }
+                return day;
+            })
         );
     };
 
