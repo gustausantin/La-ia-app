@@ -18,23 +18,25 @@ import {
   Heart,
 } from "lucide-react";
 
-// Componente de feature card REDISEÑADO
+// Componente de feature card REDISEÑADO - Layout horizontal optimizado
 const FeatureCard = ({ icon, title, description }) => (
-  <div className="group relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+  <div className="group relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-    <div className="relative z-10">
-      <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-      {icon}
-    </div>
-      <h4 className="font-bold text-white text-lg mb-2">{title}</h4>
-      <p className="text-white/90 text-sm leading-relaxed font-medium">{description}</p>
+    <div className="relative z-10 flex items-start gap-3">
+      <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+        {icon}
+      </div>
+      <div className="flex-1">
+        <h4 className="font-bold text-white text-lg mb-1">{title}</h4>
+        <p className="text-white/90 text-sm leading-relaxed font-medium">{description}</p>
+      </div>
     </div>
   </div>
 );
 
 // Componente de testimonial REDISEÑADO
 const TestimonialCard = ({ quote, author, restaurant, savings }) => (
-  <div className="relative overflow-hidden bg-white/15 backdrop-blur-xl border border-white/30 rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 group">
+  <div className="relative overflow-hidden bg-white/15 backdrop-blur-xl border border-white/30 rounded-2xl p-4 hover:bg-white/20 transition-all duration-300 group">
     <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     <div className="relative z-10">
       <div className="flex gap-1 mb-3">
@@ -200,7 +202,7 @@ export default function Login() {
   // Componente principal de beneficios - COMPLETAMENTE REDISEÑADO
   const AgentBenefits = () => (
     <div className="lg:block hidden relative">
-      <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 p-8 rounded-3xl text-white h-full min-h-screen">
+      <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 p-6 rounded-3xl text-white h-full min-h-screen">
         {/* Elementos decorativos de fondo */}
         <div className="absolute inset-0 opacity-30">
           <div className="w-full h-full bg-white/5" style={{
@@ -212,7 +214,7 @@ export default function Login() {
         
         <div className="relative z-10">
           {/* Header mejorado */}
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex items-center gap-4 mb-6">
             <div className="relative">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center">
                 <Bot className="w-8 h-8 text-white" />
@@ -230,7 +232,7 @@ export default function Login() {
         </div>
 
           {/* Features grid rediseñado */}
-          <div className="grid grid-cols-1 gap-4 mb-8">
+          <div className="grid grid-cols-1 gap-3 mb-6">
           <FeatureCard
               icon={<MessageCircle className="w-6 h-6 text-white" />}
             title="Multi-Canal"
@@ -254,8 +256,8 @@ export default function Login() {
         </div>
 
           {/* Testimonials rediseñados */}
-          <div className="space-y-4 mb-8">
-            <h3 className="font-black text-xl mb-6 flex items-center gap-2">
+          <div className="space-y-3 mb-6">
+            <h3 className="font-black text-xl mb-4 flex items-center gap-2">
               <Heart className="w-5 h-5 text-pink-300 fill-pink-300" />
             Lo que dicen nuestros clientes
           </h3>
@@ -274,7 +276,7 @@ export default function Login() {
         </div>
 
           {/* Oferta especial rediseñada */}
-          <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400/20 to-orange-400/20 backdrop-blur-xl border border-yellow-300/30 rounded-2xl p-6">
+          <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400/20 to-orange-400/20 backdrop-blur-xl border border-yellow-300/30 rounded-2xl p-4">
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-300/10 to-transparent" />
             <div className="relative z-10 text-center">
               <div className="flex items-center justify-center gap-2 mb-3">
