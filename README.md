@@ -56,7 +56,7 @@ npm run dev
 
 ### **📚 PARA NUEVOS DESARROLLADORES:**
 1. **[📖 docs/README-MASTER.md](docs/README-MASTER.md)** - Guía completa de onboarding
-2. **[🏗️ docs/DATABASE-SCHEMA-CURRENT.md](docs/DATABASE-SCHEMA-CURRENT.md)** - Esquema de base de datos
+2. **[🏗️ docs/DATABASE-MASTER-REFERENCE.md](docs/DATABASE-MASTER-REFERENCE.md)** - Esquema completo de BD
 3. **[🔒 docs/SECURITY-ENTERPRISE-CERTIFICATION.md](docs/SECURITY-ENTERPRISE-CERTIFICATION.md)** - Certificación de seguridad
 
 ### **📊 ESTADO Y PROGRESO:**
