@@ -1,0 +1,4 @@
+FORCE DEPLOY FIX BUILD ERROR
+Timestamp: 2025-01-27 16:22
+Error: MIME type module script error
+Solución: Forzar rebuild limpio
