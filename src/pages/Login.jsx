@@ -33,7 +33,7 @@ const FeatureCard = ({ icon, title, description }) => (
     </div>
     <div>
       <h4 className="font-semibold text-gray-900">{title}</h4>
-      <p className="text-sm text-white mt-1">{description}</p>
+      <p className="text-sm text-gray-900 mt-1">{description}</p>
     </div>
   </div>
 );
