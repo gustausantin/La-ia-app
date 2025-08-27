@@ -274,56 +274,9 @@ export default function Analytics() {
             
             setMetricsData(finalMetrics);
             
-            // Generar análisis ROI REAL desde Supabase
-            try {
-                const { data: roiData, error: roiError } = await supabase.rpc('calculate_restaurant_roi', {
-                    restaurant_uuid: restaurantId
-                });
-                
-                if (roiError) {
-                    console.warn('Error calculando ROI real, usando fallback:', roiError);
-                    const roi = ProfessionalCalculators.calculateROI(finalMetrics, restaurant);
-                    setRoiAnalysis(roi);
-                } else if (roiData && roiData.length > 0) {
-                    // Formatear datos del ROI real
-                    const realRoi = roiData[0];
-                    const formattedRoi = {
-                        totalROI: parseFloat(realRoi.net_benefit),
-                        roiPercentage: Math.round(parseFloat(realRoi.roi_percentage)),
-                        revenueGenerated: parseFloat(realRoi.current_monthly_revenue),
-                        costSavings: parseFloat(realRoi.cost_savings),
-                        paybackWeeks: realRoi.payback_weeks,
-                        
-                        // Desglose transparente REAL
-                        desglose: {
-                            ingresoBase: parseFloat(realRoi.current_monthly_revenue),
-                            incrementoIA: parseFloat(realRoi.projected_revenue_with_ai) - parseFloat(realRoi.current_monthly_revenue),
-                            ahorroStaff: parseFloat(realRoi.cost_savings),
-                            costoSistema: -parseFloat(realRoi.ai_cost),
-                            beneficioNeto: parseFloat(realRoi.net_benefit)
-                        },
-                        
-                        // Fuentes REALES
-                        fuentes: {
-                            source: realRoi.calculation_source,
-                            ticketPromedio: 'restaurant_business_config.avg_ticket_price',
-                            costoPersonal: 'restaurant_business_config.staff_cost_monthly',
-                            incrementoIA: 'restaurant_business_config.ai_expected_improvement',
-                            costeSistema: 'restaurant_business_config.ai_system_cost'
-                        }
-                    };
-                    
-                    setRoiAnalysis(formattedRoi);
-                } else {
-                    // Fallback si no hay datos
-                    const roi = ProfessionalCalculators.calculateROI(finalMetrics, restaurant);
-                    setRoiAnalysis(roi);
-                }
-            } catch (roiError) {
-                console.error('Error en ROI real:', roiError);
-                const roi = ProfessionalCalculators.calculateROI(finalMetrics, restaurant);
-                setRoiAnalysis(roi);
-            }
+            // Generar análisis ROI
+            const roi = ProfessionalCalculators.calculateROI(finalMetrics, restaurant);
+            setRoiAnalysis(roi);
             
             // Generar predicciones
             const forecast = ProfessionalCalculators.generateForecast(processedMetrics);
