@@ -120,12 +120,19 @@ export default defineConfig({
   // ===== DEV SERVER ENTERPRISE =====
   server: {
     host: "0.0.0.0",
-    port: 5000,
+    port: 3000,
     strictPort: true,
+    
+    // ===== HMR CONFIGURATION - FIX WEBSOCKET =====
+    hmr: {
+      port: 3000,
+      host: 'localhost',
+      clientPort: 3000,
+    },
     
     // ===== SECURITY HEADERS ENTERPRISE =====
     headers: {
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' *.supabase.co wss:;",
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' *.supabase.co wss: ws:;",
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
       'X-XSS-Protection': '1; mode=block',
