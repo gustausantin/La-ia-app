@@ -195,11 +195,13 @@ const {
         address: "",
         city: "",
         postal_code: "",
-        country: "ES",
-        timezone: "Europe/Madrid",
-        currency: "EUR",
-        language: "es",
         logo_url: "",
+        // Campos adicionales importantes
+        capacity_total: 0,
+        price_range: "",
+        instagram: "",
+        facebook: "",
+        accepting_reservations: true,
         
         // Horarios de operación
         operating_hours: {
@@ -536,11 +538,13 @@ const {
                 // Datos desde settings JSONB
                 website: savedSettings.website || "",
                 description: savedSettings.description || "",
-                country: savedSettings.country || "ES",
-                timezone: savedSettings.timezone || "Europe/Madrid",
-                currency: savedSettings.currency || "EUR",
-                language: savedSettings.language || "es",
                 logo_url: savedSettings.logo_url || "",
+                // Campos adicionales
+                capacity_total: savedSettings.capacity_total || 0,
+                price_range: savedSettings.price_range || "",
+                instagram: savedSettings.instagram || "",
+                facebook: savedSettings.facebook || "",
+                accepting_reservations: savedSettings.accepting_reservations !== false,
                 // Horarios de operación
                 operating_hours: savedSettings.operating_hours || prev.operating_hours,
                 // Configuración de reservas
@@ -639,7 +643,6 @@ const {
 
             switch (section) {
                 case "Información general":
-                case "Preferencias regionales":
                     await saveGeneralSettings();
                     break;
                 case "Horarios de operación":
@@ -676,6 +679,25 @@ const {
 
     // 🏢 GUARDAR INFORMACIÓN GENERAL
     const saveGeneralSettings = async () => {
+        console.log("🏢 INICIANDO GUARDADO GENERAL...");
+        console.log("📋 Datos a guardar:", {
+            name: settings.name,
+            email: settings.email,
+            phone: settings.phone,
+            address: settings.address,
+            city: settings.city,
+            postal_code: settings.postal_code,
+            cuisine_type: settings.cuisine_type,
+            website: settings.website,
+            description: settings.description,
+            logo_url: settings.logo_url,
+            capacity_total: settings.capacity_total,
+            price_range: settings.price_range,
+            instagram: settings.instagram,
+            facebook: settings.facebook,
+            accepting_reservations: settings.accepting_reservations
+        });
+
         if (!settings.name?.trim()) {
             throw new Error("El nombre del restaurante es obligatorio");
         }
@@ -693,9 +715,24 @@ const {
         }
         
         const currentSettings = currentData?.settings || {};
+        console.log("📖 Settings actuales en BD:", currentSettings);
         
-        // Guardar datos generales + preferencias regionales
-        const { error } = await supabase
+        const newSettings = {
+            ...currentSettings,
+            website: settings.website || "",
+            description: settings.description || "",
+            logo_url: settings.logo_url || "",
+            capacity_total: settings.capacity_total || 0,
+            price_range: settings.price_range || "",
+            instagram: settings.instagram || "",
+            facebook: settings.facebook || "",
+            accepting_reservations: settings.accepting_reservations !== false
+        };
+        
+        console.log("💾 Nuevos settings a guardar:", newSettings);
+        
+        // Guardar datos generales
+        const { data, error } = await supabase
             .from("restaurants")
             .update({
                 name: settings.name,
@@ -705,21 +742,18 @@ const {
                 city: settings.city,
                 postal_code: settings.postal_code,
                 cuisine_type: settings.cuisine_type,
-                settings: {
-                    ...currentSettings,
-                    website: settings.website || "",
-                    description: settings.description || "",
-                    country: settings.country,
-                    timezone: settings.timezone,
-                    currency: settings.currency,
-                    language: settings.language,
-                    logo_url: settings.logo_url
-                },
+                settings: newSettings,
                 updated_at: new Date().toISOString()
             })
-            .eq("id", restaurantId);
+            .eq("id", restaurantId)
+            .select(); // Importante: añadir .select() para ver qué se guardó
 
-        if (error) throw error;
+        if (error) {
+            console.error("❌ Error en update:", error);
+            throw error;
+        }
+        
+        console.log("✅ GUARDADO EXITOSO en BD:", data);
 
         // Actualizar contexto
         if (window.dispatchEvent) {
@@ -1104,21 +1138,31 @@ const {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Tipo de Cocina
+                                                Especialidad/Tipo de Cocina *
                                             </label>
                                             <select
                                                 value={settings.cuisine_type}
                                                 onChange={(e) => handleInputChange("cuisine_type", e.target.value)}
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                required
                                             >
-                                                <option value="">Seleccionar...</option>
-                                                <option value="mediterranea">Mediterránea</option>
-                                                <option value="italiana">Italiana</option>
-                                                <option value="japonesa">Japonesa</option>
-                                                <option value="mexicana">Mexicana</option>
-                                                <option value="fusion">Fusión</option>
-                                                <option value="tradicional">Tradicional</option>
-                                                <option value="otro">Otro</option>
+                                                <option value="">Selecciona el tipo de cocina</option>
+                                                <option value="Mediterránea">Mediterránea</option>
+                                                <option value="Española">Española</option>
+                                                <option value="Italiana">Italiana</option>
+                                                <option value="Asiática">Asiática</option>
+                                                <option value="Mexicana">Mexicana</option>
+                                                <option value="Francesa">Francesa</option>
+                                                <option value="Japonesa">Japonesa</option>
+                                                <option value="China">China</option>
+                                                <option value="India">India</option>
+                                                <option value="Americana">Americana</option>
+                                                <option value="Vegetariana/Vegana">Vegetariana/Vegana</option>
+                                                <option value="Marisquería">Marisquería</option>
+                                                <option value="Asador/Parrilla">Asador/Parrilla</option>
+                                                <option value="Tapas">Tapas</option>
+                                                <option value="Fusión">Fusión</option>
+                                                <option value="Otros">Otros</option>
                                             </select>
                                         </div>
 
@@ -1167,8 +1211,76 @@ const {
                                                 value={settings.description}
                                                 onChange={(e) => handleInputChange("description", e.target.value)}
                                                 rows="3"
-                                                placeholder="Describe tu restaurante..."
+                                                placeholder="Describe tu restaurante, especialidades, ambiente..."
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                        </div>
+
+                                        {/* Nuevos campos importantes */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Capacidad Total (comensales)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={settings.capacity_total}
+                                                onChange={(e) => handleInputChange("capacity_total", parseInt(e.target.value) || 0)}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="0"
+                                                min="0"
+                                                max="1000"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Rango de Precios
+                                            </label>
+                                            <select
+                                                value={settings.price_range}
+                                                onChange={(e) => handleInputChange("price_range", e.target.value)}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            >
+                                                <option value="">Selecciona el rango</option>
+                                                <option value="€ - Económico (0-15€)">€ - Económico (0-15€)</option>
+                                                <option value="€€ - Moderado (15-30€)">€€ - Moderado (15-30€)</option>
+                                                <option value="€€€ - Alto (30-50€)">€€€ - Alto (30-50€)</option>
+                                                <option value="€€€€ - Premium (+50€)">€€€€ - Premium (+50€)</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Instagram
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.instagram}
+                                                onChange={(e) => handleInputChange("instagram", e.target.value)}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="@turestaurante"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Facebook
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.facebook}
+                                                onChange={(e) => handleInputChange("facebook", e.target.value)}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="facebook.com/turestaurante"
+                                            />
+                                        </div>
+
+                                        <div className="col-span-2">
+                                            <ToggleSwitch
+                                                enabled={settings.accepting_reservations}
+                                                onChange={(enabled) => handleInputChange("accepting_reservations", enabled)}
+                                                label="Acepta reservas actualmente"
+                                                description="Desactiva temporalmente si no quieres recibir nuevas reservas"
                                             />
                                         </div>
 
@@ -1225,78 +1337,7 @@ const {
                                     </div>
                                 </SettingSection>
 
-                                {/* Preferencias regionales */}
-                                <SettingSection
-                                    title="Preferencias Regionales"
-                                    description="Configura idioma, moneda y zona horaria"
-                                    icon={<Globe />}
-                                >
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                <Languages className="w-4 h-4 inline mr-1" />
-                                                Idioma
-                                            </label>
-                                            <select
-                                                value={settings.language}
-                                                onChange={(e) => handleInputChange("language", e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            >
-                                                <option value="es">Español</option>
-                                                <option value="ca">Català</option>
-                                                <option value="en">English</option>
-                                                <option value="fr">Français</option>
-                                            </select>
-                                        </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                <DollarSign className="w-4 h-4 inline mr-1" />
-                                                Moneda
-                                            </label>
-                                            <select
-                                                value={settings.currency}
-                                                onChange={(e) => handleInputChange("currency", e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            >
-                                                <option value="EUR">EUR (€)</option>
-                                                <option value="USD">USD ($)</option>
-                                                <option value="GBP">GBP (£)</option>
-                                            </select>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                <Clock className="w-4 h-4 inline mr-1" />
-                                                Zona Horaria
-                                            </label>
-                                            <select
-                                                value={settings.timezone}
-                                                onChange={(e) => handleInputChange("timezone", e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            >
-                                                <option value="Europe/Madrid">Madrid (UTC+1)</option>
-                                                <option value="Europe/London">Londres (UTC+0)</option>
-                                                <option value="America/New_York">Nueva York (UTC-5)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
-                                        <button
-                                            onClick={() => handleSave("Preferencias regionales")}
-                                            disabled={saving}
-                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                                        >
-                                            {saving ? (
-                                                <RefreshCw className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <Save className="w-4 h-4" />
-                                            )}
-                                            Guardar cambios
-                                        </button>
-                                    </div>
-                                </SettingSection>
                             </div>
                         )}
 
