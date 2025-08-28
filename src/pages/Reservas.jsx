@@ -550,8 +550,12 @@ export default function Reservas() {
 
     // CRÍTICO: Función para validar antes de crear reservas
     const handleCreateReservation = useCallback(() => {
-        // Verificar que hay mesas configuradas Y activas
-        const activeTables = tables.filter(table => table.is_active !== false);
+        // Verificar que hay mesas configuradas Y operativas (misma lógica que contador Mesas)
+        const activeTables = tables.filter(table => 
+            table.is_active !== false && 
+            table.status !== "inactive" && 
+            table.status !== "maintenance"
+        );
         
         if (tables.length === 0) {
             // No hay mesas en absoluto
@@ -606,9 +610,9 @@ export default function Reservas() {
                 (t) => (
                     <div className="space-y-3">
                         <div>
-                            <p className="font-medium !text-white" style={{color: 'white !important'}}>⚠️ No hay mesas activas</p>
+                            <p className="font-medium !text-white" style={{color: 'white !important'}}>⚠️ No hay mesas operativas</p>
                             <p className="text-sm !text-gray-200 mt-1" style={{color: '#e5e7eb !important'}}>
-                                Todas las mesas están inactivas. Activa al menos una mesa para crear reservas.
+                                Todas las mesas están inactivas o en mantenimiento. Activa al menos una mesa para crear reservas.
                             </p>
                         </div>
                         <div className="flex gap-2">
@@ -1356,6 +1360,94 @@ const ReservationFormModal = ({
 
     const [errors, setErrors] = useState({});
 
+    // Función para vincular reserva con cliente existente y actualizar métricas
+    const handleCustomerLinking = async (reservationData) => {
+        try {
+            // Buscar cliente existente por teléfono o email
+            const { data: existingCustomers, error: searchError } = await supabase
+                .from("customers")
+                .select("*")
+                .eq("restaurant_id", restaurantId)
+                .or(`phone.eq.${reservationData.customer_phone},email.eq.${reservationData.customer_email || ''}`);
+
+            if (searchError) {
+                console.error("Error searching customers:", searchError);
+                return;
+            }
+
+            let customer = existingCustomers?.[0];
+
+            if (customer) {
+                // Cliente existente: actualizar métricas
+                const updatedData = {
+                    total_reservations: (customer.total_reservations || 0) + 1,
+                    last_visit: reservationData.reservation_date,
+                    total_spent: customer.total_spent || 0, // Se actualizaría con el ticket real
+                };
+
+                // Calcular nuevo segmento automático según reglas
+                updatedData.ai_segment = calculateAutomaticSegment(updatedData, customer);
+
+                await supabase
+                    .from("customers")
+                    .update(updatedData)
+                    .eq("id", customer.id);
+
+                console.log(`Cliente ${customer.name} actualizado: ${updatedData.total_reservations} reservas`);
+            } else {
+                // Cliente nuevo: crear automáticamente
+                const newCustomer = {
+                    name: reservationData.customer_name,
+                    phone: reservationData.customer_phone,
+                    email: reservationData.customer_email || null,
+                    restaurant_id: restaurantId,
+                    total_reservations: 1,
+                    last_visit: reservationData.reservation_date,
+                    total_spent: 0,
+                    ai_segment: "nuevo",
+                    notes: "Cliente creado automáticamente desde reserva",
+                };
+
+                await supabase
+                    .from("customers")
+                    .insert([newCustomer]);
+
+                console.log(`Nuevo cliente ${newCustomer.name} creado automáticamente`);
+            }
+        } catch (error) {
+            console.error("Error in customer linking:", error);
+            // No mostramos error al usuario, es proceso en background
+        }
+    };
+
+    // Función para calcular segmento automático según reglas de negocio
+    const calculateAutomaticSegment = (customerData, existingCustomer) => {
+        const totalReservations = customerData.total_reservations || 0;
+        const totalSpent = customerData.total_spent || 0;
+        const lastVisit = new Date(customerData.last_visit);
+        const now = new Date();
+        const daysSinceLastVisit = Math.floor((now - lastVisit) / (1000 * 60 * 60 * 24));
+
+        // Reglas de segmentación automática
+        if (totalReservations === 0 || daysSinceLastVisit <= 7) {
+            return "nuevo";
+        } else if (totalReservations >= 5 || totalSpent >= 500) {
+            return "vip";
+        } else if (totalReservations >= 3) {
+            return "regular";
+        } else if (totalReservations >= 1 && totalReservations <= 2) {
+            return "ocasional";
+        } else if (daysSinceLastVisit > 180) {
+            return "inactivo";
+        } else if (daysSinceLastVisit > 90 && (existingCustomer?.total_reservations || 0) >= 3) {
+            return "en_riesgo";
+        } else if (totalSpent >= 300) {
+            return "alto_valor";
+        }
+
+        return "ocasional"; // Por defecto
+    };
+
     const validateForm = () => {
         const newErrors = {};
 
@@ -1415,6 +1507,9 @@ const ReservationFormModal = ({
                     .insert([reservationData]);
 
                 if (error) throw error;
+
+                // NUEVO: Vincular con cliente existente y actualizar métricas
+                await handleCustomerLinking(reservationData);
             }
 
             onSave();
