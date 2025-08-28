@@ -550,9 +550,11 @@ export default function Reservas() {
 
     // CRÍTICO: Función para validar antes de crear reservas
     const handleCreateReservation = useCallback(() => {
-        // Verificar que hay mesas configuradas
+        // Verificar que hay mesas configuradas Y activas
+        const activeTables = tables.filter(table => table.is_active !== false);
+        
         if (tables.length === 0) {
-            // Mostrar mensaje de error con opción de ir a crear mesas
+            // No hay mesas en absoluto
             const handleGoToTables = () => {
                 navigate('/mesas');
                 toast.dismiss(); // Cerrar el toast
@@ -592,10 +594,52 @@ export default function Reservas() {
             );
             return;
         }
+
+        if (activeTables.length === 0) {
+            // Hay mesas pero todas están inactivas
+            const handleGoToTables = () => {
+                navigate('/mesas');
+                toast.dismiss(); // Cerrar el toast
+            };
+            
+            toast.error(
+                (t) => (
+                    <div className="space-y-3">
+                        <div>
+                            <p className="font-medium !text-white" style={{color: 'white !important'}}>⚠️ No hay mesas activas</p>
+                            <p className="text-sm !text-gray-200 mt-1" style={{color: '#e5e7eb !important'}}>
+                                Todas las mesas están inactivas. Activa al menos una mesa para crear reservas.
+                            </p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleGoToTables}
+                                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                            >
+                                Ir a Mesas
+                            </button>
+                            <button
+                                onClick={() => toast.dismiss(t.id)}
+                                className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                ),
+                {
+                    duration: 10000,
+                    style: {
+                        maxWidth: '400px',
+                    }
+                }
+            );
+            return;
+        }
         
-        // Si hay mesas, proceder normalmente
+        // Si hay mesas activas, proceder normalmente
         setShowCreateModal(true);
-    }, [tables.length, navigate]);
+    }, [tables, navigate]);
 
     // Configurar real-time subscriptions
     useEffect(() => {
