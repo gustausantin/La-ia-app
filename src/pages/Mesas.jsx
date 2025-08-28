@@ -604,61 +604,122 @@ export default function Mesas() {
 
             setTablePreferences(preferences);
 
-            // Generar sugerencias basadas en datos reales
+            // REGLAS CLARAS DE SUGERENCIAS IA - LÓGICA COHERENTE
             const zoneOccupancy = {};
+            const zoneCapacity = {};
+            
+            // Calcular ocupación y capacidad por zona
+            tables.forEach(table => {
+                if (table.is_active !== false) {
+                    const zone = table.zone;
+                    zoneCapacity[zone] = (zoneCapacity[zone] || 0) + 1;
+                }
+            });
+            
             reservations.forEach(r => {
                 const table = tables.find(t => t.id === r.table_id || t.table_number === r.table_number);
-                if (table) {
+                if (table && table.is_active !== false) {
                     zoneOccupancy[table.zone] = (zoneOccupancy[table.zone] || 0) + 1;
                 }
             });
 
-            // Sugerencia de balanceamiento de zonas
-            const maxZone = Object.entries(zoneOccupancy).reduce((a, b) => 
-                a[1] > b[1] ? a : b, ['', 0]
-            );
-            
-            if (maxZone[1] > 0 && Object.keys(zoneOccupancy).length > 1) {
-                realSuggestions.push({
-                    message: `Zona ${maxZone[0]} al ${Math.round((maxZone[1] / reservations.length) * 100)}% de ocupación. Balancear otras zonas`,
-                    type: "balance",
-                });
-            }
+            // REGLA 1: Balanceamiento de zonas (si ocupación > 80% en una zona)
+            Object.entries(zoneOccupancy).forEach(([zone, occupied]) => {
+                const capacity = zoneCapacity[zone] || 1;
+                const occupancyRate = (occupied / capacity) * 100;
+                
+                if (occupancyRate >= 80) {
+                    realSuggestions.push({
+                        message: `Zona ${zone} al ${Math.round(occupancyRate)}% de ocupación. Considera optimizar distribución`,
+                        type: "balance",
+                    });
+                }
+            });
 
-            // Análisis de capacidad
+            // REGLA 2: Análisis de capacidad vs demanda
             const avgPartySize = reservations.length > 0 ? 
-                reservations.reduce((sum, r) => sum + (r.party_size || 2), 0) / reservations.length : 
-                2;
+                reservations.reduce((sum, r) => sum + (r.party_size || 2), 0) / reservations.length : 0;
             
             if (avgPartySize > 0) {
+                const tablesOptimal = tables.filter(t => 
+                    t.is_active !== false && 
+                    Math.abs(t.capacity - avgPartySize) <= 1
+                ).length;
+                
+                const totalActiveTables = tables.filter(t => t.is_active !== false).length;
+                const optimalPercentage = totalActiveTables > 0 ? (tablesOptimal / totalActiveTables) * 100 : 0;
+                
+                if (optimalPercentage < 50) {
+                    realSuggestions.push({
+                        message: `Solo ${Math.round(optimalPercentage)}% de mesas son óptimas para grupos de ${Math.round(avgPartySize)} personas (promedio)`,
+                        type: "optimization",
+                    });
+                } else {
+                    realSuggestions.push({
+                        message: `Configuración óptima: ${Math.round(optimalPercentage)}% de mesas adecuadas para demanda actual`,
+                        type: "insight",
+                    });
+                }
+            }
+
+            // REGLA 3: Detectar mesas infrautilizadas
+            const underutilizedTables = tables.filter(table => {
+                if (table.is_active === false) return false;
+                const tableReservations = reservations.filter(r => 
+                    r.table_id === table.id || r.table_number === table.table_number
+                );
+                return tableReservations.length === 0 && tables.length > 1;
+            });
+
+            if (underutilizedTables.length > 0 && reservations.length > 0) {
                 realSuggestions.push({
-                    message: `Patrón detectado: Grupos promedio de ${Math.round(avgPartySize)} personas`,
-                    type: "insight",
+                    message: `${underutilizedTables.length} mesa(s) sin reservas hoy. Considera promociones específicas`,
+                    type: "optimization",
                 });
             }
 
             setAgentSuggestions(realSuggestions);
 
-            // Calcular estadísticas reales del agente
-            const totalTables = tables.length;
+            // ESTADÍSTICAS REALES DEL AGENTE - CÁLCULOS COHERENTES
+            const activeTables = tables.filter(t => t.is_active !== false).length;
             const occupiedTables = reservations.length;
-            const efficiency = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
             
-            // Calcular rotación promedio (estimación)
-            const avgTurnover = occupiedTables > 0 ? 
-                `${Math.round(1.5 + (occupiedTables / totalTables))}h` : 
-                "0h";
+            // Eficiencia: % de mesas activas con reservas
+            const efficiency = activeTables > 0 ? Math.round((occupiedTables / activeTables) * 100) : 0;
             
-            // Score de optimización basado en balance de zonas
-            const optimization = Object.keys(zoneOccupancy).length > 1 ? 
-                Math.max(60, 100 - Math.abs(Object.values(zoneOccupancy).reduce((a, b) => a - b, 0)) * 10) : 
-                efficiency;
+            // Rotación promedio: estimación basada en reservas por mesa
+            const avgTurnover = activeTables > 0 ? 
+                `${Math.round(1.5 + (occupiedTables / activeTables))}h` : "0h";
+
+            // Optimización: balance de zonas + utilización
+            let optimization = 100;
+            
+            // Penalizar si hay desbalance de zonas (>30% diferencia)
+            if (Object.keys(zoneOccupancy).length > 1) {
+                const occupancyRates = Object.entries(zoneOccupancy).map(([zone, occupied]) => {
+                    const capacity = zoneCapacity[zone] || 1;
+                    return (occupied / capacity) * 100;
+                });
+                
+                if (occupancyRates.length > 0) {
+                    const maxRate = Math.max(...occupancyRates);
+                    const minRate = Math.min(...occupancyRates);
+                    const balanceScore = Math.max(0, 100 - (maxRate - minRate));
+                    optimization = Math.round((optimization + balanceScore) / 2);
+                }
+            }
+            
+            // Penalizar si hay mesas inactivas innecesarias
+            const inactiveTables = tables.filter(t => t.is_active === false).length;
+            if (inactiveTables > 0 && occupiedTables > activeTables * 0.8) {
+                optimization = Math.max(0, optimization - (inactiveTables * 10));
+            }
 
             setAgentStats((prev) => ({
                 ...prev,
-                efficiency,
+                efficiency: Math.min(100, Math.max(0, efficiency)),
                 avgTurnover,
-                optimization: Math.min(100, optimization),
+                optimization: Math.min(100, Math.max(0, optimization)),
             }));
         } catch (error) {
             console.error("Error calculating agent metrics:", error);
@@ -785,6 +846,9 @@ export default function Mesas() {
                         if (selectedStatus === "inactive") {
                             return !isActive;
                         }
+                        if (selectedStatus === "maintenance") {
+                            return table.status === "maintenance";
+                        }
 
                         return true;
                     });
@@ -836,17 +900,22 @@ export default function Mesas() {
         return grouped;
     }, [filteredTables]);
 
-    // Calcular estadísticas
+    // Calcular estadísticas - CORREGIDO con lógica real
     const stats = useMemo(() => {
         const total = tables.length;
-        const active = tables.filter((t) => t.status === "active").length;
+        const active = tables.filter((t) => t.is_active !== false && t.status !== "inactive").length;
         const reserved = reservations.filter(
             (r) => r.status === "confirmada",
         ).length;
         const occupied = reservations.filter(
             (r) => r.status === "sentada",
         ).length;
-        const available = active - reserved - occupied;
+        // Calcular disponibles: mesas activas que NO tienen reservas
+        const tablesWithReservations = reservations.map(r => r.table_id);
+        const available = tables.filter(t => 
+            (t.is_active !== false && t.status !== "inactive") && 
+            !tablesWithReservations.includes(t.id)
+        ).length;
 
         return { total, active, available, reserved, occupied };
     }, [tables, reservations]);
@@ -1096,6 +1165,7 @@ export default function Mesas() {
                             <option value="reserved">Reservadas</option>
                             <option value="occupied">Ocupadas</option>
                             <option value="inactive">Inactivas</option>
+                            <option value="maintenance">En mantenimiento</option>
                         </select>
 
                         {/* Toggle vista */}
