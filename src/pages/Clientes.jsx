@@ -578,6 +578,11 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
         email: customer?.email || "",
         phone: customer?.phone || "",
         notes: customer?.notes || "",
+        // Nuevos campos ampliados
+        ai_segment: customer?.ai_segment || "nuevo",
+        total_visits: customer?.total_reservations || 0,
+        last_visit: customer?.last_visit || null,
+        total_spent: customer?.total_spent || 0,
     });
     const [errors, setErrors] = useState({});
 
@@ -611,6 +616,11 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
             const customerData = {
                 ...formData,
                 restaurant_id: restaurantId,
+                // Campos ampliados
+                total_reservations: formData.total_visits, // Mapear visitas
+                last_visit: formData.last_visit,
+                total_spent: formData.total_spent,
+                ai_segment: formData.ai_segment,
             };
 
             if (customer) {
@@ -718,6 +728,72 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
                             rows="3"
                             placeholder="Preferencias, alergias, etc..."
                         />
+                    </div>
+
+                    {/* Sección de información del cliente */}
+                    <div className="border-t pt-4">
+                        <h4 className="text-sm font-medium text-gray-900 mb-3">Información del Cliente</h4>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Segmento
+                                </label>
+                                <select
+                                    value={formData.ai_segment}
+                                    onChange={(e) => setFormData({ ...formData, ai_segment: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                >
+                                    {Object.entries(CUSTOMER_SEGMENTS).map(([key, segment]) => (
+                                        <option key={key} value={key}>
+                                            {segment.icon} {segment.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-gray-500 mt-1">Segmento del cliente (editable manualmente)</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Nº de Visitas
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={formData.total_visits}
+                                    onChange={(e) => setFormData({ ...formData, total_visits: parseInt(e.target.value) || 0 })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    placeholder="0"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Última Visita
+                                </label>
+                                <input
+                                    type="date"
+                                    value={formData.last_visit || ""}
+                                    onChange={(e) => setFormData({ ...formData, last_visit: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Valor Acumulado (€)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={formData.total_spent}
+                                    onChange={(e) => setFormData({ ...formData, total_spent: parseFloat(e.target.value) || 0 })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    placeholder="0.00"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">

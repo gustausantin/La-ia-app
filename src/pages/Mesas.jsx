@@ -900,22 +900,42 @@ export default function Mesas() {
         return grouped;
     }, [filteredTables]);
 
-    // Calcular estadísticas - CORREGIDO con lógica real
+    // Calcular estadísticas - CORREGIDO lógica real mejorada
     const stats = useMemo(() => {
         const total = tables.length;
-        const active = tables.filter((t) => t.is_active !== false && t.status !== "inactive").length;
+        
+        // Activas: mesas que están operativas (no inactivas ni en mantenimiento)
+        const active = tables.filter((t) => 
+            t.is_active !== false && 
+            t.status !== "inactive" && 
+            t.status !== "maintenance"
+        ).length;
+        
         const reserved = reservations.filter(
             (r) => r.status === "confirmada",
         ).length;
         const occupied = reservations.filter(
             (r) => r.status === "sentada",
         ).length;
-        // Calcular disponibles: mesas activas que NO tienen reservas
-        const tablesWithReservations = reservations.map(r => r.table_id);
-        const available = tables.filter(t => 
-            (t.is_active !== false && t.status !== "inactive") && 
-            !tablesWithReservations.includes(t.id)
-        ).length;
+        
+        // Disponibles: mesas activas SIN reservas (ni por table_id ni por table_number)
+        const tablesWithReservations = new Set([
+            ...reservations.map(r => r.table_id).filter(Boolean),
+            ...reservations.map(r => r.table_number).filter(Boolean)
+        ]);
+        
+        const available = tables.filter(t => {
+            // Debe estar activa y operativa
+            const isOperational = t.is_active !== false && 
+                                 t.status !== "inactive" && 
+                                 t.status !== "maintenance";
+            
+            // No debe tener reservas asignadas
+            const hasNoReservations = !tablesWithReservations.has(t.id) && 
+                                     !tablesWithReservations.has(t.table_number);
+            
+            return isOperational && hasNoReservations;
+        }).length;
 
         return { total, active, available, reserved, occupied };
     }, [tables, reservations]);
