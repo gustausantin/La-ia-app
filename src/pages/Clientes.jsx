@@ -58,25 +58,26 @@ import {
     X,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { recomputeCustomerStats, recomputeSegment, getCRMStats } from "../services/CRMService";
 
 // Segmentación automática con IA - REGLAS DE NEGOCIO DEFINIDAS
 const CUSTOMER_SEGMENTS = {
-    new: {
+    nuevo: {
         label: "Nuevo",
         description: "Cliente recién registrado (0 reservas confirmadas)",
         color: "bg-green-100 text-green-800 border-green-200",
         icon: "🌟",
         aiAction: "Enviar bienvenida personalizada",
-        criteria: (customer) => customer.total_visits === 0,
+        criteria: (customer) => customer.visits_count === 0,
     },
-    occasional: {
+    ocasional: {
         label: "Ocasional",
         description: "1-2 reservas confirmadas",
         color: "bg-blue-100 text-blue-800 border-blue-200",
         icon: "👥",
         aiAction: "Incentivar más visitas",
         criteria: (customer) =>
-            customer.total_visits >= 1 && customer.total_visits <= 2,
+            customer.visits_count >= 1 && customer.visits_count <= 2,
     },
     regular: {
         label: "Regular",
@@ -85,7 +86,7 @@ const CUSTOMER_SEGMENTS = {
         icon: "⭐",
         aiAction: "Programa de fidelización",
         criteria: (customer) =>
-            customer.total_visits >= 3 && customer.total_visits <= 4,
+            customer.visits_count >= 3 && customer.visits_count <= 4,
     },
     vip: {
         label: "VIP",
@@ -93,35 +94,35 @@ const CUSTOMER_SEGMENTS = {
         color: "bg-yellow-100 text-yellow-800 border-yellow-200",
         icon: "👑",
         aiAction: "Atención premium personalizada",
-        criteria: (customer) => customer.total_visits >= 5 || customer.total_spent >= 500,
+        criteria: (customer) => customer.visits_count >= 5 || customer.total_spent >= 500,
     },
-    inactive: {
+    inactivo: {
         label: "Inactivo",
         description: "Sin reservas en los últimos 6 meses (180 días)",
         color: "bg-gray-100 text-gray-800 border-gray-200",
         icon: "💤",
         aiAction: "Campaña de reactivación",
-        criteria: (customer) => customer.days_since_last_visit > 180,
+        criteria: (customer) => customer.days_since_last_visit > 60,
     },
-    at_risk: {
+    en_riesgo: {
         label: "En Riesgo",
         description: "Era frecuente, ahora 3+ meses sin actividad",
         color: "bg-orange-100 text-orange-800 border-orange-200",
         icon: "⚠️",
         aiAction: "Oferta especial de reactivación",
-        criteria: (customer) => customer.days_since_last_visit > 90 && customer.total_visits > 0,
+        criteria: (customer) => customer.days_since_last_visit > 30 && customer.visits_count > 2,
     },
-    high_value: {
+    alto_valor: {
         label: "Alto Valor",
         description: "Gasto promedio alto",
         color: "bg-emerald-100 text-emerald-800 border-emerald-200",
         icon: "💎",
         aiAction: "Experiencias exclusivas",
         criteria: (customer) => {
-            const noShowRate = customer.total_visits > 0 
-                ? (customer.no_shows || 0) / customer.total_visits 
+            const noShowRate = customer.visits_count > 0 
+                ? (customer.no_shows || 0) / customer.visits_count 
                 : 0;
-            return customer.total_visits >= 3 && noShowRate < 0.1;
+            return customer.visits_count >= 3 && noShowRate < 0.1;
         },
     },
 };
@@ -197,7 +198,7 @@ export default function Clientes() {
                 return;
             }
 
-            // CORREGIDO: Cargar clientes reales desde Supabase
+            // CORREGIDO: Cargar clientes reales desde Supabase con nuevos campos CRM
             const { data: customers, error } = await supabase
                 .from("customers")
                 .select(`
@@ -207,6 +208,7 @@ export default function Clientes() {
                         status,
                         party_size,
                         reservation_date,
+                        spend_amount,
                         created_at
                     )
                 `)
@@ -218,44 +220,26 @@ export default function Clientes() {
                 throw error;
             }
 
-            // Procesar datos y calcular segmentación automática
+            // Procesar datos usando los campos CRM reales
             const processedCustomers = (customers || []).map(customer => {
-                const confirmedReservations = customer.reservations?.filter(r => 
-                    r.status === 'confirmada' || r.status === 'completada'
-                ) || [];
-                
-                const totalReservations = confirmedReservations.length;
-                const totalSpent = confirmedReservations.reduce((sum, r) => sum + (r.party_size * 35), 0); // Estimación
-                const lastReservation = confirmedReservations[0]?.reservation_date;
-                const daysSinceLastVisit = lastReservation ? 
-                    differenceInDays(new Date(), parseISO(lastReservation)) : 999;
+                // Calcular días desde última visita
+                const daysSinceLastVisit = customer.last_visit_at ? 
+                    differenceInDays(new Date(), parseISO(customer.last_visit_at)) : 999;
 
-                // Aplicar reglas de segmentación automática
-                let segment = 'new';
-                if (totalReservations === 0) {
-                    segment = 'new';
-                } else if (totalReservations >= 5 || totalSpent >= 500) {
-                    segment = 'vip';
-                } else if (totalReservations >= 3) {
-                    segment = 'regular';
-                } else if (totalReservations >= 1) {
-                    segment = 'occasional';
-                }
-
-                // Verificar si está inactivo o en riesgo
-                if (daysSinceLastVisit > 180) {
-                    segment = 'inactive';
-                } else if (daysSinceLastVisit > 90 && totalReservations > 0) {
-                    segment = 'at_risk';
-                }
+                // Usar segment_manual si existe, sino usar segment_auto
+                const finalSegment = customer.segment_manual || customer.segment_auto || 'nuevo';
 
                 return {
                     ...customer,
-                    total_visits: totalReservations, // Mapear a total_visits del esquema
-                    total_spent: totalSpent,
-                    last_visit: lastReservation,
+                    // Usar campos CRM nativos
+                    visits_count: customer.visits_count || 0,
+                    total_spent: customer.total_spent || 0,
+                    last_visit: customer.last_visit_at,
                     days_since_last_visit: daysSinceLastVisit,
-                    ai_segment: segment
+                    ai_segment: finalSegment,
+                    // Campos adicionales calculados
+                    churn_risk: customer.churn_risk_score || 0,
+                    predicted_ltv: customer.predicted_ltv || 0
                 };
             });
 
@@ -288,7 +272,7 @@ export default function Clientes() {
         const avgCustomerValue = total > 0 ? totalValue / total : 0;
         
         // Tasa de retención (clientes con más de 1 reserva)
-        const returningCustomers = customersData.filter(c => c.total_visits > 1).length;
+        const returningCustomers = customersData.filter(c => c.visits_count > 1).length;
         const retentionRate = total > 0 ? (returningCustomers / total) * 100 : 0;
 
         // Contar por cada segmento
@@ -341,7 +325,7 @@ export default function Clientes() {
                     return (b.total_spent || 0) - (a.total_spent || 0);
                 case "visits":
                     // Por número total de reservas confirmadas
-                    return (b.total_visits || 0) - (a.total_visits || 0);
+                    return (b.visits_count || 0) - (a.visits_count || 0);
                 case "recent":
                 default:
                     // Por fecha de última reserva (no de creación)
@@ -546,7 +530,7 @@ export default function Clientes() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-600">
-                                        {customer.total_visits || 0} reservas
+                                        {customer.visits_count || 0} reservas
                                     </span>
                                 </div>
                             </div>
@@ -584,7 +568,7 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
         // Segmento manual (se guardará en preferences.segment)
         segment: customer?.preferences?.segment || "nuevo",
         // Stats automáticos (solo para mostrar, no editar)
-        total_visits: customer?.total_visits || 0,
+        visits_count: customer?.visits_count || 0,
         last_visit: customer?.last_visit || null,
         total_spent: customer?.total_spent || 0,
     });
@@ -637,7 +621,7 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
                 },
                 // Stats se mantienen automáticos si es edición
                 ...(customer && {
-                    total_visits: customer.total_visits,
+                    visits_count: customer.visits_count,
                     total_spent: customer.total_spent,
                     last_visit: customer.last_visit
                 })
@@ -817,7 +801,7 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="bg-gray-50 p-3 rounded-lg">
                                     <p className="text-xs text-gray-600">Nº de Visitas</p>
-                                    <p className="text-lg font-semibold text-gray-900">{formData.total_visits}</p>
+                                    <p className="text-lg font-semibold text-gray-900">{formData.visits_count}</p>
                                 </div>
 
                                 <div className="bg-gray-50 p-3 rounded-lg">
