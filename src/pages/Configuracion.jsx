@@ -755,10 +755,12 @@ const {
         
         console.log("✅ GUARDADO EXITOSO en BD:", data);
 
-        // Actualizar contexto
-        if (window.dispatchEvent) {
-            window.dispatchEvent(new CustomEvent('restaurant-updated'));
-        }
+        // Actualizar contexto después de un delay para asegurar persistencia
+        setTimeout(() => {
+            if (window.dispatchEvent) {
+                window.dispatchEvent(new CustomEvent('restaurant-updated'));
+            }
+        }, 100);
     };
 
     // ⏰ GUARDAR HORARIOS DE OPERACIÓN
