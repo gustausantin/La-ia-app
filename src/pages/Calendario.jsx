@@ -155,6 +155,34 @@ export default function Calendario() {
         initializeData();
     }, [restaurantId]);
 
+    // Escuchar cambios de horarios desde Configuración
+    useEffect(() => {
+        const handleRestaurantReload = (event) => {
+            console.log("🔄 Calendario: Recargando horarios por cambio en Configuración");
+            initializeData();
+        };
+
+        window.addEventListener('force-restaurant-reload', handleRestaurantReload);
+        
+        // También recargar cuando se enfoca la página
+        const handleFocus = () => {
+            initializeData();
+        };
+        
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                initializeData();
+            }
+        });
+
+        return () => {
+            window.removeEventListener('force-restaurant-reload', handleRestaurantReload);
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleFocus);
+        };
+    }, []);
+
     const initializeData = async () => {
         if (!restaurantId) return;
         

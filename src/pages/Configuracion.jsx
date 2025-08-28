@@ -214,7 +214,7 @@ const {
             sunday: { open: "10:00", close: "22:00", closed: false }
         },
 
-        // Configuración de reservas
+        // Configuración de reservas - SIMPLIFICADO PARA MVP
         reservation_settings: {
             enabled: true,
             advance_booking_days: 30,
@@ -222,9 +222,10 @@ const {
             max_party_size: 12,
             turn_duration: 90,
             buffer_time: 15,
-            auto_confirm: false,
-            require_phone: true,
-            require_email: true,
+            // Valores fijos para MVP (sin toggles)
+            auto_confirm: true,        // SIEMPRE confirmación automática
+            require_phone: true,       // SIEMPRE teléfono obligatorio  
+            require_email: true,       // SIEMPRE email obligatorio
             cancellation_window: 2,
             modification_window: 1
         },
@@ -1577,36 +1578,39 @@ const {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-4">
-                                        <ToggleSwitch
-                                            enabled={settings.reservation_settings.auto_confirm}
-                                            onChange={(enabled) => setSettings(prev => ({
-                                                ...prev,
-                                                reservation_settings: { ...prev.reservation_settings, auto_confirm: enabled }
-                                            }))}
-                                            label="Confirmación automática"
-                                            description="Las reservas se confirman automáticamente si hay disponibilidad"
-                                        />
+                                    <div className="border-t pt-6">
+                                        <h4 className="font-medium text-gray-900 mb-4">Configuración automática (MVP)</h4>
+                                        <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <div>
+                                                    <p className="font-medium text-blue-900">Confirmación automática</p>
+                                                    <p className="text-sm text-blue-700">Las reservas se confirman automáticamente si hay disponibilidad</p>
+                                                </div>
+                                            </div>
 
-                                        <ToggleSwitch
-                                            enabled={settings.reservation_settings.require_phone}
-                                            onChange={(enabled) => setSettings(prev => ({
-                                                ...prev,
-                                                reservation_settings: { ...prev.reservation_settings, require_phone: enabled }
-                                            }))}
-                                            label="Requerir teléfono"
-                                            description="El teléfono es obligatorio para hacer una reserva"
-                                        />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <div>
+                                                    <p className="font-medium text-blue-900">Teléfono obligatorio</p>
+                                                    <p className="text-sm text-blue-700">Siempre se requiere teléfono para hacer una reserva</p>
+                                                </div>
+                                            </div>
 
-                                        <ToggleSwitch
-                                            enabled={settings.reservation_settings.require_email}
-                                            onChange={(enabled) => setSettings(prev => ({
-                                                ...prev,
-                                                reservation_settings: { ...prev.reservation_settings, require_email: enabled }
-                                            }))}
-                                            label="Requerir email"
-                                            description="El email es obligatorio para hacer una reserva"
-                                        />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <div>
+                                                    <p className="font-medium text-blue-900">Email obligatorio</p>
+                                                    <p className="text-sm text-blue-700">Siempre se requiere email para hacer una reserva</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-3 p-2 bg-blue-100 rounded border-l-4 border-blue-400">
+                                                <p className="text-xs text-blue-800">
+                                                    💡 <strong>MVP:</strong> Estas configuraciones están fijas para garantizar la mejor experiencia de usuario y funcionalidad del agente IA.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1640,9 +1644,17 @@ const {
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-3 h-3 rounded-full ${settings.agent.enabled ? 'bg-green-500' : 'bg-gray-400'} animate-pulse`} />
-                                                <span className="font-medium text-gray-900">
-                                                    Estado: {settings.agent.enabled ? 'Activo' : 'Inactivo'}
-                                                </span>
+                                                <div>
+                                                    <span className="font-medium text-gray-900">
+                                                        Estado: {settings.agent.enabled ? 'Activo' : 'Inactivo'}
+                                                    </span>
+                                                    <p className="text-sm text-gray-600 mt-1">
+                                                        {settings.agent.enabled 
+                                                            ? '🟢 El agente atiende llamadas, mensajes y chats automáticamente 24/7'
+                                                            : '🔴 El agente NO responde. Todas las consultas llegan a ti manualmente'
+                                                        }
+                                                    </p>
+                                                </div>
                                             </div>
                                             <ToggleSwitch
                                                 enabled={settings.agent.enabled}
@@ -1650,9 +1662,15 @@ const {
                                                 label=""
                                             />
                                         </div>
+                                        
+                                        <div className="mt-3 p-3 bg-white rounded border-l-4 border-purple-400">
+                                            <p className="text-xs text-gray-700">
+                                                <strong>💡 Efecto práctico:</strong> Cuando está <span className="text-green-600 font-semibold">activo</span>, el agente maneja automáticamente WhatsApp, llamadas telefónicas, chat web, Instagram y Facebook. Cuando está <span className="text-red-600 font-semibold">inactivo</span>, tendrás que responder todo manualmente.
+                                            </p>
+                                        </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-6">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Nombre del Agente
@@ -1661,26 +1679,27 @@ const {
                                                 type="text"
                                                 value={settings.agent.name}
                                                 onChange={(e) => handleNestedChange('agent', 'name', e.target.value)}
-                                                placeholder="Ej: Julia, tu asistente"
+                                                placeholder="Ej: Claudia, Julia, Alex, María..."
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                             />
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                Este nombre aparecerá cuando el agente se presente a los clientes
+                                            </p>
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Personalidad
-                                            </label>
-                                            <select
-                                                value={settings.agent.personality}
-                                                onChange={(e) => handleNestedChange('agent', 'personality', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                            >
-                                                <option value="professional_friendly">Profesional Amigable</option>
-                                                <option value="professional">Profesional</option>
-                                                <option value="friendly">Amigable</option>
-                                                <option value="casual">Casual</option>
-                                                <option value="formal">Formal</option>
-                                            </select>
+                                        <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                                                <div>
+                                                    <h4 className="font-medium text-green-900">Personalidad automática (MVP)</h4>
+                                                    <p className="text-sm text-green-700 mt-1">
+                                                        El agente siempre usa un tono <strong>profesional y amigable</strong> optimizado para restaurantes.
+                                                    </p>
+                                                    <p className="text-xs text-green-600 mt-2">
+                                                        💡 En futuras versiones podrás personalizar completamente el tono y estilo de conversación.
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1753,43 +1772,74 @@ const {
                                         />
 
                                         {settings.agent.table_optimization?.enabled && (
-                                            <div>
-                                                <h4 className="font-medium text-gray-900 mb-4">
-                                                    Factores de preferencia (importancia)
-                                                </h4>
-                                                <div className="space-y-4">
-                                                    <div>
-                                                        <div className="flex justify-between mb-2">
-                                                            <label className="text-sm font-medium text-gray-700">
-                                                                Rotación (velocidad de servicio)
-                                                            </label>
-                                                            <span className="text-sm text-gray-600">
-                                                                {settings.agent.table_optimization?.factors?.rotation || 80}%
-                                                            </span>
-                                                        </div>
-                                                        <input
-                                                            type="range"
-                                                            min="0"
-                                                            max="100"
-                                                            step="10"
-                                                            value={settings.agent.table_optimization?.factors?.rotation || 80}
-                                                            onChange={(e) =>
-                                                                setSettings(prev => ({
-                                                                    ...prev,
-                                                                    agent: {
-                                                                        ...prev.agent,
-                                                                        table_optimization: {
-                                                                            ...prev.agent.table_optimization,
-                                                                            factors: {
-                                                                                ...prev.agent.table_optimization?.factors,
-                                                                                rotation: parseInt(e.target.value)
+                                            <div className="space-y-6">
+                                                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                                    <h4 className="font-medium text-purple-900 mb-2">💡 ¿Cómo funciona la optimización?</h4>
+                                                    <p className="text-sm text-purple-700">
+                                                        El agente analiza el historial de tus mesas y aprende cuáles son más eficientes. Luego prioriza esas mesas al asignar reservas automáticamente.
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <h4 className="font-medium text-gray-900 mb-4">
+                                                        Factor de optimización principal
+                                                    </h4>
+                                                    
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <div className="flex justify-between mb-2">
+                                                                <label className="text-sm font-medium text-gray-700">
+                                                                    Prioridad de rotación eficiente
+                                                                </label>
+                                                                <span className="text-sm font-semibold text-purple-600">
+                                                                    {settings.agent.table_optimization?.factors?.rotation || 80}%
+                                                                </span>
+                                                            </div>
+                                                            <input
+                                                                type="range"
+                                                                min="0"
+                                                                max="100"
+                                                                step="10"
+                                                                value={settings.agent.table_optimization?.factors?.rotation || 80}
+                                                                onChange={(e) =>
+                                                                    setSettings(prev => ({
+                                                                        ...prev,
+                                                                        agent: {
+                                                                            ...prev.agent,
+                                                                            table_optimization: {
+                                                                                ...prev.agent.table_optimization,
+                                                                                factors: {
+                                                                                    ...prev.agent.table_optimization?.factors,
+                                                                                    rotation: parseInt(e.target.value)
+                                                                                }
                                                                             }
                                                                         }
-                                                                    }
-                                                                }))
-                                                            }
-                                                            className="w-full"
-                                                        />
+                                                                    }))
+                                                                }
+                                                                className="w-full"
+                                                            />
+                                                            
+                                                            <div className="mt-3 grid grid-cols-3 gap-4 text-xs">
+                                                                <div className="text-center p-2 bg-red-50 rounded">
+                                                                    <div className="font-semibold text-red-600">0-30%</div>
+                                                                    <div className="text-red-700">Prioriza comodidad sobre eficiencia</div>
+                                                                </div>
+                                                                <div className="text-center p-2 bg-yellow-50 rounded">
+                                                                    <div className="font-semibold text-yellow-600">40-70%</div>
+                                                                    <div className="text-yellow-700">Balance equilibrado</div>
+                                                                </div>
+                                                                <div className="text-center p-2 bg-green-50 rounded">
+                                                                    <div className="font-semibold text-green-600">80-100%</div>
+                                                                    <div className="text-green-700">Máxima eficiencia y rotación</div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="mt-4 p-3 bg-gray-50 rounded border-l-4 border-gray-400">
+                                                                <p className="text-sm text-gray-700">
+                                                                    <strong>🎯 Ejemplo práctico:</strong> Con <strong>80%</strong>, el agente preferirá asignar mesas que históricamente se liberan más rápido, aumentando la capacidad de atender más clientes. Con <strong>30%</strong>, priorizará mesas más cómodas aunque sean más lentas.
+                                                                </p>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
