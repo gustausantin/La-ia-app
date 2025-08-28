@@ -223,6 +223,18 @@ const AuthProvider = ({ children }) => {
     if (bootedRef.current) return;
     bootedRef.current = true;
 
+    // CRÍTICO: Escuchar eventos de forzar recarga desde Configuración
+    const handleForceReload = (event) => {
+      const { restaurant: freshRestaurant } = event.detail;
+      if (freshRestaurant) {
+        logger.info('🔄 Forzando actualización de restaurant desde evento:', freshRestaurant.name);
+        setRestaurant(freshRestaurant);
+        setRestaurantId(freshRestaurant.id);
+      }
+    };
+
+    window.addEventListener('force-restaurant-reload', handleForceReload);
+
     // Inicializar inmediatamente
     initSession();
 
@@ -259,6 +271,7 @@ const AuthProvider = ({ children }) => {
 
     return () => {
       subscription.unsubscribe();
+      window.removeEventListener('force-restaurant-reload', handleForceReload);
     };
   }, []);
 
