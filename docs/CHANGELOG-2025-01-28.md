@@ -1,5 +1,67 @@
 # 📋 CHANGELOG - 28 de Enero 2025
-## Fixes Críticos y Mejoras en Reservas, Mesas e IA
+## CRM Sistema Inteligente + Fixes Críticos Completos
+
+---
+
+## 🎯 **NUEVA FUNCIONALIDAD REVOLUCIONARIA: CRM SISTEMA INTELIGENTE**
+
+### **🚀 CRM ENTERPRISE IMPLEMENTADO (FEATURE COMPLETA)**
+
+#### **🗄️ BASE DE DATOS AVANZADA:**
+- ✅ **4 Migraciones SQL:** customers_enhanced, interactions, automation_rules, templates
+- ✅ **Schema CRM:** segment_auto/manual, visits_count, churn_risk_score, predicted_ltv
+- ✅ **Nuevas tablas:** customer_interactions, automation_rules, template_variables
+- ✅ **RLS completo:** Seguridad multi-tenant + auditoría
+
+#### **🤖 INTELIGENCIA ARTIFICIAL CRM:**
+- ✅ **Segmentación automática:** 7 categorías inteligentes
+  - Nuevo, Ocasional, Regular, VIP, Inactivo, En riesgo, Alto valor
+- ✅ **Triggers automáticos:** Reserva completada → actualizar cliente
+- ✅ **Cálculos IA:** churn_risk_score, predicted_ltv, segment automático
+
+#### **🔄 AUTOMATIZACIONES AVANZADAS:**
+- ✅ **Sistema completo:** Cooldown, consent, horarios, límites diarios
+- ✅ **Procesador inteligente:** CRMAutomationProcessor con retry logic
+- ✅ **Plantillas dinámicas:** Variables personalizadas, Markdown → HTML
+- ✅ **Estados de envío:** pending → sent → delivered → opened
+
+#### **⏰ JOB DIARIO EMPRESARIAL:**
+- ✅ **Cron completo:** Actualización masiva de segmentación
+- ✅ **Mantenimiento:** Detectar inactivos, re-engagement automático
+- ✅ **Limpieza:** Datos antiguos, optimización DB, métricas diarias
+- ✅ **API endpoint:** `/api/crm-daily-job` para cron externo
+
+#### **🔗 WEBHOOKS E INTEGRACIÓN:**
+- ✅ **6 Webhooks específicos:** reserva, segmento, email, SMS, WhatsApp, job diario
+- ✅ **N8N integration:** Workflows automáticos configurables
+- ✅ **Servicios externos:** SendGrid, Twilio, WhatsApp Business API
+- ✅ **Retry logic:** Reintentos automáticos con fallbacks
+
+#### **🎨 UI CONFIGURACIÓN AVANZADA:**
+- ✅ **Sección "CRM & IA":** Configuración empresarial completa
+- ✅ **Umbrales configurables:** Días inactivo, visitas VIP, gastos, etc.
+- ✅ **Automatizaciones UI:** Cooldown, límites, horarios
+- ✅ **Preview segmentación:** Vista previa en tiempo real
+
+#### **👥 CLIENTES MEJORADOS:**
+- ✅ **Stats automáticos:** visits_count, total_spent, last_visit_at (read-only)
+- ✅ **Campos separados:** Nombre, 1º Apellido, 2º Apellido
+- ✅ **Segmentación visual:** Badges dinámicos según reglas CRM
+- ✅ **Histórico completo:** Reservas e interacciones por cliente
+
+**Archivos nuevos:**
+- `src/services/CRMService.js` (lógica principal)
+- `src/services/CRMAutomationService.js` (automatizaciones)
+- `src/services/CRMDailyJob.js` (job diario)
+- `src/services/CRMWebhookService.js` (webhooks)
+- `supabase/migrations/20250128_001-004_*.sql` (4 migraciones)
+- `public/api/crm-daily-job.js` (endpoint API)
+- `docs/CRM-SETUP-GUIDE.md` (guía completa)
+
+**Archivos modificados:**
+- `src/pages/Reservas.jsx` (integración CRM automática)
+- `src/pages/Clientes.jsx` (campos CRM nativos)
+- `src/pages/Configuracion.jsx` (sección CRM & IA)
 
 ---
 

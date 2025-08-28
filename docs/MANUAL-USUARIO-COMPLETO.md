@@ -10,8 +10,9 @@
 ### **CARACTERÍSTICAS PRINCIPALES:**
 - ✅ **Agente IA 24/7** que atiende clientes automáticamente
 - ✅ **Gestión completa de reservas** en tiempo real
-- ✅ **CRM inteligente** con segmentación automática de clientes
+- ✅ **CRM Sistema Inteligente** con segmentación automática y automatizaciones
 - ✅ **Centro de comunicación omnicanal** (WhatsApp, teléfono, redes sociales)
+- ✅ **Automatizaciones CRM** con email/SMS/WhatsApp automáticos
 - ✅ **Analytics avanzados** con predicciones de IA
 - ✅ **Gestión de mesas** con optimización automática
 - ✅ **Calendario inteligente** con gestión de horarios
@@ -108,45 +109,72 @@ Gestiona todas las reservas del restaurante, tanto las creadas por el agente IA 
 
 ---
 
-## 4️⃣ **CLIENTES (CRM)**
+## 4️⃣ **CLIENTES (CRM SISTEMA INTELIGENTE)** ✨
 
 ### **¿Qué hace?**
-CRM inteligente que analiza automáticamente a los clientes y los segmenta usando IA.
+**CRM revolucionario enterprise** con IA que gestiona automáticamente todo el ciclo de vida del cliente desde la primera visita hasta automatizaciones de re-engagement.
 
-### **Funcionalidades principales:**
-- 👥 **Lista de clientes** con información completa
-- ✅ **Crear nuevos clientes** con formulario completo (FUNCIONA)
-- ✅ **Botones "Nuevo Cliente" operativos** (CORREGIDO)
-- 🧠 **Segmentación automática por IA:**
-  - VIP (clientes frecuentes)
-  - Nuevos (recién registrados)
-  - En riesgo (pueden abandonar)
-  - Inactivos (no vienen hace tiempo)
-- 📊 **Métricas de clientes:**
-  - Total de clientes
-  - Nuevos este mes
-  - Valor promedio por cliente
-  - Tasa de retención
-- 🎯 **Insights predictivos:**
-  - Probabilidad de reserva
-  - Valor de vida predicho (LTV)
-  - Riesgo de abandono
-- 📱 **Canal de adquisición:** WhatsApp, llamadas, Instagram, etc.
-- 🔧 **Validación de formularios** y manejo de errores
+### **🚀 FUNCIONALIDADES ENTERPRISE:**
+
+#### **🤖 SEGMENTACIÓN AUTOMÁTICA IA:**
+- 📊 **7 Segmentos inteligentes:** Nuevo, Ocasional, Regular, VIP, Inactivo, En riesgo, Alto valor
+- ⚡ **Actualización automática:** Al completar reserva → recalcula segmento
+- 🎯 **Reglas configurables:** Umbrales personalizables en "CRM & IA"
+- 🎨 **Visualización clara:** Badges dinámicos con colores diferenciados
+
+#### **🔄 AUTOMATIZACIONES AVANZADAS:**
+- 📧 **Email automático:** Reactivación de inactivos con plantillas Markdown
+- 📱 **SMS/WhatsApp:** Bienvenida VIP, ofertas especiales
+- ⏰ **Cooldown inteligente:** Respeta frecuencia y preferencias
+- 🎯 **Consent management:** Opt-out de email/SMS respetado
+- 📅 **Job diario:** Detecta cambios y activa campañas automáticamente
+
+#### **📊 ANALYTICS ENTERPRISE:**
+- 🎯 **Churn Risk Score:** Predicción riesgo pérdida (0-100)
+- 💰 **Predicted LTV:** Valor vida cliente predicho por IA
+- 📈 **Stats automáticos:** visits_count, total_spent, avg_ticket (read-only)
+- 🗓️ **Histórico completo:** Reservas e interacciones registradas
+
+#### **🎨 UI MODERNA ENTERPRISE:**
+- 🏷️ **Fichas completas:** Nombre, 1º Apellido, 2º Apellido separados
+- 📊 **Stats dinámicos:** Visitas, última visita, valor acumulado (automáticos)
+- 🔍 **Búsqueda avanzada:** Nombre, segmento, valor, fecha última visita
+- ⚙️ **Override manual:** Segmento editable manualmente cuando sea necesario
+
+#### **🔗 INTEGRACIÓN AUTOMÁTICA:**
+- 🎯 **Trigger reservas:** Completar reserva → actualizar cliente automático
+- 📨 **Webhooks N8N:** 6 webhooks para integraciones externas
+- 🌐 **Multi-canal:** WhatsApp, teléfono, web, Instagram, Facebook
+- 🔧 **API completa:** Endpoints para integraciones personalizadas
 
 ### **¿De dónde salen los datos?**
-✅ **DATOS REALES:** Base completamente funcional
+✅ **DATOS REALES ENTERPRISE:** Base completamente funcional con nuevas tablas CRM
 
-**Tablas utilizadas:**
-- Tabla `customers` - Clientes reales ✅ FUNCIONA
-- Campos IA disponibles:
-  - `acquisition_channel` (whatsapp/vapi/instagram/facebook/web/manual)
-  - `ai_score` (puntuación predictiva)
-  - `predicted_ltv` (valor de vida predicho)  
-  - `churn_risk_score` (riesgo de abandono)
-  - `ai_segment` (segmento asignado por IA)
-- Tabla `customer_interactions` - Historial de interacciones ✅ DISPONIBLE
-- Tabla `customer_preferences_ai` - Preferencias IA ✅ DISPONIBLE
+**Tablas CRM principales:**
+- 📊 `customers` - Clientes con schema CRM mejorado ✅ ENTERPRISE
+  - `segment_auto` / `segment_manual` (segmentación inteligente)
+  - `visits_count` / `total_spent` / `avg_ticket` (stats automáticos)
+  - `churn_risk_score` / `predicted_ltv` (IA predictiva)
+  - `last_visit_at` / `consent_email` / `consent_sms`
+  - `first_name` / `last_name1` / `last_name2` (campos separados)
+
+- 📧 `customer_interactions` - Interacciones automáticas ✅ NUEVO
+  - Emails, SMS, WhatsApp enviados automáticamente
+  - Estados: pending → sent → delivered → opened
+  - Templates con variables personalizadas
+
+- 🤖 `automation_rules` - Reglas de automatización ✅ NUEVO
+  - Condiciones por segmento, cooldown, horarios
+  - Acciones: send_email, send_sms, send_whatsapp
+
+- 📝 `message_templates` - Plantillas mejoradas ✅ ENTERPRISE
+  - Markdown con variables dinámicas {{first_name}}, {{visits_count}}
+  - Canales: email, sms, whatsapp
+  - Métricas: success_rate, usage_count
+
+- 📋 `automation_rule_executions` - Auditoría completa ✅ NUEVO
+  - Registro de todas las ejecuciones automáticas
+  - Resultados, errores, retry logic
 
 ### **¿Funciona correctamente?**
 ✅ **SÍ** - Creación de clientes funciona perfectamente. CRM completo con segmentación inteligente conectado a Supabase. *(Corregido en Enero 2025)*
