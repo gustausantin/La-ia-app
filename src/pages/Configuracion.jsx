@@ -525,6 +525,12 @@ const {
             // Cargar datos completos del restaurante - PREFILL TOTAL
             const savedSettings = restaurantData?.settings || {};
             
+            console.log("🔄 CARGANDO SETTINGS - Restaurant data:", restaurantData);
+            console.log("🔄 CARGANDO SETTINGS - Saved settings JSONB:", savedSettings);
+            console.log("🔄 CARGANDO SETTINGS - Website:", savedSettings.website);
+            console.log("🔄 CARGANDO SETTINGS - Description:", savedSettings.description);
+            console.log("🔄 CARGANDO SETTINGS - Logo:", savedSettings.logo_url);
+            
             setSettings((prev) => ({
                 ...prev,
                 // Datos básicos del restaurante
@@ -669,7 +675,7 @@ const {
             toast.success(`✅ ${section} actualizado correctamente`);
             console.log(`✅ GUARDADO EXITOSO: ${section}`);
 
-        } catch (error) {
+} catch (error) {
             console.error(`❌ Error guardando ${section}:`, error);
             toast.error(error.message || "Error al guardar los cambios");
         } finally {
@@ -680,6 +686,7 @@ const {
     // 🏢 GUARDAR INFORMACIÓN GENERAL
     const saveGeneralSettings = async () => {
         console.log("🏢 INICIANDO GUARDADO GENERAL...");
+        console.log("🔍 RestaurantId:", restaurantId);
         console.log("📋 Datos a guardar:", {
             name: settings.name,
             email: settings.email,
@@ -697,6 +704,11 @@ const {
             facebook: settings.facebook,
             accepting_reservations: settings.accepting_reservations
         });
+
+        if (!restaurantId) {
+            console.error("❌ CRÍTICO: No hay restaurantId para guardar");
+            throw new Error("ID del restaurante no encontrado");
+        }
 
         if (!settings.name?.trim()) {
             throw new Error("El nombre del restaurante es obligatorio");
@@ -754,6 +766,20 @@ const {
         }
         
         console.log("✅ GUARDADO EXITOSO en BD:", data);
+
+        // 🔍 VERIFICACIÓN INMEDIATA: Leer lo que se acaba de guardar
+        const { data: verifyData, error: verifyError } = await supabase
+            .from("restaurants")
+            .select("name, email, phone, address, city, postal_code, cuisine_type, settings")
+            .eq("id", restaurantId)
+            .single();
+            
+        if (verifyError) {
+            console.error("❌ Error verificando guardado:", verifyError);
+        } else {
+            console.log("🔍 VERIFICACIÓN: Datos leídos inmediatamente después del guardado:", verifyData);
+            console.log("🔍 VERIFICACIÓN: Settings JSONB:", verifyData.settings);
+        }
 
         // Actualizar contexto
         if (window.dispatchEvent) {
@@ -1273,7 +1299,7 @@ const {
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="facebook.com/turestaurante"
                                             />
-                                        </div>
+                                    </div>
 
                                         <div className="col-span-2">
                                             <ToggleSwitch
@@ -1282,7 +1308,7 @@ const {
                                                 label="Acepta reservas actualmente"
                                                 description="Desactiva temporalmente si no quieres recibir nuevas reservas"
                                             />
-                                        </div>
+                                    </div>
 
                                         <div className="col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
