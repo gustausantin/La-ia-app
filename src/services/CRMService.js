@@ -7,6 +7,7 @@
 import { supabase } from '../lib/supabase';
 import { format, differenceInDays, subDays, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { triggerSegmentChangeWebhook, triggerReservationWebhook } from './CRMWebhookService';
 
 /**
  * CONFIGURACIÓN DE UMBRALES CRM
@@ -229,6 +230,14 @@ export async function recomputeSegment(customerId, restaurantId) {
             // 6. Verificar si necesita crear interacción automática
             await checkAndCreateAutomaticInteraction(customerId, restaurantId, previousSegment, newSegment);
             
+            // 7. 🔗 WEBHOOK: Notificar cambio de segmento
+            try {
+                await triggerSegmentChangeWebhook(customerId, previousSegment, newSegment, updatedCustomer);
+            } catch (webhookError) {
+                console.error('❌ Error en webhook de cambio de segmento:', webhookError);
+                // No fallar el proceso principal por error de webhook
+            }
+            
             return {
                 success: true,
                 customer: updatedCustomer,
@@ -443,6 +452,19 @@ export async function processReservationCompletion(reservationId, restaurantId) 
         }
         
         console.log(`✅ Reserva ${reservationId} procesada correctamente`);
+        
+        // 5. 🔗 WEBHOOK: Notificar reserva completada
+        try {
+            await triggerReservationWebhook(reservation, statsResult.customer, {
+                stats: statsResult.stats,
+                segmentChanged: segmentResult.segmentChanged,
+                newSegment: segmentResult.newSegment
+            });
+        } catch (webhookError) {
+            console.error('❌ Error en webhook de reserva completada:', webhookError);
+            // No fallar el proceso principal por error de webhook
+        }
+        
         return {
             success: true,
             customerId,
