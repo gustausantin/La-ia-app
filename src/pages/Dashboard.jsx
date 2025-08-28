@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import {
@@ -216,6 +217,8 @@ export default function Dashboard() {
         agentStatus, 
         addNotification 
       } = useAuthContext();
+      
+    const navigate = useNavigate();
 
     logger.info('📊 Dashboard avanzado rendering...', { status, isAuthenticated });
 
@@ -437,14 +440,10 @@ export default function Dashboard() {
         await loadDashboardData();
         setRefreshing(false);
         toast.success("Datos actualizados");
-
-        // Agregar notificación global
-        addNotification({
-            type: 'system',
-            message: 'Dashboard actualizado correctamente',
-            priority: 'low'
-        });
-    }, [loadDashboardData, addNotification]);
+        
+        // CORREGIDO: NO crear notificaciones falsas en el sistema
+        // Solo mostrar el toast para confirmar la actualización
+    }, [loadDashboardData]);
 
     // Efecto para cargar datos iniciales automáticamente - SIN BUCLES
     useEffect(() => {
@@ -607,9 +606,9 @@ export default function Dashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatCard
-                        title="Reservas del Agente"
+                        title="Reservas del Agente IA"
                         value={stats.agent_reservations}
-                        detail={`${agentEfficiency}% del total`}
+                        detail={`Canales externos (${agentEfficiency}% del total)`}
                         icon={<Bot className="w-6 h-6 text-purple-600" />}
                         color="bg-purple-50"
                         badge={{
@@ -673,7 +672,7 @@ export default function Dashboard() {
                 <StatCard
                     title="Reservas Manuales"
                     value={stats.manual_reservations}
-                    detail={`${100 - agentEfficiency}% del total`}
+                    detail={`Hechas desde la app (${100 - agentEfficiency}% del total)`}
                     icon={<Users className="w-6 h-6 text-gray-600" />}
                     color="bg-gray-50"
                     loading={isLoading}
@@ -776,7 +775,7 @@ export default function Dashboard() {
                                         Tu agente IA está esperando las primeras conversaciones de clientes.
                                     </p>
                                     <button 
-                                        onClick={() => window.location.href = '/comunicacion'} 
+                                        onClick={() => navigate('/comunicacion')} 
                                         className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
                                     >
                                         <Bot className="w-4 h-4 mr-2" />
@@ -887,14 +886,14 @@ export default function Dashboard() {
                                     </p>
                                     <div className="flex space-x-3">
                                         <button 
-                                            onClick={() => window.location.href = '/reservas'} 
+                                            onClick={() => navigate('/reservas')} 
                                             className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
                                         >
                                             <Plus className="w-4 h-4 mr-2" />
                                             Crear Primera Reserva
                                         </button>
                                         <button 
-                                            onClick={() => window.location.href = '/configuracion'} 
+                                            onClick={() => navigate('/configuracion')} 
                                             className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                                         >
                                             <Settings className="w-4 h-4 mr-2" />
