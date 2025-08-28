@@ -447,43 +447,7 @@ const {
         },
     ];
 
-    // Cargar configuración
-    useEffect(() => {
-        if (isReady) {
-            // SIEMPRE cargar settings, incluso sin restaurantId
-            loadSettings();
-            
-            // Solo cargar métricas si hay restaurantId
-            if (restaurantId) {
-                loadAgentMetrics();
-                loadRealTimeStatus();
-            }
-        }
-    }, [isReady, restaurantId]);
-
-    // CRÍTICO: Recargar datos cuando se vuelve a la página (focus)
-    useEffect(() => {
-        const handleFocus = () => {
-            console.log("🔄 Página enfocada, recargando configuración...");
-            if (isReady && restaurantId) {
-                loadSettings();
-            }
-        };
-
-        window.addEventListener('focus', handleFocus);
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && isReady && restaurantId) {
-                console.log("🔄 Página visible, recargando configuración...");
-                loadSettings();
-            }
-        });
-
-        return () => {
-            window.removeEventListener('focus', handleFocus);
-            document.removeEventListener('visibilitychange', handleFocus);
-        };
-    }, [isReady, restaurantId, loadSettings]);
-
+    // CRÍTICO: Definir loadSettings ANTES de los effects
     const loadSettings = useCallback(async () => {
         try {
             setLoading(true);
@@ -598,6 +562,36 @@ const {
             setLoading(false);
         }
     }, [restaurantId, restaurant, user]);
+
+    // Cargar configuración
+    useEffect(() => {
+        if (isReady) {
+            // SIEMPRE cargar settings, incluso sin restaurantId
+            loadSettings();
+            
+            // Solo cargar métricas si hay restaurantId
+            if (restaurantId) {
+                loadAgentMetrics();
+                loadRealTimeStatus();
+            }
+        }
+    }, [isReady, restaurantId, loadSettings]); // Ahora sí podemos incluir loadSettings
+
+    // CRÍTICO: Recargar datos cuando se vuelve a la página (focus)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden && isReady && restaurantId) {
+                console.log("🔄 Página visible, recargando configuración...");
+                loadSettings();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [isReady, restaurantId, loadSettings]);
 
     const loadAgentMetrics = async () => {
         try {
