@@ -277,6 +277,36 @@ const {
             }
         },
 
+        // Configuración CRM & IA
+        crm: {
+            // Umbrales de segmentación
+            thresholds: {
+                inactivo_days: 60,
+                vip_visits: 5,
+                vip_spend: 500,
+                alto_valor_spend: 1000,
+                en_riesgo_drop: 50,
+                regular_visits_min: 3,
+                regular_visits_max: 4,
+                period_days: 90
+            },
+            // Configuración de automatizaciones
+            automation: {
+                enabled: true,
+                cooldown_days: 30,
+                max_daily_sends: 50,
+                working_hours_only: true,
+                working_hours_start: "09:00",
+                working_hours_end: "21:00"
+            },
+            // Configuración de plantillas
+            templates: {
+                reactivacion_enabled: true,
+                vip_upgrade_enabled: true,
+                en_riesgo_enabled: false
+            }
+        },
+
         // Configuración de canales
         channels: {
             vapi: {
@@ -412,7 +442,7 @@ const {
         },
         {
             id: "crm",
-            label: "CRM IA",
+            label: "CRM & IA",
             icon: <Brain className="w-4 h-4" />,
             highlight: true
         },
@@ -677,6 +707,9 @@ const {
                 case "Configuración del Agente":
                 case "Optimización de mesas":
                     await saveAgentSettings();
+                    break;
+                case "Configuración CRM":
+                    await saveCRMSettings();
                     break;
                 case "Notificaciones":
                     await saveNotificationSettings();
@@ -946,6 +979,33 @@ const {
 
         if (error) throw error;
         
+        // CRÍTICO: Forzar recarga del contexto
+        await forceContextReload();
+    };
+
+    // 🎯 GUARDAR CONFIGURACIÓN CRM
+    const saveCRMSettings = async () => {
+        const { data: currentData } = await supabase
+            .from("restaurants")
+            .select("settings")
+            .eq("id", restaurantId)
+            .single();
+
+        const currentSettings = currentData?.settings || {};
+
+        const { error } = await supabase
+            .from("restaurants")
+            .update({
+                settings: {
+                    ...currentSettings,
+                    crm: settings.crm
+                },
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", restaurantId);
+
+        if (error) throw error;
+
         // CRÍTICO: Forzar recarga del contexto
         await forceContextReload();
     };
@@ -1858,6 +1918,248 @@ const {
                                                 <Save className="w-4 h-4" />
                                             )}
                                             Guardar optimización
+                                        </button>
+                                    </div>
+                                </SettingSection>
+                            </div>
+                        )}
+
+                        {/* Configuración CRM & IA */}
+                        {activeTab === "crm" && (
+                            <div className="space-y-6">
+                                <SettingSection
+                                    title="CRM & IA - Sistema Inteligente"
+                                    description="Configuración avanzada de segmentación y automatizaciones"
+                                    icon={<Brain />}
+                                    premium
+                                >
+                                    <div className="space-y-8">
+                                        {/* Umbrales de Segmentación */}
+                                        <div className="border-b border-gray-200 pb-6">
+                                            <h4 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                                <Target className="w-5 h-5 text-purple-600" />
+                                                Umbrales de Segmentación
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Días para considerar "Inactivo"
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={settings.crm.thresholds.inactivo_days}
+                                                        onChange={(e) => setSettings(prev => ({
+                                                            ...prev,
+                                                            crm: {
+                                                                ...prev.crm,
+                                                                thresholds: {
+                                                                    ...prev.crm.thresholds,
+                                                                    inactivo_days: parseInt(e.target.value) || 60
+                                                                }
+                                                            }
+                                                        }))}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        min="1"
+                                                        max="365"
+                                                    />
+                                                    <p className="text-xs text-gray-500 mt-1">Días sin visita para marcar cliente como inactivo</p>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Visitas mínimas para VIP
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={settings.crm.thresholds.vip_visits}
+                                                        onChange={(e) => setSettings(prev => ({
+                                                            ...prev,
+                                                            crm: {
+                                                                ...prev.crm,
+                                                                thresholds: {
+                                                                    ...prev.crm.thresholds,
+                                                                    vip_visits: parseInt(e.target.value) || 5
+                                                                }
+                                                            }
+                                                        }))}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        min="1"
+                                                        max="50"
+                                                    />
+                                                    <p className="text-xs text-gray-500 mt-1">Número de visitas para segmento VIP</p>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Gasto mínimo VIP (€)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={settings.crm.thresholds.vip_spend}
+                                                        onChange={(e) => setSettings(prev => ({
+                                                            ...prev,
+                                                            crm: {
+                                                                ...prev.crm,
+                                                                thresholds: {
+                                                                    ...prev.crm.thresholds,
+                                                                    vip_spend: parseInt(e.target.value) || 500
+                                                                }
+                                                            }
+                                                        }))}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        min="0"
+                                                        step="50"
+                                                    />
+                                                    <p className="text-xs text-gray-500 mt-1">Gasto total para segmento VIP</p>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Gasto "Alto Valor" (€)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={settings.crm.thresholds.alto_valor_spend}
+                                                        onChange={(e) => setSettings(prev => ({
+                                                            ...prev,
+                                                            crm: {
+                                                                ...prev.crm,
+                                                                thresholds: {
+                                                                    ...prev.crm.thresholds,
+                                                                    alto_valor_spend: parseInt(e.target.value) || 1000
+                                                                }
+                                                            }
+                                                        }))}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        min="0"
+                                                        step="100"
+                                                    />
+                                                    <p className="text-xs text-gray-500 mt-1">Gasto para segmento "Alto Valor"</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Automatizaciones */}
+                                        <div className="border-b border-gray-200 pb-6">
+                                            <h4 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                                <Zap className="w-5 h-5 text-yellow-600" />
+                                                Automatizaciones
+                                            </h4>
+                                            <div className="space-y-4">
+                                                <ToggleSwitch
+                                                    enabled={settings.crm.automation.enabled}
+                                                    onChange={(enabled) => setSettings(prev => ({
+                                                        ...prev,
+                                                        crm: {
+                                                            ...prev.crm,
+                                                            automation: {
+                                                                ...prev.crm.automation,
+                                                                enabled
+                                                            }
+                                                        }
+                                                    }))}
+                                                    label="Activar automatizaciones CRM"
+                                                    description="Envío automático de emails/SMS según segmentación"
+                                                />
+
+                                                {settings.crm.automation.enabled && (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 p-4 bg-gray-50 rounded-lg">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                Cooldown (días)
+                                                            </label>
+                                                            <input
+                                                                type="number"
+                                                                value={settings.crm.automation.cooldown_days}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    crm: {
+                                                                        ...prev.crm,
+                                                                        automation: {
+                                                                            ...prev.crm.automation,
+                                                                            cooldown_days: parseInt(e.target.value) || 30
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                                                min="1"
+                                                                max="180"
+                                                            />
+                                                            <p className="text-xs text-gray-500 mt-1">Días entre envíos al mismo cliente</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                Máximo diario
+                                                            </label>
+                                                            <input
+                                                                type="number"
+                                                                value={settings.crm.automation.max_daily_sends}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    crm: {
+                                                                        ...prev.crm,
+                                                                        automation: {
+                                                                            ...prev.crm.automation,
+                                                                            max_daily_sends: parseInt(e.target.value) || 50
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                                                min="1"
+                                                                max="500"
+                                                            />
+                                                            <p className="text-xs text-gray-500 mt-1">Límite de envíos por día</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Preview de Segmentación */}
+                                        <div>
+                                            <h4 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                                <BarChart3 className="w-5 h-5 text-blue-600" />
+                                                Preview de Segmentación
+                                            </h4>
+                                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                                <p className="text-sm text-blue-700 mb-3">
+                                                    ⚡ <strong>Próximamente:</strong> Vista previa en tiempo real de cuántos clientes cumplen cada segmento con la configuración actual.
+                                                </p>
+                                                <div className="grid grid-cols-4 gap-3 text-xs">
+                                                    <div className="bg-white p-2 rounded text-center">
+                                                        <div className="text-lg font-bold text-green-600">--</div>
+                                                        <div className="text-gray-600">Nuevos</div>
+                                                    </div>
+                                                    <div className="bg-white p-2 rounded text-center">
+                                                        <div className="text-lg font-bold text-yellow-600">--</div>
+                                                        <div className="text-gray-600">VIP</div>
+                                                    </div>
+                                                    <div className="bg-white p-2 rounded text-center">
+                                                        <div className="text-lg font-bold text-red-600">--</div>
+                                                        <div className="text-gray-600">Inactivos</div>
+                                                    </div>
+                                                    <div className="bg-white p-2 rounded text-center">
+                                                        <div className="text-lg font-bold text-orange-600">--</div>
+                                                        <div className="text-gray-600">En Riesgo</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                                        <button
+                                            onClick={() => handleSave("Configuración CRM")}
+                                            disabled={saving}
+                                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                        >
+                                            {saving ? (
+                                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Save className="w-4 h-4" />
+                                            )}
+                                            Guardar configuración CRM
                                         </button>
                                     </div>
                                 </SettingSection>

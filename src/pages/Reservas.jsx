@@ -42,6 +42,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { processReservationCompletion } from "../services/CRMService";
 
 // DATOS NECESARIOS DE SUPABASE:
 // - tabla: reservations (con campos 'source' y 'channel')
@@ -828,7 +829,42 @@ export default function Reservas() {
 
                 if (error) throw error;
 
-                toast.success(message);
+                // 🎯 CRM INTEGRATION: Procesar automáticamente cuando se completa reserva
+                if (newStatus === "completada") {
+                    console.log("🎯 CRM: Procesando completación de reserva", reservation.id);
+                    
+                    try {
+                        const crmResult = await processReservationCompletion(reservation.id, restaurantId);
+                        
+                        if (crmResult.success) {
+                            console.log("✅ CRM: Reserva procesada correctamente", crmResult);
+                            
+                            // Mostrar mensaje enriquecido si hubo cambio de segmento
+                            if (crmResult.segmentChanged) {
+                                toast.success(
+                                    `${message} ✨ Cliente actualizado a "${crmResult.newSegment}"`,
+                                    { duration: 4000 }
+                                );
+                                addNotification({
+                                    type: "crm",
+                                    message: `Cliente ${reservation.customer_name} promovido a segmento "${crmResult.newSegment}"`,
+                                    priority: "medium",
+                                });
+                            } else {
+                                toast.success(message);
+                            }
+                        } else {
+                            console.error("❌ CRM: Error procesando reserva:", crmResult.error);
+                            toast.success(`${message} (CRM: ${crmResult.error})`);
+                        }
+                    } catch (crmError) {
+                        console.error("❌ CRM: Error inesperado:", crmError);
+                        toast.success(`${message} (CRM sin procesar)`);
+                    }
+                } else {
+                    toast.success(message);
+                }
+
                 addNotification({
                     type: "system",
                     message: `${message}: ${reservation.customer_name}`,
@@ -839,7 +875,7 @@ export default function Reservas() {
                 toast.error("Error al actualizar la reserva");
             }
         },
-        [loadReservations, addNotification],
+        [loadReservations, addNotification, restaurantId],
     );
 
     // Manejar acciones masivas
