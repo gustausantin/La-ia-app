@@ -47,11 +47,11 @@ import toast from "react-hot-toast";
 // - RPC: get_agent_table_insights(restaurant_id)
 // - real-time: suscripción a cambios en tables y reservations
 
-// Estados de mesa con iconos y colores
+// Estados de mesa con iconos y colores mejorados
 const TABLE_STATES = {
     available: {
         label: "Disponible",
-        icon: "✓",
+        icon: "✅", // Mesa activa = check verde
         color: "border-green-400",
         bgColor: "bg-green-50",
         textColor: "text-green-700",
@@ -72,7 +72,7 @@ const TABLE_STATES = {
     },
     inactive: {
         label: "Inactiva",
-        icon: "❌",
+        icon: "❌", // Mesa inactiva = X roja
         color: "border-gray-400",
         bgColor: "bg-gray-50",
         textColor: "text-gray-700",
@@ -183,8 +183,15 @@ const TableCard = ({
 
     // Determinar el estado de la mesa
     const getTableStatus = () => {
-        if (table.status !== "active") {
-            return table.status === "maintenance" ? "maintenance" : "inactive";
+        // Verificar primero si la mesa está activa (is_active = true)
+        const isActive = table.is_active !== false && table.status !== "inactive";
+        
+        if (!isActive) {
+            return "inactive";
+        }
+
+        if (table.status === "maintenance") {
+            return "maintenance";
         }
 
         if (!reservation) return "available";
@@ -239,8 +246,7 @@ const TableCard = ({
                                 )}
                             </div>
                             <p className="text-sm text-gray-600">
-                                {table.zone} • {table.min_capacity}-
-                                {table.max_capacity} personas
+                                {table.zone} • {table.capacity} personas
                             </p>
 
                             {reservation && (
@@ -378,7 +384,7 @@ const TableCard = ({
                     <h4 className="font-bold text-gray-900">{table.name}</h4>
                     <p className="text-xs text-gray-600 mt-1">{table.zone}</p>
                     <p className="text-xs text-gray-500">
-                        {table.min_capacity}-{table.max_capacity} pax
+                        {table.capacity} pax
                     </p>
                 </div>
 
@@ -761,27 +767,28 @@ export default function Mesas() {
             filtered = filtered.filter((table) => table.zone === selectedZone);
         }
 
-        // Filtro por estado
-        if (selectedStatus !== "all") {
-            filtered = filtered.filter((table) => {
-                const reservation = getTableReservation(table.id);
+                        // Filtro por estado
+                if (selectedStatus !== "all") {
+                    filtered = filtered.filter((table) => {
+                        const reservation = getTableReservation(table.id);
+                        const isActive = table.is_active !== false && table.status !== "inactive";
 
-                if (selectedStatus === "available") {
-                    return table.status === "active" && !reservation;
-                }
-                if (selectedStatus === "reserved") {
-                    return reservation && reservation.status === "confirmada";
-                }
-                if (selectedStatus === "occupied") {
-                    return reservation && reservation.status === "sentada";
-                }
-                if (selectedStatus === "inactive") {
-                    return table.status !== "active";
-                }
+                        if (selectedStatus === "available") {
+                            return isActive && !reservation;
+                        }
+                        if (selectedStatus === "reserved") {
+                            return isActive && reservation && reservation.status === "confirmada";
+                        }
+                        if (selectedStatus === "occupied") {
+                            return isActive && reservation && reservation.status === "sentada";
+                        }
+                        if (selectedStatus === "inactive") {
+                            return !isActive;
+                        }
 
-                return true;
-            });
-        }
+                        return true;
+                    });
+                }
 
         // Filtro por búsqueda
         if (searchTerm) {
@@ -1313,7 +1320,7 @@ const TableModal = ({
         name: table?.name || "",
         zone: table?.zone || "",
         capacity: table?.capacity || 4,
-        status: table?.status || "available",
+        status: table ? (table.is_active === false ? "inactive" : "available") : "available",
         notes: table?.notes || "",
     });
 
@@ -1351,10 +1358,14 @@ const TableModal = ({
 
         try {
             const tableData = {
-                ...formData,
-                restaurant_id: restaurantId,
+                table_number: formData.table_number,
+                name: formData.name,
+                zone: formData.zone,
                 capacity: parseInt(formData.capacity),
-                is_active: formData.status === "available",
+                notes: formData.notes,
+                restaurant_id: restaurantId,
+                is_active: formData.status !== "inactive",
+                status: formData.status === "maintenance" ? "maintenance" : "available",
             };
 
             if (table) {
@@ -1530,7 +1541,7 @@ const TableModal = ({
                             }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
-                            <option value="active">Activa</option>
+                            <option value="available">Activa</option>
                             <option value="inactive">Inactiva</option>
                             <option value="maintenance">
                                 En mantenimiento

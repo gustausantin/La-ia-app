@@ -562,8 +562,8 @@ export default function Reservas() {
                 (t) => (
                     <div className="space-y-3">
                         <div>
-                            <p className="font-medium text-red-800">⚠️ No hay mesas configuradas</p>
-                            <p className="text-sm text-red-700 mt-1">
+                            <p className="font-medium text-white">⚠️ No hay mesas configuradas</p>
+                            <p className="text-sm text-gray-200 mt-1">
                                 Para crear reservas necesitas configurar mesas primero.
                             </p>
                         </div>
