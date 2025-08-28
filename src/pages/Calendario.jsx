@@ -160,25 +160,38 @@ export default function Calendario() {
         
         setLoading(true);
         try {
-            // Cargar horarios reales desde Supabase
-            const { data: scheduleData, error: scheduleError } = await supabase
-                .from("restaurant_schedule")
-                .select("*")
-                .eq("restaurant_id", restaurantId)
-                .order("day_of_week");
+            // Cargar horarios desde restaurants.settings (donde están realmente guardados)
+            const { data: restaurantData, error: scheduleError } = await supabase
+                .from("restaurants")
+                .select("settings")
+                .eq("id", restaurantId)
+                .single();
 
             if (scheduleError) {
+                console.error("❌ Error cargando horarios:", scheduleError);
             }
 
-            // Si no hay horarios guardados, crear estructura vacía
-            const loadedSchedule = scheduleData && scheduleData.length > 0 
-                ? scheduleData 
-                : daysOfWeek.map(day => ({
+            const savedHours = restaurantData?.settings?.operating_hours || {};
+
+            // Convertir horarios de operating_hours a formato de calendario
+            const loadedSchedule = daysOfWeek.map(day => {
+                const dayKey = day.id; // monday, tuesday, etc.
+                const dayHours = savedHours[dayKey];
+                
+                return {
                     day_of_week: day.id,
                     day_name: day.name,
-                    is_open: false, // CERRADO por defecto hasta que configuren
-                    slots: [] // SIN slots hasta que configuren
-                }));
+                    is_open: dayHours ? !dayHours.closed : false,
+                    slots: dayHours && !dayHours.closed ? [
+                        {
+                            id: 1,
+                            name: "Horario Principal",
+                            start_time: dayHours.open || "09:00",
+                            end_time: dayHours.close || "22:00"
+                        }
+                    ] : []
+                };
+            });
 
             // Configuración del agente por defecto
             const defaultAgentSchedule = {};
@@ -285,7 +298,8 @@ export default function Calendario() {
     };
 
     // Actualizar horario semanal
-    const updateDaySchedule = (dayId, field, value) => {
+    const updateDaySchedule = async (dayId, field, value) => {
+        // Actualizar estado local
         setWeeklySchedule(prev => 
             prev.map(day => {
                 if (day.day_of_week === dayId) {
@@ -305,6 +319,39 @@ export default function Calendario() {
                 return day;
             })
         );
+
+        // Guardar en Supabase - Sincronizar con restaurants.settings
+        try {
+            const { data: currentData } = await supabase
+                .from("restaurants")
+                .select("settings")
+                .eq("id", restaurantId)
+                .single();
+
+            const currentSettings = currentData?.settings || {};
+            const operatingHours = currentSettings.operating_hours || {};
+
+            // Actualizar el día específico
+            operatingHours[dayId] = {
+                ...operatingHours[dayId],
+                closed: field === 'is_open' ? !value : operatingHours[dayId]?.closed || false,
+                open: operatingHours[dayId]?.open || "09:00",
+                close: operatingHours[dayId]?.close || "22:00"
+            };
+
+            await supabase
+                .from("restaurants")
+                .update({
+                    settings: {
+                        ...currentSettings,
+                        operating_hours: operatingHours
+                    }
+                })
+                .eq("id", restaurantId);
+
+        } catch (error) {
+            console.error("❌ Error guardando horarios:", error);
+        }
     };
 
     // Actualizar slot de horario
