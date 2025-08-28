@@ -1,6 +1,6 @@
 
 // Configuracion.jsx - Panel de Configuración COMPLETO y MEJORADO para Son-IA
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import {
@@ -461,7 +461,30 @@ const {
         }
     }, [isReady, restaurantId]);
 
-    const loadSettings = async () => {
+    // CRÍTICO: Recargar datos cuando se vuelve a la página (focus)
+    useEffect(() => {
+        const handleFocus = () => {
+            console.log("🔄 Página enfocada, recargando configuración...");
+            if (isReady && restaurantId) {
+                loadSettings();
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && isReady && restaurantId) {
+                console.log("🔄 Página visible, recargando configuración...");
+                loadSettings();
+            }
+        });
+
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleFocus);
+        };
+    }, [isReady, restaurantId, loadSettings]);
+
+    const loadSettings = useCallback(async () => {
         try {
             setLoading(true);
             
@@ -503,11 +526,11 @@ const {
             console.log("🏙️ Ciudad:", restaurant?.city);
             console.log("📮 CP:", restaurant?.postal_code);
             
-            // Si no tenemos restaurant desde AuthContext, cargar directamente desde BD
-            let restaurantData = restaurant;
+            // CRÍTICO: SIEMPRE cargar datos frescos desde BD para evitar cache obsoleto
+            let restaurantData = null;
             
-            if (!restaurant && restaurantId) {
-                console.log("🔄 Restaurant no en context, cargando desde BD...");
+            if (restaurantId) {
+                console.log("🔄 Cargando datos FRESCOS desde BD (ignorando contexto para evitar cache)...");
                 const { data: dbRestaurant, error: dbError } = await supabase
                     .from("restaurants")
                     .select("*")
@@ -516,10 +539,15 @@ const {
                 
                 if (dbError) {
                     console.error("❌ Error cargando restaurant desde BD:", dbError);
+                    // Solo entonces usar datos del contexto como fallback
+                    restaurantData = restaurant;
                 } else {
                     restaurantData = dbRestaurant;
-                    console.log("✅ Restaurant cargado desde BD:", restaurantData);
+                    console.log("✅ Datos FRESCOS cargados desde BD:", restaurantData);
                 }
+            } else {
+                // Sin restaurantId, usar datos del contexto
+                restaurantData = restaurant;
             }
             
             // Cargar datos completos del restaurante - PREFILL TOTAL
@@ -569,7 +597,7 @@ const {
             toast.error("Error al cargar la configuración");
             setLoading(false);
         }
-    };
+    }, [restaurantId, restaurant, user]);
 
     const loadAgentMetrics = async () => {
         try {
@@ -755,12 +783,47 @@ const {
         
         console.log("✅ GUARDADO EXITOSO en BD:", data);
 
-        // Actualizar contexto después de un delay para asegurar persistencia
-        setTimeout(() => {
-            if (window.dispatchEvent) {
-                window.dispatchEvent(new CustomEvent('restaurant-updated'));
+        // CRÍTICO: Forzar recarga del restaurant en AuthContext después de guardar
+        try {
+            // Recargar datos del restaurant desde la BD
+            const { data: freshData, error: reloadError } = await supabase
+                .from("restaurants")
+                .select("*")
+                .eq("id", restaurantId)
+                .single();
+                
+            if (!reloadError && freshData) {
+                // Forzar actualización del contexto mediante evento personalizado
+                window.dispatchEvent(new CustomEvent('force-restaurant-reload', {
+                    detail: { restaurant: freshData }
+                }));
+                console.log("🔄 AuthContext actualizado con datos frescos");
             }
-        }, 100);
+        } catch (reloadError) {
+            console.warn("⚠️ No se pudo actualizar AuthContext:", reloadError);
+        }
+    };
+
+    // 🔄 FUNCIÓN AUXILIAR PARA FORZAR RECARGA DEL CONTEXTO
+    const forceContextReload = async () => {
+        try {
+            // Recargar datos del restaurant desde la BD
+            const { data: freshData, error: reloadError } = await supabase
+                .from("restaurants")
+                .select("*")
+                .eq("id", restaurantId)
+                .single();
+                
+            if (!reloadError && freshData) {
+                // Forzar actualización del contexto mediante evento personalizado
+                window.dispatchEvent(new CustomEvent('force-restaurant-reload', {
+                    detail: { restaurant: freshData }
+                }));
+                console.log("🔄 AuthContext actualizado con datos frescos");
+            }
+        } catch (reloadError) {
+            console.warn("⚠️ No se pudo actualizar AuthContext:", reloadError);
+        }
     };
 
     // ⏰ GUARDAR HORARIOS DE OPERACIÓN
@@ -786,6 +849,9 @@ const {
 
         // Sincronizar con calendario
         await syncHoursWithCalendar();
+        
+        // CRÍTICO: Forzar recarga del contexto
+        await forceContextReload();
     };
 
     // 📅 GUARDAR CONFIGURACIÓN DE RESERVAS
@@ -808,6 +874,9 @@ const {
             .eq("id", restaurantId);
 
         if (error) throw error;
+        
+        // CRÍTICO: Forzar recarga del contexto
+        await forceContextReload();
     };
 
     // 🤖 GUARDAR CONFIGURACIÓN DEL AGENTE
@@ -831,6 +900,9 @@ const {
             .eq("id", restaurantId);
 
         if (error) throw error;
+        
+        // CRÍTICO: Forzar recarga del contexto
+        await forceContextReload();
     };
 
     // 🔔 GUARDAR CONFIGURACIÓN DE NOTIFICACIONES
@@ -853,6 +925,9 @@ const {
             .eq("id", restaurantId);
 
         if (error) throw error;
+        
+        // CRÍTICO: Forzar recarga del contexto
+        await forceContextReload();
     };
 
     // 📱 GUARDAR CONFIGURACIÓN DE CANALES
@@ -875,6 +950,9 @@ const {
             .eq("id", restaurantId);
 
         if (error) throw error;
+        
+        // CRÍTICO: Forzar recarga del contexto
+        await forceContextReload();
     };
 
     // 🔄 SINCRONIZAR HORARIOS CON CALENDARIO
