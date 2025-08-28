@@ -213,12 +213,12 @@ const {
         },
 
         // Configuración de reservas
-        reservations: {
+        reservation_settings: {
             enabled: true,
             advance_booking_days: 30,
             min_party_size: 1,
             max_party_size: 12,
-            slot_duration: 90,
+            turn_duration: 90,
             buffer_time: 15,
             auto_confirm: false,
             require_phone: true,
@@ -520,10 +520,12 @@ const {
                 }
             }
             
-            // Cargar datos reales del registro/Supabase inmediatamente 
+            // Cargar datos completos del restaurante - PREFILL TOTAL
+            const savedSettings = restaurantData?.settings || {};
+            
             setSettings((prev) => ({
                 ...prev,
-                // Datos del restaurante desde el registro - PREFILL AUTOMÁTICO MEJORADO
+                // Datos básicos del restaurante
                 name: restaurantData?.name || "",
                 email: restaurantData?.email || user?.email || "",
                 phone: restaurantData?.phone || "",
@@ -531,13 +533,30 @@ const {
                 city: restaurantData?.city || "",
                 postal_code: restaurantData?.postal_code || "",
                 cuisine_type: restaurantData?.cuisine_type || "",
-                // Cargar website y description desde settings JSONB
-                website: restaurantData?.settings?.website || "",
-                description: restaurantData?.settings?.description || "",
+                // Datos desde settings JSONB
+                website: savedSettings.website || "",
+                description: savedSettings.description || "",
+                country: savedSettings.country || "ES",
+                timezone: savedSettings.timezone || "Europe/Madrid",
+                currency: savedSettings.currency || "EUR",
+                language: savedSettings.language || "es",
+                logo_url: savedSettings.logo_url || "",
+                // Horarios de operación
+                operating_hours: savedSettings.operating_hours || prev.operating_hours,
+                // Configuración de reservas
+                reservation_settings: savedSettings.reservation_settings || prev.reservation_settings,
+                // Configuración del agente
                 agent: {
                     ...prev.agent,
-                    name: restaurantData?.name ? `Asistente de ${restaurantData.name}` : "Asistente Virtual",
-                }
+                    ...savedSettings.agent,
+                    name: savedSettings.agent?.name || (restaurantData?.name ? `Asistente de ${restaurantData.name}` : "Asistente Virtual"),
+                },
+                // Optimización de mesas
+                table_optimization: savedSettings.table_optimization || prev.table_optimization,
+                // Notificaciones
+                notifications: savedSettings.notifications || prev.notifications,
+                // Canales
+                channels: savedSettings.channels || prev.channels
             }));
             
             setLoading(false);
@@ -607,6 +626,7 @@ const {
         }
     };
 
+    // 💾 FUNCIÓN PRINCIPAL DE GUARDADO POR SECCIONES
     const handleSave = async (section) => {
         if (!restaurantId) {
             toast.error("No se encontró el ID del restaurante");
@@ -615,70 +635,260 @@ const {
 
         try {
             setSaving(true);
-            console.log("💾 GUARDANDO - Datos a guardar:", settings);
+            console.log(`💾 GUARDANDO SECCIÓN: ${section}`, settings);
 
-            // 🛡️ VALIDACIONES PREVENTIVAS
-            if (!restaurantId) {
-                throw new Error("ID del restaurante no encontrado");
-            }
-            
-            if (!settings.name?.trim()) {
-                throw new Error("El nombre del restaurante es obligatorio");
-            }
-
-            // 1. Primero obtener settings actuales
-            const { data: currentData, error: fetchError } = await supabase
-                .from("restaurants")
-                .select("settings")
-                .eq("id", restaurantId)
-                .single();
-                
-            if (fetchError) {
-                console.error("❌ Error obteniendo settings:", fetchError);
-                throw new Error("No se pudo acceder a la configuración actual");
-            }
-            
-            const currentSettings = currentData?.settings || {};
-            
-            // 2. Guardar campos básicos + website/description en settings JSONB
-            const { data, error } = await supabase
-                .from("restaurants")
-                .update({
-                    name: settings.name,
-                    email: settings.email,
-                    phone: settings.phone,
-                    address: settings.address,
-                    city: settings.city,
-                    postal_code: settings.postal_code,
-                    cuisine_type: settings.cuisine_type,
-                    // Combinar settings existentes con nuevos valores
-                    settings: {
-                        ...currentSettings,
-                        website: settings.website || "",
-                        description: settings.description || ""
-                    },
-                    updated_at: new Date().toISOString()
-                })
-                .eq("id", restaurantId);
-
-            if (error) {
-                console.error("❌ Error guardando:", error);
-                throw error;
-            }
-
-            // Actualizar el contexto con los nuevos datos
-            if (window.dispatchEvent) {
-                window.dispatchEvent(new CustomEvent('restaurant-updated'));
+            switch (section) {
+                case "Información general":
+                case "Preferencias regionales":
+                    await saveGeneralSettings();
+                    break;
+                case "Horarios de operación":
+                    await saveOperatingHours();
+                    break;
+                case "Configuración de reservas":
+                    await saveReservationSettings();
+                    break;
+                case "Configuración del Agente":
+                case "Optimización de mesas":
+                    await saveAgentSettings();
+                    break;
+                case "Notificaciones":
+                    await saveNotificationSettings();
+                    break;
+                case "Configuración de canales":
+                    await saveChannelSettings();
+                    break;
+                default:
+                    toast.info(`Función ${section} en desarrollo`);
+                    return;
             }
 
             toast.success(`✅ ${section} actualizado correctamente`);
-            console.log("✅ GUARDADO EXITOSO:", data);
+            console.log(`✅ GUARDADO EXITOSO: ${section}`);
 
         } catch (error) {
-            console.error("❌ Error al guardar:", error);
-            toast.error("Error al guardar los cambios");
+            console.error(`❌ Error guardando ${section}:`, error);
+            toast.error(error.message || "Error al guardar los cambios");
         } finally {
             setSaving(false);
+        }
+    };
+
+    // 🏢 GUARDAR INFORMACIÓN GENERAL
+    const saveGeneralSettings = async () => {
+        if (!settings.name?.trim()) {
+            throw new Error("El nombre del restaurante es obligatorio");
+        }
+
+        // Obtener settings actuales
+        const { data: currentData, error: fetchError } = await supabase
+            .from("restaurants")
+            .select("settings")
+            .eq("id", restaurantId)
+            .single();
+            
+        if (fetchError) {
+            console.error("❌ Error obteniendo settings:", fetchError);
+            throw new Error("No se pudo acceder a la configuración actual");
+        }
+        
+        const currentSettings = currentData?.settings || {};
+        
+        // Guardar datos generales + preferencias regionales
+        const { error } = await supabase
+            .from("restaurants")
+            .update({
+                name: settings.name,
+                email: settings.email,
+                phone: settings.phone,
+                address: settings.address,
+                city: settings.city,
+                postal_code: settings.postal_code,
+                cuisine_type: settings.cuisine_type,
+                settings: {
+                    ...currentSettings,
+                    website: settings.website || "",
+                    description: settings.description || "",
+                    country: settings.country,
+                    timezone: settings.timezone,
+                    currency: settings.currency,
+                    language: settings.language,
+                    logo_url: settings.logo_url
+                },
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", restaurantId);
+
+        if (error) throw error;
+
+        // Actualizar contexto
+        if (window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('restaurant-updated'));
+        }
+    };
+
+    // ⏰ GUARDAR HORARIOS DE OPERACIÓN
+    const saveOperatingHours = async () => {
+        const { data: currentData } = await supabase
+            .from("restaurants")
+            .select("settings")
+            .eq("id", restaurantId)
+            .single();
+            
+        const { error } = await supabase
+            .from("restaurants")
+            .update({
+                settings: {
+                    ...(currentData?.settings || {}),
+                    operating_hours: settings.operating_hours
+                },
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", restaurantId);
+
+        if (error) throw error;
+
+        // Sincronizar con calendario
+        await syncHoursWithCalendar();
+    };
+
+    // 📅 GUARDAR CONFIGURACIÓN DE RESERVAS
+    const saveReservationSettings = async () => {
+        const { data: currentData } = await supabase
+            .from("restaurants")
+            .select("settings")
+            .eq("id", restaurantId)
+            .single();
+            
+        const { error } = await supabase
+            .from("restaurants")
+            .update({
+                settings: {
+                    ...(currentData?.settings || {}),
+                    reservation_settings: settings.reservation_settings
+                },
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", restaurantId);
+
+        if (error) throw error;
+    };
+
+    // 🤖 GUARDAR CONFIGURACIÓN DEL AGENTE
+    const saveAgentSettings = async () => {
+        const { data: currentData } = await supabase
+            .from("restaurants")
+            .select("settings")
+            .eq("id", restaurantId)
+            .single();
+            
+        const { error } = await supabase
+            .from("restaurants")
+            .update({
+                settings: {
+                    ...(currentData?.settings || {}),
+                    agent: settings.agent,
+                    table_optimization: settings.table_optimization
+                },
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", restaurantId);
+
+        if (error) throw error;
+    };
+
+    // 🔔 GUARDAR CONFIGURACIÓN DE NOTIFICACIONES
+    const saveNotificationSettings = async () => {
+        const { data: currentData } = await supabase
+            .from("restaurants")
+            .select("settings")
+            .eq("id", restaurantId)
+            .single();
+            
+        const { error } = await supabase
+            .from("restaurants")
+            .update({
+                settings: {
+                    ...(currentData?.settings || {}),
+                    notifications: settings.notifications
+                },
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", restaurantId);
+
+        if (error) throw error;
+    };
+
+    // 📱 GUARDAR CONFIGURACIÓN DE CANALES
+    const saveChannelSettings = async () => {
+        const { data: currentData } = await supabase
+            .from("restaurants")
+            .select("settings")
+            .eq("id", restaurantId)
+            .single();
+            
+        const { error } = await supabase
+            .from("restaurants")
+            .update({
+                settings: {
+                    ...(currentData?.settings || {}),
+                    channels: settings.channels
+                },
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", restaurantId);
+
+        if (error) throw error;
+    };
+
+    // 🔄 SINCRONIZAR HORARIOS CON CALENDARIO
+    const syncHoursWithCalendar = async () => {
+        try {
+            console.log("🔄 Sincronizando horarios con calendario...");
+            // TODO: Implementar sincronización real con tabla restaurant_schedule
+        } catch (error) {
+            console.error("❌ Error sincronizando calendario:", error);
+        }
+    };
+
+    // 📷 MANEJO DE CARGA DE LOGO
+    const handleLogoUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Validar tipo de archivo
+        if (!file.type.startsWith('image/')) {
+            toast.error('Por favor selecciona un archivo de imagen válido');
+            return;
+        }
+
+        // Validar tamaño (2MB máximo)
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error('El archivo no puede ser mayor a 2MB');
+            return;
+        }
+
+        try {
+            // Convertir archivo a base64 para almacenamiento temporal
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64String = e.target.result;
+                setSettings(prev => ({
+                    ...prev,
+                    logo_url: base64String
+                }));
+                toast.success('Logo cargado correctamente');
+            };
+            reader.readAsDataURL(file);
+
+            // TODO: En producción, subir a Supabase Storage
+            // const { data, error } = await supabase.storage
+            //     .from('restaurant-logos')
+            //     .upload(`${restaurantId}/logo.${file.name.split('.').pop()}`, file);
+
+        } catch (error) {
+            console.error('❌ Error cargando logo:', error);
+            toast.error('Error al cargar el logo');
         }
     };
 
@@ -857,7 +1067,18 @@ const {
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                                                    <input
+                                                        type="file"
+                                                        id="logo-upload"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={handleLogoUpload}
+                                                    />
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => document.getElementById('logo-upload').click()}
+                                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                                    >
                                                         <Upload className="w-4 h-4" />
                                                         Subir logo
                                                     </button>
@@ -1185,11 +1406,12 @@ const {
                                             </label>
                                             <input
                                                 type="number"
-                                                value={settings.reservations.advance_booking_days}
-                                                onChange={(e) => handleDeepNestedChange('reservations', 'advance_booking_days', '', parseInt(e.target.value))}
+                                                value={settings.reservation_settings.advance_booking_days}
+                                                onChange={(e) => handleNestedChange('reservation_settings', 'advance_booking_days', parseInt(e.target.value) || 0)}
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 min="1"
                                                 max="365"
+                                                onFocus={(e) => e.target.select()}
                                             />
                                         </div>
 
@@ -1198,8 +1420,8 @@ const {
                                                 Duración de turno (minutos)
                                             </label>
                                             <select
-                                                value={settings.reservations.slot_duration}
-                                                onChange={(e) => handleDeepNestedChange('reservations', 'slot_duration', '', parseInt(e.target.value))}
+                                                value={settings.reservation_settings.turn_duration}
+                                                onChange={(e) => handleNestedChange('reservation_settings', 'turn_duration', parseInt(e.target.value))}
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             >
                                                 <option value="60">60 minutos</option>
@@ -1215,11 +1437,12 @@ const {
                                             </label>
                                             <input
                                                 type="number"
-                                                value={settings.reservations.min_party_size}
-                                                onChange={(e) => handleDeepNestedChange('reservations', 'min_party_size', '', parseInt(e.target.value))}
+                                                value={settings.reservation_settings.min_party_size}
+                                                onChange={(e) => handleNestedChange('reservation_settings', 'min_party_size', parseInt(e.target.value) || 1)}
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 min="1"
                                                 max="20"
+                                                onFocus={(e) => e.target.select()}
                                             />
                                         </div>
 
@@ -1229,41 +1452,42 @@ const {
                                             </label>
                                             <input
                                                 type="number"
-                                                value={settings.reservations.max_party_size}
-                                                onChange={(e) => handleDeepNestedChange('reservations', 'max_party_size', '', parseInt(e.target.value))}
+                                                value={settings.reservation_settings.max_party_size}
+                                                onChange={(e) => handleNestedChange('reservation_settings', 'max_party_size', parseInt(e.target.value) || 1)}
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 min="1"
                                                 max="50"
+                                                onFocus={(e) => e.target.select()}
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-4">
                                         <ToggleSwitch
-                                            enabled={settings.reservations.auto_confirm}
+                                            enabled={settings.reservation_settings.auto_confirm}
                                             onChange={(enabled) => setSettings(prev => ({
                                                 ...prev,
-                                                reservations: { ...prev.reservations, auto_confirm: enabled }
+                                                reservation_settings: { ...prev.reservation_settings, auto_confirm: enabled }
                                             }))}
                                             label="Confirmación automática"
                                             description="Las reservas se confirman automáticamente si hay disponibilidad"
                                         />
 
                                         <ToggleSwitch
-                                            enabled={settings.reservations.require_phone}
+                                            enabled={settings.reservation_settings.require_phone}
                                             onChange={(enabled) => setSettings(prev => ({
                                                 ...prev,
-                                                reservations: { ...prev.reservations, require_phone: enabled }
+                                                reservation_settings: { ...prev.reservation_settings, require_phone: enabled }
                                             }))}
                                             label="Requerir teléfono"
                                             description="El teléfono es obligatorio para hacer una reserva"
                                         />
 
                                         <ToggleSwitch
-                                            enabled={settings.reservations.require_email}
+                                            enabled={settings.reservation_settings.require_email}
                                             onChange={(enabled) => setSettings(prev => ({
                                                 ...prev,
-                                                reservations: { ...prev.reservations, require_email: enabled }
+                                                reservation_settings: { ...prev.reservation_settings, require_email: enabled }
                                             }))}
                                             label="Requerir email"
                                             description="El email es obligatorio para hacer una reserva"
