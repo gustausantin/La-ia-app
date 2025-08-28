@@ -67,7 +67,7 @@ const CUSTOMER_SEGMENTS = {
         color: "bg-green-100 text-green-800 border-green-200",
         icon: "🌟",
         aiAction: "Enviar bienvenida personalizada",
-        criteria: (customer) => customer.total_reservations === 0,
+        criteria: (customer) => customer.total_visits === 0,
     },
     occasional: {
         label: "Ocasional",
@@ -76,7 +76,7 @@ const CUSTOMER_SEGMENTS = {
         icon: "👥",
         aiAction: "Incentivar más visitas",
         criteria: (customer) =>
-            customer.total_reservations >= 1 && customer.total_reservations <= 2,
+            customer.total_visits >= 1 && customer.total_visits <= 2,
     },
     regular: {
         label: "Regular",
@@ -85,7 +85,7 @@ const CUSTOMER_SEGMENTS = {
         icon: "⭐",
         aiAction: "Programa de fidelización",
         criteria: (customer) =>
-            customer.total_reservations >= 3 && customer.total_reservations <= 4,
+            customer.total_visits >= 3 && customer.total_visits <= 4,
     },
     vip: {
         label: "VIP",
@@ -93,7 +93,7 @@ const CUSTOMER_SEGMENTS = {
         color: "bg-yellow-100 text-yellow-800 border-yellow-200",
         icon: "👑",
         aiAction: "Atención premium personalizada",
-        criteria: (customer) => customer.total_reservations >= 5 || customer.total_spent >= 500,
+        criteria: (customer) => customer.total_visits >= 5 || customer.total_spent >= 500,
     },
     inactive: {
         label: "Inactivo",
@@ -109,7 +109,7 @@ const CUSTOMER_SEGMENTS = {
         color: "bg-orange-100 text-orange-800 border-orange-200",
         icon: "⚠️",
         aiAction: "Oferta especial de reactivación",
-        criteria: (customer) => customer.days_since_last_visit > 90 && customer.total_reservations > 0,
+        criteria: (customer) => customer.days_since_last_visit > 90 && customer.total_visits > 0,
     },
     high_value: {
         label: "Alto Valor",
@@ -118,10 +118,10 @@ const CUSTOMER_SEGMENTS = {
         icon: "💎",
         aiAction: "Experiencias exclusivas",
         criteria: (customer) => {
-            const noShowRate = customer.total_reservations > 0 
-                ? (customer.no_shows || 0) / customer.total_reservations 
+            const noShowRate = customer.total_visits > 0 
+                ? (customer.no_shows || 0) / customer.total_visits 
                 : 0;
-            return customer.total_reservations >= 3 && noShowRate < 0.1;
+            return customer.total_visits >= 3 && noShowRate < 0.1;
         },
     },
 };
@@ -251,7 +251,7 @@ export default function Clientes() {
 
                 return {
                     ...customer,
-                    total_reservations: totalReservations,
+                    total_visits: totalReservations, // Mapear a total_visits del esquema
                     total_spent: totalSpent,
                     last_visit: lastReservation,
                     days_since_last_visit: daysSinceLastVisit,
@@ -288,7 +288,7 @@ export default function Clientes() {
         const avgCustomerValue = total > 0 ? totalValue / total : 0;
         
         // Tasa de retención (clientes con más de 1 reserva)
-        const returningCustomers = customersData.filter(c => c.total_reservations > 1).length;
+        const returningCustomers = customersData.filter(c => c.total_visits > 1).length;
         const retentionRate = total > 0 ? (returningCustomers / total) * 100 : 0;
 
         // Contar por cada segmento
@@ -341,7 +341,7 @@ export default function Clientes() {
                     return (b.total_spent || 0) - (a.total_spent || 0);
                 case "visits":
                     // Por número total de reservas confirmadas
-                    return (b.total_reservations || 0) - (a.total_reservations || 0);
+                    return (b.total_visits || 0) - (a.total_visits || 0);
                 case "recent":
                 default:
                     // Por fecha de última reserva (no de creación)
@@ -546,7 +546,7 @@ export default function Clientes() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-600">
-                                        {customer.total_reservations || 0} reservas
+                                        {customer.total_visits || 0} reservas
                                     </span>
                                 </div>
                             </div>
@@ -574,13 +574,17 @@ export default function Clientes() {
 const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null }) => {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
-        name: customer?.name || "",
+        // Campos básicos editables
+        first_name: customer?.name?.split(' ')[0] || "",
+        last_name_1: customer?.name?.split(' ')[1] || "",
+        last_name_2: customer?.name?.split(' ')[2] || "",
         email: customer?.email || "",
         phone: customer?.phone || "",
         notes: customer?.notes || "",
-        // Nuevos campos ampliados
-        ai_segment: customer?.ai_segment || "nuevo",
-        total_visits: customer?.total_reservations || 0,
+        // Segmento manual (se guardará en preferences.segment)
+        segment: customer?.preferences?.segment || "nuevo",
+        // Stats automáticos (solo para mostrar, no editar)
+        total_visits: customer?.total_visits || 0,
         last_visit: customer?.last_visit || null,
         total_spent: customer?.total_spent || 0,
     });
@@ -589,8 +593,12 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.name.trim()) {
-            newErrors.name = "El nombre es obligatorio";
+        if (!formData.first_name.trim()) {
+            newErrors.first_name = "El nombre es obligatorio";
+        }
+
+        if (!formData.last_name_1.trim()) {
+            newErrors.last_name_1 = "El primer apellido es obligatorio";
         }
 
         if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
@@ -613,14 +621,26 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
         setLoading(true);
 
         try {
+            // Construir nombre completo y datos según esquema real
+            const fullName = `${formData.first_name} ${formData.last_name_1} ${formData.last_name_2}`.trim();
+            
             const customerData = {
-                ...formData,
+                name: fullName,
+                email: formData.email || null,
+                phone: formData.phone,
+                notes: formData.notes || null,
                 restaurant_id: restaurantId,
-                // Campos ampliados
-                total_reservations: formData.total_visits, // Mapear visitas
-                last_visit: formData.last_visit,
-                total_spent: formData.total_spent,
-                ai_segment: formData.ai_segment,
+                // Guardar segmento en preferences (JSONB)
+                preferences: {
+                    segment: formData.segment,
+                    created_manually: true
+                },
+                // Stats se mantienen automáticos si es edición
+                ...(customer && {
+                    total_visits: customer.total_visits,
+                    total_spent: customer.total_spent,
+                    last_visit: customer.last_visit
+                })
             };
 
             if (customer) {
@@ -663,22 +683,56 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre completo *
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                                errors.name ? "border-red-300" : "border-gray-300"
-                            }`}
-                            placeholder="Juan Pérez"
-                        />
-                        {errors.name && (
-                            <p className="text-xs text-red-600 mt-1">{errors.name}</p>
-                        )}
+                    {/* Nombre y Apellidos separados */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Nombre *
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.first_name}
+                                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                                    errors.first_name ? "border-red-300" : "border-gray-300"
+                                }`}
+                                placeholder="Juan"
+                            />
+                            {errors.first_name && (
+                                <p className="text-xs text-red-600 mt-1">{errors.first_name}</p>
+                            )}
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                1º Apellido *
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.last_name_1}
+                                onChange={(e) => setFormData({ ...formData, last_name_1: e.target.value })}
+                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                                    errors.last_name_1 ? "border-red-300" : "border-gray-300"
+                                }`}
+                                placeholder="García"
+                            />
+                            {errors.last_name_1 && (
+                                <p className="text-xs text-red-600 mt-1">{errors.last_name_1}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                2º Apellido
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.last_name_2}
+                                onChange={(e) => setFormData({ ...formData, last_name_2: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="López"
+                            />
+                        </div>
                     </div>
 
                     <div>
@@ -730,71 +784,63 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
                         />
                     </div>
 
-                    {/* Sección de información del cliente */}
+                    {/* Sección de segmento manual */}
                     <div className="border-t pt-4">
-                        <h4 className="text-sm font-medium text-gray-900 mb-3">Información del Cliente</h4>
+                        <h4 className="text-sm font-medium text-gray-900 mb-3">Segmentación</h4>
                         
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Segmento
-                                </label>
-                                <select
-                                    value={formData.ai_segment}
-                                    onChange={(e) => setFormData({ ...formData, ai_segment: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                                >
-                                    {Object.entries(CUSTOMER_SEGMENTS).map(([key, segment]) => (
-                                        <option key={key} value={key}>
-                                            {segment.icon} {segment.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <p className="text-xs text-gray-500 mt-1">Segmento del cliente (editable manualmente)</p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Nº de Visitas
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={formData.total_visits}
-                                    onChange={(e) => setFormData({ ...formData, total_visits: parseInt(e.target.value) || 0 })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    placeholder="0"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Última Visita
-                                </label>
-                                <input
-                                    type="date"
-                                    value={formData.last_visit || ""}
-                                    onChange={(e) => setFormData({ ...formData, last_visit: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Valor Acumulado (€)
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={formData.total_spent}
-                                    onChange={(e) => setFormData({ ...formData, total_spent: parseFloat(e.target.value) || 0 })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    placeholder="0.00"
-                                />
-                            </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Segmento del Cliente
+                            </label>
+                            <select
+                                value={formData.segment}
+                                onChange={(e) => setFormData({ ...formData, segment: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            >
+                                {Object.entries(CUSTOMER_SEGMENTS).map(([key, segment]) => (
+                                    <option key={key} value={key}>
+                                        {segment.icon} {segment.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Puedes cambiarlo manualmente. Se actualizará automáticamente según las reservas.
+                            </p>
                         </div>
                     </div>
+
+                    {/* Stats automáticos (solo mostrar si es edición) */}
+                    {customer && (
+                        <div className="border-t pt-4">
+                            <h4 className="text-sm font-medium text-gray-900 mb-3">Estadísticas (Automáticas)</h4>
+                            
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs text-gray-600">Nº de Visitas</p>
+                                    <p className="text-lg font-semibold text-gray-900">{formData.total_visits}</p>
+                                </div>
+
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs text-gray-600">Última Visita</p>
+                                    <p className="text-sm text-gray-900">
+                                        {formData.last_visit 
+                                            ? new Date(formData.last_visit).toLocaleDateString('es-ES')
+                                            : 'Sin visitas'
+                                        }
+                                    </p>
+                                </div>
+
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs text-gray-600">Valor Acumulado</p>
+                                    <p className="text-lg font-semibold text-gray-900">€{formData.total_spent?.toFixed(2) || '0.00'}</p>
+                                </div>
+                            </div>
+                            
+                            <p className="text-xs text-gray-500 mt-2">
+                                💡 Estos valores se actualizan automáticamente según las reservas del cliente.
+                            </p>
+                        </div>
+                    )}
 
                     <div className="flex justify-end gap-3 pt-4">
                         <button

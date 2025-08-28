@@ -1378,33 +1378,42 @@ const ReservationFormModal = ({
             let customer = existingCustomers?.[0];
 
             if (customer) {
-                // Cliente existente: actualizar métricas
+                // Cliente existente: actualizar métricas usando esquema real
                 const updatedData = {
-                    total_reservations: (customer.total_reservations || 0) + 1,
+                    total_visits: (customer.total_visits || 0) + 1,
                     last_visit: reservationData.reservation_date,
                     total_spent: customer.total_spent || 0, // Se actualizaría con el ticket real
                 };
 
-                // Calcular nuevo segmento automático según reglas
-                updatedData.ai_segment = calculateAutomaticSegment(updatedData, customer);
+                // Calcular nuevo segmento automático y guardarlo en preferences
+                const newSegment = calculateAutomaticSegment(updatedData, customer);
+                updatedData.preferences = {
+                    ...customer.preferences,
+                    segment: newSegment,
+                    last_auto_update: new Date().toISOString()
+                };
 
                 await supabase
                     .from("customers")
                     .update(updatedData)
                     .eq("id", customer.id);
 
-                console.log(`Cliente ${customer.name} actualizado: ${updatedData.total_reservations} reservas`);
+                console.log(`Cliente ${customer.name} actualizado: ${updatedData.total_visits} visitas`);
             } else {
-                // Cliente nuevo: crear automáticamente
+                // Cliente nuevo: crear automáticamente usando esquema real
                 const newCustomer = {
                     name: reservationData.customer_name,
                     phone: reservationData.customer_phone,
                     email: reservationData.customer_email || null,
                     restaurant_id: restaurantId,
-                    total_reservations: 1,
+                    total_visits: 1,
                     last_visit: reservationData.reservation_date,
                     total_spent: 0,
-                    ai_segment: "nuevo",
+                    preferences: {
+                        segment: "nuevo",
+                        created_automatically: true,
+                        created_from: "reservation"
+                    },
                     notes: "Cliente creado automáticamente desde reserva",
                 };
 
@@ -1422,24 +1431,24 @@ const ReservationFormModal = ({
 
     // Función para calcular segmento automático según reglas de negocio
     const calculateAutomaticSegment = (customerData, existingCustomer) => {
-        const totalReservations = customerData.total_reservations || 0;
+        const totalVisits = customerData.total_visits || 0;
         const totalSpent = customerData.total_spent || 0;
         const lastVisit = new Date(customerData.last_visit);
         const now = new Date();
         const daysSinceLastVisit = Math.floor((now - lastVisit) / (1000 * 60 * 60 * 24));
 
-        // Reglas de segmentación automática
-        if (totalReservations === 0 || daysSinceLastVisit <= 7) {
+        // Reglas de segmentación automática actualizadas
+        if (totalVisits === 0 || daysSinceLastVisit <= 7) {
             return "nuevo";
-        } else if (totalReservations >= 5 || totalSpent >= 500) {
+        } else if (totalVisits >= 5 || totalSpent >= 500) {
             return "vip";
-        } else if (totalReservations >= 3) {
+        } else if (totalVisits >= 3) {
             return "regular";
-        } else if (totalReservations >= 1 && totalReservations <= 2) {
+        } else if (totalVisits >= 1 && totalVisits <= 2) {
             return "ocasional";
         } else if (daysSinceLastVisit > 180) {
             return "inactivo";
-        } else if (daysSinceLastVisit > 90 && (existingCustomer?.total_reservations || 0) >= 3) {
+        } else if (daysSinceLastVisit > 90 && (existingCustomer?.total_visits || 0) >= 3) {
             return "en_riesgo";
         } else if (totalSpent >= 300) {
             return "alto_valor";
