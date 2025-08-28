@@ -2,6 +2,7 @@
 // Reservas.jsx - Sistema COMPLETO de Gestión de Reservas con Agente IA para Son-IA
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { format, parseISO, addDays, subDays } from "date-fns";
@@ -382,6 +383,7 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
 export default function Reservas() {
     const { restaurant, restaurantId, isReady, addNotification } =
         useAuthContext();
+    const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
     const [reservations, setReservations] = useState([]);
@@ -545,6 +547,55 @@ export default function Reservas() {
         } catch (error) {
         }
     }, [restaurantId]);
+
+    // CRÍTICO: Función para validar antes de crear reservas
+    const handleCreateReservation = useCallback(() => {
+        // Verificar que hay mesas configuradas
+        if (tables.length === 0) {
+            // Mostrar mensaje de error con opción de ir a crear mesas
+            const handleGoToTables = () => {
+                navigate('/mesas');
+                toast.dismiss(); // Cerrar el toast
+            };
+            
+            toast.error(
+                (t) => (
+                    <div className="space-y-3">
+                        <div>
+                            <p className="font-medium text-red-800">⚠️ No hay mesas configuradas</p>
+                            <p className="text-sm text-red-700 mt-1">
+                                Para crear reservas necesitas configurar mesas primero.
+                            </p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleGoToTables}
+                                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                            >
+                                Ir a Mesas
+                            </button>
+                            <button
+                                onClick={() => toast.dismiss(t.id)}
+                                className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                ),
+                {
+                    duration: 10000,
+                    style: {
+                        maxWidth: '400px',
+                    }
+                }
+            );
+            return;
+        }
+        
+        // Si hay mesas, proceder normalmente
+        setShowCreateModal(true);
+    }, [tables.length, navigate]);
 
     // Configurar real-time subscriptions
     useEffect(() => {
@@ -880,7 +931,7 @@ export default function Reservas() {
                         </button>
 
                         <button
-                            onClick={() => setShowCreateModal(true)}
+                            onClick={handleCreateReservation}
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                         >
                             <Plus className="w-4 h-4" />
@@ -1170,7 +1221,7 @@ export default function Reservas() {
                             !filters.channel &&
                             !filters.source && (
                                 <button
-                                    onClick={() => setShowCreateModal(true)}
+                                    onClick={handleCreateReservation}
                                     className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                                 >
                                     <Plus className="w-4 h-4" />
@@ -1327,7 +1378,31 @@ const ReservationFormModal = ({
             toast.success(reservation ? "Reserva actualizada correctamente" : "Reserva creada correctamente");
         } catch (error) {
             console.error("Error saving reservation:", error);
-            toast.error(`Error al guardar la reserva: ${error.message || error.hint || 'Error desconocido'}`);
+            
+            // MEJORADO: Mensajes de error más descriptivos y orientativos
+            let errorMessage = 'Error desconocido';
+            
+            if (error.message && error.message.includes('created_by')) {
+                errorMessage = "Faltan datos de configuración del restaurante. Ve a Configuración para completar tu perfil.";
+            } else if (error.message && error.message.includes('column')) {
+                if (tables.length === 0) {
+                    errorMessage = "⚠️ No puedes crear reservas porque no hay mesas configuradas.\n\n👉 Ve a la sección 'Mesas' y crea mesas primero, luego vuelve aquí para crear reservas.";
+                } else {
+                    errorMessage = `Error en la base de datos: ${error.message}. Contacta con soporte si persiste.`;
+                }
+            } else if (error.hint) {
+                errorMessage = `Error: ${error.hint}`;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            toast.error(errorMessage, {
+                duration: 6000, // Mostrar más tiempo para que se pueda leer
+                style: {
+                    maxWidth: '400px',
+                    whiteSpace: 'pre-line' // Permitir saltos de línea
+                }
+            });
         } finally {
             setLoading(false);
         }
