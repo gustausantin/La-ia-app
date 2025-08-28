@@ -19,6 +19,84 @@ class AnalyticsAI {
     };
   }
 
+  // === MÉTODOS AUXILIARES ===
+  calculateOptimizationImpact(optimization) {
+    return {
+      efficiency: optimization.efficiency || 0.85,
+      revenue: optimization.revenue || 1000,
+      satisfaction: optimization.satisfaction || 0.90,
+      operationalCost: optimization.operationalCost || 500
+    };
+  }
+
+  calculateCostSavings(optimization) {
+    const baseCost = 1000;
+    const optimizedCost = optimization.operationalCost || 800;
+    return baseCost - optimizedCost;
+  }
+
+  predictSatisfactionImpact(optimization) {
+    return Math.min(0.95, (optimization.satisfaction || 0.8) * 1.1);
+  }
+
+  calculateBusinessImpact(prediction) {
+    return {
+      revenueImpact: prediction.expectedReservations * 45, // €45 promedio por reserva
+      operationalCost: prediction.expectedReservations * 15,
+      netProfit: prediction.expectedReservations * 30,
+      customerSatisfaction: 0.85 + (prediction.confidence * 0.15)
+    };
+  }
+
+  async generateDemandStrategies(prediction) {
+    const strategies = [];
+    if (prediction.expectedReservations > 80) {
+      strategies.push('Implementar sistema de cola virtual');
+      strategies.push('Abrir horarios adicionales');
+    }
+    if (prediction.confidence < 0.7) {
+      strategies.push('Mejorar recolección de datos');
+    }
+    return strategies;
+  }
+
+  validatePredictionConfidence(prediction) {
+    return Math.min(0.95, Math.max(0.5, prediction.confidence || 0.8));
+  }
+
+  analyzeSegmentationPatterns(customers) {
+    const patterns = {
+      vip_percentage: customers.filter(c => c.ai_segment === 'Champion').length / customers.length,
+      churn_risk: customers.filter(c => c.churn_risk > 70).length / customers.length,
+      engagement_score: customers.reduce((sum, c) => sum + (c.behavior_score || 0), 0) / customers.length
+    };
+    return patterns;
+  }
+
+  async generateSegmentationInsights(customers) {
+    const insights = [];
+    const vipCount = customers.filter(c => c.ai_segment === 'Champion').length;
+    const atRiskCount = customers.filter(c => c.churn_risk > 70).length;
+    
+    if (vipCount > customers.length * 0.15) {
+      insights.push({
+        type: 'opportunity',
+        message: `Alto porcentaje de clientes VIP (${Math.round(vipCount/customers.length*100)}%)`,
+        recommendation: 'Implementar programa de fidelización exclusivo'
+      });
+    }
+    
+    if (atRiskCount > customers.length * 0.2) {
+      insights.push({
+        type: 'warning',
+        message: `${atRiskCount} clientes en riesgo de churn`,
+        recommendation: 'Activar campaña de retención inmediata'
+      });
+    }
+    
+    return insights;
+  }
+
   // === SEGMENTACIÓN INTELIGENTE DE CLIENTES ===
   async segmentCustomers(customers) {
     try {
