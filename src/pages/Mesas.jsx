@@ -560,57 +560,104 @@ export default function Mesas() {
         }
     }, [restaurantId]);
 
-    // Función para cargar preferencias del agente
+    // Función para calcular métricas reales del agente
     const loadAgentPreferences = useCallback(async () => {
         if (!restaurantId) return;
 
         try {
-            // Simular preferencias del agente por ahora
-            const mockPreferences = {
-                "table-1": {
-                    score: 95,
-                    reason: "Alta rotación, ubicación ideal",
-                },
-                "table-2": {
-                    score: 85,
-                    reason: "Buena capacidad, zona tranquila",
-                },
-                "table-3": { score: 70, reason: "Mesa versátil para grupos" },
-            };
+            // Calcular preferencias reales basadas en datos
+            const preferences = {};
+            const realSuggestions = [];
+            
+            tables.forEach(table => {
+                // Reservas para esta mesa
+                const tableReservations = reservations.filter(r => 
+                    r.table_id === table.id || r.table_number === table.table_number
+                );
+                
+                // Calcular score basado en rotación y eficiencia
+                const score = tableReservations.length > 0 ? 
+                    Math.min(95, 50 + (tableReservations.length * 10)) : 
+                    40; // Score base si no hay reservas
 
-            setTablePreferences(mockPreferences);
+                let reason = "Sin datos suficientes";
+                if (tableReservations.length >= 3) {
+                    reason = "Alta rotación, muy solicitada";
+                } else if (tableReservations.length >= 1) {
+                    reason = "Rotación moderada, buena ubicación";
+                } else {
+                    reason = "Baja rotación, considerar promociones";
+                    realSuggestions.push({
+                        message: `Mesa ${table.name} tiene baja rotación. Considera promociones`,
+                        type: "optimization",
+                    });
+                }
 
-            // Simular sugerencias del agente
-            const mockSuggestions = [
-                {
-                    message:
-                        "Mesa T5 tiene baja rotación. Considera promociones",
-                    type: "optimization",
-                },
-                {
-                    message:
-                        "Zona terraza al 90% capacidad. Optimizar interior",
+                preferences[table.id] = { score, reason };
+            });
+
+            setTablePreferences(preferences);
+
+            // Generar sugerencias basadas en datos reales
+            const zoneOccupancy = {};
+            reservations.forEach(r => {
+                const table = tables.find(t => t.id === r.table_id || t.table_number === r.table_number);
+                if (table) {
+                    zoneOccupancy[table.zone] = (zoneOccupancy[table.zone] || 0) + 1;
+                }
+            });
+
+            // Sugerencia de balanceamiento de zonas
+            const maxZone = Object.entries(zoneOccupancy).reduce((a, b) => 
+                a[1] > b[1] ? a : b, ['', 0]
+            );
+            
+            if (maxZone[1] > 0 && Object.keys(zoneOccupancy).length > 1) {
+                realSuggestions.push({
+                    message: `Zona ${maxZone[0]} al ${Math.round((maxZone[1] / reservations.length) * 100)}% de ocupación. Balancear otras zonas`,
                     type: "balance",
-                },
-                {
-                    message:
-                        "Patrón detectado: Mesas de 2 más solicitadas los martes",
+                });
+            }
+
+            // Análisis de capacidad
+            const avgPartySize = reservations.length > 0 ? 
+                reservations.reduce((sum, r) => sum + (r.party_size || 2), 0) / reservations.length : 
+                2;
+            
+            if (avgPartySize > 0) {
+                realSuggestions.push({
+                    message: `Patrón detectado: Grupos promedio de ${Math.round(avgPartySize)} personas`,
                     type: "insight",
-                },
-            ];
+                });
+            }
 
-            setAgentSuggestions(mockSuggestions);
+            setAgentSuggestions(realSuggestions);
 
-            // Simular estadísticas del agente
+            // Calcular estadísticas reales del agente
+            const totalTables = tables.length;
+            const occupiedTables = reservations.length;
+            const efficiency = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
+            
+            // Calcular rotación promedio (estimación)
+            const avgTurnover = occupiedTables > 0 ? 
+                `${Math.round(1.5 + (occupiedTables / totalTables))}h` : 
+                "0h";
+            
+            // Score de optimización basado en balance de zonas
+            const optimization = Object.keys(zoneOccupancy).length > 1 ? 
+                Math.max(60, 100 - Math.abs(Object.values(zoneOccupancy).reduce((a, b) => a - b, 0)) * 10) : 
+                efficiency;
+
             setAgentStats((prev) => ({
                 ...prev,
-                efficiency: 88,
-                avgTurnover: "1.5h",
-                optimization: 92,
+                efficiency,
+                avgTurnover,
+                optimization: Math.min(100, optimization),
             }));
         } catch (error) {
+            console.error("Error calculating agent metrics:", error);
         }
-    }, [restaurantId]);
+    }, [restaurantId, tables, reservations]);
 
     // Configurar real-time subscriptions
     useEffect(() => {
@@ -686,10 +733,16 @@ export default function Mesas() {
             Promise.all([
                 loadTables(),
                 loadTodayReservations(),
-                loadAgentPreferences(),
             ]).finally(() => setLoading(false));
         }
     }, [isReady, restaurantId]); // SOLO dependencies estables
+
+    // Recalcular métricas del agente cuando cambien datos
+    useEffect(() => {
+        if (tables.length > 0 || reservations.length > 0) {
+            loadAgentPreferences();
+        }
+    }, [tables, reservations, loadAgentPreferences]);
 
     // Función para obtener reserva de una mesa
     const getTableReservation = useCallback(
@@ -1259,9 +1312,8 @@ const TableModal = ({
         table_number: table?.table_number || "",
         name: table?.name || "",
         zone: table?.zone || "",
-        min_capacity: table?.min_capacity || 2,
-        max_capacity: table?.max_capacity || 4,
-        status: table?.status || "active",
+        capacity: table?.capacity || 4,
+        status: table?.status || "available",
         notes: table?.notes || "",
     });
 
@@ -1282,16 +1334,8 @@ const TableModal = ({
             newErrors.zone = "La zona es obligatoria";
         }
 
-        if (!formData.min_capacity || formData.min_capacity < 1) {
-            newErrors.min_capacity = "Capacidad mínima debe ser al menos 1";
-        }
-
-        if (
-            !formData.max_capacity ||
-            formData.max_capacity < formData.min_capacity
-        ) {
-            newErrors.max_capacity =
-                "Capacidad máxima debe ser mayor o igual a la mínima";
+        if (!formData.capacity || formData.capacity < 1) {
+            newErrors.capacity = "La capacidad debe ser al menos 1";
         }
 
         setErrors(newErrors);
@@ -1309,8 +1353,8 @@ const TableModal = ({
             const tableData = {
                 ...formData,
                 restaurant_id: restaurantId,
-                min_capacity: parseInt(formData.min_capacity),
-                max_capacity: parseInt(formData.max_capacity),
+                capacity: parseInt(formData.capacity),
+                is_active: formData.status === "available",
             };
 
             if (table) {
@@ -1412,8 +1456,7 @@ const TableModal = ({
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Zona
                         </label>
-                        <input
-                            type="text"
+                        <select
                             value={formData.zone}
                             onChange={(e) =>
                                 setFormData({
@@ -1426,8 +1469,17 @@ const TableModal = ({
                                     ? "border-red-300"
                                     : "border-gray-300"
                             }`}
-                            placeholder="Salón principal, Terraza, etc."
-                        />
+                        >
+                            <option value="">Seleccionar zona...</option>
+                            <option value="Salón principal">Salón principal</option>
+                            <option value="Salón secundario">Salón secundario</option>
+                            <option value="Terraza">Terraza</option>
+                            <option value="Privado">Privado</option>
+                            <option value="Exterior">Exterior</option>
+                            <option value="Barra">Barra</option>
+                            <option value="VIP">Zona VIP</option>
+                            <option value="Otros">Otros</option>
+                        </select>
                         {errors.zone && (
                             <p className="text-xs text-red-600 mt-1">
                                 {errors.zone}
@@ -1435,62 +1487,33 @@ const TableModal = ({
                         )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Capacidad Mínima
-                            </label>
-                            <input
-                                type="number"
-                                min="1"
-                                value={formData.min_capacity}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        min_capacity:
-                                            parseInt(e.target.value) || 1,
-                                    })
-                                }
-                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                                    errors.min_capacity
-                                        ? "border-red-300"
-                                        : "border-gray-300"
-                                }`}
-                            />
-                            {errors.min_capacity && (
-                                <p className="text-xs text-red-600 mt-1">
-                                    {errors.min_capacity}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Capacidad Máxima
-                            </label>
-                            <input
-                                type="number"
-                                min="1"
-                                value={formData.max_capacity}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        max_capacity:
-                                            parseInt(e.target.value) || 1,
-                                    })
-                                }
-                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                                    errors.max_capacity
-                                        ? "border-red-300"
-                                        : "border-gray-300"
-                                }`}
-                            />
-                            {errors.max_capacity && (
-                                <p className="text-xs text-red-600 mt-1">
-                                    {errors.max_capacity}
-                                </p>
-                            )}
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Capacidad (personas)
+                        </label>
+                        <input
+                            type="number"
+                            min="1"
+                            max="20"
+                            value={formData.capacity}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    capacity: parseInt(e.target.value) || 1,
+                                })
+                            }
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                                errors.capacity
+                                    ? "border-red-300"
+                                    : "border-gray-300"
+                            }`}
+                            placeholder="Ej: 4 personas"
+                        />
+                        {errors.capacity && (
+                            <p className="text-xs text-red-600 mt-1">
+                                {errors.capacity}
+                            </p>
+                        )}
                     </div>
 
                     <div>
