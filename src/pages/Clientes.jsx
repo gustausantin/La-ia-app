@@ -59,65 +59,57 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-// Segmentación mejorada con IA - DEFINIDO AL PRINCIPIO DEL ARCHIVO
+// Segmentación automática con IA - REGLAS DE NEGOCIO DEFINIDAS
 const CUSTOMER_SEGMENTS = {
     new: {
         label: "Nuevo",
-        description: "Primera visita (1 reserva)",
+        description: "Cliente recién registrado (0 reservas confirmadas)",
         color: "bg-green-100 text-green-800 border-green-200",
         icon: "🌟",
         aiAction: "Enviar bienvenida personalizada",
-        criteria: (customer) => customer.total_reservations === 1,
+        criteria: (customer) => customer.total_reservations === 0,
     },
     occasional: {
         label: "Ocasional",
-        description: "2-5 reservas",
+        description: "1-2 reservas confirmadas",
         color: "bg-blue-100 text-blue-800 border-blue-200",
         icon: "👥",
-        aiAction: "Incentivar segunda visita",
+        aiAction: "Incentivar más visitas",
         criteria: (customer) =>
-            customer.total_reservations >= 2 && customer.total_reservations <= 5,
+            customer.total_reservations >= 1 && customer.total_reservations <= 2,
     },
     regular: {
         label: "Regular",
-        description: "6-15 reservas",
+        description: "3-4 reservas confirmadas",
         color: "bg-purple-100 text-purple-800 border-purple-200",
         icon: "⭐",
         aiAction: "Programa de fidelización",
         criteria: (customer) =>
-            customer.total_reservations >= 6 && customer.total_reservations <= 15,
+            customer.total_reservations >= 3 && customer.total_reservations <= 4,
     },
     vip: {
         label: "VIP",
-        description: "Más de 15 reservas",
+        description: "≥ 5 reservas o gasto > 500€",
         color: "bg-yellow-100 text-yellow-800 border-yellow-200",
         icon: "👑",
         aiAction: "Atención premium personalizada",
-        criteria: (customer) => customer.total_reservations > 15,
+        criteria: (customer) => customer.total_reservations >= 5 || customer.total_spent >= 500,
     },
     inactive: {
         label: "Inactivo",
-        description: "Sin actividad >90 días",
+        description: "Sin reservas en los últimos 6 meses (180 días)",
         color: "bg-gray-100 text-gray-800 border-gray-200",
         icon: "💤",
         aiAction: "Campaña de reactivación",
-        criteria: (customer) => {
-            if (!customer.last_visit) return true;
-            const daysSince = differenceInDays(new Date(), parseISO(customer.last_visit));
-            return daysSince > 90;
-        },
+        criteria: (customer) => customer.days_since_last_visit > 180,
     },
     at_risk: {
         label: "En Riesgo",
-        description: "30-90 días sin visitar",
+        description: "Era frecuente, ahora 3+ meses sin actividad",
         color: "bg-orange-100 text-orange-800 border-orange-200",
         icon: "⚠️",
         aiAction: "Oferta especial de reactivación",
-        criteria: (customer) => {
-            if (!customer.last_visit) return false;
-            const daysSince = differenceInDays(new Date(), parseISO(customer.last_visit));
-            return daysSince >= 30 && daysSince <= 90;
-        },
+        criteria: (customer) => customer.days_since_last_visit > 90 && customer.total_reservations > 0,
     },
     high_value: {
         label: "Alto Valor",
@@ -205,30 +197,104 @@ export default function Clientes() {
                 return;
             }
 
-            // Por ahora, devolver lista vacía - sin datos mock
-            const customers = [];
+            // CORREGIDO: Cargar clientes reales desde Supabase
+            const { data: customers, error } = await supabase
+                .from("customers")
+                .select(`
+                    *,
+                    reservations:reservations!customer_id(
+                        id,
+                        status,
+                        party_size,
+                        reservation_date,
+                        created_at
+                    )
+                `)
+                .eq("restaurant_id", restaurantId)
+                .order("created_at", { ascending: false });
 
-            setCustomers(customers);
+            if (error) {
+                console.error("Error loading customers:", error);
+                throw error;
+            }
+
+            // Procesar datos y calcular segmentación automática
+            const processedCustomers = (customers || []).map(customer => {
+                const confirmedReservations = customer.reservations?.filter(r => 
+                    r.status === 'confirmada' || r.status === 'completada'
+                ) || [];
+                
+                const totalReservations = confirmedReservations.length;
+                const totalSpent = confirmedReservations.reduce((sum, r) => sum + (r.party_size * 35), 0); // Estimación
+                const lastReservation = confirmedReservations[0]?.reservation_date;
+                const daysSinceLastVisit = lastReservation ? 
+                    differenceInDays(new Date(), parseISO(lastReservation)) : 999;
+
+                // Aplicar reglas de segmentación automática
+                let segment = 'new';
+                if (totalReservations === 0) {
+                    segment = 'new';
+                } else if (totalReservations >= 5 || totalSpent >= 500) {
+                    segment = 'vip';
+                } else if (totalReservations >= 3) {
+                    segment = 'regular';
+                } else if (totalReservations >= 1) {
+                    segment = 'occasional';
+                }
+
+                // Verificar si está inactivo o en riesgo
+                if (daysSinceLastVisit > 180) {
+                    segment = 'inactive';
+                } else if (daysSinceLastVisit > 90 && totalReservations > 0) {
+                    segment = 'at_risk';
+                }
+
+                return {
+                    ...customer,
+                    total_reservations: totalReservations,
+                    total_spent: totalSpent,
+                    last_visit: lastReservation,
+                    days_since_last_visit: daysSinceLastVisit,
+                    ai_segment: segment
+                };
+            });
+
+            setCustomers(processedCustomers);
         } catch (error) {
+            console.error("Error loading customers:", error);
             toast.error("Error al cargar los clientes");
+            setCustomers([]); // Fallback a lista vacía
         } finally {
             setLoading(false);
         }
     }, [restaurantId]);
 
-    // Calculate stats
+    // Calculate stats - CÁLCULOS REALES BASADOS EN DATOS
     const calculateStats = useCallback((customersData) => {
         const total = customersData.length;
-        const newThisMonth = 0;
-        const vipCustomers = 0;
-        const atRiskCustomers = 0;
-        const totalValue = 0;
-        const avgCustomerValue = 0;
-        const retentionRate = 0;
+        
+        // Calcular clientes nuevos este mes
+        const thirtyDaysAgo = subDays(new Date(), 30);
+        const newThisMonth = customersData.filter(customer => 
+            new Date(customer.created_at) >= thirtyDaysAgo
+        ).length;
 
+        // Calcular por segmentos automáticamente
+        const vipCustomers = customersData.filter(c => c.ai_segment === 'vip').length;
+        const atRiskCustomers = customersData.filter(c => c.ai_segment === 'at_risk').length;
+        
+        // Calcular valores totales
+        const totalValue = customersData.reduce((sum, c) => sum + (c.total_spent || 0), 0);
+        const avgCustomerValue = total > 0 ? totalValue / total : 0;
+        
+        // Tasa de retención (clientes con más de 1 reserva)
+        const returningCustomers = customersData.filter(c => c.total_reservations > 1).length;
+        const retentionRate = total > 0 ? (returningCustomers / total) * 100 : 0;
+
+        // Contar por cada segmento
         const segments = {};
         Object.keys(CUSTOMER_SEGMENTS).forEach((segmentKey) => {
-            segments[segmentKey] = 0;
+            segments[segmentKey] = customersData.filter(c => c.ai_segment === segmentKey).length;
         });
 
         return {
@@ -237,8 +303,8 @@ export default function Clientes() {
             vipCustomers,
             atRiskCustomers,
             totalValue,
-            avgCustomerValue,
-            retentionRate,
+            avgCustomerValue: Math.round(avgCustomerValue),
+            retentionRate: Math.round(retentionRate),
             segments,
         };
     }, []);
@@ -264,20 +330,27 @@ export default function Clientes() {
             }
         }
 
-        // Sort
+        // Sort - CRITERIOS COHERENTES CON REGLAS DE NEGOCIO
         filtered.sort((a, b) => {
             switch (filters.sortBy) {
                 case "name":
+                    // Alfabético por nombre
                     return a.name.localeCompare(b.name);
                 case "value":
-                    const valueA = (a.total_reservations || 0) * 87.5;
-                    const valueB = (b.total_reservations || 0) * 87.5;
-                    return valueB - valueA;
+                    // Por gasto acumulado total (calculado desde reservas)
+                    return (b.total_spent || 0) - (a.total_spent || 0);
                 case "visits":
+                    // Por número total de reservas confirmadas
                     return (b.total_reservations || 0) - (a.total_reservations || 0);
                 case "recent":
                 default:
-                    return new Date(b.created_at) - new Date(a.created_at);
+                    // Por fecha de última reserva (no de creación)
+                    if (!a.last_visit && !b.last_visit) {
+                        return new Date(b.created_at) - new Date(a.created_at);
+                    }
+                    if (!a.last_visit) return 1;
+                    if (!b.last_visit) return -1;
+                    return new Date(b.last_visit) - new Date(a.last_visit);
             }
         });
 
