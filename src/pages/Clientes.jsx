@@ -636,6 +636,11 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
         notes: customer?.notes || "",
         // Segmento manual (se guardará en preferences.segment)
         segment: customer?.preferences?.segment || "nuevo",
+        // Campos de consentimiento CRM
+        notifications_enabled: customer?.notifications_enabled !== false,
+        preferred_channel: customer?.preferred_channel || "whatsapp",
+        consent_whatsapp: customer?.consent_whatsapp !== false,
+        consent_email: customer?.consent_email !== false,
         // Stats automáticos (solo para mostrar, no editar)
         visits_count: customer?.total_visits || 0,
         last_visit: customer?.last_visit || null,
@@ -693,6 +698,11 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
                     segment: formData.segment,
                     created_manually: true
                 },
+                // Campos de consentimiento CRM
+                notifications_enabled: formData.notifications_enabled,
+                preferred_channel: formData.preferred_channel,
+                consent_whatsapp: formData.consent_whatsapp,
+                consent_email: formData.consent_email,
                 // Stats se mantienen automáticos si es edición
                 ...(customer && {
                     total_visits: customer.total_visits,
@@ -840,6 +850,76 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
                             rows="3"
                             placeholder="Preferencias, alergias, etc..."
                         />
+                    </div>
+
+                    {/* Sección de consentimientos CRM */}
+                    <div className="border-t pt-4">
+                        <h4 className="text-sm font-medium text-gray-900 mb-3">Preferencias de Comunicación</h4>
+                        
+                        <div className="space-y-4">
+                            {/* Master switch */}
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <label className="text-sm font-medium text-gray-700">
+                                        Recibir comunicaciones automáticas
+                                    </label>
+                                    <p className="text-xs text-gray-500">
+                                        Si está desactivado, no recibirá ningún mensaje automático
+                                    </p>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={formData.notifications_enabled !== false}
+                                    onChange={(e) => setFormData({ ...formData, notifications_enabled: e.target.checked })}
+                                    className="w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                />
+                            </div>
+                            
+                            {/* Canal preferido */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Canal Preferido
+                                </label>
+                                <select
+                                    value={formData.preferred_channel || 'whatsapp'}
+                                    onChange={(e) => setFormData({ ...formData, preferred_channel: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="whatsapp">WhatsApp</option>
+                                    <option value="email">Email</option>
+                                    <option value="none">Ninguno</option>
+                                </select>
+                            </div>
+                            
+                            {/* Consentimientos específicos */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.consent_whatsapp !== false}
+                                        onChange={(e) => setFormData({ ...formData, consent_whatsapp: e.target.checked })}
+                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
+                                    />
+                                    <div>
+                                        <label className="text-sm text-gray-700">WhatsApp</label>
+                                        <p className="text-xs text-gray-500">Mensajes por WhatsApp</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.consent_email !== false}
+                                        onChange={(e) => setFormData({ ...formData, consent_email: e.target.checked })}
+                                        className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2"
+                                    />
+                                    <div>
+                                        <label className="text-sm text-gray-700">Email</label>
+                                        <p className="text-xs text-gray-500">Correos electrónicos</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Sección de segmento manual */}

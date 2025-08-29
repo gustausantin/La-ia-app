@@ -1,74 +1,57 @@
-// ========================================
-// CRM DAILY JOB API ENDPOINT
-// Fecha: 28 Enero 2025
-// Descripción: Endpoint para ejecutar job diario CRM desde cron externo
-// ========================================
+// API endpoint para ejecutar el job diario de CRM
+// Se puede llamar desde un cron externo o scheduler
 
-/**
- * ENDPOINT API para job diario CRM
- * Uso: POST /api/crm-daily-job
- * Headers: Authorization: Bearer <API_KEY>
- */
+import { runCRMDailyJob } from '../../src/services/CRMDailyJobEnhanced.js';
+
 export default async function handler(req, res) {
-    // Solo permitir método POST
-    if (req.method !== 'POST') {
-        return res.status(405).json({ 
-            success: false, 
-            error: 'Method not allowed. Use POST.' 
-        });
+  // Solo permitir POST requests
+  if (req.method !== 'POST') {
+    return res.status(405).json({ 
+      error: 'Method not allowed', 
+      message: 'Only POST requests are allowed' 
+    });
+  }
+  
+  // Verificar autenticación básica (API key)
+  const apiKey = req.headers.authorization?.replace('Bearer ', '');
+  const expectedApiKey = process.env.CRM_DAILY_JOB_API_KEY || 'crm-job-secret-key';
+  
+  if (apiKey !== expectedApiKey) {
+    return res.status(401).json({ 
+      error: 'Unauthorized', 
+      message: 'Invalid API key' 
+    });
+  }
+  
+  try {
+    console.log('🚀 Ejecutando CRM Daily Job vía API...');
+    
+    const result = await runCRMDailyJob();
+    
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: 'CRM Daily Job ejecutado exitosamente',
+        duration: result.duration,
+        stats: result.stats,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        error: result.error,
+        stats: result.stats,
+        timestamp: new Date().toISOString()
+      });
     }
-
-    try {
-        // 1. Verificar autenticación
-        const authHeader = req.headers.authorization;
-        const expectedKey = process.env.CRM_API_KEY || 'your-secret-api-key';
-        
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ 
-                success: false, 
-                error: 'Missing or invalid authorization header' 
-            });
-        }
-
-        const apiKey = authHeader.split(' ')[1];
-        if (apiKey !== expectedKey) {
-            return res.status(401).json({ 
-                success: false, 
-                error: 'Invalid API key' 
-            });
-        }
-
-        // 2. Importar y ejecutar job diario
-        const { runDailyCRMJob } = await import('../../src/services/CRMDailyJob.js');
-        
-        console.log('🌅 Iniciando job diario CRM via API...');
-        const jobResult = await runDailyCRMJob();
-
-        // 3. Responder con resultados
-        return res.status(200).json({
-            success: jobResult.success,
-            timestamp: new Date().toISOString(),
-            data: jobResult
-        });
-
-    } catch (error) {
-        console.error('❌ Error en API job diario:', error);
-        
-        return res.status(500).json({
-            success: false,
-            error: error.message,
-            timestamp: new Date().toISOString()
-        });
-    }
+    
+  } catch (error) {
+    console.error('❌ Error ejecutando CRM Daily Job:', error);
+    
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 }
-
-/**
- * CONFIGURACIÓN PARA VERCEL
- */
-export const config = {
-    api: {
-        bodyParser: {
-            sizeLimit: '1mb'
-        }
-    }
-};
