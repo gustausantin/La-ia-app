@@ -684,7 +684,7 @@ export default function Dashboard() {
                     detail="En proceso ahora"
                     icon={<MessageSquare className="w-6 h-6 text-indigo-600" />}
                     color="bg-indigo-50"
-                    onClick={() => (window.location.href = "/comunicacion")}
+                    onClick={() => navigate('/comunicacion?view=conversations&filter=active')}
                     loading={isLoading}
                 />
 
@@ -720,7 +720,7 @@ export default function Dashboard() {
                                     key={conv.id}
                                     className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
                                     onClick={() =>
-                                        (window.location.href = "/comunicacion")
+                                        navigate(`/comunicacion?view=conversations&conversation=${conv.id}`)
                                     }
                                 >
                                     <div className="flex items-start justify-between">
@@ -775,7 +775,7 @@ export default function Dashboard() {
                                         Tu agente IA está esperando las primeras conversaciones de clientes.
                                     </p>
                                     <button 
-                                        onClick={() => navigate('/comunicacion')} 
+                                        onClick={() => navigate('/comunicacion?view=conversations')} 
                                         className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
                                     >
                                         <Bot className="w-4 h-4 mr-2" />

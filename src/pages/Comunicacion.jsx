@@ -1028,6 +1028,27 @@ export default function Comunicacion() {
     const [showTemplates, setShowTemplates] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [activeView, setActiveView] = useState("conversations"); // conversations, analytics, settings
+    
+    // Leer parámetros de URL para navegación consistente
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const view = urlParams.get('view');
+        const filter = urlParams.get('filter');
+        const conversationId = urlParams.get('conversation');
+        
+        if (view) {
+            setActiveView(view);
+        }
+        
+        if (filter) {
+            setFilters(prev => ({ ...prev, state: filter }));
+        }
+        
+        if (conversationId) {
+            // TODO: Buscar y seleccionar conversación específica
+            console.log('Navegando a conversación:', conversationId);
+        }
+    }, []);
 
     // Estados de filtros
     const [filters, setFilters] = useState({
@@ -1179,8 +1200,8 @@ export default function Comunicacion() {
             // DATOS MOCK ELIMINADOS - Solo usar datos reales
             setConversations([]);
 
-            // Generar datos de analytics
-            generateAnalyticsData();
+            // Cargar datos de analytics REALES
+            loadAnalyticsData();
         } catch (error) {
             toast.error("Error al cargar las conversaciones");
         } finally {
@@ -1304,71 +1325,146 @@ export default function Comunicacion() {
         [selectedConversation, restaurant],
     );
 
-    // Generar datos de analytics
-    const generateAnalyticsData = useCallback(() => {
-        // ⏱️ TIEMPO DE RESPUESTA REAL:
-        // - IA: Desde mensaje cliente → respuesta automática (1-8 segundos)
-        // - Humano: Desde escalamiento → respuesta staff (1-15 minutos)
-        const responseTimeChart = [];
-        for (let hour = 8; hour <= 23; hour++) {
-            const aiTime = hour >= 9 && hour <= 22 ? 
-                Math.floor(Math.random() * 3) + 2 : // 2-5 segundos horario activo
-                Math.floor(Math.random() * 4) + 3;  // 3-7 segundos fuera horario
-            
-            const humanTime = hour >= 11 && hour <= 21 ? 
-                Math.floor(Math.random() * 5) + 2 : // 2-7 min horario staff
-                Math.floor(Math.random() * 8) + 8; // 8-16 min fuera horario
-
-            responseTimeChart.push({
-                hour: `${hour}:00`,
-                ai: aiTime,
-                human: humanTime,
+    // Cargar datos de analytics REALES desde Supabase
+    const loadAnalyticsData = useCallback(async () => {
+        if (!restaurantId) {
+            // Si no hay restaurantId, mostrar datos vacíos
+            setAnalyticsData({
+                responseTimeChart: [],
+                channelDistribution: [],
+                satisfactionTrend: [],
+                peakHours: [],
             });
+            return;
         }
 
-        // 📊 DISTRIBUCIÓN POR CANAL REAL:
-        // Basado en canales configurados y populares en restaurantes
-        const channelDistribution = [
-            { channel: "WhatsApp", count: 189, percentage: 63 },
-            { channel: "Llamadas (VAPI)", count: 74, percentage: 25 },
-            { channel: "Web Chat", count: 25, percentage: 8 },
-            { channel: "Email", count: 12, percentage: 4 },
-        ];
+        try {
+            // 📊 DATOS REALES DESDE SUPABASE:
+            // 1. Buscar conversaciones reales
+            const { data: conversations, error: convError } = await supabase
+                .from('conversations')
+                .select(`
+                    id,
+                    channel,
+                    created_at,
+                    updated_at,
+                    state,
+                    messages:messages(
+                        id,
+                        created_at,
+                        direction,
+                        ai_generated
+                    )
+                `)
+                .eq('restaurant_id', restaurantId)
+                .gte('created_at', subDays(new Date(), 7).toISOString()); // Última semana
 
-        // 😊 SATISFACCIÓN DEL CLIENTE REAL:
-        // Basada en análisis de sentiment + feedback explícito post-conversación
-        const satisfactionTrend = [];
-        for (let i = 6; i >= 0; i--) {
-            const date = subDays(new Date(), i);
+            if (convError) {
+                console.warn('No se pudieron cargar conversaciones:', convError);
+                // Mostrar datos vacíos en lugar de mockeados
+                setAnalyticsData({
+                    responseTimeChart: Array.from({length: 16}, (_, i) => ({
+                        hour: `${i + 8}:00`,
+                        ai: 0,
+                        human: 0,
+                    })),
+                    channelDistribution: [],
+                    satisfactionTrend: Array.from({length: 7}, (_, i) => ({
+                        date: format(subDays(new Date(), 6 - i), "dd/MM"),
+                        satisfaction: 0,
+                        conversations: 0,
+                    })),
+                    peakHours: [
+                        { hour: "12:00-14:00", conversations: 0 },
+                        { hour: "14:00-16:00", conversations: 0 },
+                        { hour: "19:00-21:00", conversations: 0 },
+                        { hour: "21:00-23:00", conversations: 0 },
+                    ],
+                });
+                return;
+            }
+
+            // Procesar datos reales
+            const totalConversations = conversations?.length || 0;
             
-            // Realista: 78-94% con variaciones lógicas por día
-            const baseSatisfaction = 86;
-            const weekendBonus = [0, 6].includes(date.getDay()) ? 4 : 0; // Fin de semana mejor
-            const variation = Math.floor(Math.random() * 6) - 3; // ±3 puntos
-            
-            satisfactionTrend.push({
-                date: format(date, "dd/MM"),
-                satisfaction: Math.min(94, Math.max(78, baseSatisfaction + weekendBonus + variation)),
-                conversations: Math.floor(Math.random() * 25) + 35, // 35-60 conversaciones/día
+            // 📊 Distribución por canal REAL
+            const channelCounts = {};
+            conversations?.forEach(conv => {
+                channelCounts[conv.channel] = (channelCounts[conv.channel] || 0) + 1;
+            });
+
+            const channelDistribution = Object.entries(channelCounts).map(([channel, count]) => ({
+                channel: channel === 'whatsapp' ? 'WhatsApp' : 
+                        channel === 'vapi' ? 'Llamadas (VAPI)' : 
+                        channel === 'web' ? 'Web Chat' : 
+                        channel === 'email' ? 'Email' : channel,
+                count,
+                percentage: totalConversations > 0 ? Math.round((count / totalConversations) * 100) : 0
+            }));
+
+            // ⏱️ Tiempo de respuesta REAL (por ahora vacío hasta implementar lógica)
+            const responseTimeChart = Array.from({length: 16}, (_, i) => ({
+                hour: `${i + 8}:00`,
+                ai: 0, // TODO: Calcular desde messages con ai_generated
+                human: 0, // TODO: Calcular desde escalamientos
+            }));
+
+            // 😊 Satisfacción REAL (por ahora vacío hasta implementar feedback)
+            const satisfactionTrend = Array.from({length: 7}, (_, i) => {
+                const date = subDays(new Date(), 6 - i);
+                const dayConversations = conversations?.filter(conv => 
+                    format(new Date(conv.created_at), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+                ).length || 0;
+
+                return {
+                    date: format(date, "dd/MM"),
+                    satisfaction: 0, // TODO: Calcular desde feedback real
+                    conversations: dayConversations,
+                };
+            });
+
+            // 🕐 Horas pico REAL
+            const hourlyConversations = {};
+            conversations?.forEach(conv => {
+                const hour = new Date(conv.created_at).getHours();
+                if (hour >= 12 && hour <= 23) {
+                    const timeSlot = 
+                        hour >= 12 && hour < 14 ? "12:00-14:00" :
+                        hour >= 14 && hour < 16 ? "14:00-16:00" :
+                        hour >= 19 && hour < 21 ? "19:00-21:00" :
+                        hour >= 21 && hour <= 23 ? "21:00-23:00" : null;
+                    
+                    if (timeSlot) {
+                        hourlyConversations[timeSlot] = (hourlyConversations[timeSlot] || 0) + 1;
+                    }
+                }
+            });
+
+            const peakHours = [
+                { hour: "12:00-14:00", conversations: hourlyConversations["12:00-14:00"] || 0 },
+                { hour: "14:00-16:00", conversations: hourlyConversations["14:00-16:00"] || 0 },
+                { hour: "19:00-21:00", conversations: hourlyConversations["19:00-21:00"] || 0 },
+                { hour: "21:00-23:00", conversations: hourlyConversations["21:00-23:00"] || 0 },
+            ];
+
+            setAnalyticsData({
+                responseTimeChart,
+                channelDistribution,
+                satisfactionTrend,
+                peakHours,
+            });
+
+        } catch (error) {
+            console.error('Error cargando analytics:', error);
+            // En caso de error, mostrar datos vacíos
+            setAnalyticsData({
+                responseTimeChart: [],
+                channelDistribution: [],
+                satisfactionTrend: [],
+                peakHours: [],
             });
         }
-
-        // 🕐 HORAS PICO REALES:
-        // Basadas en patrones típicos de restaurantes españoles
-        const peakHours = [
-            { hour: "12:00-14:00", conversations: 67 }, // Almuerzo principal
-            { hour: "14:00-16:00", conversations: 42 }, // Post-almuerzo
-            { hour: "19:00-21:00", conversations: 89 }, // Cena principal
-            { hour: "21:00-23:00", conversations: 56 }, // Post-cena
-        ];
-
-        setAnalyticsData({
-            responseTimeChart,
-            channelDistribution,
-            satisfactionTrend,
-            peakHours,
-        });
-    }, []);
+    }, [restaurantId]);
 
     // Cargar datos inicial
     useEffect(() => {
