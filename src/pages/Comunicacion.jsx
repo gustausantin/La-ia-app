@@ -1339,68 +1339,71 @@ export default function Comunicacion() {
         }
 
         try {
-            // 📊 DATOS REALES DESDE SUPABASE:
-            // 1. Buscar conversaciones reales
-            const { data: conversations, error: convError } = await supabase
-                .from('conversations')
-                .select(`
-                    id,
-                    channel,
-                    created_at,
-                    updated_at,
-                    state,
-                    messages:messages(
-                        id,
-                        created_at,
-                        direction,
-                        ai_generated
-                    )
-                `)
-                .eq('restaurant_id', restaurantId)
-                .gte('created_at', subDays(new Date(), 7).toISOString()); // Última semana
+            console.log("📊 Cargando analytics desde Supabase...");
+            
+            // 📊 INTENTAR CARGAR DATOS REALES - Con fallback si tablas no existen
+            let conversations = [];
+            
+            // Intentar cargar desde message_batches_demo primero (ya existe)
+            try {
+                const { data: batchData, error: batchError } = await supabase
+                    .from('message_batches_demo')
+                    .select('*')
+                    .eq('restaurant_id', restaurantId)
+                    .gte('created_at', subDays(new Date(), 7).toISOString());
 
-            if (convError) {
-                console.warn('No se pudieron cargar conversaciones:', convError);
-                // Mostrar datos vacíos en lugar de mockeados
-                setAnalyticsData({
-                    responseTimeChart: Array.from({length: 16}, (_, i) => ({
-                        hour: `${i + 8}:00`,
-                        ai: 0,
-                        human: 0,
-                    })),
-                    channelDistribution: [],
-                    satisfactionTrend: Array.from({length: 7}, (_, i) => ({
-                        date: format(subDays(new Date(), 6 - i), "dd/MM"),
-                        satisfaction: 0,
-                        conversations: 0,
-                    })),
-                    peakHours: [
-                        { hour: "12:00-14:00", conversations: 0 },
-                        { hour: "14:00-16:00", conversations: 0 },
-                        { hour: "19:00-21:00", conversations: 0 },
-                        { hour: "21:00-23:00", conversations: 0 },
-                    ],
-                });
-                return;
+                if (!batchError && batchData) {
+                    conversations = batchData.map(batch => ({
+                        id: batch.batch_id,
+                        channel: batch.channel || 'whatsapp',
+                        created_at: batch.created_at,
+                        state: batch.state || 'active'
+                    }));
+                    console.log("📊 Datos cargados desde message_batches_demo:", conversations.length);
+                }
+            } catch (error) {
+                console.warn("⚠️ message_batches_demo no disponible:", error.message);
             }
 
-            // Procesar datos reales
+            // Si no hay datos, intentar desde conversations (futura tabla)
+            if (conversations.length === 0) {
+                try {
+                    const { data: convData, error: convError } = await supabase
+                        .from('conversations')
+                        .select('id, channel, created_at, state')
+                        .eq('restaurant_id', restaurantId)
+                        .gte('created_at', subDays(new Date(), 7).toISOString());
+
+                    if (!convError && convData) {
+                        conversations = convData;
+                        console.log("📊 Datos cargados desde conversations:", conversations.length);
+                    }
+                } catch (error) {
+                    console.warn("⚠️ Tabla conversations no existe aún:", error.message);
+                }
+            }
+
+            // Procesar datos reales o mostrar vacío
             const totalConversations = conversations?.length || 0;
+            console.log(`📊 Total conversaciones encontradas: ${totalConversations}`);
             
             // 📊 Distribución por canal REAL
             const channelCounts = {};
             conversations?.forEach(conv => {
-                channelCounts[conv.channel] = (channelCounts[conv.channel] || 0) + 1;
+                const channel = conv.channel || 'whatsapp';
+                channelCounts[channel] = (channelCounts[channel] || 0) + 1;
             });
 
-            const channelDistribution = Object.entries(channelCounts).map(([channel, count]) => ({
-                channel: channel === 'whatsapp' ? 'WhatsApp' : 
-                        channel === 'vapi' ? 'Llamadas (VAPI)' : 
-                        channel === 'web' ? 'Web Chat' : 
-                        channel === 'email' ? 'Email' : channel,
-                count,
-                percentage: totalConversations > 0 ? Math.round((count / totalConversations) * 100) : 0
-            }));
+            const channelDistribution = totalConversations > 0 
+                ? Object.entries(channelCounts).map(([channel, count]) => ({
+                    channel: channel === 'whatsapp' ? 'WhatsApp' : 
+                            channel === 'vapi' ? 'Llamadas (VAPI)' : 
+                            channel === 'web' ? 'Web Chat' : 
+                            channel === 'email' ? 'Email' : channel,
+                    count,
+                    percentage: Math.round((count / totalConversations) * 100)
+                }))
+                : []; // Array vacío si no hay datos
 
             // ⏱️ Tiempo de respuesta REAL (por ahora vacío hasta implementar lógica)
             const responseTimeChart = Array.from({length: 16}, (_, i) => ({
@@ -1455,13 +1458,26 @@ export default function Comunicacion() {
             });
 
         } catch (error) {
-            console.error('Error cargando analytics:', error);
-            // En caso de error, mostrar datos vacíos
+            console.error('❌ Error general cargando analytics:', error);
+            // En caso de error, mostrar datos vacíos profesionales
             setAnalyticsData({
-                responseTimeChart: [],
+                responseTimeChart: Array.from({length: 16}, (_, i) => ({
+                    hour: `${i + 8}:00`,
+                    ai: 0,
+                    human: 0,
+                })),
                 channelDistribution: [],
-                satisfactionTrend: [],
-                peakHours: [],
+                satisfactionTrend: Array.from({length: 7}, (_, i) => ({
+                    date: format(subDays(new Date(), 6 - i), "dd/MM"),
+                    satisfaction: 0,
+                    conversations: 0,
+                })),
+                peakHours: [
+                    { hour: "12:00-14:00", conversations: 0 },
+                    { hour: "14:00-16:00", conversations: 0 },
+                    { hour: "19:00-21:00", conversations: 0 },
+                    { hour: "21:00-23:00", conversations: 0 },
+                ],
             });
         }
     }, [restaurantId]);
