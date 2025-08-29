@@ -8,7 +8,7 @@ import {
   MessageSquare,
   Send,
   Edit,
-  Skip,
+  SkipForward,
   Clock,
   User,
   Crown,
@@ -494,7 +494,7 @@ export default function CRMProximosMensajes() {
                   }
                 }}
                 onSendNow={() => sendMessageNow(message.id)}
-                onSkip={() => skipMessage(message.id)}
+                onSkipForward={() => skipMessage(message.id)}
                 onEdit={() => setShowEditModal(message)}
                 onPreview={() => setShowPreviewModal(message)}
               />
@@ -553,7 +553,7 @@ const MessageRow = ({
   isSelected, 
   onSelect, 
   onSendNow, 
-  onSkip, 
+  onSkipForward, 
   onEdit, 
   onPreview 
 }) => {
@@ -694,11 +694,11 @@ const MessageRow = ({
               </button>
               
               <button
-                onClick={onSkip}
+                onClick={onSkipForward}
                 className="p-2 text-gray-600 hover:text-gray-700 rounded-lg hover:bg-gray-50"
                 title="Saltar"
               >
-                <Skip className="w-4 h-4" />
+                <SkipForward className="w-4 h-4" />
               </button>
             </>
           )}
