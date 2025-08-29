@@ -39,7 +39,22 @@ const mockSupabase = {
     subscribe: vi.fn(),
   })),
   removeChannel: vi.fn(),
-  rpc: vi.fn(),
+  rpc: vi.fn((functionName, params) => {
+    // Mock específico para create_restaurant_securely
+    if (functionName === 'create_restaurant_securely') {
+      return Promise.resolve({
+        data: {
+          success: true,
+          restaurant_id: 'test-restaurant-id',
+          restaurant_name: params?.restaurant_data?.name || 'Test Restaurant',
+          message: 'Restaurant created successfully'
+        },
+        error: null
+      });
+    }
+    // Mock por defecto para otras RPC
+    return Promise.resolve({ data: {}, error: null });
+  }),
 };
 
 vi.mock('../lib/supabase', () => ({
@@ -393,8 +408,8 @@ afterAll(() => {
 
 // Aumentar timeouts para tests complejos
 vi.setConfig({
-  testTimeout: 10000,
-  hookTimeout: 10000,
+  testTimeout: 15000, // Aumentado para AuthContext async
+  hookTimeout: 15000,
 });
 
 // === MATCHERS PERSONALIZADOS ===

@@ -190,39 +190,7 @@ class MLEngine {
     return recommendations;
   }
 
-  neuralNetworkPredict(inputs) {
-    // Simulación de red neuronal para predicción de demanda
-    const weights = {
-      baseDemand: 0.4,
-      seasonality: 0.2,
-      weather: 0.15,
-      events: 0.15,
-      promotions: 0.1
-    };
-    
-    const baseReservations = (inputs.baseDemand && inputs.baseDemand.baseline) || 50;
-    const seasonality = inputs.seasonalityAdjustment || 1.0;
-    const weather = inputs.weatherImpact || 1.0;
-    const events = inputs.eventsImpact || 1.0;
-    const promotions = inputs.promotionsImpact || 1.0;
-    
-    const prediction = baseReservations * 
-                      (weights.baseDemand +
-                       weights.seasonality * seasonality +
-                       weights.weather * weather +
-                       weights.events * events +
-                       weights.promotions * promotions);
-    
-    const finalReservations = Math.max(10, Math.round(prediction || 50));
-    const confidence = Math.min(0.95, Math.max(0.5, 
-      (inputs.baseDemand && inputs.baseDemand.confidence) || 0.8
-    ));
-    
-    return {
-      reservations: finalReservations,
-      confidence: confidence
-    };
-  }
+
 
   isHoliday(dateString) {
     // Simulación básica de detección de festivos
@@ -413,6 +381,38 @@ class MLEngine {
     }
   }
 
+  // ✅ MÉTODO AUXILIAR: Análisis competitivo simulado
+  async simulateCompetitiveAnalysis(data) {
+    try {
+      // Simular análisis competitivo basado en datos del mercado
+      const marketData = data.reservations || [];
+      const avgDemand = marketData.length / 30; // Promedio mensual
+      
+      const competitiveMetrics = {
+        marketPosition: avgDemand > 100 ? 'leader' : avgDemand > 50 ? 'competitive' : 'challenger',
+        demandVsMarket: Math.random() * 0.4 + 0.8, // 80-120% vs mercado
+        pricePositioning: Math.random() * 0.3 + 0.85, // 85-115% vs competencia
+        serviceLevel: Math.random() * 0.2 + 0.9, // 90-110% vs competencia
+        recommendations: [
+          'Analizar precios de competencia local',
+          'Mejorar tiempo de servicio en horas pico',
+          'Implementar ofertas diferenciadas'
+        ]
+      };
+      
+      return competitiveMetrics;
+    } catch (error) {
+      console.error('Error en análisis competitivo:', error);
+      return {
+        marketPosition: 'competitive',
+        demandVsMarket: 1.0,
+        pricePositioning: 1.0,
+        serviceLevel: 1.0,
+        recommendations: []
+      };
+    }
+  }
+
   // === INSIGHTS AUTOMÁTICOS CON NLP ===
   async generateAutoInsights(data) {
     try {
@@ -544,7 +544,7 @@ class MLEngine {
   }
 
   neuralNetworkPredict(inputs) {
-    // Simulación de red neuronal para predicción
+    // Simulación de red neuronal para predicción - ANTI-NaN
     const weights = {
       baseDemand: 0.3,
       seasonality: 0.2,
@@ -554,19 +554,35 @@ class MLEngine {
       dayOfWeek: 0.05
     };
     
-    let prediction = 0;
+    let prediction = 50; // Base segura para evitar NaN
+    
     Object.entries(weights).forEach(([key, weight]) => {
-      if (inputs[key] !== undefined) {
-        prediction += inputs[key] * weight;
+      const value = inputs[key];
+      if (value !== undefined && value !== null && !isNaN(value)) {
+        // Si es un objeto (como baseDemand), extraer baseline
+        const numericValue = typeof value === 'object' ? (value.baseline || value.value || 50) : value;
+        if (!isNaN(numericValue)) {
+          prediction += numericValue * weight;
+        }
       }
     });
     
-    // Aplicar función de activación (sigmoid)
-    const normalizedPrediction = 1 / (1 + Math.exp(-prediction));
+    // Asegurar que prediction no sea NaN
+    if (isNaN(prediction) || prediction <= 0) {
+      prediction = 50; // Fallback seguro
+    }
+    
+    // Aplicar función de activación (sigmoid) con protección NaN
+    const normalizedPrediction = Math.max(0.1, Math.min(0.95, 
+      1 / (1 + Math.exp(-Math.max(-10, Math.min(10, prediction / 50))))
+    ));
+    
+    const finalReservations = Math.max(10, Math.round(normalizedPrediction * 100));
+    const finalConfidence = Math.max(0.5, Math.min(0.95, 0.6 + normalizedPrediction * 0.35));
     
     return {
-      reservations: normalizedPrediction * 100, // Escalar a número realista
-      confidence: Math.min(0.95, 0.6 + normalizedPrediction * 0.35)
+      reservations: finalReservations,
+      confidence: finalConfidence
     };
   }
 
@@ -997,6 +1013,8 @@ class ChurnPredictionModel {
   generateStaffingRecommendations(optimization) {
     return ['Programar personal adicional en horas pico'];
   }
+
+
 
   prioritizeInsights(insights) {
     return insights.sort((a, b) => (b.impact * b.confidence) - (a.impact * a.confidence));
