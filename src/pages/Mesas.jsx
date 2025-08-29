@@ -924,13 +924,16 @@ export default function Mesas() {
         
         const available = tables.filter(t => {
             // Debe estar activa y operativa
-            const isOperational = t.is_active !== false;
+            const isActive = t.is_active !== false;
+            
+            // NO debe estar en mantenimiento
+            const notInMaintenance = t.status !== "maintenance";
             
             // No debe tener reservas asignadas
             const hasNoReservations = !tablesWithReservations.has(t.id) && 
                                      !tablesWithReservations.has(t.table_number);
             
-            return isOperational && hasNoReservations;
+            return isActive && notInMaintenance && hasNoReservations;
         }).length;
 
         return { total, active, available, reserved, occupied };

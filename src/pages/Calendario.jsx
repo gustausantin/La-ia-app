@@ -302,35 +302,82 @@ export default function Calendario() {
 
     // Guardar horario semanal
     const saveWeeklySchedule = async () => {
+        if (!restaurantId) {
+            toast.error("Error: No hay restaurante configurado");
+            return;
+        }
+
         setSaving(true);
         try {
+            console.log("🔄 Guardando horarios en calendario...", schedule);
+            
+            // Mapear números de día a nombres
+            const dayMapping = {
+                1: 'monday',    // Lunes
+                2: 'tuesday',   // Martes  
+                3: 'wednesday', // Miércoles
+                4: 'thursday',  // Jueves
+                5: 'friday',    // Viernes
+                6: 'saturday',  // Sábado
+                0: 'sunday'     // Domingo
+            };
+
             // Convertir schedule a formato operating_hours
             const operating_hours = {};
             schedule.forEach(day => {
-                operating_hours[day.day_of_week] = {
+                const dayName = dayMapping[day.day_of_week] || 'monday';
+                operating_hours[dayName] = {
                     open: day.slots[0]?.start_time || "09:00",
                     close: day.slots[0]?.end_time || "22:00",
                     closed: !day.is_open
                 };
             });
 
+            console.log("📊 Operating hours a guardar:", operating_hours);
+
+            // Obtener settings actuales para no sobrescribir otros datos
+            const { data: currentRestaurant, error: fetchError } = await supabase
+                .from("restaurants")
+                .select("settings")
+                .eq("id", restaurantId)
+                .single();
+
+            if (fetchError) {
+                console.error("Error obteniendo configuración actual:", fetchError);
+                throw fetchError;
+            }
+
+            const currentSettings = currentRestaurant?.settings || {};
+
             // Actualizar en la base de datos
             const { error } = await supabase
                 .from("restaurants")
                 .update({
                     settings: {
-                        ...restaurant.settings,
-                        operating_hours
-                    }
+                        ...currentSettings,
+                        operating_hours,
+                        calendar_schedule: schedule // También guardar el schedule completo
+                    },
+                    updated_at: new Date().toISOString()
                 })
                 .eq("id", restaurantId);
 
-            if (error) throw error;
+            if (error) {
+                console.error("Error en actualización Supabase:", error);
+                throw error;
+            }
 
-            toast.success("Horarios actualizados correctamente");
+            // Disparar evento para sync con Configuración
+            window.dispatchEvent(new CustomEvent('schedule-updated', { 
+                detail: { scheduleData: schedule, restaurantId } 
+            }));
+
+            toast.success("✅ Horarios actualizados correctamente");
+            console.log("✅ Horarios guardados exitosamente");
+            
         } catch (error) {
-            console.error("Error guardando horarios:", error);
-            toast.error("Error al guardar los horarios");
+            console.error("❌ Error guardando horarios:", error);
+            toast.error(`Error al guardar los horarios: ${error.message || 'Error desconocido'}`);
         } finally {
             setSaving(false);
         }
@@ -449,9 +496,9 @@ export default function Calendario() {
                     {/* Tab: Horarios del restaurante */}
                     {activeTab === 'horarios' && (
                         <div className="p-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {schedule.map((day, index) => (
-                                    <div key={day.day_of_week} className="bg-gray-50 rounded-lg p-4">
+                                    <div key={day.day_of_week} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                                         <div className="flex items-center justify-between mb-3">
                                             <h3 className="font-medium text-gray-900">{day.day_name}</h3>
                                                     <button
