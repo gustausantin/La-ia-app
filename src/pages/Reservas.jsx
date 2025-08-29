@@ -1417,8 +1417,8 @@ const ReservationFormModal = ({
             if (customer) {
                 // Cliente existente: actualizar métricas usando esquema real
                 const updatedData = {
-                    total_visits: (customer.total_visits || 0) + 1,
-                    last_visit: reservationData.reservation_date,
+                    visits_count: (customer.visits_count || 0) + 1,
+                    last_visit_at: reservationData.reservation_date,
                     total_spent: customer.total_spent || 0, // Se actualizaría con el ticket real
                 };
 
@@ -1435,7 +1435,7 @@ const ReservationFormModal = ({
                     .update(updatedData)
                     .eq("id", customer.id);
 
-                console.log(`Cliente ${customer.name} actualizado: ${updatedData.total_visits} visitas`);
+                console.log(`Cliente ${customer.name} actualizado: ${updatedData.visits_count} visitas`);
             } else {
                 // Cliente nuevo: crear automáticamente usando esquema real
                 const newCustomer = {
@@ -1443,8 +1443,8 @@ const ReservationFormModal = ({
                     phone: reservationData.customer_phone,
                     email: reservationData.customer_email || null,
                     restaurant_id: restaurantId,
-                    total_visits: 1,
-                    last_visit: reservationData.reservation_date,
+                    visits_count: 1,
+                    last_visit_at: reservationData.reservation_date,
                     total_spent: 0,
                     preferences: {
                         segment: "nuevo",
@@ -1468,7 +1468,7 @@ const ReservationFormModal = ({
 
     // Función para calcular segmento automático según reglas de negocio
     const calculateAutomaticSegment = (customerData, existingCustomer) => {
-        const totalVisits = customerData.total_visits || 0;
+        const totalVisits = customerData.visits_count || 0;
         const totalSpent = customerData.total_spent || 0;
         const lastVisit = new Date(customerData.last_visit);
         const now = new Date();
@@ -1485,7 +1485,7 @@ const ReservationFormModal = ({
             return "ocasional";
         } else if (daysSinceLastVisit > 180) {
             return "inactivo";
-        } else if (daysSinceLastVisit > 90 && (existingCustomer?.total_visits || 0) >= 3) {
+        } else if (daysSinceLastVisit > 90 && (existingCustomer?.visits_count || 0) >= 3) {
             return "en_riesgo";
         } else if (totalSpent >= 300) {
             return "alto_valor";
