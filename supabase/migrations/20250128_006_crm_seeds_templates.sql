@@ -147,12 +147,12 @@
         WHERE restaurant_id = p_restaurant_id AND name = 'Reconocimiento Alto Valor';
 
         -- 1. REGLA: Bienvenida automática
-        INSERT INTO automation_rules (
+                INSERT INTO automation_rules (
             restaurant_id, name, description, is_active,
-                    trigger_event, target_segment, template_id,
-        cooldown_days, max_executions_per_customer, max_daily_executions,
-        execution_hours_start, execution_hours_end, execution_days_of_week,
-        action_config, rule_type, action_type
+            trigger_event, target_segment, template_id,
+            cooldown_days, max_executions_per_customer, max_daily_executions,
+            execution_hours_start, execution_hours_end, execution_days_of_week,
+            action_config
         ) VALUES (
             p_restaurant_id,
             'Bienvenida Nuevo Cliente',
@@ -166,9 +166,7 @@
             20, -- Máximo 20 bienvenidas por día
             '10:00', '20:00',
             ARRAY[1,2,3,4,5,6,7],
-            '{"channel": "whatsapp", "fallback_to_email": true}'::jsonb,
-            'automatic',
-            'send_message'
+            '{"channel": "whatsapp", "fallback_to_email": true}'::jsonb
         ) ON CONFLICT (restaurant_id, name) DO NOTHING;
 
         -- 2. REGLA: Reactivación clientes inactivos
@@ -177,7 +175,7 @@
                     trigger_event, target_segment, template_id,
         cooldown_days, max_executions_per_customer, max_daily_executions,
         execution_hours_start, execution_hours_end, execution_days_of_week,
-        action_config, rule_type, action_type
+        action_config
         ) VALUES (
             p_restaurant_id,
             'Reactivación Clientes Inactivos',
@@ -200,7 +198,7 @@
                     trigger_event, target_segment, template_id,
         cooldown_days, max_executions_per_customer, max_daily_executions,
         execution_hours_start, execution_hours_end, execution_days_of_week,
-        action_config, rule_type, action_type
+        action_config
         ) VALUES (
             p_restaurant_id,
             'Bienvenida VIP Automática',
@@ -223,7 +221,7 @@
                     trigger_event, target_segment, template_id,
         cooldown_days, max_executions_per_customer, max_daily_executions,
         execution_hours_start, execution_hours_end, execution_days_of_week,
-        action_config, rule_type, action_type
+        action_config
         ) VALUES (
             p_restaurant_id,
             'Recuperación Clientes en Riesgo',
@@ -246,7 +244,7 @@
                     trigger_event, target_segment, template_id,
         cooldown_days, max_executions_per_customer, max_daily_executions,
         execution_hours_start, execution_hours_end, execution_days_of_week,
-        action_config, rule_type, action_type
+        action_config
         ) VALUES (
             p_restaurant_id,
             'Reconocimiento Alto Valor',
