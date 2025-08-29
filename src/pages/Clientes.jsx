@@ -56,6 +56,7 @@ import {
     ChevronUp,
     Info,
     X,
+    Edit2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { recomputeCustomerStats, recomputeSegment, getCRMStats } from "../services/CRMService";
@@ -185,6 +186,7 @@ export default function Clientes() {
     });
 
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingCustomer, setEditingCustomer] = useState(null);
 
     // Load customers
     const loadCustomers = useCallback(async () => {
@@ -359,6 +361,12 @@ export default function Clientes() {
     useEffect(() => {
         setStats(calculateStats(customers));
     }, [customers, calculateStats]);
+
+    // Handler para editar cliente
+    const handleEditCustomer = (customer) => {
+        setEditingCustomer(customer);
+        setShowCreateModal(true);
+    };
 
     // Mostrar mensaje de configuración si no hay restaurantId
     if (!isReady) {
@@ -580,24 +588,50 @@ export default function Clientes() {
                     <LoadingState />
                 ) : filteredAndSortedCustomers.length > 0 ? (
                     filteredAndSortedCustomers.map((customer) => (
-                        <div key={customer.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div key={customer.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
+                                <div 
+                                    className="flex items-center gap-3 cursor-pointer flex-1"
+                                    onClick={() => handleEditCustomer(customer)}
+                                >
                                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                                         <span className="text-blue-600 font-semibold">
                                             {customer.name.charAt(0).toUpperCase()}
                                         </span>
                                     </div>
-                                    <div>
+                                    <div className="flex-1">
                                         <h3 className="font-semibold text-gray-900">
                                             {customer.name}
                                         </h3>
                                         <p className="text-sm text-gray-600">
-                                            {customer.email}
+                                            {customer.email} • {customer.phone}
                                         </p>
+                                        <div className="flex items-center gap-4 mt-1">
+                                            <span className="text-xs text-gray-500">
+                                                📊 {customer.total_visits || 0} visitas
+                                            </span>
+                                            <span className="text-xs text-gray-500">
+                                                💰 €{customer.total_spent || 0}
+                                            </span>
+                                            {customer.last_visit && (
+                                                <span className="text-xs text-gray-500">
+                                                    🕐 {format(new Date(customer.last_visit), "dd/MM/yyyy")}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEditCustomer(customer);
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        title="Editar cliente"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
                                     <span className="text-sm text-gray-600">
                                         {customer.visits_count || 0} reservas
                                     </span>
@@ -610,13 +644,17 @@ export default function Clientes() {
                 )}
             </div>
 
-            {/* Modal de crear cliente */}
+            {/* Modal de crear/editar cliente */}
             {showCreateModal && (
                 <CustomerModal
                     isOpen={showCreateModal}
-                    onClose={() => setShowCreateModal(false)}
+                    onClose={() => {
+                        setShowCreateModal(false);
+                        setEditingCustomer(null);
+                    }}
                     onSave={loadCustomers}
                     restaurantId={restaurantId}
+                    customer={editingCustomer}
                 />
             )}
         </div>
@@ -857,8 +895,8 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
                         <h4 className="text-sm font-medium text-gray-900 mb-3">Preferencias de Comunicación</h4>
                         
                         <div className="space-y-4">
-                            {/* Master switch */}
-                            <div className="flex items-center justify-between">
+                            {/* Master switch mejorado */}
+                            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
                                 <div>
                                     <label className="text-sm font-medium text-gray-700">
                                         Recibir comunicaciones automáticas
@@ -867,56 +905,101 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
                                         Si está desactivado, no recibirá ningún mensaje automático
                                     </p>
                                 </div>
-                                <input
-                                    type="checkbox"
-                                    checked={formData.notifications_enabled !== false}
-                                    onChange={(e) => setFormData({ ...formData, notifications_enabled: e.target.checked })}
-                                    className="w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                                />
-                            </div>
-                            
-                            {/* Canal preferido */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Canal Preferido
+                                {/* Toggle Switch */}
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.notifications_enabled !== false}
+                                        onChange={(e) => setFormData({ ...formData, notifications_enabled: e.target.checked })}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                                 </label>
-                                <select
-                                    value={formData.preferred_channel || 'whatsapp'}
-                                    onChange={(e) => setFormData({ ...formData, preferred_channel: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                                >
-                                    <option value="whatsapp">WhatsApp</option>
-                                    <option value="email">Email</option>
-                                    <option value="none">Ninguno</option>
-                                </select>
                             </div>
                             
-                            {/* Consentimientos específicos */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.consent_whatsapp !== false}
-                                        onChange={(e) => setFormData({ ...formData, consent_whatsapp: e.target.checked })}
-                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
-                                    />
-                                    <div>
-                                        <label className="text-sm text-gray-700">WhatsApp</label>
-                                        <p className="text-xs text-gray-500">Mensajes por WhatsApp</p>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.consent_email !== false}
-                                        onChange={(e) => setFormData({ ...formData, consent_email: e.target.checked })}
-                                        className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2"
-                                    />
-                                    <div>
-                                        <label className="text-sm text-gray-700">Email</label>
-                                        <p className="text-xs text-gray-500">Correos electrónicos</p>
-                                    </div>
+                            {/* Canal preferido ÚNICO (sin duplicidad) */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Canal Preferido para Comunicación
+                                </label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {/* WhatsApp */}
+                                    <label className={`cursor-pointer p-3 border-2 rounded-lg transition-all ${
+                                        formData.preferred_channel === 'whatsapp' 
+                                            ? 'border-green-500 bg-green-50' 
+                                            : 'border-gray-200 hover:border-green-300'
+                                    }`}>
+                                        <input
+                                            type="radio"
+                                            name="preferred_channel"
+                                            value="whatsapp"
+                                            checked={formData.preferred_channel === 'whatsapp'}
+                                            onChange={(e) => setFormData({ 
+                                                ...formData, 
+                                                preferred_channel: e.target.value,
+                                                consent_whatsapp: true,
+                                                consent_email: false
+                                            })}
+                                            className="sr-only"
+                                        />
+                                        <div className="text-center">
+                                            <div className="text-green-600 mb-1">📱</div>
+                                            <div className="text-sm font-medium">WhatsApp</div>
+                                            <div className="text-xs text-gray-500">Mensajes directos</div>
+                                        </div>
+                                    </label>
+
+                                    {/* Email */}
+                                    <label className={`cursor-pointer p-3 border-2 rounded-lg transition-all ${
+                                        formData.preferred_channel === 'email' 
+                                            ? 'border-blue-500 bg-blue-50' 
+                                            : 'border-gray-200 hover:border-blue-300'
+                                    }`}>
+                                        <input
+                                            type="radio"
+                                            name="preferred_channel"
+                                            value="email"
+                                            checked={formData.preferred_channel === 'email'}
+                                            onChange={(e) => setFormData({ 
+                                                ...formData, 
+                                                preferred_channel: e.target.value,
+                                                consent_whatsapp: false,
+                                                consent_email: true
+                                            })}
+                                            className="sr-only"
+                                        />
+                                        <div className="text-center">
+                                            <div className="text-blue-600 mb-1">📧</div>
+                                            <div className="text-sm font-medium">Email</div>
+                                            <div className="text-xs text-gray-500">Correo electrónico</div>
+                                        </div>
+                                    </label>
+
+                                    {/* Ninguno */}
+                                    <label className={`cursor-pointer p-3 border-2 rounded-lg transition-all ${
+                                        formData.preferred_channel === 'none' 
+                                            ? 'border-gray-500 bg-gray-50' 
+                                            : 'border-gray-200 hover:border-gray-300'
+                                    }`}>
+                                        <input
+                                            type="radio"
+                                            name="preferred_channel"
+                                            value="none"
+                                            checked={formData.preferred_channel === 'none'}
+                                            onChange={(e) => setFormData({ 
+                                                ...formData, 
+                                                preferred_channel: e.target.value,
+                                                consent_whatsapp: false,
+                                                consent_email: false
+                                            })}
+                                            className="sr-only"
+                                        />
+                                        <div className="text-center">
+                                            <div className="text-gray-600 mb-1">🚫</div>
+                                            <div className="text-sm font-medium">Ninguno</div>
+                                            <div className="text-xs text-gray-500">Sin comunicación</div>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
                         </div>
