@@ -80,6 +80,14 @@ export default function Calendario() {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [activeTab, setActiveTab] = useState('horarios');
     const [showEventModal, setShowEventModal] = useState(false);
+    
+    // Estados para estadísticas calculadas
+    const [stats, setStats] = useState({
+        daysOpen: 0,
+        weeklyHours: 0,
+        activeChannels: 5,
+        occupancy: 0
+    });
 
     // Estados para eventos especiales
     const [events, setEvents] = useState([]);
@@ -176,6 +184,9 @@ export default function Calendario() {
             });
 
             setSchedule(loadedSchedule);
+            
+            // Calcular estadísticas
+            calculateStats(loadedSchedule);
 
         } catch (error) {
             console.error("❌ Error inicializando calendario:", error);
@@ -184,6 +195,78 @@ export default function Calendario() {
             setLoading(false);
         }
     };
+
+    // Función para calcular estadísticas reales
+    const calculateStats = useCallback(async (scheduleData) => {
+        try {
+            // 1. Días abiertos
+            const daysOpen = scheduleData.filter(day => day.is_open).length;
+            
+            // 2. Horas semanales
+            const weeklyHours = scheduleData.reduce((total, day) => {
+                if (!day.is_open || !day.slots[0]) return total;
+                const start = day.slots[0].start_time;
+                const end = day.slots[0].end_time;
+                const startHour = parseInt(start.split(':')[0]);
+                const endHour = parseInt(end.split(':')[0]);
+                const hours = endHour - startHour;
+                return total + hours;
+            }, 0);
+
+            // 3. Canales activos (desde configuración)
+            let activeChannels = 5; // valor por defecto
+            try {
+                const { data: restaurantData } = await supabase
+                    .from("restaurants")
+                    .select("settings")
+                    .eq("id", restaurantId)
+                    .single();
+                
+                const channels = restaurantData?.settings?.channels || {};
+                activeChannels = Object.values(channels).filter(channel => channel?.enabled).length;
+            } catch (error) {
+                console.warn("No se pudieron cargar canales:", error);
+            }
+
+            // 4. Ocupación promedio (desde reservas)
+            let occupancy = 0;
+            try {
+                const today = new Date();
+                const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                
+                const { data: reservations } = await supabase
+                    .from("reservations")
+                    .select("party_size")
+                    .eq("restaurant_id", restaurantId)
+                    .gte("reservation_date", lastWeek.toISOString().split('T')[0])
+                    .eq("status", "confirmada");
+
+                const { data: tablesData } = await supabase
+                    .from("tables")
+                    .select("capacity")
+                    .eq("restaurant_id", restaurantId)
+                    .eq("is_active", true);
+
+                if (reservations && tablesData) {
+                    const totalCapacity = tablesData.reduce((sum, table) => sum + (table.capacity || 0), 0);
+                    const totalGuests = reservations.reduce((sum, res) => sum + (res.party_size || 0), 0);
+                    occupancy = totalCapacity > 0 ? Math.round((totalGuests / (totalCapacity * 7)) * 100) : 0;
+                }
+            } catch (error) {
+                console.warn("No se pudo calcular ocupación:", error);
+            }
+
+            setStats({
+                daysOpen,
+                weeklyHours,
+                activeChannels,
+                occupancy
+            });
+
+        } catch (error) {
+            console.error("Error calculando estadísticas:", error);
+        }
+    }, [restaurantId]);
 
     // Obtener horario de un día específico
     const getDaySchedule = useCallback((date) => {
@@ -206,10 +289,16 @@ export default function Calendario() {
     };
 
     // Manejar click en día del calendario
-    const handleDayClick = (date) => {
-        console.log("Día seleccionado:", format(date, 'yyyy-MM-dd'));
-        // Aquí se implementará la funcionalidad de eventos especiales
-    };
+    const handleDayClick = useCallback((date) => {
+        try {
+            console.log("Día seleccionado:", format(date, 'yyyy-MM-dd'));
+            // TODO: Implementar modal de eventos especiales
+            toast.info(`Funcionalidad de eventos para ${format(date, 'dd/MM/yyyy')} próximamente`);
+        } catch (error) {
+            console.error("Error en handleDayClick:", error);
+            toast.error("Error al seleccionar el día");
+        }
+    }, []);
 
     // Guardar horario semanal
     const saveWeeklySchedule = async () => {
@@ -247,7 +336,7 @@ export default function Calendario() {
         }
     };
 
-    return (
+        return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
@@ -259,20 +348,14 @@ export default function Calendario() {
                                 Horarios y Calendario
                             </h1>
                             <p className="text-gray-600 mt-1">
-                                Gestiona los horarios del restaurante y la disponibilidad del agente IA
+                                Gestiona los horarios del restaurante y eventos especiales
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
-                                onClick={() => setShowAgentSettings(!showAgentSettings)}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-                            >
-                                <Bot className="w-4 h-4" />
-                                Config. Agente IA
-                            </button>
-                            <button
-                                onClick={activeTab === 'horarios' ? saveWeeklySchedule : saveAgentSchedule}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                onClick={saveWeeklySchedule}
+                                disabled={saving}
+                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
                             >
                                 {saving ? (
                                     <>
@@ -281,64 +364,56 @@ export default function Calendario() {
                                     </>
                                 ) : (
                                     <>
-                                        <Save className="w-4 h-4" />
-                                        Guardar cambios
+                                <Save className="w-4 h-4" />
+                                Guardar cambios
                                     </>
                                 )}
                             </button>
                         </div>
-                    </div>
-                </div>
-
-                {/* Estadísticas rápidas */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Días abiertos</p>
-                                <p className="text-2xl font-bold text-green-600">
-                                    {schedule.filter(day => day.is_open).length}
-                                </p>
-                            </div>
-                            <CheckCircle className="w-8 h-8 text-green-500" />
                         </div>
                     </div>
 
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Horas semanales</p>
-                                <p className="text-2xl font-bold text-blue-600">
-                                    {schedule.reduce((total, day) => {
-                                        if (!day.is_open || !day.slots[0]) return total;
-                                        const start = day.slots[0].start_time;
-                                        const end = day.slots[0].end_time;
-                                        const hours = parseInt(end.split(':')[0]) - parseInt(start.split(':')[0]);
-                                        return total + hours;
-                                    }, 0)}h
-                                </p>
+                                    {/* Estadísticas rápidas - Diseño vertical mejorado */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-blue-600" />
+                        Resumen de actividad
+                    </h2>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="text-center">
+                            <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-3">
+                                <CheckCircle className="w-6 h-6 text-green-600" />
                             </div>
-                            <Clock className="w-8 h-8 text-blue-500" />
+                            <p className="text-2xl font-bold text-gray-900">{stats.daysOpen}</p>
+                            <p className="text-sm text-gray-600">Días abiertos</p>
+                            <p className="text-xs text-gray-500">de 7 días</p>
                         </div>
-                    </div>
 
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Canales IA activos</p>
-                                <p className="text-2xl font-bold text-purple-600">5</p>
+                        <div className="text-center">
+                            <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-3">
+                                <Clock className="w-6 h-6 text-blue-600" />
                             </div>
-                            <Bot className="w-8 h-8 text-purple-500" />
+                            <p className="text-2xl font-bold text-gray-900">{stats.weeklyHours}h</p>
+                            <p className="text-sm text-gray-600">Horas semanales</p>
+                            <p className="text-xs text-gray-500">tiempo de servicio</p>
                         </div>
-                    </div>
 
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Ocupación promedio</p>
-                                <p className="text-2xl font-bold text-orange-600">0%</p>
+                        <div className="text-center">
+                            <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mx-auto mb-3">
+                                <MessageSquare className="w-6 h-6 text-purple-600" />
                             </div>
-                            <TrendingUp className="w-8 h-8 text-orange-500" />
+                            <p className="text-2xl font-bold text-gray-900">{stats.activeChannels}</p>
+                            <p className="text-sm text-gray-600">Canales activos</p>
+                            <p className="text-xs text-gray-500">comunicación</p>
+                        </div>
+
+                        <div className="text-center">
+                            <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mx-auto mb-3">
+                                <TrendingUp className="w-6 h-6 text-orange-600" />
+                            </div>
+                            <p className="text-2xl font-bold text-gray-900">{stats.occupancy}%</p>
+                            <p className="text-sm text-gray-600">Ocupación</p>
+                            <p className="text-xs text-gray-500">última semana</p>
                         </div>
                     </div>
                 </div>
@@ -379,7 +454,7 @@ export default function Calendario() {
                                     <div key={day.day_of_week} className="bg-gray-50 rounded-lg p-4">
                                         <div className="flex items-center justify-between mb-3">
                                             <h3 className="font-medium text-gray-900">{day.day_name}</h3>
-                                            <button
+                                                    <button
                                                 onClick={() => {
                                                     const newSchedule = [...schedule];
                                                     newSchedule[index].is_open = !newSchedule[index].is_open;
@@ -393,21 +468,21 @@ export default function Calendario() {
                                                     }
                                                     setSchedule(newSchedule);
                                                 }}
-                                                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                                                    day.is_open 
-                                                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                        : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                                }`}
-                                            >
-                                                {day.is_open ? 'Abierto' : 'Cerrado'}
-                                            </button>
-                                        </div>
-
+                                                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                                                            day.is_open 
+                                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                                : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                                        }`}
+                                                    >
+                                                        {day.is_open ? 'Abierto' : 'Cerrado'}
+                                                    </button>
+                                                </div>
+                                                
                                         {day.is_open && day.slots.length > 0 && (
                                             <div className="space-y-2">
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="time"
+                                                                <div className="flex items-center gap-2">
+                                                                    <input
+                                                                        type="time"
                                                         value={day.slots[0].start_time}
                                                         onChange={(e) => {
                                                             const newSchedule = [...schedule];
@@ -415,10 +490,10 @@ export default function Calendario() {
                                                             setSchedule(newSchedule);
                                                         }}
                                                         className="text-sm px-2 py-1 border border-gray-300 rounded"
-                                                    />
-                                                    <span className="text-gray-400">-</span>
-                                                    <input
-                                                        type="time"
+                                                                    />
+                                                                    <span className="text-gray-400">-</span>
+                                                                    <input
+                                                                        type="time"
                                                         value={day.slots[0].end_time}
                                                         onChange={(e) => {
                                                             const newSchedule = [...schedule];
@@ -426,8 +501,8 @@ export default function Calendario() {
                                                             setSchedule(newSchedule);
                                                         }}
                                                         className="text-sm px-2 py-1 border border-gray-300 rounded"
-                                                    />
-                                                </div>
+                                                                    />
+                                                                </div>
                                                 <button
                                                     className="w-full text-xs text-blue-600 hover:text-blue-800 py-1"
                                                     onClick={() => {
@@ -437,11 +512,11 @@ export default function Calendario() {
                                                 >
                                                     + Añadir turno
                                                 </button>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
                                 ))}
-                            </div>
+                                </div>
 
                             <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
                                 <button
@@ -493,8 +568,11 @@ export default function Calendario() {
                                         Hoy
                                     </button>
                                 </div>
-                                <button
-                                    onClick={() => setShowEventModal(true)}
+                                                                    <button
+                                    onClick={() => {
+                                        toast.info("Funcionalidad de eventos especiales próximamente");
+                                        // setShowEventModal(true);
+                                    }}
                                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                 >
                                     <Plus className="w-4 h-4" />
@@ -519,7 +597,7 @@ export default function Calendario() {
                                         const isToday = isSameDay(day, new Date());
                                         const isCurrentMonth = isSameMonth(day, currentDate);
                                         const daySchedule = getDaySchedule(day);
-                                        
+
                                         return (
                                             <div
                                                 key={index}
@@ -530,12 +608,12 @@ export default function Calendario() {
                                             >
                                                 <div className={`text-sm font-medium mb-1 ${
                                                     isToday ? 'text-blue-600' : isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
-                                                }`}>
-                                                    {format(day, 'd')}
+                                                    }`}>
+                                                        {format(day, 'd')}
                                                 </div>
-                                                
+
                                                 {/* Estado del día */}
-                                                <div className="space-y-1">
+                                                    <div className="space-y-1">
                                                     {daySchedule.is_open ? (
                                                         <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
                                                             Abierto {daySchedule.slots[0]?.start_time}-{daySchedule.slots[0]?.end_time}
@@ -543,9 +621,9 @@ export default function Calendario() {
                                                     ) : (
                                                         <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">
                                                             Cerrado
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                )}
+                                                    </div>
                                             </div>
                                         );
                                     })}
@@ -571,8 +649,8 @@ export default function Calendario() {
                                 >
                                     <Plus className="w-4 h-4" />
                                     Crear evento especial
-                                </button>
-                            </div>
+                                    </button>
+                                </div>
                         </div>
                     )}
                 </div>
