@@ -31,6 +31,7 @@ const Comunicacion = lazy(() =>
 );
 const Analytics = lazy(() => import('./pages/Analytics'));
 const Configuracion = lazy(() => import('./pages/Configuracion'));
+const CRMProximosMensajes = lazy(() => import('./pages/CRMProximosMensajes'));
 
 // Componente de carga mejorado
 const LoadingScreen = () => (
@@ -159,6 +160,14 @@ function AppContent() {
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <Configuracion />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/crm/mensajes" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <CRMProximosMensajes />
                   </Suspense>
                 } 
               />

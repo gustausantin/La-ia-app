@@ -71,6 +71,12 @@ export default function Layout() {
             badge: null, // TODO: Implementar contador de mensajes no leídos
         },
         { name: "Clientes", path: "/clientes", icon: Users, badge: null },
+        {
+            name: "CRM Mensajes",
+            path: "/crm/mensajes",
+            icon: Zap,
+            badge: null, // TODO: Implementar contador de mensajes programados
+        },
         { name: "Mesas", path: "/mesas", icon: Briefcase, badge: null },
         {
             name: "Calendario",

@@ -528,11 +528,222 @@ export async function getCRMStats(restaurantId) {
     }
 }
 
+/**
+ * NUEVA FUNCIÓN: Evalúa reglas de automatización en tiempo real
+ */
+export const evaluateAutomationRules = async (customerId, restaurantId, triggerEvent, context = {}) => {
+  try {
+    console.log('🔄 Evaluando reglas de automatización:', { customerId, triggerEvent, context });
+    
+    // Obtener reglas activas para el evento
+    const { data: rules, error: rulesError } = await supabase
+      .from('automation_rules')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .eq('is_active', true)
+      .eq('trigger_event', triggerEvent);
+    
+    if (rulesError) {
+      console.error('Error obteniendo reglas:', rulesError);
+      return;
+    }
+    
+    if (!rules || rules.length === 0) {
+      console.log('📭 No hay reglas activas para el evento:', triggerEvent);
+      return;
+    }
+    
+    console.log(`📋 Evaluando ${rules.length} reglas para evento ${triggerEvent}`);
+    
+    // Importar servicios de elegibilidad dinámicamente para evitar dependencias circulares
+    const { CRMEligibilityService } = await import('./CRMEligibilityService');
+    
+    for (const rule of rules) {
+      try {
+        // Verificar elegibilidad
+        const eligibility = await CRMEligibilityService.checkEligibility(
+          customerId,
+          restaurantId,
+          rule.id,
+          context
+        );
+        
+        if (eligibility.eligible) {
+          // Crear mensaje programado
+          await createScheduledMessageFromRule(
+            customerId,
+            restaurantId,
+            rule,
+            eligibility.channel,
+            context
+          );
+          
+          console.log(`✅ Mensaje creado para regla: ${rule.name}`);
+        } else {
+          console.log(`⏭️ Cliente no elegible para regla ${rule.name}:`, eligibility.reasons);
+        }
+        
+      } catch (ruleError) {
+        console.error(`❌ Error evaluando regla ${rule.name}:`, ruleError);
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Error evaluando reglas de automatización:', error);
+  }
+};
+
+/**
+ * Crea un mensaje programado desde una regla de automatización
+ */
+const createScheduledMessageFromRule = async (customerId, restaurantId, rule, channel, context) => {
+  try {
+    // Obtener datos del cliente
+    const { data: customer, error: customerError } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('id', customerId)
+      .single();
+    
+    if (customerError || !customer) {
+      throw new Error('Cliente no encontrado');
+    }
+    
+    // Obtener plantilla
+    const { data: template, error: templateError } = await supabase
+      .from('message_templates')
+      .select('*')
+      .eq('id', rule.template_id)
+      .single();
+    
+    if (templateError || !template) {
+      throw new Error('Plantilla no encontrada');
+    }
+    
+    // Renderizar contenido
+    const renderedContent = await renderMessageTemplate(template, customer, restaurantId);
+    
+    // Calcular cuándo enviar
+    const scheduledFor = new Date();
+    if (template.send_delay_hours > 0) {
+      scheduledFor.setHours(scheduledFor.getHours() + template.send_delay_hours);
+    }
+    
+    // Crear mensaje programado
+    const messageData = {
+      restaurant_id: restaurantId,
+      customer_id: customerId,
+      automation_rule_id: rule.id,
+      template_id: template.id,
+      scheduled_for: scheduledFor.toISOString(),
+      channel_planned: channel,
+      subject_rendered: template.subject ? await renderMessageTemplate({ content_markdown: template.subject }, customer, restaurantId) : null,
+      content_rendered: renderedContent,
+      variables_used: extractTemplateVariables(template, customer),
+      status: 'planned'
+    };
+    
+    const { error } = await supabase
+      .from('scheduled_messages')
+      .insert([messageData]);
+    
+    if (error) throw error;
+    
+    console.log(`📅 Mensaje programado creado para ${customer.name}`);
+    
+  } catch (error) {
+    console.error('Error creando mensaje programado:', error);
+    throw error;
+  }
+};
+
+/**
+ * Renderiza una plantilla de mensaje con variables del cliente
+ */
+const renderMessageTemplate = async (template, customer, restaurantId) => {
+  try {
+    // Obtener datos del restaurante
+    const { data: restaurant } = await supabase
+      .from('restaurants')
+      .select('name, email, phone')
+      .eq('id', restaurantId)
+      .single();
+    
+    let content = template.content_markdown || '';
+    
+    // Variables del cliente
+    content = content.replace(/\{\{first_name\}\}/g, customer.name?.split(' ')[0] || 'Cliente');
+    content = content.replace(/\{\{name\}\}/g, customer.name || 'Cliente');
+    content = content.replace(/\{\{email\}\}/g, customer.email || '');
+    content = content.replace(/\{\{phone\}\}/g, customer.phone || '');
+    content = content.replace(/\{\{visits_count\}\}/g, customer.total_visits || 0);
+    content = content.replace(/\{\{total_spent\}\}/g, customer.total_spent || 0);
+    
+    // Variables del restaurante
+    content = content.replace(/\{\{restaurant_name\}\}/g, restaurant?.name || 'Nuestro Restaurante');
+    content = content.replace(/\{\{restaurant_phone\}\}/g, restaurant?.phone || '');
+    content = content.replace(/\{\{restaurant_email\}\}/g, restaurant?.email || '');
+    
+    // Variables calculadas
+    if (customer.last_visit) {
+      const daysSince = Math.floor((new Date() - new Date(customer.last_visit)) / (1000 * 60 * 60 * 24));
+      content = content.replace(/\{\{days_since_last_visit\}\}/g, daysSince.toString());
+    } else {
+      content = content.replace(/\{\{days_since_last_visit\}\}/g, 'muchos');
+    }
+    
+    return content;
+    
+  } catch (error) {
+    console.error('Error renderizando plantilla:', error);
+    return template.content_markdown || '';
+  }
+};
+
+/**
+ * Extrae variables utilizadas en una plantilla
+ */
+const extractTemplateVariables = (template, customer) => {
+  const variables = {};
+  
+  if (template.variables && Array.isArray(template.variables)) {
+    template.variables.forEach(varName => {
+      switch (varName) {
+        case 'first_name':
+          variables[varName] = customer.name?.split(' ')[0] || 'Cliente';
+          break;
+        case 'name':
+          variables[varName] = customer.name || 'Cliente';
+          break;
+        case 'visits_count':
+          variables[varName] = customer.total_visits || 0;
+          break;
+        case 'total_spent':
+          variables[varName] = customer.total_spent || 0;
+          break;
+        case 'days_since_last_visit':
+          if (customer.last_visit) {
+            const days = Math.floor((new Date() - new Date(customer.last_visit)) / (1000 * 60 * 60 * 24));
+            variables[varName] = days;
+          } else {
+            variables[varName] = 'muchos';
+          }
+          break;
+        default:
+          variables[varName] = customer[varName] || '';
+      }
+    });
+  }
+  
+  return variables;
+};
+
 export default {
     recomputeCustomerStats,
     recomputeSegment,
     processReservationCompletion,
     getCRMStats,
+    evaluateAutomationRules,
     CRM_THRESHOLDS,
     SEGMENTATION_RULES
 };
