@@ -85,7 +85,8 @@ docs/chat-sessions/
 ```bash
 1. docs/CRM-SISTEMA-INTELIGENTE-COMPLETO.md (técnico)
 2. docs/CRM-MANUAL-MENSAJERIA.md (usuario)
-3. docs/CHANGELOG-2025-01-29-FINAL.md (cambios)
+3. docs/CHANGELOG-2025-01-30-VALIDACIONES.md (V3.1 validaciones) ✨ NUEVO
+4. docs/CHANGELOG-2025-01-29-FINAL.md (V3.0 cambios)
 ```
 
 ### **🧪 Para Testing & QA:**
