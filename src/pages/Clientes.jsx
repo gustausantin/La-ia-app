@@ -59,6 +59,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { recomputeCustomerStats, recomputeSegment, getCRMStats } from "../services/CRMService";
+import { ensureRestaurantExists } from "../utils/restaurantSetup";
 
 // Segmentación automática con IA - REGLAS DE NEGOCIO DEFINIDAS
 const CUSTOMER_SEGMENTS = {
@@ -171,7 +172,7 @@ const EmptyState = ({ onCreateCustomer }) => (
 
 // Main Component
 export default function Clientes() {
-    const { restaurant, restaurantId, isReady } = useAuthContext();
+    const { restaurant, restaurantId, isReady, user } = useAuthContext();
 
     const [loading, setLoading] = useState(true);
     const [customers, setCustomers] = useState([]);
@@ -195,22 +196,27 @@ export default function Clientes() {
                 console.log('📋 Clientes: Sin restaurantId, mostrando estado vacío');
                 setCustomers([]);
                 setLoading(false);
+                toast.error("Error al cargar los clientes: No hay restaurante configurado");
                 return;
             }
 
-            // CORREGIDO: Cargar clientes reales desde Supabase con nuevos campos CRM
+            // CORREGIDO: Cargar clientes reales desde Supabase con campos correctos
             const { data: customers, error } = await supabase
                 .from("customers")
                 .select(`
-                    *,
-                    reservations:reservations!customer_id(
-                        id,
-                        status,
-                        party_size,
-                        reservation_date,
-                        spend_amount,
-                        created_at
-                    )
+                    id,
+                    restaurant_id,
+                    name,
+                    email,
+                    phone,
+                    preferences,
+                    tags,
+                    notes,
+                    total_visits,
+                    total_spent,
+                    last_visit,
+                    created_at,
+                    updated_at
                 `)
                 .eq("restaurant_id", restaurantId)
                 .order("created_at", { ascending: false });
@@ -220,26 +226,26 @@ export default function Clientes() {
                 throw error;
             }
 
-            // Procesar datos usando los campos CRM reales
+            // Procesar datos usando los campos del esquema correcto
             const processedCustomers = (customers || []).map(customer => {
                 // Calcular días desde última visita
-                const daysSinceLastVisit = customer.last_visit_at ? 
-                    differenceInDays(new Date(), parseISO(customer.last_visit_at)) : 999;
+                const daysSinceLastVisit = customer.last_visit ? 
+                    differenceInDays(new Date(), parseISO(customer.last_visit)) : 999;
 
-                // Usar segment_manual si existe, sino usar segment_auto
-                const finalSegment = customer.segment_manual || customer.segment_auto || 'nuevo';
+                // Obtener segmento desde preferences (JSONB)
+                const preferences = customer.preferences || {};
+                const finalSegment = preferences.segment || 'nuevo';
 
                 return {
                     ...customer,
-                    // Usar campos CRM nativos
-                    visits_count: customer.visits_count || 0,
+                    // Mapear campos del esquema correcto
+                    visits_count: customer.total_visits || 0,
                     total_spent: customer.total_spent || 0,
-                    last_visit: customer.last_visit_at,
+                    last_visit_at: customer.last_visit,
                     days_since_last_visit: daysSinceLastVisit,
                     ai_segment: finalSegment,
-                    // Campos adicionales calculados
-                    churn_risk: customer.churn_risk_score || 0,
-                    predicted_ltv: customer.predicted_ltv || 0
+                    // Campos adicionales
+                    preferences: preferences
                 };
             });
 
@@ -265,7 +271,7 @@ export default function Clientes() {
 
         // Calcular por segmentos automáticamente
         const vipCustomers = customersData.filter(c => c.ai_segment === 'vip').length;
-        const atRiskCustomers = customersData.filter(c => c.ai_segment === 'at_risk').length;
+        const atRiskCustomers = customersData.filter(c => c.ai_segment === 'en_riesgo').length;
         
         // Calcular valores totales
         const totalValue = customersData.reduce((sum, c) => sum + (c.total_spent || 0), 0);
@@ -354,8 +360,47 @@ export default function Clientes() {
         setStats(calculateStats(customers));
     }, [customers, calculateStats]);
 
+    // Mostrar mensaje de configuración si no hay restaurantId
     if (!isReady) {
         return <LoadingState />;
+    }
+
+    // Si no hay restaurant configurado, mostrar mensaje especial
+    if (isReady && !restaurantId) {
+        return (
+            <div className="max-w-7xl mx-auto space-y-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div className="text-center py-12">
+                        <AlertTriangle className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+                        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                            Configuración Inicial Requerida
+                        </h2>
+                        <p className="text-gray-600 mb-6">
+                            Para gestionar clientes, necesitas completar la configuración inicial del restaurante.
+                        </p>
+                        <div className="flex gap-4 justify-center">
+                            <button
+                                onClick={async () => {
+                                    const success = await ensureRestaurantExists(user);
+                                    if (success) {
+                                        window.location.reload();
+                                    }
+                                }}
+                                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            >
+                                Configuración Automática
+                            </button>
+                            <button
+                                onClick={() => window.location.href = '/configuracion'}
+                                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                                Configuración Manual
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -394,8 +439,8 @@ export default function Clientes() {
                 </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Stats Cards - Panel rediseñado con métricas clave */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between">
                         <div>
@@ -413,7 +458,7 @@ export default function Clientes() {
                         <div>
                             <p className="text-sm text-gray-600">Nuevos</p>
                             <p className="text-2xl font-bold text-green-600">
-                                {stats.newThisMonth || 0}
+                                {stats.segments?.nuevo || 0}
                             </p>
                         </div>
                         <UserPlus className="w-8 h-8 text-green-500" />
@@ -425,7 +470,7 @@ export default function Clientes() {
                         <div>
                             <p className="text-sm text-gray-600">VIP</p>
                             <p className="text-2xl font-bold text-yellow-600">
-                                {stats.vipCustomers || 0}
+                                {stats.segments?.vip || 0}
                             </p>
                         </div>
                         <Crown className="w-8 h-8 text-yellow-500" />
@@ -437,10 +482,34 @@ export default function Clientes() {
                         <div>
                             <p className="text-sm text-gray-600">En Riesgo</p>
                             <p className="text-2xl font-bold text-orange-600">
-                                {stats.atRiskCustomers || 0}
+                                {stats.segments?.en_riesgo || 0}
                             </p>
                         </div>
                         <AlertTriangle className="w-8 h-8 text-orange-500" />
+                    </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600">Inactivos</p>
+                            <p className="text-2xl font-bold text-gray-500">
+                                {stats.segments?.inactivo || 0}
+                            </p>
+                        </div>
+                        <Clock className="w-8 h-8 text-gray-400" />
+                    </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600">Alto Valor</p>
+                            <p className="text-2xl font-bold text-emerald-600">
+                                {stats.segments?.alto_valor || 0}
+                            </p>
+                        </div>
+                        <DollarSign className="w-8 h-8 text-emerald-500" />
                     </div>
                 </div>
             </div>
@@ -568,7 +637,7 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
         // Segmento manual (se guardará en preferences.segment)
         segment: customer?.preferences?.segment || "nuevo",
         // Stats automáticos (solo para mostrar, no editar)
-        visits_count: customer?.visits_count || 0,
+        visits_count: customer?.total_visits || 0,
         last_visit: customer?.last_visit || null,
         total_spent: customer?.total_spent || 0,
     });
@@ -605,6 +674,11 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
         setLoading(true);
 
         try {
+            // Validar que tenemos restaurantId
+            if (!restaurantId) {
+                throw new Error("No hay restaurante configurado. Contacta con soporte técnico.");
+            }
+
             // Construir nombre completo y datos según esquema real
             const fullName = `${formData.first_name} ${formData.last_name_1} ${formData.last_name_2}`.trim();
             
@@ -621,7 +695,7 @@ const CustomerModal = ({ isOpen, onClose, onSave, restaurantId, customer = null 
                 },
                 // Stats se mantienen automáticos si es edición
                 ...(customer && {
-                    visits_count: customer.visits_count,
+                    total_visits: customer.total_visits,
                     total_spent: customer.total_spent,
                     last_visit: customer.last_visit
                 })
