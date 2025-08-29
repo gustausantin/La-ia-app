@@ -4,6 +4,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useChannelStats } from '../hooks/useChannelStats';
 import { useOccupancy } from '../hooks/useOccupancy';
+import CalendarioErrorBoundary from '../components/CalendarioErrorBoundary';
 import { 
     format, 
     parseISO, 
@@ -277,6 +278,17 @@ export default function Calendario() {
             return;
         }
 
+        // Validaciones antes de guardar
+        const invalidDays = schedule.filter(day => {
+            if (!day.is_open) return false;
+            return !day.slots || day.slots.length === 0 || !day.slots[0].start_time || !day.slots[0].end_time;
+        });
+
+        if (invalidDays.length > 0) {
+            toast.error(`Horarios incompletos en: ${invalidDays.map(d => d.day_name).join(', ')}`);
+            return;
+        }
+
         setSaving(true);
         try {
             console.log("🔄 Guardando horarios en calendario...", schedule);
@@ -295,12 +307,31 @@ export default function Calendario() {
             // Convertir schedule a formato operating_hours
             const operating_hours = {};
             schedule.forEach(day => {
-                const dayName = dayMapping[day.day_of_week] || 'monday';
-                operating_hours[dayName] = {
-                    open: day.slots[0]?.start_time || "09:00",
-                    close: day.slots[0]?.end_time || "22:00",
-                    closed: !day.is_open
-                };
+                // day.day_of_week ya viene como string (monday, tuesday, etc.)
+                const dayName = day.day_of_week;
+                
+                if (!day.is_open || !day.slots || day.slots.length === 0) {
+                    operating_hours[dayName] = {
+                        open: "09:00",
+                        close: "22:00",
+                        closed: true
+                    };
+                } else {
+                    // Para múltiples turnos, usar el primer turno como principal
+                    // y guardar todos los turnos en una propiedad adicional
+                    const firstSlot = day.slots[0];
+                    operating_hours[dayName] = {
+                        open: firstSlot.start_time || "09:00",
+                        close: firstSlot.end_time || "22:00",
+                        closed: false,
+                        // Guardar todos los turnos para uso futuro
+                        shifts: day.slots.map(slot => ({
+                            start: slot.start_time,
+                            end: slot.end_time,
+                            name: slot.name
+                        }))
+                    };
+                }
             });
 
             console.log("📊 Operating hours a guardar:", operating_hours);
@@ -347,13 +378,27 @@ export default function Calendario() {
             
         } catch (error) {
             console.error("❌ Error guardando horarios:", error);
-            toast.error(`Error al guardar los horarios: ${error.message || 'Error desconocido'}`);
+            
+            // Mensajes de error más específicos
+            let errorMessage = "Error al guardar los horarios";
+            if (error.message?.includes('permission')) {
+                errorMessage = "Sin permisos para actualizar horarios";
+            } else if (error.message?.includes('network')) {
+                errorMessage = "Error de conexión. Verifica tu internet";
+            } else if (error.message?.includes('validation')) {
+                errorMessage = "Datos de horarios inválidos";
+            } else if (error.message) {
+                errorMessage = `Error: ${error.message}`;
+            }
+            
+            toast.error(errorMessage);
         } finally {
             setSaving(false);
         }
     };
 
         return (
+        <CalendarioErrorBoundary>
         <div className="min-h-screen bg-gray-50 p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
@@ -400,25 +445,25 @@ export default function Calendario() {
                         <div className="text-center">
                             <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-3">
                                 <CheckCircle className="w-6 h-6 text-green-600" />
-                            </div>
+                                </div>
                             <p className="text-2xl font-bold text-gray-900">{stats.daysOpen}</p>
-                            <p className="text-sm text-gray-600">Días abiertos</p>
+                                    <p className="text-sm text-gray-600">Días abiertos</p>
                             <p className="text-xs text-gray-500">de 7 días</p>
                         </div>
 
                         <div className="text-center">
                             <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-3">
                                 <Clock className="w-6 h-6 text-blue-600" />
-                            </div>
+                                </div>
                             <p className="text-2xl font-bold text-gray-900">{stats.weeklyHours}h</p>
-                            <p className="text-sm text-gray-600">Horas semanales</p>
+                                    <p className="text-sm text-gray-600">Horas semanales</p>
                             <p className="text-xs text-gray-500">tiempo de servicio</p>
                         </div>
 
                         <div className="text-center">
                             <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mx-auto mb-3">
                                 <MessageSquare className="w-6 h-6 text-purple-600" />
-                            </div>
+                                </div>
                             <p className="text-2xl font-bold text-gray-900">{stats.activeChannels}</p>
                             <p className="text-sm text-gray-600">Canales activos</p>
                             <p className="text-xs text-gray-500">comunicación</p>
@@ -427,7 +472,7 @@ export default function Calendario() {
                         <div className="text-center">
                             <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mx-auto mb-3">
                                 <TrendingUp className="w-6 h-6 text-orange-600" />
-                            </div>
+                                </div>
                             <p className="text-2xl font-bold text-gray-900">{stats.occupancy}%</p>
                             <p className="text-sm text-gray-600">Ocupación</p>
                             <p className="text-xs text-gray-500">última semana</p>
@@ -498,7 +543,7 @@ export default function Calendario() {
                                         {day.is_open && day.slots.length > 0 && (
                                             <div className="space-y-2">
                                                                 <div className="flex items-center gap-2">
-                                                                    <input
+                                                                <input
                                                                         type="time"
                                                         value={day.slots[0].start_time}
                                                         onChange={(e) => {
@@ -520,28 +565,43 @@ export default function Calendario() {
                                                         className="text-sm px-2 py-1 border border-gray-300 rounded"
                                                                     />
                                                                 </div>
-                                                <button
+                                                                                                <button
                                                     className="w-full text-xs text-blue-600 hover:text-blue-800 py-1"
                                                     onClick={(e) => {
                                                         e.preventDefault();
                                                         e.stopPropagation();
-                                                        // TODO: Implementar múltiples turnos
-                                                        toast("Múltiples turnos próximamente", {
-                                                            icon: "ℹ️",
-                                                            duration: 3000,
-                                                        });
+                                                        
+                                                        // Implementar múltiples turnos AHORA
+                                                        const dayIndex = schedule.findIndex(d => d.day_of_week === day.day_of_week);
+                                                        if (dayIndex !== -1) {
+                                                            const newSchedule = [...schedule];
+                                                            const currentSlots = newSchedule[dayIndex].slots || [];
+                                                            
+                                                            // Añadir nuevo turno
+                                                            const newSlot = {
+                                                                id: currentSlots.length + 1,
+                                                                name: `Turno ${currentSlots.length + 1}`,
+                                                                start_time: "20:00",
+                                                                end_time: "23:00"
+                                                            };
+                                                            
+                                                            newSchedule[dayIndex].slots.push(newSlot);
+                                                            setSchedule(newSchedule);
+                                                            
+                                                            toast.success(`Turno ${currentSlots.length + 1} añadido para ${day.day_name}`);
+                                                        }
                                                     }}
                                                 >
                                                     + Añadir turno
-                                                </button>
-                                                    </div>
-                                                )}
-                                            </div>
+                                </button>
+                        </div>
+                    )}
+                                                        </div>
                                 ))}
-                                </div>
-
+                                                    </div>
+                                                    
                             <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
-                                <button
+                                                        <button
                                     onClick={saveWeeklySchedule}
                                     disabled={saving}
                                     className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
@@ -557,8 +617,8 @@ export default function Calendario() {
                                             Guardar horarios
                                         </>
                                     )}
-                                </button>
-                            </div>
+                                                        </button>
+                                                    </div>
                         </div>
                     )}
 
@@ -590,7 +650,7 @@ export default function Calendario() {
                                         Hoy
                                     </button>
                                 </div>
-                                                                    <button
+                                    <button
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
@@ -601,10 +661,10 @@ export default function Calendario() {
                                         // setShowEventModal(true);
                                     }}
                                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Nuevo evento
-                                </button>
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        Nuevo evento
+                                    </button>
                             </div>
 
                             {/* Calendario */}
@@ -676,12 +736,13 @@ export default function Calendario() {
                                 >
                                     <Plus className="w-4 h-4" />
                                     Crear evento especial
-                                    </button>
+                                </button>
+                            </div>
                                 </div>
+                            )}
                         </div>
-                    )}
                 </div>
             </div>
-        </div>
+        </CalendarioErrorBoundary>
     );
 }
