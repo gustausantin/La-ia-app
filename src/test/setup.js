@@ -296,18 +296,23 @@ beforeAll(() => {
         // ✅ QUICK WIN: Callback inmediato y síncrono para tests
         if (callback && typeof callback === 'function') {
           // Ejecutar callback inmediatamente
-          try {
-            callback([{
-              target: element,
-              isIntersecting: true,
-              intersectionRatio: 1,
-              boundingClientRect: { top: 0, left: 0, right: 100, bottom: 100 },
-              rootBounds: { top: 0, left: 0, right: 1000, bottom: 1000 },
-              time: Date.now()
-            }]);
-          } catch (e) {
-            // Silenciar errores en tests
-          }
+          // Usar setTimeout para evitar problemas síncronos
+          setTimeout(() => {
+            try {
+              callback([{
+                target: element,
+                isIntersecting: true,
+                intersectionRatio: 1,
+                boundingClientRect: element?.getBoundingClientRect?.() || { 
+                  x: 0, y: 0, width: 100, height: 100, top: 0, right: 100, bottom: 100, left: 0 
+                },
+                rootBounds: { x: 0, y: 0, width: 1024, height: 768, top: 0, right: 1024, bottom: 768, left: 0 },
+                time: Date.now()
+              }]);
+            } catch (error) {
+              console.warn('⚠️ IntersectionObserver callback error (test env):', error);
+            }
+          }, 0);
         }
       }),
       unobserve: vi.fn(),
