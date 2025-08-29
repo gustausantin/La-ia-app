@@ -452,29 +452,9 @@ const {
             icon: <MessageSquare className="w-4 h-4" />,
         },
         {
-            id: "workflows",
-            label: "Workflows",
-            icon: <Webhook className="w-4 h-4" />,
-        },
-        {
             id: "notifications",
             label: "Notificaciones",
             icon: <Bell className="w-4 h-4" />,
-        },
-        { 
-            id: "team", 
-            label: "Equipo", 
-            icon: <Users className="w-4 h-4" /> 
-        },
-        {
-            id: "billing",
-            label: "Facturación",
-            icon: <CreditCard className="w-4 h-4" />,
-        },
-        {
-            id: "integrations",
-            label: "Integraciones",
-            icon: <Link2 className="w-4 h-4" />,
         },
     ];
 
@@ -1014,9 +994,65 @@ const {
     const syncHoursWithCalendar = async () => {
         try {
             console.log("🔄 Sincronizando horarios con calendario...");
-            // TODO: Implementar sincronización real con tabla restaurant_schedule
+            
+            // Mapear días a números (0=domingo, 1=lunes, etc.)
+            const dayMapping = {
+                monday: 1,
+                tuesday: 2, 
+                wednesday: 3,
+                thursday: 4,
+                friday: 5,
+                saturday: 6,
+                sunday: 0
+            };
+
+            // Crear array de horarios para el calendario
+            const scheduleData = Object.entries(settings.operating_hours).map(([day, hours]) => ({
+                restaurant_id: restaurantId,
+                day_of_week: dayMapping[day],
+                day_name: day === 'monday' ? 'Lunes' :
+                         day === 'tuesday' ? 'Martes' :
+                         day === 'wednesday' ? 'Miércoles' :
+                         day === 'thursday' ? 'Jueves' :
+                         day === 'friday' ? 'Viernes' :
+                         day === 'saturday' ? 'Sábado' :
+                         'Domingo',
+                is_open: !hours.closed,
+                slots: !hours.closed ? [
+                    {
+                        id: 1,
+                        name: "Horario Principal",
+                        start_time: hours.open || "09:00",
+                        end_time: hours.close || "22:00"
+                    }
+                ] : []
+            }));
+
+            // Actualizamos los settings del restaurante para que el calendario los tome
+            const { error } = await supabase
+                .from("restaurants")
+                .update({
+                    settings: {
+                        ...(await supabase.from("restaurants").select("settings").eq("id", restaurantId).single()).data?.settings,
+                        operating_hours: settings.operating_hours,
+                        calendar_schedule: scheduleData
+                    },
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", restaurantId);
+
+            if (error) throw error;
+
+            console.log("✅ Horarios sincronizados con calendario correctamente");
+            
+            // Forzar actualización del calendario si está abierto
+            window.dispatchEvent(new CustomEvent('schedule-updated', { 
+                detail: { scheduleData, restaurantId } 
+            }));
+
         } catch (error) {
             console.error("❌ Error sincronizando calendario:", error);
+            throw error;
         }
     };
 
@@ -1484,7 +1520,9 @@ const {
                                 icon={<Clock />}
                             >
                                 <div className="space-y-4">
-                                    {Object.entries(settings.operating_hours).map(([day, hours]) => (
+                                    {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
+                                        const hours = settings.operating_hours[day];
+                                        return (
                                         <div key={day} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
                                             <div className="w-24">
                                                 <span className="font-medium text-gray-900 capitalize">
@@ -1547,7 +1585,8 @@ const {
                                                 <span className="text-gray-500">Cerrado</span>
                                             )}
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
 
                                 <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
@@ -2404,6 +2443,150 @@ const {
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Facebook */}
+                                        <div className="p-4 border border-gray-200 rounded-lg">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                                    </svg>
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-900">Facebook</h4>
+                                                        <p className="text-sm text-gray-600">Integración con Facebook Messenger</p>
+                                                    </div>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.channels.facebook.enabled}
+                                                    onChange={(enabled) => 
+                                                        setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev.channels,
+                                                                facebook: { ...prev.channels.facebook, enabled }
+                                                            }
+                                                        }))
+                                                    }
+                                                    label=""
+                                                />
+                                            </div>
+                                            {settings.channels.facebook.enabled && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Page ID
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={settings.channels.facebook.page_id}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        facebook: { ...prev.channels.facebook, page_id: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="ID de tu página de Facebook"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Access Token
+                                                        </label>
+                                                        <input
+                                                            type="password"
+                                                            value={settings.channels.facebook.access_token}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        facebook: { ...prev.channels.facebook, access_token: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="Token de acceso de Facebook"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Instagram */}
+                                        <div className="p-4 border border-gray-200 rounded-lg">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <svg className="w-5 h-5 text-pink-600" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                                    </svg>
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-900">Instagram</h4>
+                                                        <p className="text-sm text-gray-600">Mensajes directos de Instagram</p>
+                                                    </div>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.channels.instagram.enabled}
+                                                    onChange={(enabled) => 
+                                                        setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev.channels,
+                                                                instagram: { ...prev.channels.instagram, enabled }
+                                                            }
+                                                        }))
+                                                    }
+                                                    label=""
+                                                />
+                                            </div>
+                                            {settings.channels.instagram.enabled && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Page ID
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={settings.channels.instagram.page_id}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        instagram: { ...prev.channels.instagram, page_id: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="ID de tu perfil de Instagram"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Access Token
+                                                        </label>
+                                                        <input
+                                                            type="password"
+                                                            value={settings.channels.instagram.access_token}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        instagram: { ...prev.channels.instagram, access_token: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="Token de acceso de Instagram"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
@@ -2613,57 +2796,7 @@ const {
                             </SettingSection>
                         )}
 
-                        {activeTab === "workflows" && (
-                            <SettingSection
-                                title="Workflows y Automatizaciones"
-                                description="N8N y flujos personalizados"
-                                icon={<Webhook />}
-                            >
-                                <div className="text-center py-8 text-gray-500">
-                                    <Webhook className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>Workflows próximamente...</p>
-                                </div>
-                            </SettingSection>
-                        )}
 
-                        {activeTab === "team" && (
-                            <SettingSection
-                                title="Gestión de Equipo"
-                                description="Usuarios, roles y permisos"
-                                icon={<Users />}
-                            >
-                                <div className="text-center py-8 text-gray-500">
-                                    <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>Gestión de equipo próximamente...</p>
-                                </div>
-                            </SettingSection>
-                        )}
-
-                        {activeTab === "billing" && (
-                            <SettingSection
-                                title="Facturación y Planes"
-                                description="Suscripción y métodos de pago"
-                                icon={<CreditCard />}
-                            >
-                                <div className="text-center py-8 text-gray-500">
-                                    <CreditCard className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>Facturación próximamente...</p>
-                                </div>
-                            </SettingSection>
-                        )}
-
-                        {activeTab === "integrations" && (
-                            <SettingSection
-                                title="Integraciones"
-                                description="Conecta con sistemas externos"
-                                icon={<Link2 />}
-                            >
-                                <div className="text-center py-8 text-gray-500">
-                                    <Link2 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>Integraciones próximamente...</p>
-                                </div>
-                            </SettingSection>
-                        )}
                     </div>
                 </div>
             </div>
