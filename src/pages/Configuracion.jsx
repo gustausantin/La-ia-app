@@ -183,6 +183,127 @@ const {
     const [activeTab, setActiveTab] = useState("general");
     const [testingConnection, setTestingConnection] = useState({});
 
+    // Función para validar canales
+    const validateChannel = useCallback((channelType, channelSettings) => {
+        const errors = [];
+        let isValid = true;
+
+        switch (channelType) {
+            case 'vapi':
+                if (!channelSettings.api_key.trim()) {
+                    errors.push("API Key es obligatorio");
+                    isValid = false;
+                }
+                if (!channelSettings.phone_number.trim()) {
+                    errors.push("Número de teléfono es obligatorio");
+                    isValid = false;
+                }
+                break;
+
+            case 'whatsapp':
+                if (!channelSettings.phone_number.trim()) {
+                    errors.push("Número de WhatsApp es obligatorio");
+                    isValid = false;
+                }
+                if (!channelSettings.api_key.trim()) {
+                    errors.push("Token de WhatsApp Business API es obligatorio");
+                    isValid = false;
+                }
+                break;
+
+            case 'email':
+                if (!channelSettings.smtp_host.trim()) {
+                    errors.push("Servidor SMTP es obligatorio");
+                    isValid = false;
+                }
+                if (!channelSettings.smtp_user.trim()) {
+                    errors.push("Usuario SMTP es obligatorio");
+                    isValid = false;
+                }
+                if (!channelSettings.smtp_password.trim()) {
+                    errors.push("Contraseña SMTP es obligatoria");
+                    isValid = false;
+                }
+                if (!channelSettings.from_email.trim()) {
+                    errors.push("Email origen es obligatorio");
+                    isValid = false;
+                }
+                break;
+
+            case 'facebook':
+                if (!channelSettings.page_id?.trim()) {
+                    errors.push("ID de página de Facebook es obligatorio");
+                    isValid = false;
+                }
+                if (!channelSettings.access_token?.trim()) {
+                    errors.push("Token de acceso de Facebook es obligatorio");
+                    isValid = false;
+                }
+                break;
+
+            case 'instagram':
+                if (!channelSettings.page_id?.trim()) {
+                    errors.push("ID de perfil de Instagram es obligatorio");
+                    isValid = false;
+                }
+                if (!channelSettings.access_token?.trim()) {
+                    errors.push("Token de acceso de Instagram es obligatorio");
+                    isValid = false;
+                }
+                break;
+        }
+
+        return { isValid, errors };
+    }, []);
+
+    // Función para validar todos los canales
+    const validateAllChannels = useCallback(() => {
+        const newValidation = {};
+        
+        Object.keys(settings.channels).forEach(channelType => {
+            if (settings.channels[channelType].enabled) {
+                newValidation[channelType] = validateChannel(channelType, settings.channels[channelType]);
+            } else {
+                newValidation[channelType] = { isValid: true, errors: [] };
+            }
+        });
+
+        setChannelValidation(newValidation);
+        return newValidation;
+    }, [settings.channels, validateChannel]);
+
+    // Función para obtener conteo de canales activos y válidos
+    const getActiveChannelCount = useCallback(() => {
+        const validation = validateAllChannels();
+        const activeChannels = Object.keys(settings.channels).filter(channelType => 
+            settings.channels[channelType].enabled && validation[channelType]?.isValid
+        );
+        return {
+            active: activeChannels.length,
+            total: Object.keys(settings.channels).length,
+            validChannels: activeChannels
+        };
+    }, [settings.channels, validateAllChannels]);
+
+    // Función para prevenir activación de canales inválidos
+    const handleChannelToggle = useCallback((channelType, enabled) => {
+        if (enabled) {
+            const validation = validateChannel(channelType, settings.channels[channelType]);
+            if (!validation.isValid) {
+                toast.error(`No se puede activar ${channelType}: ${validation.errors.join(', ')}`);
+                return;
+            }
+        }
+
+        setSettings(prev => ({
+            ...prev,
+            channels: {
+                ...prev.channels,
+                [channelType]: { ...prev.channels[channelType], enabled }
+            }
+        }));
+    }, [settings.channels, validateChannel]);
+
     // Estados para todas las configuraciones
     const [settings, setSettings] = useState({
         // Información general
@@ -417,6 +538,15 @@ const {
         last_updated: new Date()
     });
 
+    // Estados para validación de canales
+    const [channelValidation, setChannelValidation] = useState({
+        vapi: { isValid: false, errors: [] },
+        whatsapp: { isValid: false, errors: [] },
+        email: { isValid: false, errors: [] },
+        facebook: { isValid: false, errors: [] },
+        instagram: { isValid: false, errors: [] }
+    });
+
     // Tabs de navegación
     const settingsTabs = [
         {
@@ -587,6 +717,11 @@ const {
             }
         }
     }, [isReady, restaurantId, loadSettings]); // Ahora sí podemos incluir loadSettings
+
+    // Effect para validar canales cuando cambian
+    useEffect(() => {
+        validateAllChannels();
+    }, [settings.channels, validateAllChannels]);
 
     // CRÍTICO: Recargar datos cuando se vuelve a la página (focus)
     useEffect(() => {
@@ -2227,15 +2362,7 @@ const {
                                                 <div className="flex items-center gap-2">
                                                     <ToggleSwitch
                                                         enabled={settings.channels.vapi.enabled}
-                                                        onChange={(enabled) => 
-                                                            setSettings(prev => ({
-                                                                ...prev,
-                                                                channels: {
-                                                                    ...prev.channels,
-                                                                    vapi: { ...prev.channels.vapi, enabled }
-                                                                }
-                                                            }))
-                                                        }
+                                                        onChange={(enabled) => handleChannelToggle('vapi', enabled)}
                                                         label=""
                                                     />
                                                     <button
@@ -2248,47 +2375,70 @@ const {
                                                 </div>
                                             </div>
                                             {settings.channels.vapi.enabled && (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                            API Key
-                                                        </label>
-                                                        <input
-                                                            type="password"
-                                                            value={settings.channels.vapi.api_key}
-                                                            onChange={(e) => 
-                                                                setSettings(prev => ({
-                                                                    ...prev,
-                                                                    channels: {
-                                                                        ...prev.channels,
-                                                                        vapi: { ...prev.channels.vapi, api_key: e.target.value }
-                                                                    }
-                                                                }))
-                                                            }
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                            placeholder="Ingresa tu API key de VAPI"
-                                                        />
+                                                <div className="space-y-4">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                                API Key *
+                                                            </label>
+                                                            <input
+                                                                type="password"
+                                                                value={settings.channels.vapi.api_key}
+                                                                onChange={(e) => 
+                                                                    setSettings(prev => ({
+                                                                        ...prev,
+                                                                        channels: {
+                                                                            ...prev.channels,
+                                                                            vapi: { ...prev.channels.vapi, api_key: e.target.value }
+                                                                        }
+                                                                    }))
+                                                                }
+                                                                className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                                                                    channelValidation.vapi?.errors?.some(e => e.includes('API Key')) 
+                                                                        ? 'border-red-300 bg-red-50' 
+                                                                        : 'border-gray-300'
+                                                                }`}
+                                                                placeholder="Ingresa tu API key de VAPI"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                                Número de teléfono *
+                                                            </label>
+                                                            <input
+                                                                type="tel"
+                                                                value={settings.channels.vapi.phone_number}
+                                                                onChange={(e) => 
+                                                                    setSettings(prev => ({
+                                                                        ...prev,
+                                                                        channels: {
+                                                                            ...prev.channels,
+                                                                            vapi: { ...prev.channels.vapi, phone_number: e.target.value }
+                                                                        }
+                                                                    }))
+                                                                }
+                                                                className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                                                                    channelValidation.vapi?.errors?.some(e => e.includes('teléfono')) 
+                                                                        ? 'border-red-300 bg-red-50' 
+                                                                        : 'border-gray-300'
+                                                                }`}
+                                                                placeholder="+34 666 123 456"
+                                                            />
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                            Número de teléfono
-                                                        </label>
-                                                        <input
-                                                            type="tel"
-                                                            value={settings.channels.vapi.phone_number}
-                                                            onChange={(e) => 
-                                                                setSettings(prev => ({
-                                                                    ...prev,
-                                                                    channels: {
-                                                                        ...prev.channels,
-                                                                        vapi: { ...prev.channels.vapi, phone_number: e.target.value }
-                                                                    }
-                                                                }))
-                                                            }
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                            placeholder="+34 666 123 456"
-                                                        />
-                                                    </div>
+                                                    {channelValidation.vapi?.errors?.length > 0 && (
+                                                        <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                                            <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                                                            <div className="text-sm text-red-700">
+                                                                <p className="font-medium">Campos obligatorios faltantes:</p>
+                                                                <ul className="list-disc list-inside mt-1">
+                                                                    {channelValidation.vapi.errors.map((error, index) => (
+                                                                        <li key={index}>{error}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -2306,15 +2456,7 @@ const {
                                                 <div className="flex items-center gap-2">
                                                     <ToggleSwitch
                                                         enabled={settings.channels.whatsapp.enabled}
-                                                        onChange={(enabled) => 
-                                                            setSettings(prev => ({
-                                                                ...prev,
-                                                                channels: {
-                                                                    ...prev.channels,
-                                                                    whatsapp: { ...prev.channels.whatsapp, enabled }
-                                                                }
-                                                            }))
-                                                        }
+                                                        onChange={(enabled) => handleChannelToggle('whatsapp', enabled)}
                                                         label=""
                                                     />
                                                     <button

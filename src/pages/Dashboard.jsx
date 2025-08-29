@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
+import { useChannelStats } from "../hooks/useChannelStats";
+import { useOccupancy } from "../hooks/useOccupancy";
 import {
     format,
     addHours,
@@ -219,6 +221,8 @@ export default function Dashboard() {
       } = useAuthContext();
       
     const navigate = useNavigate();
+    const { channelStats } = useChannelStats();
+    const { occupancy: occupancyData } = useOccupancy(7);
 
     logger.info('📊 Dashboard avanzado rendering...', { status, isAuthenticated });
 
@@ -649,8 +653,8 @@ export default function Dashboard() {
 
                     <StatCard
                         title="Canales Activos"
-                        value="0/5"
-                        detail="Ningún canal configurado"
+                        value={`${channelStats.active}/${channelStats.total}`}
+                        detail={channelStats.active === 0 ? "Ningún canal configurado" : `${channelStats.validChannels.join(', ')} activos`}
                         icon={<Activity className="w-6 h-6 text-blue-600" />}
                         color="bg-blue-50"
                         loading={isLoading}
@@ -694,6 +698,43 @@ export default function Dashboard() {
                     detail={peakHours.join(", ")}
                     icon={<Clock className="w-6 h-6 text-amber-600" />}
                     color="bg-amber-50"
+                    loading={isLoading}
+                />
+            </div>
+
+            {/* Ocupación y métricas operativas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <StatCard
+                    title="Ocupación Promedio"
+                    value={`${occupancyData.average}%`}
+                    detail={`Últimos 7 días • Hoy: ${occupancyData.today}%`}
+                    icon={<BarChart2 className="w-6 h-6 text-emerald-600" />}
+                    color="bg-emerald-50"
+                    trend={
+                        occupancyData.average > 70
+                            ? { positive: true, value: "Alta" }
+                            : occupancyData.average > 40
+                            ? { positive: true, value: "Media" }
+                            : { positive: false, value: "Baja" }
+                    }
+                    loading={isLoading}
+                />
+
+                <StatCard
+                    title="Mesas Activas"
+                    value={occupancyData.details?.activeTables || 0}
+                    detail={`Capacidad total: ${occupancyData.details?.totalTableCapacity || 0} personas`}
+                    icon={<Users className="w-6 h-6 text-cyan-600" />}
+                    color="bg-cyan-50"
+                    loading={isLoading}
+                />
+
+                <StatCard
+                    title="Reservas Totales"
+                    value={occupancyData.details?.totalReservations || 0}
+                    detail={`${occupancyData.details?.totalGuests || 0} comensales • ${occupancyData.details?.averagePartySize || 0} promedio/mesa`}
+                    icon={<Calendar className="w-6 h-6 text-violet-600" />}
+                    color="bg-violet-50"
                     loading={isLoading}
                 />
             </div>

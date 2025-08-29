@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { useChannelStats } from '../hooks/useChannelStats';
+import { useOccupancy } from '../hooks/useOccupancy';
 import { 
     format, 
     parseISO, 
@@ -72,6 +74,8 @@ const daysOfWeek = [
 
 export default function Calendario() {
     const { restaurant, restaurantId, isReady, addNotification } = useAuthContext();
+    const { channelStats } = useChannelStats();
+    const { occupancy: occupancyData } = useOccupancy(7);
 
     // Estados principales
     const [loading, setLoading] = useState(true);
@@ -213,48 +217,11 @@ export default function Calendario() {
                 return total + hours;
             }, 0);
 
-            // 3. Canales activos (desde configuración)
-            let activeChannels = 5; // valor por defecto
-            try {
-                const { data: restaurantData } = await supabase
-                    .from("restaurants")
-                    .select("settings")
-                    .eq("id", restaurantId)
-                    .single();
-                
-                const channels = restaurantData?.settings?.channels || {};
-                activeChannels = Object.values(channels).filter(channel => channel?.enabled).length;
-            } catch (error) {
-                console.warn("No se pudieron cargar canales:", error);
-            }
+            // 3. Canales activos (desde hook)
+            const activeChannels = channelStats.active;
 
-            // 4. Ocupación promedio (desde reservas)
-            let occupancy = 0;
-            try {
-                const today = new Date();
-                const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-                
-                const { data: reservations } = await supabase
-                    .from("reservations")
-                    .select("party_size")
-                    .eq("restaurant_id", restaurantId)
-                    .gte("reservation_date", lastWeek.toISOString().split('T')[0])
-                    .eq("status", "confirmada");
-
-                const { data: tablesData } = await supabase
-                    .from("tables")
-                    .select("capacity")
-                    .eq("restaurant_id", restaurantId)
-                    .eq("is_active", true);
-
-                if (reservations && tablesData) {
-                    const totalCapacity = tablesData.reduce((sum, table) => sum + (table.capacity || 0), 0);
-                    const totalGuests = reservations.reduce((sum, res) => sum + (res.party_size || 0), 0);
-                    occupancy = totalCapacity > 0 ? Math.round((totalGuests / (totalCapacity * 7)) * 100) : 0;
-                }
-            } catch (error) {
-                console.warn("No se pudo calcular ocupación:", error);
-            }
+            // 4. Ocupación promedio (desde hook)
+            const occupancy = occupancyData.average;
 
             setStats({
                 daysOpen,
@@ -293,7 +260,10 @@ export default function Calendario() {
         try {
             console.log("Día seleccionado:", format(date, 'yyyy-MM-dd'));
             // TODO: Implementar modal de eventos especiales
-            toast.info(`Funcionalidad de eventos para ${format(date, 'dd/MM/yyyy')} próximamente`);
+            toast(`Funcionalidad de eventos para ${format(date, 'dd/MM/yyyy')} próximamente`, {
+                icon: "📅",
+                duration: 3000,
+            });
         } catch (error) {
             console.error("Error en handleDayClick:", error);
             toast.error("Error al seleccionar el día");
@@ -552,9 +522,14 @@ export default function Calendario() {
                                                                 </div>
                                                 <button
                                                     className="w-full text-xs text-blue-600 hover:text-blue-800 py-1"
-                                                    onClick={() => {
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
                                                         // TODO: Implementar múltiples turnos
-                                                        toast.info("Múltiples turnos próximamente");
+                                                        toast("Múltiples turnos próximamente", {
+                                                            icon: "ℹ️",
+                                                            duration: 3000,
+                                                        });
                                                     }}
                                                 >
                                                     + Añadir turno
@@ -616,8 +591,13 @@ export default function Calendario() {
                                     </button>
                                 </div>
                                                                     <button
-                                    onClick={() => {
-                                        toast.info("Funcionalidad de eventos especiales próximamente");
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        toast("Funcionalidad de eventos especiales próximamente", {
+                                            icon: "🗓️",
+                                            duration: 3000,
+                                        });
                                         // setShowEventModal(true);
                                     }}
                                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
