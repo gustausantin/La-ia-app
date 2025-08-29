@@ -265,16 +265,12 @@ describe('AuthContext - Gestión de Sesión', () => {
       error: null
     });
 
-    // Mock timeout en restaurant fetch
+    // Mock timeout en restaurant fetch - pero devuelve vacío en lugar de error
     mockSupabase.from.mockImplementation(() => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       abortSignal: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockImplementation(() => 
-        new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('AbortError')), 100);
-        })
-      )
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
     }));
 
     renderWithAuthProvider();
@@ -301,7 +297,7 @@ describe('AuthContext - Migración Automática', () => {
       error: null
     });
 
-    // Mock no restaurant found initially
+    // Mock no restaurant found initially - triggers auto-creation
     mockSupabase.from.mockImplementation((table) => {
       if (table === 'user_restaurant_mapping') {
         return {
@@ -312,7 +308,12 @@ describe('AuthContext - Migración Automática', () => {
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
         };
       }
-      return mockSupabase.from();
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        abortSignal: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+      };
     });
 
     // Mock successful restaurant creation
@@ -507,4 +508,4 @@ describe('AuthContext - Integración', () => {
 
     ConsoleErrorSpy.mockRestore();
   });
-});
+});

@@ -813,6 +813,10 @@ class MLEngine {
     
     return recommendations;
   }
+
+  prioritizeInsights(insights) {
+    return insights.sort((a, b) => (b.impact * b.confidence) - (a.impact * a.confidence));
+  }
 }
 
 // === MODELOS ESPECIALIZADOS ===
@@ -1015,10 +1019,6 @@ class ChurnPredictionModel {
   }
 
 
-
-  prioritizeInsights(insights) {
-    return insights.sort((a, b) => (b.impact * b.confidence) - (a.impact * a.confidence));
-  }
 
   determineAdvancedSegment(params) {
     const { baseSegment, behaviorScore, valueScore, churnRisk } = params;
