@@ -11,25 +11,34 @@
 3. **[🗄️ Database Reference](DATABASE-MASTER-REFERENCE.md)** - Esquema completo de BD
 
 ### **📊 Estado del Proyecto:**
-4. **[📈 Progreso Actual](PROGRESO-ACTUAL-2025-01-27-UPDATED.md)** - Estado actualizado del desarrollo
-5. **[📝 Changelog Final](CHANGELOG-2025-01-29-FINAL.md)** - Historial completo de cambios
-6. **[🧪 Testing Evaluation](TESTING-EVALUATION-2025-01-28.md)** - Resultados de pruebas
+4. **[📈 Progreso Actual](PROGRESO-ACTUAL-2025-01-27-UPDATED.md)** - Estado actualizado V3.0
+5. **[📝 Changelog V3.0](CHANGELOG-2025-01-29-FINAL-V2.md)** - Major Release con facturación ✨ **NUEVO**
+6. **[📝 Changelog Anterior](CHANGELOG-2025-01-29-FINAL.md)** - Historial previo de cambios
+7. **[🧪 Testing Evaluation](TESTING-EVALUATION-2025-01-28.md)** - Resultados de pruebas
 
 ---
 
 ## 🎯 **FUNCIONALIDADES ESPECÍFICAS**
 
 ### **🤖 CRM Sistema Inteligente:**
-7. **[🎯 CRM Completo](CRM-SISTEMA-INTELIGENTE-COMPLETO.md)** - Documentación técnica completa
-8. **[📖 Manual CRM](CRM-MANUAL-MENSAJERIA.md)** - Guía de usuario para mensajería
+8. **[🎯 CRM Completo](CRM-SISTEMA-INTELIGENTE-COMPLETO.md)** - Documentación técnica completa
+9. **[📖 Manual CRM](CRM-MANUAL-MENSAJERIA.md)** - Guía de usuario para mensajería
+
+### **💰 Sistema de Facturación:** ✨ **NUEVO**
+10. **[🧾 Billing Integration Guide](BILLING-INTEGRATION-GUIDE.md)** - Integración TPV completa
+11. **[📊 TPV España Guide](TPV-ESPANA-COMPATIBILITY.md)** - Compatibilidad sistemas españoles
+
+### **📞 Comunicación Omnicanal:**
+12. **[💬 Communication Analytics](COMMUNICATION-ANALYTICS-GUIDE.md)** - Métricas y fuentes definidas
+13. **[📝 Templates System](TEMPLATES-PERSONALIZADAS-GUIDE.md)** - Sistema de plantillas
 
 ### **🔒 Seguridad Enterprise:**
-9. **[🛡️ Security Certification](SECURITY-ENTERPRISE-CERTIFICATION.md)** - Certificación de seguridad
-10. **[📱 PWA Guide](PWA-GUIA-COMPLETA.md)** - Progressive Web App
+14. **[🛡️ Security Certification](SECURITY-ENTERPRISE-CERTIFICATION.md)** - Certificación de seguridad
+15. **[📱 PWA Guide](PWA-GUIA-COMPLETA.md)** - Progressive Web App
 
 ### **⚡ Performance & AI:**
-11. **[🚀 Performance Optimization](PERFORMANCE-OPTIMIZATION-COMPLETA.md)** - Optimizaciones avanzadas
-12. **[🤖 IA Expansion](IA-EXPANSION-COMPLETA.md)** - Características de Inteligencia Artificial
+16. **[🚀 Performance Optimization](PERFORMANCE-OPTIMIZATION-COMPLETA.md)** - Optimizaciones avanzadas
+17. **[🤖 IA Expansion](IA-EXPANSION-COMPLETA.md)** - Características de Inteligencia Artificial
 
 ---
 
