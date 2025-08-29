@@ -184,7 +184,7 @@ const TableCard = ({
     // Determinar el estado de la mesa
     const getTableStatus = () => {
         // Verificar primero si la mesa está activa (is_active = true)
-        const isActive = table.is_active !== false && table.status !== "inactive";
+        const isActive = table.is_active !== false;
         
         if (!isActive) {
             return "inactive";
@@ -832,7 +832,7 @@ export default function Mesas() {
                 if (selectedStatus !== "all") {
                     filtered = filtered.filter((table) => {
                         const reservation = getTableReservation(table.id);
-                        const isActive = table.is_active !== false && table.status !== "inactive";
+                        const isActive = table.is_active !== false;
 
                         if (selectedStatus === "available") {
                             return isActive && !reservation;
@@ -906,9 +906,7 @@ export default function Mesas() {
         
         // Activas: mesas que están operativas (no inactivas ni en mantenimiento)
         const active = tables.filter((t) => 
-            t.is_active !== false && 
-            t.status !== "inactive" && 
-            t.status !== "maintenance"
+            t.is_active !== false
         ).length;
         
         const reserved = reservations.filter(
@@ -926,9 +924,7 @@ export default function Mesas() {
         
         const available = tables.filter(t => {
             // Debe estar activa y operativa
-            const isOperational = t.is_active !== false && 
-                                 t.status !== "inactive" && 
-                                 t.status !== "maintenance";
+            const isOperational = t.is_active !== false;
             
             // No debe tener reservas asignadas
             const hasNoReservations = !tablesWithReservations.has(t.id) && 

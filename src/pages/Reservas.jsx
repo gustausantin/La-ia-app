@@ -518,13 +518,16 @@ export default function Reservas() {
                 .from("tables")
                 .select("*")
                 .eq("restaurant_id", restaurantId)
-                .eq("status", "active")
+                .eq("is_active", true)
                 .order("zone")
                 .order("table_number");
 
             if (error) throw error;
             setTables(data || []);
+            console.log("✅ Mesas cargadas en Reservas:", data?.length || 0);
         } catch (error) {
+            console.error("❌ Error cargando mesas:", error);
+            toast.error("Error al cargar las mesas");
         }
     }, [restaurantId]);
 
@@ -553,9 +556,7 @@ export default function Reservas() {
     const handleCreateReservation = useCallback(() => {
         // Verificar que hay mesas configuradas Y operativas (misma lógica que contador Mesas)
         const activeTables = tables.filter(table => 
-            table.is_active !== false && 
-            table.status !== "inactive" && 
-            table.status !== "maintenance"
+            table.is_active !== false
         );
         
         if (tables.length === 0) {
