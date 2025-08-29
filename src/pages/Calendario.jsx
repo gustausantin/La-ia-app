@@ -162,7 +162,13 @@ export default function Calendario() {
             initializeData();
         };
 
+        const handleScheduleUpdate = (event) => {
+            console.log("🔄 Calendario: Horarios actualizados desde Configuración");
+            initializeData();
+        };
+
         window.addEventListener('force-restaurant-reload', handleRestaurantReload);
+        window.addEventListener('schedule-updated', handleScheduleUpdate);
         
         // También recargar cuando se enfoca la página
         const handleFocus = () => {
@@ -178,6 +184,7 @@ export default function Calendario() {
 
         return () => {
             window.removeEventListener('force-restaurant-reload', handleRestaurantReload);
+            window.removeEventListener('schedule-updated', handleScheduleUpdate);
             window.removeEventListener('focus', handleFocus);
             document.removeEventListener('visibilitychange', handleFocus);
         };
@@ -200,22 +207,28 @@ export default function Calendario() {
             }
 
             const savedHours = restaurantData?.settings?.operating_hours || {};
+            
+            console.log("🔄 Horarios cargados desde BD:", savedHours);
 
             // Convertir horarios de operating_hours a formato de calendario
             const loadedSchedule = daysOfWeek.map(day => {
                 const dayKey = day.id; // monday, tuesday, etc.
                 const dayHours = savedHours[dayKey];
                 
+                console.log(`📅 ${day.name}:`, dayHours);
+                
+                const isOpen = dayHours ? !dayHours.closed : false;
+                
                 return {
                     day_of_week: day.id,
                     day_name: day.name,
-                    is_open: dayHours ? !dayHours.closed : false,
-                    slots: dayHours && !dayHours.closed ? [
+                    is_open: isOpen,
+                    slots: isOpen ? [
                         {
                             id: 1,
                             name: "Horario Principal",
-                            start_time: dayHours.open || "09:00",
-                            end_time: dayHours.close || "22:00"
+                            start_time: dayHours?.open || "09:00",
+                            end_time: dayHours?.close || "22:00"
                         }
                     ] : []
                 };
@@ -573,7 +586,6 @@ export default function Calendario() {
                         <nav className="flex space-x-8 px-6" aria-label="Tabs">
                             {[
                                 { id: 'horarios', name: 'Horarios del restaurante', icon: Clock },
-                                { id: 'agente', name: 'Agente IA', icon: Bot },
                                 { id: 'calendario', name: 'Vista calendario', icon: Calendar },
                                 { id: 'eventos', name: 'Eventos especiales', icon: Star }
                             ].map((tab) => {
@@ -712,16 +724,10 @@ export default function Calendario() {
                         </div>
                     )}
 
-                    {/* Tab: Agente IA */}
-                    {activeTab === 'agente' && (
+                    {/* Tab: Calendario */}
+                    {activeTab === 'calendario' && (
                         <div className="p-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {/* Configuración por canal */}
-                                <div className="space-y-4">
-                                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                        <Settings className="w-5 h-5" />
-                                        Configuración por canal
-                                    </h3>
+                            {/* Controles del calendario */}
 
                                     {agentChannels.map((channel) => {
                                         const Icon = channel.icon;
