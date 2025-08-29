@@ -190,66 +190,70 @@ const {
 
         switch (channelType) {
             case 'vapi':
-                if (!channelSettings.api_key.trim()) {
+                if (!channelSettings?.api_key?.trim()) {
                     errors.push("API Key es obligatorio");
                     isValid = false;
                 }
-                if (!channelSettings.phone_number.trim()) {
+                if (!channelSettings?.phone_number?.trim()) {
                     errors.push("Número de teléfono es obligatorio");
                     isValid = false;
                 }
                 break;
 
             case 'whatsapp':
-                if (!channelSettings.phone_number.trim()) {
+                if (!channelSettings?.phone_number?.trim()) {
                     errors.push("Número de WhatsApp es obligatorio");
                     isValid = false;
                 }
-                if (!channelSettings.api_key.trim()) {
+                if (!channelSettings?.api_key?.trim()) {
                     errors.push("Token de WhatsApp Business API es obligatorio");
                     isValid = false;
                 }
                 break;
 
             case 'email':
-                if (!channelSettings.smtp_host.trim()) {
+                if (!channelSettings?.smtp_host?.trim()) {
                     errors.push("Servidor SMTP es obligatorio");
                     isValid = false;
                 }
-                if (!channelSettings.smtp_user.trim()) {
+                if (!channelSettings?.smtp_user?.trim()) {
                     errors.push("Usuario SMTP es obligatorio");
                     isValid = false;
                 }
-                if (!channelSettings.smtp_password.trim()) {
+                if (!channelSettings?.smtp_password?.trim()) {
                     errors.push("Contraseña SMTP es obligatoria");
                     isValid = false;
                 }
-                if (!channelSettings.from_email.trim()) {
+                if (!channelSettings?.from_email?.trim()) {
                     errors.push("Email origen es obligatorio");
                     isValid = false;
                 }
                 break;
 
             case 'facebook':
-                if (!channelSettings.page_id?.trim()) {
+                if (!channelSettings?.page_id?.trim()) {
                     errors.push("ID de página de Facebook es obligatorio");
                     isValid = false;
                 }
-                if (!channelSettings.access_token?.trim()) {
+                if (!channelSettings?.access_token?.trim()) {
                     errors.push("Token de acceso de Facebook es obligatorio");
                     isValid = false;
                 }
                 break;
 
             case 'instagram':
-                if (!channelSettings.page_id?.trim()) {
+                if (!channelSettings?.page_id?.trim()) {
                     errors.push("ID de perfil de Instagram es obligatorio");
                     isValid = false;
                 }
-                if (!channelSettings.access_token?.trim()) {
+                if (!channelSettings?.access_token?.trim()) {
                     errors.push("Token de acceso de Instagram es obligatorio");
                     isValid = false;
                 }
+                break;
+
+            case 'web_chat':
+                // Web chat no requiere configuración externa
                 break;
         }
 

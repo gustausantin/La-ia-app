@@ -43,7 +43,7 @@ export default function Clientes() {
                 .from("customers")
                 .select(`
                     id, restaurant_id, name, email, phone, 
-                    total_visits, total_spent, last_visit, created_at,
+                    visits_count, total_spent, last_visit_at, created_at,
                     consent_whatsapp, consent_email, notes
                 `)
                 .eq("restaurant_id", restaurantId)
@@ -193,7 +193,7 @@ export default function Clientes() {
                             <div>
                                 <p className="text-sm text-gray-600">Activos</p>
                                 <p className="text-2xl font-bold text-emerald-600">
-                                    {customers.filter(c => c.last_visit && differenceInDays(new Date(), new Date(c.last_visit)) <= 60).length}
+                                    {customers.filter(c => c.last_visit_at && differenceInDays(new Date(), new Date(c.last_visit_at)) <= 60).length}
                                 </p>
                             </div>
                             <CheckCircle2 className="w-8 h-8 text-emerald-500" />
@@ -281,17 +281,17 @@ export default function Clientes() {
                                         </div>
                                         <div className="flex items-center gap-4 text-sm text-gray-600">
                                             <div className="text-center">
-                                                <p className="font-medium text-gray-900">{customer.total_visits || 0}</p>
+                                                <p className="font-medium text-gray-900">{customer.visits_count || 0}</p>
                                                 <p className="text-xs">Visitas</p>
                                             </div>
                                             <div className="text-center">
                                                 <p className="font-medium text-gray-900">€{(customer.total_spent || 0).toFixed(2)}</p>
                                                 <p className="text-xs">Gastado</p>
                                             </div>
-                                            {customer.last_visit && (
+                                            {customer.last_visit_at && (
                                                 <div className="text-center">
                                                     <p className="font-medium text-gray-900">
-                                                        {format(parseISO(customer.last_visit), 'dd/MM')}
+                                                        {format(parseISO(customer.last_visit_at), 'dd/MM')}
                                                     </p>
                                                     <p className="text-xs">Última</p>
                                                 </div>
@@ -346,10 +346,31 @@ const CustomerModal = ({ customer, onClose, onSubmit }) => {
 
     const validateForm = () => {
         const newErrors = {};
-        if (!formData.first_name.trim()) newErrors.first_name = "El nombre es obligatorio";
-        if (!formData.email.trim()) newErrors.email = "El email es obligatorio";
-        else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email inválido";
-        if (!formData.phone.trim()) newErrors.phone = "El teléfono es obligatorio";
+        
+        // Validación de nombre
+        if (!formData.first_name.trim()) {
+            newErrors.first_name = "El nombre es obligatorio";
+        } else if (formData.first_name.trim().length < 2) {
+            newErrors.first_name = "El nombre debe tener al menos 2 caracteres";
+        }
+        
+        // Validación de email
+        if (!formData.email.trim()) {
+            newErrors.email = "El email es obligatorio";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            newErrors.email = "Formato de email inválido";
+        }
+        
+        // Validación de teléfono mejorada
+        if (!formData.phone.trim()) {
+            newErrors.phone = "El teléfono es obligatorio";
+        } else {
+            const phoneRegex = /^(\+34|0034|34)?[6789]\d{8}$/;
+            const cleanPhone = formData.phone.replace(/[\s\-()]/g, '');
+            if (!phoneRegex.test(cleanPhone)) {
+                newErrors.phone = "Formato de teléfono español inválido (ej: +34 600 123 456)";
+            }
+        }
         
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
