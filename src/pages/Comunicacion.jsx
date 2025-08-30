@@ -305,11 +305,11 @@ const RealtimeStats = ({ conversations, messages }) => {
         const last24h = subDays(now, 1);
 
         const activeConvs = conversations.filter(
-            (c) => c.state === "active",
+            (c) => c.status === "active",
         ).length;
         const aiHandled = conversations.filter((c) => c.ai_handled).length;
         const escalated = conversations.filter(
-            (c) => c.state === "escalated",
+            (c) => c.status === "escalated",
         ).length;
 
         const recentMessages = messages.filter(
@@ -374,7 +374,7 @@ const ConversationItem = ({ conversation, isSelected, onSelect }) => {
         COMMUNICATION_CHANNELS.whatsapp;
     const ChannelIcon = channel.icon;
     const state =
-        CONVERSATION_STATES[conversation.state] || CONVERSATION_STATES.active;
+        CONVERSATION_STATES[conversation.status] || CONVERSATION_STATES.active;
 
     const formatLastMessageTime = (timestamp) => {
         const date = parseISO(timestamp);
@@ -988,7 +988,7 @@ const CustomerInfoPanel = ({ conversation, onClose }) => {
                 <button
                     onClick={() => {
                         // TODO: Navegar a crear reserva con cliente preseleccionado
-                        toast.info("Navegando a crear reserva...");
+                        toast.success("Navegando a crear reserva...");
                     }}
                     className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
                 >
@@ -998,7 +998,7 @@ const CustomerInfoPanel = ({ conversation, onClose }) => {
                 <button
                     onClick={() => {
                         // TODO: Navegar a perfil completo del cliente
-                        toast.info("Ver perfil completo próximamente");
+                        toast.success("Ver perfil completo próximamente");
                     }}
                     className="w-full py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
                 >
@@ -1054,7 +1054,7 @@ export default function Comunicacion() {
     const [filters, setFilters] = useState({
         search: "",
         channel: "all",
-        state: "all",
+        status: "all",
         aiHandled: "all",
         dateRange: "today",
     });
@@ -1126,7 +1126,7 @@ export default function Comunicacion() {
                     customer_name: "Carlos Rodríguez",
                     customer_phone: "+34 611 234 567",
                     channel: "vapi",
-                    state: "escalated",
+                    status: "escalated",
                     is_vip: false,
                     ai_handled: true,
                     human_takeover: true,
@@ -1154,7 +1154,7 @@ export default function Comunicacion() {
                     customer_name: "Ana Martínez",
                     customer_phone: "+34 622 345 678",
                     channel: "instagram",
-                    state: "resolved",
+                    status: "resolved",
                     is_vip: false,
                     ai_handled: true,
                     human_takeover: false,
@@ -1344,7 +1344,11 @@ export default function Comunicacion() {
             // 📊 INTENTAR CARGAR DATOS REALES - Con fallback si tablas no existen
             let conversations = [];
             
-            // Intentar cargar desde message_batches_demo primero (ya existe)
+            // TEMPORAL: Deshabilitado hasta que las tablas estén sincronizadas
+            console.log("📊 Usando datos simulados para comunicación (chasis en desarrollo)");
+            
+            // TODO: Reactivar cuando las tablas estén completamente sincronizadas
+            /*
             try {
                 const { data: batchData, error: batchError } = await supabase
                     .from('message_batches_demo')
@@ -1352,20 +1356,22 @@ export default function Comunicacion() {
                     .eq('restaurant_id', restaurantId)
                     .gte('created_at', subDays(new Date(), 7).toISOString());
 
-                if (!batchError && batchData) {
+                if (!batchError && batchData && batchData.length > 0) {
                     conversations = batchData.map(batch => ({
                         id: batch.batch_id,
                         channel: batch.channel || 'whatsapp',
                         created_at: batch.created_at,
-                        state: batch.state || 'active'
+                        status: batch.status || 'active'
                     }));
                     console.log("📊 Datos cargados desde message_batches_demo:", conversations.length);
                 }
             } catch (error) {
                 console.warn("⚠️ message_batches_demo no disponible:", error.message);
             }
+            */
 
-            // Si no hay datos, intentar desde conversations (futura tabla)
+            // TEMPORAL: También deshabilitado
+            /*
             if (conversations.length === 0) {
                 try {
                     const { data: convData, error: convError } = await supabase
@@ -1374,14 +1380,15 @@ export default function Comunicacion() {
                         .eq('restaurant_id', restaurantId)
                         .gte('created_at', subDays(new Date(), 7).toISOString());
 
-                    if (!convError && convData) {
+                    if (!convError && convData && convData.length > 0) {
                         conversations = convData;
                         console.log("📊 Datos cargados desde conversations:", conversations.length);
                     }
                 } catch (error) {
-                    console.warn("⚠️ Tabla conversations no existe aún:", error.message);
+                    console.warn("⚠️ Tabla conversations no disponible:", error.message);
                 }
             }
+            */
 
             // Procesar datos reales o mostrar vacío
             const totalConversations = conversations?.length || 0;
@@ -1557,8 +1564,8 @@ export default function Comunicacion() {
         }
 
         // Estado
-        if (filters.state !== "all") {
-            filtered = filtered.filter((conv) => conv.state === filters.state);
+        if (filters.status !== "all") {
+            filtered = filtered.filter((conv) => conv.status === filters.status);
         }
 
         // IA
@@ -1707,12 +1714,12 @@ export default function Comunicacion() {
         setConversations((prev) =>
             prev.map((conv) =>
                 conv.id === selectedConversation.id
-                    ? { ...conv, state: "escalated", human_takeover: true }
+                    ? { ...conv, status: "escalated", human_takeover: true }
                     : conv,
             ),
         );
 
-        toast.info("Conversación escalada a atención humana");
+        toast.success("Conversación escalada a atención humana");
         if (addNotification) {
             addNotification({
                 type: 'system',
@@ -1728,13 +1735,13 @@ export default function Comunicacion() {
         // TODO: Implementar resolución real
         // await supabase
         //     .from('conversations')
-        //     .update({ state: 'resolved', resolved_at: new Date().toISOString() })
+        //     .update({ status: 'resolved', resolved_at: new Date().toISOString() })
         //     .eq('id', selectedConversation.id);
 
         setConversations((prev) =>
             prev.map((conv) =>
                 conv.id === selectedConversation.id
-                    ? { ...conv, state: "resolved" }
+                    ? { ...conv, status: "resolved" }
                     : conv,
             ),
         );
@@ -1897,11 +1904,11 @@ export default function Comunicacion() {
                                     </select>
 
                                     <select
-                                        value={filters.state}
+                                        value={filters.status}
                                         onChange={(e) =>
                                             setFilters((prev) => ({
                                                 ...prev,
-                                                state: e.target.value,
+                                                status: e.target.value,
                                             }))
                                         }
                                         className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-purple-500"
@@ -2012,7 +2019,7 @@ export default function Comunicacion() {
                                         <p className="text-sm mt-1">
                                             {filters.search ||
                                             filters.channel !== "all" ||
-                                            filters.state !== "all"
+                                            filters.status !== "all"
                                                 ? "No se encontraron conversaciones con los filtros aplicados"
                                                 : "Las nuevas conversaciones aparecerán aquí"}
                                         </p>
@@ -2040,7 +2047,7 @@ export default function Comunicacion() {
                                                         <div
                                                             className={`
                                                             absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white
-                                                            ${selectedConversation.state === "active" ? "bg-green-500" : "bg-gray-400"}
+                                                            ${selectedConversation.status === "active" ? "bg-green-500" : "bg-gray-400"}
                                                         `}
                                                         />
                                                     </div>
@@ -2083,7 +2090,7 @@ export default function Comunicacion() {
                                                 </div>
 
                                                 <div className="flex items-center gap-2">
-                                                    {selectedConversation.state ===
+                                                    {selectedConversation.status ===
                                                         "escalated" && (
                                                         <span className="px-3 py-1 bg-red-100 text-red-700 text-sm font-medium rounded-full flex items-center gap-1">
                                                             <AlertTriangle className="w-4 h-4" />
@@ -2112,7 +2119,7 @@ export default function Comunicacion() {
                                                     <button
                                                         onClick={() => {
                                                             // TODO: Implementar llamada directa
-                                                            toast.info(
+                                                            toast.success(
                                                                 "Función de llamada disponible próximamente",
                                                             );
                                                         }}
@@ -2126,7 +2133,7 @@ export default function Comunicacion() {
                                                             <MoreVertical className="w-5 h-5" />
                                                         </button>
                                                         <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                                                            {selectedConversation.state !==
+                                                            {selectedConversation.status !==
                                                                 "escalated" && (
                                                                 <button
                                                                     onClick={
@@ -2139,7 +2146,7 @@ export default function Comunicacion() {
                                                                     humano
                                                                 </button>
                                                             )}
-                                                            {selectedConversation.state !==
+                                                            {selectedConversation.status !==
                                                                 "resolved" && (
                                                                 <button
                                                                     onClick={
@@ -2314,7 +2321,7 @@ export default function Comunicacion() {
                                                             type="button"
                                                             onClick={() => {
                                                                 // TODO: Implementar adjuntar archivos
-                                                                toast.info(
+                                                                toast.success(
                                                                     "Función de archivos disponible próximamente",
                                                                 );
                                                             }}
@@ -2327,7 +2334,7 @@ export default function Comunicacion() {
                                                             type="button"
                                                             onClick={() => {
                                                                 // TODO: Implementar selector de emojis
-                                                                toast.info(
+                                                                toast.success(
                                                                     "Selector de emojis próximamente",
                                                                 );
                                                             }}
@@ -2469,7 +2476,7 @@ export default function Comunicacion() {
                                                         {
                                                             conversations.filter(
                                                                 (c) =>
-                                                                    c.state ===
+                                                                    c.status ===
                                                                     "escalated",
                                                             ).length
                                                         }
@@ -2767,7 +2774,7 @@ export default function Comunicacion() {
                                         <button
                                             onClick={() => {
                                                 // TODO: Implementar toggle de respuestas automáticas
-                                                toast.info(
+                                                toast.success(
                                                     "Configuración guardada",
                                                 );
                                             }}
@@ -2790,7 +2797,7 @@ export default function Comunicacion() {
                                         <button
                                             onClick={() => {
                                                 // TODO: Implementar toggle de escalamiento
-                                                toast.info(
+                                                toast.success(
                                                     "Configuración guardada",
                                                 );
                                             }}
@@ -2870,7 +2877,7 @@ export default function Comunicacion() {
                                                             <button
                                                                 onClick={() => {
                                                                     // TODO: Implementar conexión de canal
-                                                                    toast.info(
+                                                                    toast.success(
                                                                         `Conectar ${channel.label} próximamente`,
                                                                     );
                                                                 }}
