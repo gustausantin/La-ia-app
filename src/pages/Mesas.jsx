@@ -77,13 +77,7 @@ const TABLE_STATES = {
         bgColor: "bg-gray-50",
         textColor: "text-gray-700",
     },
-    maintenance: {
-        label: "Mantenimiento",
-        icon: "🔧",
-        color: "border-orange-400",
-        bgColor: "bg-orange-50",
-        textColor: "text-orange-700",
-    },
+
 };
 
 // Componente de estadísticas del agente
@@ -190,9 +184,7 @@ const TableCard = ({
             return "inactive";
         }
 
-        if (table.status === "maintenance") {
-            return "maintenance";
-        }
+
 
         if (!reservation) return "available";
 
@@ -846,9 +838,7 @@ export default function Mesas() {
                         if (selectedStatus === "inactive") {
                             return !isActive;
                         }
-                        if (selectedStatus === "maintenance") {
-                            return table.status === "maintenance";
-                        }
+
 
                         return true;
                     });
@@ -904,7 +894,7 @@ export default function Mesas() {
     const stats = useMemo(() => {
         const total = tables.length;
         
-        // Activas: mesas que están operativas (no inactivas ni en mantenimiento)
+        // Activas: mesas que están operativas (no inactivas)
         const active = tables.filter((t) => 
             t.is_active !== false
         ).length;
@@ -926,14 +916,13 @@ export default function Mesas() {
             // Debe estar activa y operativa
             const isActive = t.is_active !== false;
             
-            // NO debe estar en mantenimiento
-            const notInMaintenance = t.status !== "maintenance";
+
             
             // No debe tener reservas asignadas
             const hasNoReservations = !tablesWithReservations.has(t.id) && 
                                      !tablesWithReservations.has(t.table_number);
             
-            return isActive && notInMaintenance && hasNoReservations;
+            return isActive && hasNoReservations;
         }).length;
 
         return { total, active, available, reserved, occupied };
@@ -1184,7 +1173,7 @@ export default function Mesas() {
                             <option value="reserved">Reservadas</option>
                             <option value="occupied">Ocupadas</option>
                             <option value="inactive">Inactivas</option>
-                            <option value="maintenance">En mantenimiento</option>
+
                         </select>
 
                         {/* Toggle vista */}
@@ -1454,7 +1443,7 @@ const TableModal = ({
                 notes: formData.notes,
                 restaurant_id: restaurantId,
                 is_active: formData.status !== "inactive",
-                status: formData.status === "maintenance" ? "maintenance" : "available",
+                status: "available",
             };
 
             if (table) {
@@ -1632,9 +1621,7 @@ const TableModal = ({
                         >
                             <option value="available">Activa</option>
                             <option value="inactive">Inactiva</option>
-                            <option value="maintenance">
-                                En mantenimiento
-                            </option>
+
                         </select>
                     </div>
 
