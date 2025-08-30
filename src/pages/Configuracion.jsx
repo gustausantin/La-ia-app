@@ -548,12 +548,12 @@ export default function Configuracion() {
                                     onClick={() => setActiveTab(tab.id)}
                             className={`relative flex items-center gap-3 px-6 py-4 rounded-xl text-sm font-medium transition-all duration-200 min-w-[200px] ${
                                 activeTab === tab.id
-                                    ? `bg-${tab.color}-100 text-${tab.color}-700 border-2 border-${tab.color}-200 shadow-lg transform scale-105`
+                                    ? "bg-purple-100 text-purple-700 border-2 border-purple-200 shadow-lg transform scale-105"
                                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 border-2 border-gray-200 hover:border-gray-300 hover:shadow-md"
                             }`}
                         >
                             <div className={`p-2 rounded-lg ${
-                                activeTab === tab.id ? `bg-${tab.color}-200` : "bg-gray-200"
+                                activeTab === tab.id ? "bg-purple-200" : "bg-gray-200"
                             }`}>
                                 <tab.icon className="w-5 h-5" />
                             </div>
@@ -562,7 +562,7 @@ export default function Configuracion() {
                                 <div className="text-xs opacity-75 mt-1">{tab.desc}</div>
                             </div>
                             {activeTab === tab.id && (
-                                <div className={`w-2 h-2 rounded-full bg-${tab.color}-500 animate-pulse`}></div>
+                                <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
                             )}
                                 </button>
                             ))}
@@ -1079,7 +1079,7 @@ export default function Configuracion() {
                                     >
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-3">
-                                                <IconComponent className={`w-6 h-6 text-${channel.color}-600`} />
+                                                <IconComponent className="w-6 h-6 text-green-600" />
                                                     <div>
                                                     <h3 className="font-medium text-gray-900">{channel.name}</h3>
                                                     <p className="text-sm text-gray-600">{channel.description}</p>
