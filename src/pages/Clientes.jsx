@@ -1,5 +1,6 @@
 // Clientes.jsx - CRM con funcionalidad básica
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { format, parseISO, differenceInDays, subDays } from "date-fns";
@@ -20,6 +21,7 @@ const CUSTOMER_SEGMENTS = {
 
 // Componente principal
 export default function Clientes() {
+    const navigate = useNavigate();
     const { restaurant, restaurantId, isReady } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [customers, setCustomers] = useState([]);
@@ -116,7 +118,7 @@ export default function Clientes() {
                             Para gestionar clientes necesitas completar la configuración de tu restaurante.
                         </p>
                         <button
-                            onClick={() => window.location.href = '/configuracion'}
+                            onClick={() => navigate('/configuracion')}
                             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                         >
                             <Settings className="w-4 h-4" />

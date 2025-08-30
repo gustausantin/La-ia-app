@@ -1,598 +1,365 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+// Dashboard.jsx - DATOS 100% REALES de Supabase
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
-import { useChannelStats } from "../hooks/useChannelStats";
-import { useOccupancy } from "../hooks/useOccupancy";
-import {
-    format,
-    addHours,
-    isAfter,
-    isBefore,
-    subDays,
-    startOfDay,
-    endOfDay,
-} from "date-fns";
-import { es } from "date-fns/locale";
-import {
-    Calendar,
-    Users,
-    BarChart2,
-    MessageSquare,
-    AlertTriangle,
-    Clock,
-    RefreshCw,
-    TrendingUp,
-    CheckCircle2,
-    XCircle,
-    Bot,
-    Activity,
-    Zap,
-    PhoneCall,
-    MessageCircle,
-    Globe,
-    Plus,
-    Settings,
-    Brain,
-    Target,
-    Sparkles,
-    TrendingDown,
-    ChevronRight,
-    AlertCircle,
-    Award,
-    ThumbsUp,
-    Volume2,
-    DollarSign,
-    Shield,
-} from "lucide-react";
+import { format, parseISO, getHours, startOfDay, endOfDay } from "date-fns";
 import toast from "react-hot-toast";
 import {
-    LineChart,
-    Line,
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-} from "recharts";
-import logger from "../utils/logger";
-import { DashboardSpinner, PageSpinner } from "../components/LoadingSpinner";
+    Activity,
+    Users,
+    MessageSquare,
+    Calendar,
+    TrendingUp,
+    Clock,
+    BarChart3,
+    RefreshCw,
+    Zap,
+    Settings,
+    CheckCircle,
+    AlertCircle,
+    Database
+} from "lucide-react";
 
-// Estados de carga
-const LOADING_STATES = {
-    INITIAL: "initial",
-    LOADING: "loading",
-    SUCCESS: "success",
-    ERROR: "error",
+// Logger básico
+const logger = {
+    info: (msg, data) => console.log(`ℹ️ ${msg}`, data),
+    error: (msg, error) => console.error(`❌ ${msg}`, error),
+    warn: (msg, data) => console.warn(`⚠️ ${msg}`, data)
 };
 
-// Colores para gráficos
-const CHART_COLORS = {
-    agent: "#8B5CF6",
-    manual: "#3B82F6",
-    whatsapp: "#25D366",
-    vapi: "#F59E0B",
-    web: "#6366F1",
-    instagram: "#E4405F",
-    facebook: "#1877F2",
-};
-
-// Componente de tarjeta de estadística mejorado
-const StatCard = ({
-    title,
-    value,
-    detail,
-    icon,
-    color,
-    trend,
-    loading = false,
-    onClick,
-    badge,
-}) => (
-    <div
-        className={`bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md ${
-            onClick ? "cursor-pointer hover:border-blue-200" : ""
-        } ${loading ? "animate-pulse" : ""}`}
-        onClick={onClick}
-    >
-        <div className="flex items-center justify-between">
-            <div className="flex-1">
-                <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-gray-600">{title}</p>
-                    {badge && (
-                        <span
-                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${badge.className}`}
-                        >
-                            {badge.text}
-                        </span>
-                    )}
-                </div>
-                {loading ? (
-                    <div className="h-8 bg-gray-200 rounded mt-2 animate-pulse" />
-                ) : (
-                    <>
-                        <p className="text-2xl font-bold text-gray-900 mt-2">
-                            {value}
-                        </p>
-                        {detail && (
-                            <p className="text-sm text-gray-500 mt-1">
-                                {detail}
-                            </p>
-                        )}
-                    </>
-                )}
-                {trend && !loading && (
-                    <div
-                        className={`flex items-center mt-2 text-sm ${
-                            trend.positive
-                                ? "text-green-600"
-                                : "text-red-600"
-                        }`}
-                    >
-                        {trend.positive ? (
-                            <TrendingUp className="w-4 h-4 mr-1" />
-                        ) : (
-                            <TrendingDown className="w-4 h-4 mr-1" />
-                        )}
-                        <span>{trend.value}</span>
-                    </div>
-                )}
-            </div>
-            <div
-                className={`p-3 rounded-lg ${
-                    color || "bg-blue-50"
-                } flex items-center justify-center`}
-            >
-                {icon}
-            </div>
+// Spinner de carga
+const DashboardSpinner = ({ text = "Cargando..." }) => (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">{text}</p>
         </div>
     </div>
 );
 
-// Componente de alerta mejorado
-const Alert = ({
-    type = "info",
-    title,
-    message,
-    actionText,
-    onAction,
-    onDismiss,
-    icon,
-}) => {
-    const alertStyles = {
-        warning: "bg-orange-50 border-orange-200 text-orange-800",
-        error: "bg-red-50 border-red-200 text-red-800",
-        info: "bg-blue-50 border-blue-200 text-blue-800",
-        success: "bg-green-50 border-green-200 text-green-800",
-        purple: "bg-purple-50 border-purple-200 text-purple-800",
-    };
-
-    const defaultIcons = {
-        warning: <AlertTriangle className="w-5 h-5" />,
-        error: <XCircle className="w-5 h-5" />,
-        info: <MessageSquare className="w-5 h-5" />,
-        success: <CheckCircle2 className="w-5 h-5" />,
-        purple: <Sparkles className="w-5 h-5" />,
-    };
-
-    return (
-        <div className={`p-4 rounded-lg border ${alertStyles[type]} relative`}>
-            <div className="flex items-start gap-3">
-                {icon || defaultIcons[type]}
-                <div className="flex-1">
-                    <h4 className="font-semibold text-sm">{title}</h4>
-                    <p className="text-sm mt-1 opacity-90">{message}</p>
-                    {actionText && onAction && (
-                        <button
-                            onClick={onAction}
-                            className="text-sm font-medium underline mt-2 hover:no-underline inline-flex items-center gap-1"
-                        >
-                            {actionText}
-                            <ChevronRight className="w-3 h-3" />
-                        </button>
-                    )}
-                </div>
-                {onDismiss && (
-                    <button
-                        onClick={onDismiss}
-                        className="text-sm opacity-60 hover:opacity-100"
-                    >
-                        ✕
-                    </button>
-                )}
-            </div>
-        </div>
-    );
-};
-
 // Componente principal del Dashboard
 export default function Dashboard() {
-    const {
-        status,
-        isAuthenticated, 
-        restaurant, 
-        agentStatus, 
-        addNotification 
-      } = useAuthContext();
-      
+    const { status, isAuthenticated, restaurant } = useAuthContext();
     const navigate = useNavigate();
-    const { channelStats } = useChannelStats();
-    const { occupancy: occupancyData } = useOccupancy(7);
 
-    logger.info('📊 Dashboard avanzado rendering...', { status, isAuthenticated });
+    // Estados para datos REALES
+    const [realData, setRealData] = useState({
+        // Datos de reservas
+        totalReservationsToday: 0,
+        totalReservationsThisWeek: 0,
+        reservationsByHour: {},
+        peakHour: null,
+        averagePartySize: 0,
+        
+        // Datos de mesas
+        totalTables: 0,
+        totalCapacity: 0,
+        currentOccupancyRate: 0,
+        
+        // Datos de canales
+        activeChannels: 0,
+        channelsList: [],
+        
+        // Datos de clientes
+        totalCustomers: 0,
+        newCustomersToday: 0,
+        
+        // Datos del agente IA
+        agentReservations: 0, // Por ahora 0 hasta conectar APIs externas
+        agentConversions: 0,
+        averageResponseTime: 0
+    });
+
+    const [todayReservations, setTodayReservations] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [lastUpdate, setLastUpdate] = useState(new Date());
+
+    logger.info('📊 Dashboard iniciando con datos reales...', { status, isAuthenticated });
 
     // Mostrar loading mientras se inicializa
     if (status === 'checking') {
-        return <DashboardSpinner text="Cargando dashboard..." />;
+        return <DashboardSpinner text="Inicializando sistema..." />;
     }
 
-    const restaurantId = restaurant?.id; // Asegurarse de que restaurantId se derive de restaurant
+    const restaurantId = restaurant?.id;
 
-    // Función de notificaciones fallback si no existe
-    const handleNotification = useCallback((notification) => {
-        logger.info('📨 Notification:', notification);
-        // Fallback - simplemente logear
-    }, []);
-
-    // Estados principales
-    const [loadingState, setLoadingState] = useState(LOADING_STATES.INITIAL);
-    const [stats, setStats] = useState({
-        // Métricas generales
-        total_reservations: 0,
-        total_covers: 0,
-
-        // Métricas del agente
-        agent_reservations: 0,
-        manual_reservations: 0,
-        agent_success_rate: 0,
-        avg_response_time: 0,
-
-        // Por canal
-        whatsapp_reservations: 0,
-        vapi_reservations: 0,
-        web_reservations: 0,
-        instagram_reservations: 0,
-        facebook_reservations: 0,
-
-        // Tendencias
-        hourly_reservations: [],
-        channel_distribution: [],
-    });
-
-    const [reservations, setReservations] = useState([]);
-    const [conversations, setConversations] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [selectedTimeRange, setSelectedTimeRange] = useState("today");
-    const [refreshing, setRefreshing] = useState(false);
-
-    // Función para obtener estadísticas del dashboard
-    const fetchDashboardStats = useCallback(async () => {
-        if (!restaurantId) return;
-
-        try {
-            // Usar RPC real para estadísticas
-            const { data: dashboardData, error } = await supabase.rpc('get_dashboard_stats', {
-                p_restaurant_id: restaurantId,
-                p_start_date: format(new Date(), 'yyyy-MM-dd'),
-                p_end_date: format(new Date(), 'yyyy-MM-dd')
-            });
-
-            if (error) {
-                console.warn('Error en dashboard stats, usando datos vacíos:', error);
-            }
-
-            // Usar datos reales si están disponibles, sino datos vacíos
-            const statsData = dashboardData || {
-                total_reservations: 0,
-                agent_reservations: 0,
-                manual_reservations: 0,
-                total_customers: 0,
-                total_tables: 0,
-                active_tables: 0
-            };
-
-            const processedStats = {
-                total_reservations: statsData.total_reservations || 0,
-                total_covers: statsData.total_reservations * 2.5, // Estimación promedio
-                agent_reservations: statsData.agent_reservations || 0,
-                manual_reservations: statsData.manual_reservations || 0,
-                agent_success_rate: statsData.agent_reservations > 0 ? 85 : 0,
-                avg_response_time: statsData.agent_reservations > 0 ? 3 : 0,
-                whatsapp_reservations: Math.floor(statsData.agent_reservations * 0.6),
-                vapi_reservations: Math.floor(statsData.agent_reservations * 0.3),
-                web_reservations: Math.floor(statsData.agent_reservations * 0.1),
-                instagram_reservations: 0,
-                facebook_reservations: 0,
-                hourly_reservations: Array.from({ length: 24 }, (_, i) => ({
-                    hour: `${i}:00`,
-                    agent: Math.floor(Math.random() * statsData.agent_reservations / 12),
-                    manual: Math.floor(Math.random() * statsData.manual_reservations / 12),
-                })),
-                channel_distribution: [
-                    { name: "WhatsApp", value: processedStats.whatsapp_reservations, percentage: statsData.total_reservations > 0 ? Math.round((processedStats.whatsapp_reservations / statsData.total_reservations) * 100) : 0 },
-                    { name: "Vapi", value: processedStats.vapi_reservations, percentage: statsData.total_reservations > 0 ? Math.round((processedStats.vapi_reservations / statsData.total_reservations) * 100) : 0 },
-                    { name: "Web", value: processedStats.web_reservations, percentage: statsData.total_reservations > 0 ? Math.round((processedStats.web_reservations / statsData.total_reservations) * 100) : 0 },
-                    { name: "Instagram", value: 0, percentage: 0 },
-                    { name: "Manual", value: statsData.manual_reservations, percentage: statsData.total_reservations > 0 ? Math.round((statsData.manual_reservations / statsData.total_reservations) * 100) : 0 },
-                ],
-            };
-
-            setStats(processedStats);
-            return processedStats;
-        } catch (error) {
-            logger.error("Error fetching stats:", error);
-            toast.error("Error al cargar estadísticas");
-            throw error;
-        }
-    }, [restaurantId]);
-
-    // Función para obtener conversaciones del agente
-    const fetchAgentConversations = useCallback(async () => {
-        if (!restaurantId) return;
-
-        try {
-            // LIMPIO: Sin conversaciones hasta tener datos reales
-            const emptyConversations = [];
-            setConversations(emptyConversations);
-            return emptyConversations;
-        } catch (error) {
-            logger.error("Error fetching conversations:", error);
-            toast.error("Error al cargar conversaciones");
-            throw error;
-        }
-    }, [restaurantId]);
-
-    // Función para obtener reservas del día
-    const fetchTodayReservations = useCallback(async () => {
-        if (!restaurantId) return;
-
-        try {
-            const { data, error } = await supabase
-                .from("reservations")
-                .select(
-                    `
-                    id,
-                    customer_name,
-                    reservation_date,
-                    reservation_time,
-                    party_size,
-                    status,
-                    source,
-                    channel,
-                    created_at
-                `,
-                )
-                .eq("restaurant_id", restaurantId)
-                .gte("reservation_date", format(new Date(), "yyyy-MM-dd"))
-                .lte(
-                    "reservation_date",
-                    format(addHours(new Date(), 24), "yyyy-MM-dd"),
-                )
-                .order("reservation_time", { ascending: true });
-
-            if (error) throw error;
-
-            // Validar que todos los campos necesarios existan
-            const reservationsWithSource = (data || []).map(res => {
-                // Si ya tiene source y channel, respetar los valores
-                if (res.source && res.channel) {
-                    return res;
-                }
-
-                // Si no, aplicar lógica de mock temporal
-                return {
-                    ...res,
-                    source: res.source || (Math.random() > 0.3 ? 'agent' : 'manual'),
-                    channel: res.channel || (res.source === 'agent' ?
-                        ['whatsapp', 'vapi', 'web'][Math.floor(Math.random() * 3)] :
-                        'manual')
-                };
-            });
-
-            setReservations(reservationsWithSource);
-            return reservationsWithSource;
-        } catch (error) {
-            logger.error("Error fetching reservations:", error);
-            toast.error("Error al cargar reservas");
-            throw error;
-        }
-    }, [restaurantId]);
-
-    // Función para cargar todos los datos - SIN DEPENDENCIES QUE CAUSEN BUCLES
-    const loadDashboardData = useCallback(async () => {
-        if (!restaurantId) {
-            logger.warn('📊 Dashboard: No restaurantId disponible');
-            return;
-        }
-
-        // Solo prevenir carga múltiple si ya está cargando
-        if (loadingState === LOADING_STATES.LOADING) {
-            logger.info('📊 Dashboard: Ya está cargando, esperando...');
-            return;
-        }
-
-        logger.info('📊 Dashboard: Iniciando carga de datos...');
-        setLoadingState(LOADING_STATES.LOADING);
-        setIsLoading(true);
-
-        try {
-            logger.info('📊 Dashboard: Cargando estadísticas...');
-            const [statsResult, conversationsResult, reservationsResult] = await Promise.allSettled([
-                fetchDashboardStats(),
-                fetchAgentConversations(),
-                fetchTodayReservations(),
-            ]);
-
-            // Log de resultados
-            statsResult.status === 'fulfilled' 
-                ? logger.info('✅ Stats cargadas') 
-                : logger.warn('⚠️ Error en stats:', statsResult.reason);
-
-            conversationsResult.status === 'fulfilled' 
-                ? logger.info('✅ Conversaciones cargadas') 
-                : logger.warn('⚠️ Error en conversaciones:', conversationsResult.reason);
-
-            reservationsResult.status === 'fulfilled' 
-                ? logger.info('✅ Reservas cargadas') 
-                : logger.warn('⚠️ Error en reservas:', reservationsResult.reason);
-
-            logger.info('📊 Dashboard: Datos cargados exitosamente');
-            setLoadingState(LOADING_STATES.SUCCESS);
-            setIsLoading(false);
-        } catch (error) {
-            logger.error('❌ Dashboard: Error cargando datos:', error);
-            setLoadingState(LOADING_STATES.ERROR);
-            setIsLoading(false);
-        }
-    }, [restaurantId]); // SOLO restaurantId - las otras funciones son estables
-
-    // Función para refrescar datos
-    const handleRefresh = useCallback(async () => {
-        setRefreshing(true);
-        await loadDashboardData();
-        setRefreshing(false);
-        toast.success("Datos actualizados");
+    // Función para calcular la hora punta REAL
+    const calculatePeakHour = (reservations) => {
+        if (!reservations || reservations.length === 0) return null;
         
-        // CORREGIDO: NO crear notificaciones falsas en el sistema
-        // Solo mostrar el toast para confirmar la actualización
-    }, [loadDashboardData]);
-
-    // Efecto para cargar datos iniciales automáticamente - SIN BUCLES
-    useEffect(() => {
-        logger.info('🔄 Dashboard: Verificando condiciones de carga -', { 
-            status, 
-            restaurantId, 
-            loadingState,
-            hasRestaurant: !!restaurant 
+        const hourCounts = {};
+        reservations.forEach(reservation => {
+            if (reservation.reservation_time) {
+                const hour = getHours(parseISO(`2000-01-01T${reservation.reservation_time}`));
+                hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+            }
         });
 
-        // Solo cargar si todas las condiciones se cumplen y no estamos ya cargando
-        if (status === 'signed_in' && restaurantId && loadingState === LOADING_STATES.INITIAL) {
-            logger.info('✅ Dashboard: Iniciando carga automática inmediata...');
-            // Forzar reset del loading state para evitar bucles
-            setLoadingState(LOADING_STATES.LOADING);
-            setIsLoading(true);
+        if (Object.keys(hourCounts).length === 0) return null;
+        
+        const peakHour = Object.keys(hourCounts).reduce((a, b) => 
+            hourCounts[a] > hourCounts[b] ? a : b
+        );
+        
+        return `${peakHour}h`;
+    };
+
+    // Función para obtener canales REALES configurados
+    const fetchRealChannels = useCallback(async () => {
+        if (!restaurantId) return { count: 0, list: [] };
+
+        try {
+            const { data: channels, error } = await supabase
+                .from('channel_credentials')
+                .select('*')
+                .eq('restaurant_id', restaurantId)
+                .eq('is_active', true);
+
+            if (error) {
+                logger.warn("Error cargando canales:", error);
+                return { count: 0, list: [] };
+            }
+
+            const channelsList = channels || [];
+            logger.info('✅ Canales reales cargados:', channelsList);
             
-            // Llamar carga de datos directamente para evitar dependency loop
-            (async () => {
-                try {
-                    const [statsResult, conversationsResult, reservationsResult] = await Promise.allSettled([
-                        fetchDashboardStats(),
-                        fetchAgentConversations(),
-                        fetchTodayReservations(),
-                    ]);
-
-                    logger.info('📊 Dashboard: Datos iniciales cargados');
-                    setLoadingState(LOADING_STATES.SUCCESS);
-                    setIsLoading(false);
-                } catch (error) {
-                    logger.error('❌ Dashboard: Error en carga inicial:', error);
-                    setLoadingState(LOADING_STATES.ERROR);
-                    setIsLoading(false);
-                }
-            })();
+            return {
+                count: channelsList.length,
+                list: channelsList.map(ch => ch.channel)
+            };
+        } catch (error) {
+            logger.error("Error fetching channels:", error);
+            return { count: 0, list: [] };
         }
-    }, [status, restaurantId]); // SOLO estas dos dependencies
+    }, [restaurantId]);
 
-    // Suscripción real-time a reservas
-    useEffect(() => {
+    // Función para obtener datos REALES de reservas
+    const fetchRealReservations = useCallback(async () => {
         if (!restaurantId) return;
 
-        const channel = supabase
-            .channel(`dashboard-${restaurantId}`)
-            .on(
-                "postgres_changes",
-                {
-                    event: "INSERT",
-                    schema: "public",
-                    table: "reservations",
-                    filter: `restaurant_id=eq.${restaurantId}`,
-                },
-                (payload) => {
-                    logger.info("Nueva reserva:", payload);
-                    const newReservation = payload.new;
+        try {
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const startOfWeek = format(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
+            
+            // Reservas de hoy
+            const { data: todayReservations, error: todayError } = await supabase
+                .from('reservations')
+                .select('*')
+                .eq('restaurant_id', restaurantId)
+                .eq('reservation_date', today)
+                .order('reservation_time', { ascending: true });
 
-                    // Actualizar lista de reservas
-                    setReservations((prev) => [newReservation, ...prev]);
+            if (todayError) {
+                logger.warn("Error cargando reservas de hoy:", todayError);
+            }
 
-                    // Actualizar estadísticas
-                    setStats((prev) => ({
-                        ...prev,
-                        total_reservations: prev.total_reservations + 1,
-                        total_covers: prev.total_covers + (newReservation.party_size || 0),
-                        agent_reservations: newReservation.source === 'agent'
-                            ? prev.agent_reservations + 1
-                            : prev.agent_reservations,
-                        manual_reservations: newReservation.source === 'manual'
-                            ? prev.manual_reservations + 1
-                            : prev.manual_reservations,
-                    }));
+            // Reservas de la semana
+            const { data: weekReservations, error: weekError } = await supabase
+                .from('reservations')
+                .select('*')
+                .eq('restaurant_id', restaurantId)
+                .gte('reservation_date', startOfWeek)
+                .lte('reservation_date', today);
 
-                    // Notificación
-                    toast.success(
-                        `Nueva reserva ${newReservation.source === 'agent' ? 'del agente' : 'manual'}: ${newReservation.customer_name}`,
-                    );
+            if (weekError) {
+                logger.warn("Error cargando reservas de la semana:", weekError);
+            }
 
-                    // Agregar notificación global
-                    handleNotification({
-                        type: 'reservation',
-                        message: `Nueva reserva de ${newReservation.customer_name} para ${newReservation.party_size} personas`,
-                        priority: 'normal',
-                        data: { reservationId: newReservation.id }
-                    });
-                },
-            )
-            .subscribe();
+            const reservationsToday = todayReservations || [];
+            const reservationsWeek = weekReservations || [];
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [restaurantId, addNotification]);
+            // Calcular hora punta REAL
+            const peakHour = calculatePeakHour(reservationsWeek);
+            
+            // Calcular tamaño promedio de grupo REAL
+            const totalPartySize = reservationsToday.reduce((sum, r) => sum + (r.party_size || 0), 0);
+            const averagePartySize = reservationsToday.length > 0 ? 
+                Math.round(totalPartySize / reservationsToday.length * 10) / 10 : 0;
 
-    // Calcular métricas adicionales
-    const agentEfficiency = useMemo(() => {
-        if (stats.total_reservations === 0) return 0;
-        return Math.round(
-            (stats.agent_reservations / stats.total_reservations) * 100,
-        );
-    }, [stats]);
+            setTodayReservations(reservationsToday);
 
-    const peakHours = useMemo(() => {
-        const sorted = [...stats.hourly_reservations].sort(
-            (a, b) => b.agent + b.manual - (a.agent + a.manual),
-        );
-        return sorted.slice(0, 3).map((h) => h.hour.replace(":00", "h"));
-    }, [stats.hourly_reservations]);
+            return {
+                totalReservationsToday: reservationsToday.length,
+                totalReservationsThisWeek: reservationsWeek.length,
+                peakHour: peakHour,
+                averagePartySize: averagePartySize,
+                reservationsData: reservationsToday
+            };
+        } catch (error) {
+            logger.error("Error fetching reservations:", error);
+            return {
+                totalReservationsToday: 0,
+                totalReservationsThisWeek: 0,
+                peakHour: null,
+                averagePartySize: 0,
+                reservationsData: []
+            };
+        }
+    }, [restaurantId]);
 
-    // Control robusto de loading - usar solo status
-    if (status !== 'signed_in') {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-                    <p className="text-gray-600">Por favor, inicia sesión para ver el dashboard.</p>
-                </div>
-            </div>
-        );
+    // Función para obtener datos REALES de mesas
+    const fetchRealTables = useCallback(async () => {
+        if (!restaurantId) return;
+
+        try {
+            const { data: tables, error } = await supabase
+                .from('tables')
+                .select('*')
+                .eq('restaurant_id', restaurantId);
+
+            if (error) {
+                logger.warn("Error cargando mesas:", error);
+                return { totalTables: 0, totalCapacity: 0 };
+            }
+
+            const tablesList = tables || [];
+            const totalCapacity = tablesList.reduce((sum, table) => sum + (table.capacity || 0), 0);
+
+            return {
+                totalTables: tablesList.length,
+                totalCapacity: totalCapacity
+            };
+        } catch (error) {
+            logger.error("Error fetching tables:", error);
+            return { totalTables: 0, totalCapacity: 0 };
+        }
+    }, [restaurantId]);
+
+    // Función para obtener datos REALES de clientes
+    const fetchRealCustomers = useCallback(async () => {
+        if (!restaurantId) return;
+
+        try {
+            const today = format(new Date(), 'yyyy-MM-dd');
+            
+            // Total de clientes
+            const { data: allCustomers, error: allError } = await supabase
+                .from('customers')
+                .select('id')
+                .eq('restaurant_id', restaurantId);
+
+            // Clientes nuevos hoy
+            const { data: newCustomers, error: newError } = await supabase
+                .from('customers')
+                .select('id')
+                .eq('restaurant_id', restaurantId)
+                .gte('created_at', `${today}T00:00:00`)
+                .lt('created_at', `${today}T23:59:59`);
+
+            if (allError || newError) {
+                logger.warn("Error cargando clientes:", allError || newError);
+            }
+
+            return {
+                totalCustomers: allCustomers?.length || 0,
+                newCustomersToday: newCustomers?.length || 0
+            };
+        } catch (error) {
+            logger.error("Error fetching customers:", error);
+            return { totalCustomers: 0, newCustomersToday: 0 };
+        }
+    }, [restaurantId]);
+
+    // Función principal para cargar TODOS los datos reales
+    const loadRealData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            logger.info('🔄 Cargando datos reales del dashboard...');
+
+            const [reservationsData, tablesData, customersData, channelsData] = await Promise.all([
+                fetchRealReservations(),
+                fetchRealTables(),
+                fetchRealCustomers(),
+                fetchRealChannels()
+            ]);
+
+            // Calcular ocupación REAL
+            const currentOccupancyRate = tablesData.totalTables > 0 ? 
+                Math.round((reservationsData.totalReservationsToday / tablesData.totalTables) * 100) : 0;
+
+            const newRealData = {
+                // Reservas REALES
+                totalReservationsToday: reservationsData.totalReservationsToday,
+                totalReservationsThisWeek: reservationsData.totalReservationsThisWeek,
+                peakHour: reservationsData.peakHour,
+                averagePartySize: reservationsData.averagePartySize,
+                
+                // Mesas REALES
+                totalTables: tablesData.totalTables,
+                totalCapacity: tablesData.totalCapacity,
+                currentOccupancyRate: Math.min(currentOccupancyRate, 100),
+                
+                // Canales REALES
+                activeChannels: channelsData.count,
+                channelsList: channelsData.list,
+                
+                // Clientes REALES
+                totalCustomers: customersData.totalCustomers,
+                newCustomersToday: customersData.newCustomersToday,
+                
+                // Agente IA (REALES - por ahora 0 hasta conectar APIs)
+                agentReservations: 0,
+                agentConversions: 0,
+                averageResponseTime: 0
+            };
+
+            setRealData(newRealData);
+            setLastUpdate(new Date());
+            
+            logger.info('✅ Datos reales cargados exitosamente:', newRealData);
+        } catch (error) {
+            logger.error("Error loading real data:", error);
+            toast.error("Error cargando datos del dashboard");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [fetchRealReservations, fetchRealTables, fetchRealCustomers, fetchRealChannels]);
+
+    // Función de refresh
+    const handleRefresh = useCallback(async () => {
+        setRefreshing(true);
+        try {
+            await loadRealData();
+            toast.success("Dashboard actualizado con datos reales");
+        } catch (error) {
+            logger.error("Error refreshing:", error);
+            toast.error("Error al actualizar");
+        } finally {
+            setRefreshing(false);
+        }
+    }, [loadRealData]);
+
+    // Cargar datos iniciales
+    useEffect(() => {
+        if (restaurantId) {
+            loadRealData();
+        }
+    }, [restaurantId, loadRealData]);
+
+    // Si está cargando
+    if (isLoading) {
+        return <DashboardSpinner text="Cargando datos reales..." />;
     }
 
     return (
-        <div className="max-w-7xl mx-auto space-y-6">
-            {/* Header con acciones */}
-            <div className="flex justify-between items-center">
+        <div className="p-6 bg-gray-50 min-h-screen">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">
-                        Dashboard - {restaurant?.name}
+                        Dashboard - {restaurant?.name || 'Tu Restaurante'}
                     </h1>
-                    <p className="text-gray-600 mt-1">
-                        {format(new Date(), "EEEE d 'de' MMMM, yyyy", {
-                            locale: es,
-                        })}
+                    <p className="text-gray-600">
+                        {format(new Date(), "EEEE dd 'de' MMMM, yyyy")}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                        Última actualización: {format(lastUpdate, 'HH:mm:ss')} - 
+                        <span className="text-green-600 ml-1">
+                            <Database className="w-4 h-4 inline mr-1" />
+                            Datos reales de Supabase
+                        </span>
                     </p>
                 </div>
                 <button
@@ -600,469 +367,247 @@ export default function Dashboard() {
                     disabled={refreshing}
                     className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
                 >
-                    <RefreshCw
-                        className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
-                    />
-                    Actualizar
+                    <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                    Actualizar Datos
                 </button>
             </div>
 
-
-
-            {/* Métricas principales del AGENTE */}
-            <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <Bot className="w-5 h-5 text-purple-600" />
-                        Rendimiento del Agente IA Hoy
-                    </h2>
-                    <span className="text-sm text-gray-600">
-                        Última actualización: {format(new Date(), "HH:mm")}
-                    </span>
+            {/* Rendimiento del Agente IA - DATOS REALES */}
+            <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6 mb-8">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-purple-600 rounded-lg">
+                        <Zap className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900">Rendimiento del Agente IA</h2>
+                        <p className="text-sm text-gray-600">Datos reales • Sin conexiones externas aún</p>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard
-                        title="Reservas del Agente IA"
-                        value={stats.agent_reservations}
-                        detail={`Canales externos (${agentEfficiency}% del total)`}
-                        icon={<Bot className="w-6 h-6 text-purple-600" />}
-                        color="bg-purple-50"
-                        badge={{
-                            text: "IA",
-                            className: "bg-purple-100 text-purple-700",
-                        }}
-                        trend={
-                            agentEfficiency > 70
-                                ? { positive: true, value: "Excelente" }
-                                : { positive: false, value: "Mejorable" }
-                        }
-                        loading={isLoading}
-                    />
-
-                    <StatCard
-                        title="Tasa de Éxito"
-                        value={`${stats.agent_success_rate}%`}
-                        detail="Conversiones completadas"
-                        icon={<Target className="w-6 h-6 text-green-600" />}
-                        color="bg-green-50"
-                        trend={{ positive: false, value: "Sin datos" }}
-                        loading={isLoading}
-                    />
-
-                    <StatCard
-                        title="Tiempo de Respuesta"
-                        value={`${stats.avg_response_time}s`}
-                        detail="Promedio del agente"
-                        icon={<Zap className="w-6 h-6 text-orange-600" />}
-                        color="bg-orange-50"
-                        trend={
-                            stats.avg_response_time < 60
-                                ? { positive: true, value: "Rápido" }
-                                : { positive: false, value: "Lento" }
-                        }
-                        loading={isLoading}
-                    />
-
-                    <StatCard
-                        title="Canales Activos"
-                        value={`${channelStats.active}/${channelStats.total}`}
-                        detail={channelStats.active === 0 ? "Ningún canal configurado" : `${channelStats.validChannels.join(', ')} activos`}
-                        icon={<Activity className="w-6 h-6 text-blue-600" />}
-                        color="bg-blue-50"
-                        loading={isLoading}
-                    />
-                </div>
-            </div>
-
-            {/* Estadísticas generales */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                    title="Total Reservas"
-                    value={stats.total_reservations}
-                    detail={`${stats.total_covers} comensales`}
-                    icon={<Calendar className="w-6 h-6 text-blue-600" />}
-                    color="bg-blue-50"
-                    loading={isLoading}
-                />
-
-                <StatCard
-                    title="Reservas Manuales"
-                    value={stats.manual_reservations}
-                    detail={`Hechas desde la app (${100 - agentEfficiency}% del total)`}
-                    icon={<Users className="w-6 h-6 text-gray-600" />}
-                    color="bg-gray-50"
-                    loading={isLoading}
-                />
-
-                <StatCard
-                    title="Conversaciones Activas"
-                    value={conversations.filter((c) => c.state === "active").length}
-                    detail="En proceso ahora"
-                    icon={<MessageSquare className="w-6 h-6 text-indigo-600" />}
-                    color="bg-indigo-50"
-                    onClick={() => navigate('/comunicacion?view=conversations&filter=active')}
-                    loading={isLoading}
-                />
-
-                <StatCard
-                    title="Horas Punta"
-                    value={peakHours[0] || "14h"}
-                    detail={peakHours.join(", ")}
-                    icon={<Clock className="w-6 h-6 text-amber-600" />}
-                    color="bg-amber-50"
-                    loading={isLoading}
-                />
-            </div>
-
-            {/* Ocupación y métricas operativas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <StatCard
-                    title="Ocupación Promedio"
-                    value={`${occupancyData.average}%`}
-                    detail={`Últimos 7 días • Hoy: ${occupancyData.today}%`}
-                    icon={<BarChart2 className="w-6 h-6 text-emerald-600" />}
-                    color="bg-emerald-50"
-                    trend={
-                        occupancyData.average > 70
-                            ? { positive: true, value: "Alta" }
-                            : occupancyData.average > 40
-                            ? { positive: true, value: "Media" }
-                            : { positive: false, value: "Baja" }
-                    }
-                    loading={isLoading}
-                />
-
-                <StatCard
-                    title="Mesas Activas"
-                    value={occupancyData.details?.activeTables || 0}
-                    detail={`Capacidad total: ${occupancyData.details?.totalTableCapacity || 0} personas`}
-                    icon={<Users className="w-6 h-6 text-cyan-600" />}
-                    color="bg-cyan-50"
-                    loading={isLoading}
-                />
-
-                <StatCard
-                    title="Reservas Totales"
-                    value={occupancyData.details?.totalReservations || 0}
-                    detail={`${occupancyData.details?.totalGuests || 0} comensales • ${occupancyData.details?.averagePartySize || 0} promedio/mesa`}
-                    icon={<Calendar className="w-6 h-6 text-violet-600" />}
-                    color="bg-violet-50"
-                    loading={isLoading}
-                />
-            </div>
-
-            {/* Gráficos y listas */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Conversaciones recientes del agente */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <div className="p-6 border-b border-gray-100">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                <MessageSquare className="w-5 h-5 text-purple-600" />
-                                Conversaciones del Agente
-                            </h3>
-                            <span className="text-sm text-gray-500">
-                                Últimas 10
-                            </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Reservas del Agente IA - REAL */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Calendar className="w-5 h-5 text-purple-600" />
+                            <span className="text-sm font-medium text-gray-700">Reservas del Agente IA</span>
                         </div>
+                        <div className="text-2xl font-bold text-purple-600">{realData.agentReservations}</div>
+                        <div className="text-xs text-gray-500 mt-1">APIs externas no conectadas</div>
+                        <div className="text-xs text-orange-500 mt-1">⚡ Pendiente configuración</div>
                     </div>
-                    <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-                        {conversations.length > 0 ? (
-                            conversations.map((conv) => (
-                                <div
-                                    key={conv.id}
-                                    className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                                    onClick={() =>
-                                        navigate(`/comunicacion?view=conversations&conversation=${conv.id}`)
-                                    }
-                                >
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="font-medium text-gray-900">
-                                                    {conv.customer_name}
-                                                </h4>
-                                                {getChannelIcon(conv.channel)}
-                                                {conv.resulted_in_reservation && (
-                                                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-gray-600 mt-1 line-clamp-1">
-                                                {conv.last_message}
-                                            </p>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {format(
-                                                    new Date(conv.last_message_at),
-                                                    "HH:mm",
-                                                )}
-                                            </p>
-                                        </div>
-                                        <span
-                                            className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                                conv.state === "active"
-                                                    ? "bg-green-100 text-green-700"
-                                                    : conv.state === "resolved"
-                                                    ? "bg-gray-100 text-gray-700"
-                                                    : "bg-orange-100 text-orange-700"
-                                            }`}
-                                        >
-                                            {conv.state === "active"
-                                                ? "Activa"
-                                                : conv.state === "resolved"
-                                                ? "Resuelta"
-                                                : "Pendiente"}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="p-8 text-center">
-                                <div className="flex flex-col items-center">
-                                    <div className="w-16 h-16 bg-gradient-to-br from-green-50 to-blue-50 rounded-full flex items-center justify-center mb-4">
-                                        <MessageSquare className="w-8 h-8 text-green-500" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                        Agente IA listo
-                                    </h3>
-                                    <p className="text-gray-500 text-center mb-4 max-w-md">
-                                        Tu agente IA está esperando las primeras conversaciones de clientes.
-                                    </p>
-                                    <button 
-                                        onClick={() => navigate('/comunicacion?view=conversations')} 
-                                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
-                                    >
-                                        <Bot className="w-4 h-4 mr-2" />
-                                        Ver Agente IA
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
 
-                {/* Reservas de hoy */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <div className="p-6 border-b border-gray-100">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                <Calendar className="w-5 h-5 text-blue-600" />
-                                Reservas de Hoy
-                            </h3>
-                            <button
-                                onClick={() => navigate("/reservas")}
-                                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    {/* Tasa de Conversión - REAL */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center gap-3 mb-2">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <span className="text-sm font-medium text-gray-700">Tasa de Conversión</span>
+                        </div>
+                        <div className="text-2xl font-bold text-green-600">{realData.agentConversions}%</div>
+                        <div className="text-xs text-gray-500 mt-1">Sin conversaciones IA aún</div>
+                        <div className="text-xs text-orange-500 mt-1">📊 Pendiente conexión</div>
+                    </div>
+
+                    {/* Tiempo de Respuesta - REAL */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Clock className="w-5 h-5 text-orange-600" />
+                            <span className="text-sm font-medium text-gray-700">Tiempo de Respuesta</span>
+                        </div>
+                        <div className="text-2xl font-bold text-orange-600">{realData.averageResponseTime}s</div>
+                        <div className="text-xs text-gray-500 mt-1">Sin datos de respuesta aún</div>
+                        <div className="text-xs text-orange-500 mt-1">⚡ Pendiente activación</div>
+                    </div>
+
+                    {/* Canales Activos - DATOS REALES */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center gap-3 mb-2">
+                            <MessageSquare className="w-5 h-5 text-blue-600" />
+                            <span className="text-sm font-medium text-gray-700">Canales Configurados</span>
+                        </div>
+                        <div className="text-2xl font-bold text-blue-600">{realData.activeChannels}/6</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                            {realData.channelsList.length > 0 ? 
+                                `Activos: ${realData.channelsList.join(', ')}` : 
+                                'Ningún canal configurado'
+                            }
+                        </div>
+                        <div className="text-xs text-blue-500 mt-1">
+                            <button 
+                                onClick={() => navigate('/configuracion')}
+                                className="hover:underline"
                             >
-                                Ver todas →
+                                ⚙️ Configurar canales
                             </button>
                         </div>
                     </div>
-                    <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-                        {reservations.length > 0 ? (
-                            <div className="divide-y divide-gray-100">
-                                {reservations.slice(0, 10).map((res) => {
-                                    const isPast = isAfter(
-                                        new Date(),
-                                        new Date(
-                                            `${res.reservation_date}T${res.reservation_time}`,
-                                        ),
-                                    );
-                                    return (
-                                        <div
-                                            key={res.id}
-                                            className={`p-4 ${
-                                                isPast
-                                                    ? "opacity-60"
-                                                    : "hover:bg-gray-50"
-                                            } transition-colors`}
-                                        >
-                                            <div className="flex items-start justify-between">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <h4 className="font-medium text-gray-900">
-                                                            {res.customer_name}
-                                                        </h4>
-                                                        {res.source === "agent" && (
-                                                            <Bot className="w-4 h-4 text-purple-600" />
-                                                        )}
-                                                        {res.channel && getChannelIcon(res.channel)}
-                                                    </div>
-                                                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock className="w-3 h-3" />
-                                                            {res.reservation_time}
-                                                        </span>
-                                                        <span className="flex items-center gap-1">
-                                                            <Users className="w-3 h-3" />
-                                                            {res.party_size} pax
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span
-                                                        className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                                                            res.status === "confirmada"
-                                                                ? "bg-green-100 text-green-800"
-                                                                : res.status === "pendiente"
-                                                                ? "bg-yellow-100 text-yellow-800"
-                                                                : res.status === "sentada"
-                                                                ? "bg-blue-100 text-blue-800"
-                                                                : "bg-gray-100 text-gray-800"
-                                                        }`}
-                                                    >
-                                                        {res.status === "confirmada"
-                                                            ? "Confirmada"
-                                                            : res.status === "pendiente"
-                                                            ? "Pendiente"
-                                                            : res.status === "sentada"
-                                                            ? "Sentada"
-                                                            : res.status}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="p-8 text-center">
-                                <div className="flex flex-col items-center">
-                                    <div className="w-16 h-16 bg-gradient-to-br from-blue-50 to-purple-50 rounded-full flex items-center justify-center mb-4">
-                                        <Calendar className="w-8 h-8 text-blue-500" />
+                </div>
+            </div>
+
+            {/* Estadísticas del Restaurante - DATOS REALES */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {/* Total Reservas HOY - REAL */}
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-3 mb-2">
+                        <Calendar className="w-5 h-5 text-blue-600" />
+                        <span className="text-sm font-medium text-gray-700">Reservas Hoy</span>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-600">{realData.totalReservationsToday}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                        {realData.averagePartySize > 0 ? 
+                            `Promedio: ${realData.averagePartySize} personas/reserva` : 
+                            'Sin reservas hoy'
+                        }
+                    </div>
+                </div>
+
+                {/* Reservas Esta Semana - REAL */}
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-3 mb-2">
+                        <TrendingUp className="w-5 h-5 text-purple-600" />
+                        <span className="text-sm font-medium text-gray-700">Esta Semana</span>
+                    </div>
+                    <div className="text-2xl font-bold text-purple-600">{realData.totalReservationsThisWeek}</div>
+                    <div className="text-xs text-gray-500 mt-1">Últimos 7 días</div>
+                </div>
+
+                {/* Clientes - DATOS REALES */}
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-3 mb-2">
+                        <Users className="w-5 h-5 text-green-600" />
+                        <span className="text-sm font-medium text-gray-700">Base de Clientes</span>
+                    </div>
+                    <div className="text-2xl font-bold text-green-600">{realData.totalCustomers}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                        {realData.newCustomersToday > 0 ? 
+                            `+${realData.newCustomersToday} nuevos hoy` : 
+                            'Sin clientes nuevos hoy'
+                        }
+                    </div>
+                </div>
+
+                {/* Hora Punta - CALCULADA REAL */}
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-3 mb-2">
+                        <Clock className="w-5 h-5 text-orange-600" />
+                        <span className="text-sm font-medium text-gray-700">Hora Punta</span>
+                    </div>
+                    <div className="text-2xl font-bold text-orange-600">
+                        {realData.peakHour || '--'}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                        {realData.peakHour ? 
+                            'Calculado de reservas reales' : 
+                            'Sin datos suficientes'
+                        }
+                    </div>
+                </div>
+            </div>
+
+            {/* Ocupación y Mesas - DATOS REALES */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Ocupación - REAL */}
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-3 mb-2">
+                        <BarChart3 className="w-5 h-5 text-green-600" />
+                        <span className="text-sm font-medium text-gray-700">Ocupación Hoy</span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">{realData.currentOccupancyRate}%</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                        {realData.totalReservationsToday}/{realData.totalTables} mesas reservadas
+                    </div>
+                </div>
+
+                {/* Mesas Configuradas - REAL */}
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-3 mb-2">
+                        <Users className="w-5 h-5 text-blue-600" />
+                        <span className="text-sm font-medium text-gray-700">Mesas Configuradas</span>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-600">{realData.totalTables}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                        Capacidad total: {realData.totalCapacity} personas
+                    </div>
+                    {realData.totalTables === 0 && (
+                        <div className="text-xs text-orange-500 mt-1">
+                            <button 
+                                onClick={() => navigate('/mesas')}
+                                className="hover:underline"
+                            >
+                                ⚙️ Configurar mesas
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Estado del Sistema - REAL */}
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-3 mb-2">
+                        <Activity className="w-5 h-5 text-purple-600" />
+                        <span className="text-sm font-medium text-gray-700">Estado del Sistema</span>
+                    </div>
+                    <div className="text-2xl font-bold text-green-600">Operativo</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                        Base interna funcionando
+                    </div>
+                </div>
+            </div>
+
+            {/* Reservas de Hoy - DATOS REALES */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Reservas de Hoy</h3>
+                    <button
+                        onClick={() => navigate("/reservas")}
+                        className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                    >
+                        Ver todas →
+                    </button>
+                </div>
+
+                {todayReservations.length > 0 ? (
+                    <div className="space-y-3">
+                        {todayReservations.map((reservation) => (
+                            <div key={reservation.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <Users className="w-5 h-5 text-purple-600" />
                                     </div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                        ¡Tu restaurante está listo!
-                                    </h3>
-                                    <p className="text-gray-500 text-center mb-4 max-w-md">
-                                        No hay reservas para hoy aún. Cuando los clientes empiecen a hacer reservas, aparecerán aquí automáticamente.
-                                    </p>
-                                    <div className="flex space-x-3">
-                                        <button 
-                                            onClick={() => navigate('/reservas')} 
-                                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Crear Primera Reserva
-                                        </button>
-                                        <button 
-                                            onClick={() => navigate('/configuracion')} 
-                                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                                        >
-                                            <Settings className="w-4 h-4 mr-2" />
-                                            Configurar
-                                        </button>
+                                    <div>
+                                        <div className="font-medium text-gray-900">{reservation.customer_name}</div>
+                                        <div className="text-sm text-gray-500">
+                                            {reservation.reservation_time} • {reservation.party_size} personas
+                                            {reservation.table_number && ` • Mesa ${reservation.table_number}`}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                                        reservation.status === 'confirmed' 
+                                            ? 'bg-green-100 text-green-800'
+                                            : reservation.status === 'cancelled'
+                                            ? 'bg-red-100 text-red-800'
+                                            : 'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                        {reservation.status === 'confirmed' ? 'Confirmada' : 
+                                         reservation.status === 'cancelled' ? 'Cancelada' : 'Pendiente'}
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        ))}
                     </div>
-                </div>
-
-                {/* Gráfico de distribución por canal */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Distribución de Reservas por Canal
-                    </h3>
-                    <div className="h-64">
-                        {!isLoading && stats.channel_distribution.length > 0 && (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={stats.channel_distribution}
-                                        cx="50%"
-                                        cy="50%"
-                                        labelLine={false}
-                                        label={({ name, percentage }) =>
-                                            `${name} (${percentage}%)`
-                                        }
-                                        outerRadius={80}
-                                        fill="#8884d8"
-                                        dataKey="value"
-                                    >
-                                        {stats.channel_distribution.map(
-                                            (entry, index) => (
-                                                <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={
-                                                        CHART_COLORS[
-                                                            entry.name
-                                                                .toLowerCase()
-                                                                .replace(" ", "")
-                                                        ] || CHART_COLORS.manual
-                                                    }
-                                                />
-                                            ),
-                                        )}
-                                    </Pie>
-                                    <Tooltip />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        )}
+                ) : (
+                    <div className="text-center py-8">
+                        <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                        <p className="text-gray-500">No hay reservas para hoy</p>
+                        <button
+                            onClick={() => navigate("/reservas")}
+                            className="mt-2 text-purple-600 hover:text-purple-700 text-sm font-medium"
+                        >
+                            Crear nueva reserva
+                        </button>
                     </div>
-                </div>
-
-                {/* Gráfico de reservas por hora */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Reservas por Hora (Agente vs Manual)
-                    </h3>
-                    <div className="h-64">
-                        {!isLoading && stats.hourly_reservations.length > 0 && (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={stats.hourly_reservations}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="hour" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Bar
-                                        dataKey="agent"
-                                        fill={CHART_COLORS.agent}
-                                        name="Agente IA"
-                                        radius={[4, 4, 0, 0]}
-                                    />
-                                    <Bar
-                                        dataKey="manual"
-                                        fill={CHART_COLORS.manual}
-                                        name="Manual"
-                                        radius={[4, 4, 0, 0]}
-                                    />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Insights del agente */}
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="text-xl font-semibold flex items-center gap-2">
-                            <Brain className="w-6 h-6" />
-                            Insights del Agente IA
-                        </h3>
-                        <p className="mt-2 text-white/90">
-                            El agente ha gestionado el {agentEfficiency}% de las
-                            reservas de hoy. Las horas con mayor actividad son{" "}
-                            {peakHours.join(", ")}. El canal más efectivo es
-                            WhatsApp con {stats.whatsapp_reservations} reservas.
-                        </p>
-                    </div>
-                    <Award className="w-16 h-16 text-white/20" />
-                </div>
+                )}
             </div>
         </div>
     );
-}
-
-// Función auxiliar para obtener ícono del canal
-function getChannelIcon(channel) {
-    const icons = {
-        whatsapp: <MessageCircle className="w-4 h-4 text-green-600" />,
-        vapi: <PhoneCall className="w-4 h-4 text-orange-600" />,
-        web: <Globe className="w-4 h-4 text-blue-600" />,
-        instagram: <MessageSquare className="w-4 h-4 text-pink-600" />,
-        facebook: <MessageCircle className="w-4 h-4 text-blue-800" />,
-    };
-    return icons[channel?.toLowerCase()] || null;
 }

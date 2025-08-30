@@ -274,7 +274,7 @@ const {
 
         setChannelValidation(newValidation);
         return newValidation;
-    }, [settings.channels, validateChannel]);
+    }, [settings.channels]);
 
     // Función para obtener conteo de canales activos y válidos
     const getActiveChannelCount = useCallback(() => {
@@ -306,7 +306,7 @@ const {
                 [channelType]: { ...prev.channels[channelType], enabled }
             }
         }));
-    }, [settings.channels, validateChannel]);
+    }, [settings.channels]);
 
     // Estados para todas las configuraciones
     const [settings, setSettings] = useState({
