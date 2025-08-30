@@ -79,6 +79,15 @@ export default function Configuracion() {
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState("restaurant");
     
+    // Leer parámetro URL para abrir pestaña específica
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        if (tab && ['restaurant', 'channels', 'hours'].includes(tab)) {
+            setActiveTab(tab);
+        }
+    }, []);
+    
     // Estados de configuración
     const [restaurantConfig, setRestaurantConfig] = useState({
         name: "",
