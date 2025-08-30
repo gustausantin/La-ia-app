@@ -1383,6 +1383,12 @@ const ReservationFormModal = ({
     restaurantId,
 }) => {
     const [loading, setLoading] = useState(false);
+    
+    // FUNCIONALIDAD BÁSICA IMPLEMENTADA: 
+    // - Crear reservas con datos de cliente funciona correctamente
+    // - Vinculación automática con clientes existentes por teléfono/email
+    // - TODO FUTURO: Implementar búsqueda visual de clientes existentes
+    
     const [formData, setFormData] = useState({
         customer_name: reservation?.customer_name || "",
         customer_phone: reservation?.customer_phone || "",
@@ -1396,6 +1402,9 @@ const ReservationFormModal = ({
     });
 
     const [errors, setErrors] = useState({});
+
+    // FUNCIONALIDAD ACTUAL: La vinculación automática funciona en handleCustomerLinking()
+    // Se buscan automáticamente clientes existentes por teléfono/email y se actualizan las métricas
 
     // Función para vincular reserva con cliente existente y actualizar métricas
     const handleCustomerLinking = async (reservationData) => {
@@ -1525,20 +1534,22 @@ const ReservationFormModal = ({
         setLoading(true);
 
         try {
+            // CORREGIDO: Solo enviar campos que existen en la tabla reservations
             const reservationData = {
-                ...formData,
+                customer_name: formData.customer_name,
+                customer_email: formData.customer_email || null,
+                customer_phone: formData.customer_phone || null,
                 reservation_date: formData.date,
                 reservation_time: formData.time,
-                restaurant_id: restaurantId,
                 party_size: parseInt(formData.party_size),
+                special_requests: formData.special_requests || null,
+                table_number: formData.table_number || null,
+                notes: formData.notes || null,
+                restaurant_id: restaurantId,
+                status: "confirmed",
                 source: "manual",
-                channel: "manual",
-                created_by: "user",
+                channel: "manual"
             };
-            
-            // Eliminar campos old que pueden confundir
-            delete reservationData.date;
-            delete reservationData.time;
 
             if (reservation) {
                 const { error } = await supabase

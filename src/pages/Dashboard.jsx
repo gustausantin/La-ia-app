@@ -433,7 +433,7 @@ export default function Dashboard() {
                         </div>
                         <div className="text-xs text-blue-500 mt-1">
                             <button 
-                                onClick={() => navigate('/configuracion')}
+                                onClick={() => navigate('/configuracion?tab=channels')}
                                 className="hover:underline"
                             >
                                 ⚙️ Configurar canales
