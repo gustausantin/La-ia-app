@@ -1549,13 +1549,13 @@ const {
                                     <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-3 h-3 rounded-full ${settings.agent.enabled ? 'bg-green-500' : 'bg-gray-400'} animate-pulse`} />
+                                                <div className={`w-3 h-3 rounded-full ${settings.agent?.enabled ? 'bg-green-500' : 'bg-gray-400'} animate-pulse`} />
                                                     <span className="font-medium text-gray-900">
-                                                        Estado: {settings.agent.enabled ? 'Activo' : 'Inactivo'}
+                                                        Estado: {settings.agent?.enabled ? 'Activo' : 'Inactivo'}
                                                     </span>
                                             </div>
                                             <ToggleSwitch
-                                                enabled={settings.agent.enabled}
+                                                enabled={settings.agent?.enabled || false}
                                                 onChange={(enabled) => handleNestedChange('agent', 'enabled', enabled)}
                                                 label=""
                                             />
@@ -2329,16 +2329,16 @@ const {
                                         <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-3 h-3 rounded-full ${settings.crm.enabled ? 'bg-green-500' : 'bg-gray-400'} animate-pulse`} />
+                                                    <div className={`w-3 h-3 rounded-full ${settings.crm?.enabled ? 'bg-green-500' : 'bg-gray-400'} animate-pulse`} />
                                                     <span className="font-medium text-gray-900">
-                                                        CRM IA: {settings.crm.enabled ? 'Activo' : 'Inactivo'}
+                                                        CRM IA: {settings.crm?.enabled ? 'Activo' : 'Inactivo'}
                                                     </span>
                                                 </div>
                                                 <ToggleSwitch
-                                                    enabled={settings.crm.enabled}
+                                                    enabled={settings.crm?.enabled || false}
                                                     onChange={(enabled) => setSettings(prev => ({
                                                         ...prev,
-                                                        crm: { ...prev.crm, enabled }
+                                                        crm: { ...(prev.crm || {}), enabled }
                                                     }))}
                                                     label=""
                                                 />
@@ -2373,7 +2373,7 @@ const {
                                                     </label>
                                                     <input
                                                         type="number"
-                                                        value={settings.crm.thresholds.inactivo_days}
+                                                        value={settings.crm?.thresholds?.inactivo_days || 60}
                                                         onChange={(e) => setSettings(prev => ({
                                                             ...prev,
                                                             crm: {
@@ -2399,7 +2399,7 @@ const {
                                                     </label>
                                                     <input
                                                         type="number"
-                                                        value={settings.crm.thresholds.vip_visits}
+                                                        value={settings.crm?.thresholds?.vip_visits || 5}
                                                         onChange={(e) => setSettings(prev => ({
                                                             ...prev,
                                                             crm: {
@@ -2425,7 +2425,7 @@ const {
                                                     </label>
                                                     <input
                                                         type="number"
-                                                        value={settings.crm.thresholds.vip_spend}
+                                                        value={settings.crm?.thresholds?.vip_spend || 500}
                                                         onChange={(e) => setSettings(prev => ({
                                                             ...prev,
                                                             crm: {
@@ -2451,7 +2451,7 @@ const {
                                                     </label>
                                                     <input
                                                         type="number"
-                                                        value={settings.crm.thresholds.alto_valor_spend}
+                                                        value={settings.crm?.thresholds?.alto_valor_spend || 1000}
                                                         onChange={(e) => setSettings(prev => ({
                                                             ...prev,
                                                             crm: {
@@ -3080,20 +3080,7 @@ const {
                             </SettingSection>
                         )}
 
-                        {/* Otras pestañas con contenido placeholder */}
-                        {activeTab === "crm" && (
-                            <SettingSection
-                                title="CRM Inteligente"
-                                description="Gestión automática de clientes con IA"
-                                icon={<Brain />}
-                                premium
-                            >
-                                <div className="text-center py-8 text-gray-500">
-                                    <Brain className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>CRM con IA próximamente...</p>
-                                </div>
-                            </SettingSection>
-                        )}
+                                {/* Sección CRM duplicada eliminada - ya existe la completa arriba */}
 
                         {activeTab === "workflows" && (
                             <SettingSection

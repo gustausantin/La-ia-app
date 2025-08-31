@@ -443,63 +443,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* CRM IA - DIFERENCIADOR ÚNICO */}
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white mb-8">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <Zap className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold">CRM Sistema Inteligente</h2>
-                            <p className="text-purple-100">Segmentación automática y automatizaciones avanzadas</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => navigate('/configuracion?tab=crm')}
-                        className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center gap-2"
-                    >
-                        <Settings className="w-4 h-4" />
-                        Configurar
-                    </button>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-white/10 rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-white">7</div>
-                        <div className="text-sm text-purple-100">Segmentos IA</div>
-                        <div className="text-xs text-purple-200 mt-1">Automático</div>
-                    </div>
-                    
-                    <div className="bg-white/10 rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-white">85%</div>
-                        <div className="text-sm text-purple-100">Automatización</div>
-                        <div className="text-xs text-purple-200 mt-1">Sin intervención</div>
-                    </div>
-                    
-                    <div className="bg-white/10 rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-white">300%</div>
-                        <div className="text-sm text-purple-100">ROI Retención</div>
-                        <div className="text-xs text-purple-200 mt-1">vs Manual</div>
-                    </div>
-                    
-                    <div className="bg-white/10 rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-white">24/7</div>
-                        <div className="text-sm text-purple-100">Operativo</div>
-                        <div className="text-xs text-purple-200 mt-1">Siempre activo</div>
-                    </div>
-                </div>
-
-                <div className="mt-4 flex justify-center">
-                    <button
-                        onClick={() => navigate('/crm/mensajes')}
-                        className="px-6 py-2 bg-white text-purple-600 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2 font-medium"
-                    >
-                        <MessageSquare className="w-4 h-4" />
-                        Ver Próximos Mensajes
-                    </button>
-                </div>
-            </div>
+            {/* Widget CRM eliminado según solicitud del usuario */}
 
             {/* Estadísticas del Restaurante - DATOS REALES */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

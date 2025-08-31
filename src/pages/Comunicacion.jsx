@@ -7,6 +7,7 @@ import React, {
     useMemo,
     useRef,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import {
@@ -1008,6 +1009,7 @@ const CustomerInfoPanel = ({ conversation, onClose }) => {
 // Componente principal
 export default function Comunicacion() {
     const { restaurant, restaurantId, isReady, addNotification } = useAuthContext();
+    const navigate = useNavigate();
 
     // Estados principales
     const [loading, setLoading] = useState(true);
@@ -1016,13 +1018,28 @@ export default function Comunicacion() {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
     const [sendingMessage, setSendingMessage] = useState(false);
-    const [agentStatus] = useState({ active: true }); // Mock del estado del agente
+    const [agentStatus, setAgentStatus] = useState({ active: false, loading: true }); // Estado real del agente
 
     // Estados de UI
     const [showCustomerInfo, setShowCustomerInfo] = useState(false);
     const [showTemplates, setShowTemplates] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
+    const [showTemplatesManager, setShowTemplatesManager] = useState(false);
     const [activeView, setActiveView] = useState("conversations"); // conversations, analytics, settings
+
+    // Estados para plantillas REALES
+    const [realTemplates, setRealTemplates] = useState({
+        whatsapp: [],
+        email: [],
+        sms: [],
+        instagram: [],
+        facebook: []
+    });
+    const [loadingTemplates, setLoadingTemplates] = useState(false);
+
+    // Estados para canales REALES
+    const [channelsConfig, setChannelsConfig] = useState({});
+    const [loadingChannels, setLoadingChannels] = useState(false);
 
     // Estados de filtros
     const [filters, setFilters] = useState({
@@ -1045,134 +1062,55 @@ export default function Comunicacion() {
         peakHours: [],
     });
 
-    // Función para cargar conversaciones
+    // Función para cargar conversaciones REALES desde Supabase
     const loadConversations = useCallback(async () => {
         if (!restaurantId) return;
 
         try {
             setLoading(true);
 
-            // TODO: En producción, cargar datos reales desde Supabase
-            // const { data, error } = await supabase
-            //     .from('message_batches_demo')
-            //     .select(`
-            //         *,
-            //         customer:customers(*),
-            //         ai_insights:ai_conversation_insights(*)
-            //     `)
-            //     .eq('restaurant_id', restaurantId)
-            //     .order('last_message_at', { ascending: false });
+            // CARGAR DATOS REALES desde conversations
+            const { data: conversations, error: convError } = await supabase
+                .from('conversations')
+                .select(`
+                    *,
+                    customer:customers(*),
+                    messages(count)
+                `)
+                .eq('restaurant_id', restaurantId)
+                .order('updated_at', { ascending: false });
 
-            // Simular carga
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            if (convError) {
+                console.error("Error cargando conversaciones:", convError);
+                throw convError;
+            }
 
-            // Simular datos de message_batches_demo
-            const mockConversations = [
-                {
-                    id: 1,
-                    batch_id: "batch_001",
-                    customer_id: 1,
-                    customer_name: "María García",
-                    customer_phone: "+34 600 123 456",
-                    customer_email: "maria@email.com",
-                    channel: "whatsapp",
-                    state: "active",
-                    is_vip: true,
-                    ai_handled: true,
-                    human_takeover: false,
-                    unread_count: 2,
-                    last_message:
-                        "¿Tenéis disponibilidad para 4 personas esta noche?",
-                    last_message_at: new Date().toISOString(),
-                    created_at: new Date(Date.now() - 3600000).toISOString(),
-                    ai_insights: {
-                        intent: "reservation_request",
-                        sentiment: "positive",
-                        urgency: "high",
-                        topics: ["reserva", "disponibilidad"],
-                        action_required: false,
-                    },
-                },
-                {
-                    id: 2,
-                    batch_id: "batch_002",
-                    customer_id: 2,
-                    customer_name: "Carlos Rodríguez",
-                    customer_phone: "+34 611 234 567",
-                    channel: "vapi",
-                    state: "escalated",
-                    is_vip: false,
-                    ai_handled: true,
-                    human_takeover: true,
-                    unread_count: 1,
-                    last_message:
-                        "El cliente solicita hablar con el encargado sobre un evento especial",
-                    last_message_at: new Date(
-                        Date.now() - 1800000,
-                    ).toISOString(),
-                    created_at: new Date(Date.now() - 7200000).toISOString(),
-                    ai_insights: {
-                        intent: "special_event",
-                        sentiment: "neutral",
-                        urgency: "medium",
-                        topics: ["evento", "grupo grande"],
-                        action_required: true,
-                        escalation_reason:
-                            "Solicitud compleja que requiere atención personalizada",
-                    },
-                },
-                {
-                    id: 3,
-                    batch_id: "batch_003",
-                    customer_id: 3,
-                    customer_name: "Ana Martínez",
-                    customer_phone: "+34 622 345 678",
-                    channel: "instagram",
-                    state: "resolved",
-                    is_vip: false,
-                    ai_handled: true,
-                    human_takeover: false,
-                    unread_count: 0,
-                    last_message: "Gracias por la información! 😊",
-                    last_message_at: new Date(
-                        Date.now() - 10800000,
-                    ).toISOString(),
-                    created_at: new Date(Date.now() - 86400000).toISOString(),
-                    ai_insights: {
-                        intent: "information_request",
-                        sentiment: "positive",
-                        urgency: "low",
-                        topics: ["menú", "horarios"],
-                        resolution_time: 5, // minutos
-                    },
-                },
-                {
-                    id: 4,
-                    batch_id: "batch_004",
-                    customer_name: "Laura Sánchez",
-                    customer_phone: "+34 633 456 789",
-                    channel: "whatsapp",
-                    state: "pending",
-                    is_vip: true,
-                    ai_handled: false,
-                    human_takeover: false,
-                    unread_count: 3,
-                    last_message: "Hola, necesito cambiar mi reserva de mañana",
-                    last_message_at: new Date(
-                        Date.now() - 600000,
-                    ).toISOString(),
-                    created_at: new Date(Date.now() - 600000).toISOString(),
-                    ai_insights: {
-                        intent: "reservation_modification",
-                        sentiment: "neutral",
-                        urgency: "high",
-                        is_vip: true,
-                    },
-                },
-            ];
+            // Procesar conversaciones reales
+            const processedConversations = (conversations || []).map(conv => ({
+                id: conv.id,
+                customer_id: conv.customer_id,
+                customer_name: conv.customer?.name || conv.customer?.first_name || 'Cliente',
+                customer_phone: conv.customer?.phone || '',
+                customer_email: conv.customer?.email || '',
+                channel: conv.channel || 'web_chat',
+                status: conv.status || 'active',
+                is_vip: conv.customer?.segment_auto === 'vip' || conv.customer?.segment_manual === 'vip' || false,
+                ai_handled: conv.ai_handled || false,
+                human_takeover: conv.human_takeover || false,
+                unread_count: conv.unread_count || 0,
+                last_message: conv.last_message || 'Sin mensajes',
+                last_message_at: conv.updated_at || conv.created_at,
+                created_at: conv.created_at,
+                ai_insights: conv.ai_insights || {
+                    intent: 'general',
+                    sentiment: 'neutral',
+                    urgency: 'low',
+                    topics: [],
+                    action_required: false
+                }
+            }));
 
-            // DATOS MOCK ELIMINADOS - Solo usar datos reales
-            setConversations([]);
+            setConversations(processedConversations);
 
             // Generar datos de analytics
             generateAnalyticsData();
@@ -1183,97 +1121,40 @@ export default function Comunicacion() {
         }
     }, [restaurantId]);
 
-    // Función para cargar mensajes
+    // Función para cargar mensajes REALES desde Supabase
     const loadMessages = useCallback(
         async (conversationId) => {
             if (!conversationId) return;
 
             try {
-                // TODO: En producción, cargar mensajes reales
-                // const { data, error } = await supabase
-                //     .from('messages')
-                //     .select('*')
-                //     .eq('conversation_id', conversationId)
-                //     .order('created_at', { ascending: true });
+                // CARGAR MENSAJES REALES desde Supabase
+                const { data: messages, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .eq('conversation_id', conversationId)
+                    .order('created_at', { ascending: true });
 
-                // Simular mensajes con más detalle
-                const mockMessages = [
-                    {
-                        id: 1,
-                        conversation_id: conversationId,
-                        content: "Hola, buenas tardes! 👋",
-                        direction: "inbound",
-                        type: "text",
-                        delivered: true,
-                        read: true,
-                        created_at: new Date(
-                            Date.now() - 3600000,
-                        ).toISOString(),
-                        customer_info: {
-                            name: selectedConversation?.customer_name,
-                            phone: selectedConversation?.customer_phone,
-                        },
-                    },
-                    {
-                        id: 2,
-                        conversation_id: conversationId,
-                        content:
-                            "¡Hola! Bienvenido/a a " +
-                            (restaurant?.name || "nuestro restaurante") +
-                            ". Soy el asistente virtual. ¿En qué puedo ayudarte hoy?",
-                        direction: "outbound",
-                        type: "text",
-                        ai_generated: true,
-                        delivered: true,
-                        read: true,
-                        created_at: new Date(
-                            Date.now() - 3500000,
-                        ).toISOString(),
-                        response_time: 2, // segundos
-                    },
-                    {
-                        id: 3,
-                        conversation_id: conversationId,
-                        content:
-                            "¿Tenéis disponibilidad para 4 personas esta noche?",
-                        direction: "inbound",
-                        type: "text",
-                        delivered: true,
-                        read: true,
-                        created_at: new Date(
-                            Date.now() - 3400000,
-                        ).toISOString(),
-                        ai_insights: {
-                            intent: "reservation_request",
-                            entities: {
-                                party_size: 4,
-                                date: "today",
-                                time: "night",
-                            },
-                        },
-                    },
-                    {
-                        id: 4,
-                        conversation_id: conversationId,
-                        content:
-                            "¡Por supuesto! Déjame consultar la disponibilidad para esta noche... 🔍\n\nTenemos las siguientes opciones para 4 personas:\n• 20:00h - Mesa en salón principal\n• 20:30h - Mesa en terraza (recomendado)\n• 21:30h - Mesa en zona VIP\n\n¿Cuál prefieres?",
-                        direction: "outbound",
-                        type: "text",
-                        ai_generated: true,
-                        delivered: true,
-                        read: false,
-                        created_at: new Date(
-                            Date.now() - 3300000,
-                        ).toISOString(),
-                        response_time: 5,
-                        ai_insights: {
-                            action: "availability_provided",
-                            options_given: 3,
-                        },
-                    },
-                ];
+                if (error) {
+                    console.error("Error cargando mensajes:", error);
+                    throw error;
+                }
 
-                setMessages(mockMessages);
+                // Procesar mensajes reales
+                const processedMessages = (messages || []).map(msg => ({
+                    id: msg.id,
+                    conversation_id: msg.conversation_id,
+                    content: msg.content || msg.message_content || 'Mensaje sin contenido',
+                    direction: msg.direction || (msg.is_from_customer ? 'inbound' : 'outbound'),
+                    type: msg.type || msg.message_type || 'text',
+                    delivered: msg.delivered !== false,
+                    read: msg.read !== false,
+                    ai_generated: msg.ai_generated || false,
+                    created_at: msg.created_at,
+                    response_time: msg.response_time || null,
+                    ai_insights: msg.ai_insights || null
+                }));
+
+                setMessages(processedMessages);
 
                 // Marcar conversación como leída
                 if (selectedConversation?.unread_count > 0) {
@@ -1299,44 +1180,95 @@ export default function Comunicacion() {
         [selectedConversation, restaurant],
     );
 
-    // Generar datos de analytics
-    const generateAnalyticsData = useCallback(() => {
-        // Tiempos de respuesta por hora
-        const responseTimeChart = [];
-        for (let hour = 0; hour < 24; hour++) {
-            responseTimeChart.push({
-                hour: `${hour}:00`,
-                ai: Math.floor(Math.random() * 10) + 2,
-                human: Math.floor(Math.random() * 180) + 60,
+    // Generar datos de analytics REALES desde Supabase
+    const generateAnalyticsData = useCallback(async () => {
+        if (!restaurantId) return;
+
+        try {
+            // 1. Obtener datos reales de conversaciones por canal
+            const { data: channelData, error: channelError } = await supabase
+                .from('conversations')
+                .select('channel')
+                .eq('restaurant_id', restaurantId);
+
+            // 2. Obtener datos reales de mensajes con tiempos de respuesta
+            const { data: messagesData, error: messagesError } = await supabase
+                .from('messages')
+                .select('created_at, response_time, ai_generated')
+                .in('conversation_id', 
+                    (channelData || []).map(c => c.id).filter(Boolean)
+                );
+
+            // 3. Procesar distribución por canal REAL
+            const channelCounts = {};
+            (channelData || []).forEach(conv => {
+                const channel = conv.channel || 'web_chat';
+                channelCounts[channel] = (channelCounts[channel] || 0) + 1;
             });
-        }
 
-        // Distribución por canal
-        const channelDistribution = [
-            { channel: "WhatsApp", count: 245, percentage: 52 },
-            { channel: "Vapi", count: 123, percentage: 26 },
-            { channel: "Instagram", count: 67, percentage: 14 },
-            { channel: "Facebook", count: 28, percentage: 6 },
-            { channel: "Email", count: 10, percentage: 2 },
-        ];
+            const totalConversations = Object.values(channelCounts).reduce((sum, count) => sum + count, 0);
+            const channelDistribution = Object.entries(channelCounts).map(([channel, count]) => ({
+                channel: COMMUNICATION_CHANNELS[channel]?.label || channel,
+                count,
+                percentage: totalConversations > 0 ? Math.round((count / totalConversations) * 100) : 0
+            }));
 
-        // Tendencia de satisfacción
-        const satisfactionTrend = [];
-        for (let i = 6; i >= 0; i--) {
-            const date = subDays(new Date(), i);
-            satisfactionTrend.push({
+            // 4. Procesar tiempos de respuesta por hora REALES
+            const hourlyData = {};
+            (messagesData || []).forEach(msg => {
+                const hour = new Date(msg.created_at).getHours();
+                if (!hourlyData[hour]) {
+                    hourlyData[hour] = { ai: [], human: [] };
+                }
+                if (msg.response_time) {
+                    if (msg.ai_generated) {
+                        hourlyData[hour].ai.push(msg.response_time);
+                    } else {
+                        hourlyData[hour].human.push(msg.response_time);
+                    }
+                }
+            });
+
+            const responseTimeChart = [];
+            for (let hour = 0; hour < 24; hour++) {
+                const data = hourlyData[hour];
+                responseTimeChart.push({
+                    hour: `${hour}:00`,
+                    ai: data?.ai.length > 0 ? Math.round(data.ai.reduce((sum, time) => sum + time, 0) / data.ai.length) : 0,
+                    human: data?.human.length > 0 ? Math.round(data.human.reduce((sum, time) => sum + time, 0) / data.human.length) : 0,
+                });
+            }
+
+            // 5. Tendencia de satisfacción (últimos 7 días)
+            const satisfactionTrend = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = subDays(new Date(), i);
+                const dayStart = format(date, 'yyyy-MM-dd');
+                const dayConversations = (channelData || []).filter(conv => 
+                    conv.created_at && conv.created_at.startsWith(dayStart)
+                ).length;
+                
+                satisfactionTrend.push({
                     date: format(date, "dd/MM"),
-                satisfaction: 85 + Math.floor(Math.random() * 10),
-                conversations: Math.floor(Math.random() * 50) + 30,
-            });
-        }
+                    satisfaction: 85, // TODO: Obtener de customer_feedback cuando esté disponible
+                    conversations: dayConversations,
+                });
+            }
 
-        // Horas pico
+            // 6. Horas pico REALES
+            const hourlyConversations = {};
+            (channelData || []).forEach(conv => {
+                if (conv.created_at) {
+                    const hour = new Date(conv.created_at).getHours();
+                    hourlyConversations[hour] = (hourlyConversations[hour] || 0) + 1;
+                }
+            });
+
             const peakHours = [
-            { hour: "11:00-13:00", conversations: 45 },
-            { hour: "13:00-15:00", conversations: 62 },
-            { hour: "19:00-21:00", conversations: 78 },
-            { hour: "21:00-23:00", conversations: 55 },
+                { hour: "11:00-13:00", conversations: (hourlyConversations[11] || 0) + (hourlyConversations[12] || 0) },
+                { hour: "13:00-15:00", conversations: (hourlyConversations[13] || 0) + (hourlyConversations[14] || 0) },
+                { hour: "19:00-21:00", conversations: (hourlyConversations[19] || 0) + (hourlyConversations[20] || 0) },
+                { hour: "21:00-23:00", conversations: (hourlyConversations[21] || 0) + (hourlyConversations[22] || 0) },
             ];
 
             setAnalyticsData({
@@ -1345,14 +1277,153 @@ export default function Comunicacion() {
                 satisfactionTrend,
                 peakHours,
             });
-    }, []);
+
+        } catch (error) {
+            console.error("Error generando analytics:", error);
+            // En caso de error, mostrar datos vacíos pero reales
+            setAnalyticsData({
+                responseTimeChart: [],
+                channelDistribution: [],
+                satisfactionTrend: [],
+                peakHours: [],
+            });
+        }
+    }, [restaurantId]);
+
+    // Función para cargar plantillas REALES desde Supabase
+    const loadRealTemplates = useCallback(async () => {
+        if (!restaurantId) return;
+
+        try {
+            setLoadingTemplates(true);
+
+            // CARGAR PLANTILLAS REALES desde message_templates
+            const { data: templates, error } = await supabase
+                .from('message_templates')
+                .select('*')
+                .eq('restaurant_id', restaurantId)
+                .eq('is_active', true)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Error cargando plantillas:", error);
+                throw error;
+            }
+
+            // Organizar plantillas por canal
+            const templatesByChannel = {
+                whatsapp: [],
+                email: [],
+                sms: [],
+                instagram: [],
+                facebook: []
+            };
+
+            (templates || []).forEach(template => {
+                const channel = template.channel || 'whatsapp';
+                if (templatesByChannel[channel]) {
+                    templatesByChannel[channel].push({
+                        id: template.id,
+                        name: template.name,
+                        subject: template.subject,
+                        content: template.content,
+                        template_type: template.template_type,
+                        category: template.category,
+                        success_rate: template.success_rate || 0,
+                        last_used_at: template.last_used_at,
+                        variables: template.variables || [],
+                        tags: template.tags || []
+                    });
+                }
+            });
+
+            setRealTemplates(templatesByChannel);
+
+        } catch (error) {
+            console.error("Error cargando plantillas:", error);
+            toast.error("Error al cargar las plantillas");
+        } finally {
+            setLoadingTemplates(false);
+        }
+    }, [restaurantId]);
+
+    // Función para cargar configuración REAL de canales desde Supabase
+    const loadChannelsConfig = useCallback(async () => {
+        if (!restaurantId) return;
+
+        try {
+            setLoadingChannels(true);
+
+            // CARGAR CONFIGURACIÓN REAL de canales desde restaurants.settings
+            const { data: restaurantData, error } = await supabase
+                .from('restaurants')
+                .select('settings')
+                .eq('id', restaurantId)
+                .single();
+
+            if (error) {
+                console.error("Error cargando configuración de canales:", error);
+                throw error;
+            }
+
+            const channels = restaurantData?.settings?.channels || {};
+            setChannelsConfig(channels);
+
+        } catch (error) {
+            console.error("Error cargando canales:", error);
+            setChannelsConfig({});
+        } finally {
+            setLoadingChannels(false);
+        }
+    }, [restaurantId]);
+
+    // Función para cargar estado REAL del agente desde Supabase
+    const loadAgentStatus = useCallback(async () => {
+        if (!restaurantId) return;
+
+        try {
+            // CARGAR ESTADO REAL del agente desde restaurants.settings
+            const { data: restaurantData, error } = await supabase
+                .from('restaurants')
+                .select('settings')
+                .eq('id', restaurantId)
+                .single();
+
+            if (error) {
+                console.error("Error cargando estado del agente:", error);
+                setAgentStatus({ active: false, loading: false, error: true });
+                return;
+            }
+
+            const agentConfig = restaurantData?.settings?.agent || {};
+            setAgentStatus({
+                active: agentConfig.enabled || false,
+                loading: false,
+                name: agentConfig.name || 'Asistente IA',
+                personality: agentConfig.personality || 'professional_friendly',
+                response_time_target: agentConfig.response_time_target || 30
+            });
+
+        } catch (error) {
+            console.error("Error cargando agente:", error);
+            setAgentStatus({ active: false, loading: false, error: true });
+        }
+    }, [restaurantId]);
 
     // Cargar datos inicial
     useEffect(() => {
         if (isReady && restaurantId) {
             loadConversations();
+            // Asegurar que los analytics se cargan siempre
+            generateAnalyticsData();
+            // Cargar plantillas reales
+            loadRealTemplates();
+            // Cargar configuración de canales reales
+            loadChannelsConfig();
+            // Cargar estado real del agente
+            loadAgentStatus();
         }
-    }, [isReady, restaurantId, loadConversations]);
+    }, [isReady, restaurantId, loadConversations, generateAnalyticsData, loadRealTemplates, loadChannelsConfig, loadAgentStatus]);
 
     // Auto-refresh
     useEffect(() => {
@@ -2464,7 +2535,7 @@ export default function Comunicacion() {
                                         >
                                             <LineChart
                                                 data={
-                                                    analyticsData.responseTimeChart
+                                                    analyticsData.responseTimeChart || []
                                                 }
                                             >
                                                 <CartesianGrid
@@ -2513,7 +2584,7 @@ export default function Comunicacion() {
                                             <PieChart>
                                                 <Pie
                                                     data={
-                                                        analyticsData.channelDistribution
+                                                        analyticsData.channelDistribution || []
                                                     }
                                                     cx="50%"
                                                     cy="50%"
@@ -2527,7 +2598,7 @@ export default function Comunicacion() {
                                                         `${name} ${percentage}%`
                                                     }
                                                 >
-                                                    {analyticsData.channelDistribution.map(
+                                                    {(analyticsData.channelDistribution || []).map(
                                                         (entry, index) => (
                                                             <Cell
                                                                 key={`cell-${index}`}
@@ -2560,7 +2631,7 @@ export default function Comunicacion() {
                                     >
                                         <LineChart
                                             data={
-                                                analyticsData.satisfactionTrend
+                                                analyticsData.satisfactionTrend || []
                                             }
                                         >
                                             <CartesianGrid
@@ -2667,14 +2738,10 @@ export default function Comunicacion() {
                                     personalizadas para tu restaurante
                                 </p>
                                 <button
-                                    onClick={() => {
-                                        // TODO: Navegar a gestión de plantillas
-                                        toast.success(
-                                            "Gestión de plantillas disponible próximamente",
-                                        );
-                                    }}
-                                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                    onClick={() => setShowTemplatesManager(true)}
+                                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
                                 >
+                                    <FileText className="w-4 h-4" />
                                     Gestionar plantillas
                                 </button>
                             </div>
@@ -2688,23 +2755,33 @@ export default function Comunicacion() {
                                     {Object.entries(COMMUNICATION_CHANNELS).map(
                                         ([key, channel]) => {
                                             const Icon = channel.icon;
-                                            const isConnected = [
-                                                "whatsapp",
-                                                "vapi",
-                                                "instagram",
-                                            ].includes(key);
+                                            // USAR CONFIGURACIÓN REAL de Supabase
+                                            const channelConfig = channelsConfig[key] || {};
+                                            const isConnected = channelConfig.enabled && (
+                                                channelConfig.api_key || 
+                                                channelConfig.access_token || 
+                                                channelConfig.phone_number ||
+                                                key === 'web_chat' // Web chat siempre disponible
+                                            );
 
                                             return (
                                                 <div
                                                     key={key}
                                                     className={`
-                                                    p-4 rounded-lg border-2 transition-all
+                                                    p-4 rounded-lg border-2 transition-all cursor-pointer
                                                     ${
                                                         isConnected
-                                                            ? "border-green-200 bg-green-50"
-                                                            : "border-gray-200 bg-gray-50"
+                                                            ? "border-green-200 bg-green-50 hover:bg-green-100"
+                                                            : "border-gray-200 bg-gray-50 hover:bg-gray-100"
                                                     }
                                                 `}
+                                                    onDoubleClick={() => {
+                                                        if (isConnected) {
+                                                            navigate(`/configuracion?tab=channels&channel=${channel.id}`);
+                                                            toast.success(`Abriendo configuración de ${channel.label}`);
+                                                        }
+                                                    }}
+                                                    title={isConnected ? `Doble clic para configurar ${channel.label}` : `Clic en "Conectar" para configurar ${channel.label}`}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-3">
@@ -2729,10 +2806,8 @@ export default function Comunicacion() {
                                                         ) : (
                                                             <button
                                                                 onClick={() => {
-                                                                    // TODO: Implementar conexión de canal
-                                                                    toast.success(
-                                                                        `Conectar ${channel.label} próximamente`,
-                                                                    );
+                                                                    navigate('/configuracion?tab=channels');
+                                                                    toast.success(`Redirigiendo a configuración de ${channel.label}`);
                                                                 }}
                                                                 className="text-sm text-purple-600 hover:text-purple-700 font-medium"
                                                             >
@@ -2750,6 +2825,263 @@ export default function Comunicacion() {
                     </div>
                 )}
             </div>
+
+            {/* Modal Gestor de Plantillas */}
+            {showTemplatesManager && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                        <div className="p-6 border-b border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-3">
+                                    <FileText className="w-6 h-6 text-purple-600" />
+                                    Gestor de Plantillas
+                                </h3>
+                                <button
+                                    onClick={() => setShowTemplatesManager(false)}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-gray-500" />
+                                </button>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-2">
+                                Gestiona todas las plantillas de mensajes para WhatsApp, Email, SMS y más canales
+                            </p>
+                            </div>
+                            
+                                                    <div className="p-6 overflow-auto max-h-[70vh]">
+                            {loadingTemplates ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                                    <span className="ml-3 text-gray-600">Cargando plantillas...</span>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* WhatsApp Templates REALES */}
+                                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <MessageSquare className="w-6 h-6 text-green-600" />
+                                            <h4 className="font-semibold text-green-900">WhatsApp Business</h4>
+                                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                                                {realTemplates.whatsapp.length} plantillas
+                                            </span>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {realTemplates.whatsapp.length > 0 ? (
+                                                realTemplates.whatsapp.map(template => (
+                                                    <div key={template.id} className="bg-white p-3 rounded border border-green-200">
+                                                        <p className="font-medium text-sm text-gray-900">{template.name}</p>
+                                                        <p className="text-xs text-gray-600 mt-1">
+                                                            {template.content.substring(0, 60)}...
+                                                        </p>
+                                                        <div className="flex gap-2 mt-2">
+                                                            <button className="text-xs text-blue-600 hover:underline">Editar</button>
+                                                            <button className="text-xs text-gray-500 hover:underline">Duplicar</button>
+                                                            {template.success_rate > 0 && (
+                                                                <span className="text-xs text-green-600">
+                                                                    {template.success_rate}% éxito
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="bg-white p-4 rounded border border-green-200 text-center">
+                                                    <p className="text-sm text-gray-500">No hay plantillas de WhatsApp</p>
+                                                    <button className="text-xs text-green-600 hover:underline mt-2">
+                                                        Crear primera plantilla
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                                                    {/* Email Templates REALES */}
+                                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <Mail className="w-6 h-6 text-blue-600" />
+                                            <h4 className="font-semibold text-blue-900">Email Marketing</h4>
+                                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                                {realTemplates.email.length} plantillas
+                                            </span>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {realTemplates.email.length > 0 ? (
+                                                realTemplates.email.map(template => (
+                                                    <div key={template.id} className="bg-white p-3 rounded border border-blue-200">
+                                                        <p className="font-medium text-sm text-gray-900">{template.name}</p>
+                                                        <p className="text-xs text-gray-600 mt-1">
+                                                            {template.subject && `${template.subject} - `}
+                                                            {template.content.substring(0, 40)}...
+                                                        </p>
+                                                        <div className="flex gap-2 mt-2">
+                                                            <button className="text-xs text-blue-600 hover:underline">Editar</button>
+                                                            <button className="text-xs text-gray-500 hover:underline">Duplicar</button>
+                                                            {template.success_rate > 0 && (
+                                                                <span className="text-xs text-green-600">
+                                                                    {template.success_rate}% éxito
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="bg-white p-4 rounded border border-blue-200 text-center">
+                                                    <p className="text-sm text-gray-500">No hay plantillas de Email</p>
+                                                    <button className="text-xs text-blue-600 hover:underline mt-2">
+                                                        Crear primera plantilla
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                                                    {/* SMS Templates REALES */}
+                                    <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <Phone className="w-6 h-6 text-purple-600" />
+                                            <h4 className="font-semibold text-purple-900">SMS Automáticos</h4>
+                                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                                                {realTemplates.sms.length} plantillas
+                                            </span>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {realTemplates.sms.length > 0 ? (
+                                                realTemplates.sms.map(template => (
+                                                    <div key={template.id} className="bg-white p-3 rounded border border-purple-200">
+                                                        <p className="font-medium text-sm text-gray-900">{template.name}</p>
+                                                        <p className="text-xs text-gray-600 mt-1">
+                                                            {template.content.substring(0, 50)}...
+                                                        </p>
+                                                        <div className="flex gap-2 mt-2">
+                                                            <button className="text-xs text-blue-600 hover:underline">Editar</button>
+                                                            <button className="text-xs text-gray-500 hover:underline">Duplicar</button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="bg-white p-4 rounded border border-purple-200 text-center">
+                                                    <p className="text-sm text-gray-500">No hay plantillas de SMS</p>
+                                                    <button className="text-xs text-purple-600 hover:underline mt-2">
+                                                        Crear primera plantilla
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Instagram Templates REALES */}
+                                    <div className="bg-pink-50 rounded-lg p-4 border border-pink-200">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <Instagram className="w-6 h-6 text-pink-600" />
+                                            <h4 className="font-semibold text-pink-900">Instagram Direct</h4>
+                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded-full">
+                                                {realTemplates.instagram.length} plantillas
+                                            </span>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {realTemplates.instagram.length > 0 ? (
+                                                realTemplates.instagram.map(template => (
+                                                    <div key={template.id} className="bg-white p-3 rounded border border-pink-200">
+                                                        <p className="font-medium text-sm text-gray-900">{template.name}</p>
+                                                        <p className="text-xs text-gray-600 mt-1">
+                                                            {template.content.substring(0, 50)}...
+                                                        </p>
+                                                        <div className="flex gap-2 mt-2">
+                                                            <button className="text-xs text-blue-600 hover:underline">Editar</button>
+                                                            <button className="text-xs text-gray-500 hover:underline">Duplicar</button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="bg-white p-4 rounded border border-pink-200 text-center">
+                                                    <p className="text-sm text-gray-500">No hay plantillas de Instagram</p>
+                                                    <button className="text-xs text-pink-600 hover:underline mt-2">
+                                                        Crear primera plantilla
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mt-8 pt-6 border-t border-gray-200">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-semibold text-gray-900">Tipos de Cliente - Mensajes Automáticos</h4>
+                                    <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
+                                        <Plus className="w-4 h-4" />
+                                        Nueva Plantilla
+                                    </button>
+                                        </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <UserCheck className="w-5 h-5 text-green-600" />
+                                            <span className="font-medium text-gray-900">Cliente Nuevo</span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mb-2">Primera visita - Mensaje de bienvenida</p>
+                                        <p className="text-xs text-gray-500 bg-white p-2 rounded border italic">
+                                            "¡Bienvenido {{name}}! Gracias por elegirnos para tu primera experiencia..."
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Activity className="w-5 h-5 text-blue-600" />
+                                            <span className="font-medium text-gray-900">Cliente Recurrente</span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mb-2">Varias visitas en el mes - Agradecimiento</p>
+                                        <p className="text-xs text-gray-500 bg-white p-2 rounded border italic">
+                                            "¡Hola {{name}}! Nos encanta verte tan seguido. Tu mesa favorita te espera..."
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <AlertTriangle className="w-5 h-5 text-orange-600" />
+                                            <span className="font-medium text-gray-900">Cliente en Riesgo</span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mb-2">Tiempo sin visitar - Reactivación</p>
+                                        <p className="text-xs text-gray-500 bg-white p-2 rounded border italic">
+                                            "¡Te echamos de menos {{name}}! Tenemos nuevos platos que te van a encantar..."
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Award className="w-5 h-5 text-purple-600" />
+                                            <span className="font-medium text-gray-900">Cliente VIP</span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mb-2">Alto valor - Tratamiento especial</p>
+                                        <p className="text-xs text-gray-500 bg-white p-2 rounded border italic">
+                                            "¡Hola {{name}}! Como cliente VIP, hemos reservado tu mesa preferida..."
+                                        </p>
+                                    </div>
+                                </div>
+                                    </div>
+                                </div>
+
+                                                <div className="p-6 border-t border-gray-200 bg-gray-50">
+                            <div className="flex items-center justify-between">
+                                <div className="text-sm text-gray-600">
+                                    <span className="font-medium">
+                                        {Object.values(realTemplates).reduce((total, templates) => total + templates.length, 0)} plantillas activas
+                                    </span> • 
+                                    <span className="ml-1">Datos reales de Supabase</span>
+                                </div>
+                                    <div className="flex gap-3">
+                                        <button
+                                        onClick={() => setShowTemplatesManager(false)}
+                                        className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                                        >
+                                        Cerrar
+                                        </button>
+                                    <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                                        Guardar Cambios
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
         </div>
     );
 }
