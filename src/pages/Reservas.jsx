@@ -1505,7 +1505,7 @@ const ReservationFormModal = ({
         return "ocasional"; // Por defecto
     };
 
-    const validateForm = () => {
+    const validateForm = async () => {
         const newErrors = {};
 
         if (!formData.customer_name.trim()) {
@@ -1524,6 +1524,46 @@ const ReservationFormModal = ({
             newErrors.party_size = "Número de personas inválido";
         }
 
+        // 🔍 VALIDACIÓN AVANZADA: LÍMITES CONFIGURADOS (COHERENCIA)
+        try {
+            const { data: restaurantData } = await supabase
+                .from("restaurants")
+                .select("settings")
+                .eq("id", restaurantId)
+                .single();
+            
+            const reservationSettings = restaurantData?.settings?.reservation_settings || {};
+            
+            // Validar límites de personas
+            if (reservationSettings.min_party_size && formData.party_size < reservationSettings.min_party_size) {
+                newErrors.party_size = `Mínimo ${reservationSettings.min_party_size} personas (configurado en Configuración → Reservas)`;
+            }
+            
+            if (reservationSettings.max_party_size && formData.party_size > reservationSettings.max_party_size) {
+                newErrors.party_size = `Máximo ${reservationSettings.max_party_size} personas (configurado en Configuración → Reservas)`;
+            }
+            
+            // Validar días de antelación
+            if (reservationSettings.advance_booking_days) {
+                const selectedDate = new Date(formData.date);
+                const today = new Date();
+                const maxDate = new Date();
+                maxDate.setDate(today.getDate() + reservationSettings.advance_booking_days);
+                
+                if (selectedDate > maxDate) {
+                    newErrors.date = `Máximo ${reservationSettings.advance_booking_days} días de antelación (configurado en Configuración → Reservas)`;
+                }
+                
+                if (selectedDate < today) {
+                    newErrors.date = "No se pueden hacer reservas en fechas pasadas";
+                }
+            }
+            
+        } catch (error) {
+            console.error("Error validando límites configurados:", error);
+            // Continuar sin validación avanzada si hay error
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -1531,7 +1571,7 @@ const ReservationFormModal = ({
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validateForm()) return;
+        if (!(await validateForm())) return;
 
         setLoading(true);
 
