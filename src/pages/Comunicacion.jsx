@@ -2816,7 +2816,18 @@ export default function Comunicacion() {
                                                             </div>
                                                         </div>
                                                         {isConnected ? (
-                                                            <CheckCheck className="w-5 h-5 text-green-600" />
+                                                            <div className="flex items-center gap-2">
+                                                                <CheckCheck className="w-5 h-5 text-green-600" />
+                                                                <button
+                                                                    onClick={() => {
+                                                                        navigate('/configuracion?tab=channels');
+                                                                        toast.success(`Abriendo configuración de ${channel.label}`);
+                                                                    }}
+                                                                    className="text-xs text-purple-600 hover:text-purple-700 font-medium px-2 py-1 rounded border border-purple-200 hover:bg-purple-50"
+                                                                >
+                                                                    Configuración
+                                                                </button>
+                                                            </div>
                                                         ) : (
                                                             <button
                                                                 onClick={() => {
