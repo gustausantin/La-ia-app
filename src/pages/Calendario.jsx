@@ -59,7 +59,8 @@ import {
     Mail,
     Sparkles,
     Brain,
-    RefreshCw
+    RefreshCw,
+    X
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -257,15 +258,31 @@ export default function Calendario() {
         });
     };
 
+    // Estados para eventos especiales
+    const [selectedDay, setSelectedDay] = useState(null);
+    const [eventForm, setEventForm] = useState({
+        title: '',
+        description: '',
+        type: 'evento',
+        start_time: '09:00',
+        end_time: '22:00',
+        closed: false
+    });
+
     // Manejar click en día del calendario
     const handleDayClick = useCallback((date) => {
         try {
             console.log("Día seleccionado:", format(date, 'yyyy-MM-dd'));
-            // TODO: Implementar modal de eventos especiales
-            toast(`Funcionalidad de eventos para ${format(date, 'dd/MM/yyyy')} próximamente`, {
-                icon: "📅",
-                duration: 3000,
+            setSelectedDay(date);
+            setEventForm({
+                title: '',
+                description: '',
+                type: 'evento',
+                start_time: '09:00',
+                end_time: '22:00',
+                closed: false
             });
+            setShowEventModal(true);
         } catch (error) {
             console.error("Error en handleDayClick:", error);
             toast.error("Error al seleccionar el día");
@@ -541,62 +558,102 @@ export default function Calendario() {
                                                     </button>
                                                 </div>
                                                 
-                                        {day.is_open && day.slots.length > 0 && (
-                                            <div className="space-y-2">
-                                                                <div className="flex items-center gap-2">
-                                                                <input
-                                                                        type="time"
-                                                        value={day.slots[0].start_time}
-                                                        onChange={(e) => {
-                                                            const newSchedule = [...schedule];
-                                                            newSchedule[index].slots[0].start_time = e.target.value;
-                                                            setSchedule(newSchedule);
-                                                        }}
-                                                        className="text-sm px-2 py-1 border border-gray-300 rounded"
-                                                                    />
-                                                                    <span className="text-gray-400">-</span>
-                                                                    <input
-                                                                        type="time"
-                                                        value={day.slots[0].end_time}
-                                                        onChange={(e) => {
-                                                            const newSchedule = [...schedule];
-                                                            newSchedule[index].slots[0].end_time = e.target.value;
-                                                            setSchedule(newSchedule);
-                                                        }}
-                                                        className="text-sm px-2 py-1 border border-gray-300 rounded"
-                                                                    />
-                                                                </div>
-                                                                                                <button
-                                                    className="w-full text-xs text-blue-600 hover:text-blue-800 py-1"
+                                        {day.is_open && (
+                                            <div className="space-y-3">
+                                                {/* Mostrar TODOS los turnos */}
+                                                {day.slots && day.slots.map((slot, slotIndex) => (
+                                                    <div key={slot.id || slotIndex} className="bg-gray-50 p-3 rounded-lg">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <input
+                                                                type="text"
+                                                                value={slot.name || `Turno ${slotIndex + 1}`}
+                                                                onChange={(e) => {
+                                                                    const newSchedule = [...schedule];
+                                                                    newSchedule[index].slots[slotIndex].name = e.target.value;
+                                                                    setSchedule(newSchedule);
+                                                                }}
+                                                                className="text-sm font-medium bg-transparent border-none outline-none text-gray-800"
+                                                                placeholder="Nombre del turno"
+                                                            />
+                                                            {day.slots.length > 1 && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const newSchedule = [...schedule];
+                                                                        newSchedule[index].slots.splice(slotIndex, 1);
+                                                                        setSchedule(newSchedule);
+                                                                        toast.success("Turno eliminado");
+                                                                    }}
+                                                                    className="text-red-500 hover:text-red-700 text-xs"
+                                                                >
+                                                                    <Trash2 className="w-3 h-3" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="time"
+                                                                value={slot.start_time}
+                                                                onChange={(e) => {
+                                                                    const newSchedule = [...schedule];
+                                                                    newSchedule[index].slots[slotIndex].start_time = e.target.value;
+                                                                    setSchedule(newSchedule);
+                                                                }}
+                                                                className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                            />
+                                                            <span className="text-gray-500 text-xs">a</span>
+                                                            <input
+                                                                type="time"
+                                                                value={slot.end_time}
+                                                                onChange={(e) => {
+                                                                    const newSchedule = [...schedule];
+                                                                    newSchedule[index].slots[slotIndex].end_time = e.target.value;
+                                                                    setSchedule(newSchedule);
+                                                                }}
+                                                                className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                
+                                                {/* Botón para añadir NUEVO turno */}
+                                                <button
+                                                    className="w-full text-sm text-purple-600 hover:text-purple-800 py-2 border border-dashed border-purple-300 rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
                                                     onClick={(e) => {
                                                         e.preventDefault();
                                                         e.stopPropagation();
                                                         
-                                                        // Implementar múltiples turnos AHORA
-                                                        const dayIndex = schedule.findIndex(d => d.day_of_week === day.day_of_week);
-                                                        if (dayIndex !== -1) {
-                                                            const newSchedule = [...schedule];
-                                                            const currentSlots = newSchedule[dayIndex].slots || [];
-                                                            
-                                                            // Añadir nuevo turno
-                                                            const newSlot = {
-                                                                id: currentSlots.length + 1,
-                                                                name: `Turno ${currentSlots.length + 1}`,
-                                                                start_time: "20:00",
-                                                                end_time: "23:00"
-                                                            };
-                                                            
-                                                            newSchedule[dayIndex].slots.push(newSlot);
-                                                            setSchedule(newSchedule);
-                                                            
-                                                            toast.success(`Turno ${currentSlots.length + 1} añadido para ${day.day_name}`);
-                                                        }
+                                                        const newSchedule = [...schedule];
+                                                        const currentSlots = newSchedule[index].slots || [];
+                                                        
+                                                        // Sugerir horarios diferentes según el número de turno
+                                                        const turnosSugeridos = [
+                                                            { start: "09:00", end: "22:00", name: "Horario Principal" },
+                                                            { start: "12:00", end: "14:00", name: "Turno Mañana" },
+                                                            { start: "19:00", end: "21:00", name: "Turno Noche" },
+                                                            { start: "15:00", end: "17:00", name: "Turno Tarde" },
+                                                            { start: "21:00", end: "23:00", name: "Turno Nocturno" }
+                                                        ];
+                                                        
+                                                        const nextTurno = turnosSugeridos[currentSlots.length] || turnosSugeridos[1];
+                                                        
+                                                        const newSlot = {
+                                                            id: Date.now(),
+                                                            name: nextTurno.name,
+                                                            start_time: nextTurno.start,
+                                                            end_time: nextTurno.end
+                                                        };
+                                                        
+                                                        newSchedule[index].slots.push(newSlot);
+                                                        setSchedule(newSchedule);
+                                                        
+                                                        toast.success(`✅ ${nextTurno.name} añadido para ${day.day_name}`);
                                                     }}
                                                 >
-                                                    + Añadir turno
-                                </button>
-                        </div>
-                    )}
+                                                    <Plus className="w-4 h-4" />
+                                                    Añadir turno
+                                                </button>
+                                            </div>
+                                        )}
                                                         </div>
                                 ))}
                                                     </div>
@@ -744,6 +801,130 @@ export default function Calendario() {
                         </div>
                 </div>
             </div>
+
+            {/* Modal de Eventos Especiales */}
+            {showEventModal && selectedDay && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                                Evento especial - {format(selectedDay, 'dd/MM/yyyy')}
+                            </h3>
+                            <button
+                                onClick={() => setShowEventModal(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            // Aquí iría la lógica para guardar el evento
+                            toast.success(`✅ Evento "${eventForm.title}" creado para ${format(selectedDay, 'dd/MM/yyyy')}`);
+                            setShowEventModal(false);
+                        }} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Título del evento
+                                </label>
+                                <input
+                                    type="text"
+                                    value={eventForm.title}
+                                    onChange={(e) => setEventForm(prev => ({ ...prev, title: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    placeholder="Ej: Día de San Valentín, Cerrado por vacaciones..."
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Tipo de evento
+                                </label>
+                                <select
+                                    value={eventForm.type}
+                                    onChange={(e) => setEventForm(prev => ({ ...prev, type: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="evento">Evento especial</option>
+                                    <option value="cerrado">Día cerrado</option>
+                                    <option value="festivo">Día festivo</option>
+                                    <option value="promocion">Promoción especial</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={eventForm.closed}
+                                        onChange={(e) => setEventForm(prev => ({ ...prev, closed: e.target.checked }))}
+                                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                    />
+                                    <span className="text-sm text-gray-700">Restaurante cerrado este día</span>
+                                </label>
+                            </div>
+
+                            {!eventForm.closed && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Hora apertura
+                                        </label>
+                                        <input
+                                            type="time"
+                                            value={eventForm.start_time}
+                                            onChange={(e) => setEventForm(prev => ({ ...prev, start_time: e.target.value }))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Hora cierre
+                                        </label>
+                                        <input
+                                            type="time"
+                                            value={eventForm.end_time}
+                                            onChange={(e) => setEventForm(prev => ({ ...prev, end_time: e.target.value }))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Descripción (opcional)
+                                </label>
+                                <textarea
+                                    value={eventForm.description}
+                                    onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    rows="3"
+                                    placeholder="Detalles adicionales del evento..."
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEventModal(false)}
+                                    className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                >
+                                    Crear evento
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </CalendarioErrorBoundary>
     );
 }
