@@ -1390,6 +1390,8 @@ const ReservationFormModal = ({
     // - TODO FUTURO: Implementar búsqueda visual de clientes existentes
     
     const [formData, setFormData] = useState({
+        clientType: 'new', // 'existing' o 'new'
+        selectedCustomer: null,
         customer_name: reservation?.customer_name || "",
         customer_phone: reservation?.customer_phone || "",
         customer_email: reservation?.customer_email || "",
@@ -1618,6 +1620,44 @@ const ReservationFormModal = ({
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {/* Selector Cliente Existente vs Nuevo */}
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-gray-900 mb-3">Tipo de Cliente</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setFormData({...formData, clientType: 'existing'})}
+                                className={`p-3 rounded-lg border-2 transition-colors ${
+                                    formData.clientType === 'existing'
+                                        ? 'border-blue-500 bg-blue-100 text-blue-900'
+                                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Users className="w-4 h-4" />
+                                    <span className="font-medium">Cliente Existente</span>
+                                </div>
+                                <p className="text-xs mt-1">Buscar en base de datos</p>
+                            </button>
+                            
+                            <button
+                                type="button"
+                                onClick={() => setFormData({...formData, clientType: 'new'})}
+                                className={`p-3 rounded-lg border-2 transition-colors ${
+                                    formData.clientType === 'new'
+                                        ? 'border-green-500 bg-green-100 text-green-900'
+                                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Plus className="w-4 h-4" />
+                                    <span className="font-medium">Cliente Nuevo</span>
+                                </div>
+                                <p className="text-xs mt-1">Crear nuevo cliente</p>
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
