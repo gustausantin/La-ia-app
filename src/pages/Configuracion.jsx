@@ -1569,7 +1569,7 @@ const {
                                             </label>
                                             <input
                                                 type="text"
-                                                value={settings.agent.name}
+                                                value={settings.agent?.name || ''}
                                                 onChange={(e) => handleNestedChange('agent', 'name', e.target.value)}
                                                 placeholder="Ej: Julia, tu asistente"
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -1581,7 +1581,7 @@ const {
                                                 Personalidad
                                             </label>
                                             <select
-                                                value={settings.agent.personality}
+                                                value={settings.agent?.personality || 'professional_friendly'}
                                                 onChange={(e) => handleNestedChange('agent', 'personality', e.target.value)}
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                             >
@@ -1608,7 +1608,7 @@ const {
                                                 </label>
                                                 <input
                                                     type="number"
-                                                    value={settings.agent.response_time_target}
+                                                    value={settings.agent?.response_time_target || 30}
                                                     onChange={(e) => handleNestedChange('agent', 'response_time_target', parseInt(e.target.value) || 30)}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                                     min="1"
@@ -1625,7 +1625,7 @@ const {
                                                 </label>
                                                 <input
                                                     type="number"
-                                                    value={settings.agent.escalation_threshold}
+                                                    value={settings.agent?.escalation_threshold || 3}
                                                     onChange={(e) => handleNestedChange('agent', 'escalation_threshold', parseInt(e.target.value) || 3)}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                                     min="1"
@@ -2478,7 +2478,7 @@ const {
                                             <h4 className="font-medium text-gray-900 mb-4">Automatizaciones Inteligentes</h4>
                                             <div className="space-y-4">
                                                 <ToggleSwitch
-                                                    enabled={settings.crm.automation.enabled}
+                                                    enabled={settings.crm?.automation?.enabled || false}
                                                     onChange={(enabled) => setSettings(prev => ({
                                                         ...prev,
                                                         crm: {
@@ -2490,7 +2490,7 @@ const {
                                                     description="Envío automático de emails/SMS según segmentación"
                                                 />
 
-                                                {settings.crm.automation.enabled && (
+                                                {settings.crm?.automation?.enabled && (
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                                                         <div>
                                                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2498,7 +2498,7 @@ const {
                                                             </label>
                                                             <input
                                                                 type="number"
-                                                                value={settings.crm.automation.cooldown_days}
+                                                                value={settings.crm?.automation?.cooldown_days || 30}
                                                                 onChange={(e) => setSettings(prev => ({
                                                                     ...prev,
                                                                     crm: {
@@ -2524,7 +2524,7 @@ const {
                                                             </label>
                                                             <input
                                                                 type="number"
-                                                                value={settings.crm.automation.max_daily_sends}
+                                                                value={settings.crm?.automation?.max_daily_sends || 50}
                                                                 onChange={(e) => setSettings(prev => ({
                                                                     ...prev,
                                                                     crm: {
@@ -2551,7 +2551,7 @@ const {
                                                             <div className="flex gap-2 items-center">
                                                                 <input
                                                                     type="time"
-                                                                    value={settings.crm.automation.execution_hours.start}
+                                                                    value={settings.crm?.automation?.execution_hours?.start || '09:00'}
                                                                     onChange={(e) => setSettings(prev => ({
                                                                         ...prev,
                                                                         crm: {
@@ -2570,7 +2570,7 @@ const {
                                                                 <span className="text-gray-500">a</span>
                                                                 <input
                                                                     type="time"
-                                                                    value={settings.crm.automation.execution_hours.end}
+                                                                    value={settings.crm?.automation?.execution_hours?.end || '21:00'}
                                                                     onChange={(e) => setSettings(prev => ({
                                                                         ...prev,
                                                                         crm: {
@@ -2611,7 +2611,7 @@ const {
                                                             </div>
                                                         </div>
                                                         <ToggleSwitch
-                                                            enabled={settings.crm.templates.reactivacion.enabled}
+                                                            enabled={settings.crm?.templates?.reactivacion?.enabled || false}
                                                             onChange={(enabled) => setSettings(prev => ({
                                                                 ...prev,
                                                                 crm: {
@@ -2625,7 +2625,7 @@ const {
                                                             label=""
                                                         />
                                                     </div>
-                                                    {settings.crm.templates.reactivacion.enabled && (
+                                                    {settings.crm?.templates?.reactivacion?.enabled && (
                                                         <div className="space-y-3">
                                                             <div>
                                                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2633,7 +2633,7 @@ const {
                                                                 </label>
                                                                 <input
                                                                     type="text"
-                                                                    value={settings.crm.templates.reactivacion.subject}
+                                                                    value={settings.crm?.templates?.reactivacion?.subject || ''}
                                                                     onChange={(e) => setSettings(prev => ({
                                                                         ...prev,
                                                                         crm: {
@@ -2656,7 +2656,7 @@ const {
                                                                     Contenido
                                                                 </label>
                                                                 <textarea
-                                                                    value={settings.crm.templates.reactivacion.content}
+                                                                    value={settings.crm?.templates?.reactivacion?.content || ''}
                                                                     onChange={(e) => setSettings(prev => ({
                                                                         ...prev,
                                                                         crm: {
@@ -2693,7 +2693,7 @@ const {
                                                             </div>
                                                         </div>
                                                         <ToggleSwitch
-                                                            enabled={settings.crm.templates.vip_upgrade.enabled}
+                                                            enabled={settings.crm?.templates?.vip_upgrade?.enabled || false}
                                                             onChange={(enabled) => setSettings(prev => ({
                                                                 ...prev,
                                                                 crm: {
@@ -2707,7 +2707,7 @@ const {
                                                             label=""
                                                         />
                                                     </div>
-                                                    {settings.crm.templates.vip_upgrade.enabled && (
+                                                    {settings.crm?.templates?.vip_upgrade?.enabled && (
                                                         <div className="space-y-3">
                                                             <div>
                                                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2715,7 +2715,7 @@ const {
                                                                 </label>
                                                                 <input
                                                                     type="text"
-                                                                    value={settings.crm.templates.vip_upgrade.subject}
+                                                                    value={settings.crm?.templates?.vip_upgrade?.subject || ''}
                                                                     onChange={(e) => setSettings(prev => ({
                                                                         ...prev,
                                                                         crm: {
@@ -2738,7 +2738,7 @@ const {
                                                                     Contenido
                                                                 </label>
                                                                 <textarea
-                                                                    value={settings.crm.templates.vip_upgrade.content}
+                                                                    value={settings.crm?.templates?.vip_upgrade?.content || ''}
                                                                     onChange={(e) => setSettings(prev => ({
                                                                         ...prev,
                                                                         crm: {
@@ -2772,7 +2772,7 @@ const {
                                                             </div>
                                                         </div>
                                                         <ToggleSwitch
-                                                            enabled={settings.crm.templates.bienvenida.enabled}
+                                                            enabled={settings.crm?.templates?.bienvenida?.enabled || false}
                                                             onChange={(enabled) => setSettings(prev => ({
                                                                 ...prev,
                                                                 crm: {
@@ -2786,7 +2786,7 @@ const {
                                                             label=""
                                                         />
                                                     </div>
-                                                    {settings.crm.templates.bienvenida.enabled && (
+                                                    {settings.crm?.templates?.bienvenida?.enabled && (
                                                         <div className="space-y-3">
                                                             <div>
                                                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2794,7 +2794,7 @@ const {
                                                                 </label>
                                                                 <input
                                                                     type="text"
-                                                                    value={settings.crm.templates.bienvenida.subject}
+                                                                    value={settings.crm?.templates?.bienvenida?.subject || ''}
                                                                     onChange={(e) => setSettings(prev => ({
                                                                         ...prev,
                                                                         crm: {
@@ -2817,7 +2817,7 @@ const {
                                                                     Contenido
                                                                 </label>
                                                                 <textarea
-                                                                    value={settings.crm.templates.bienvenida.content}
+                                                                    value={settings.crm?.templates?.bienvenida?.content || ''}
                                                                     onChange={(e) => setSettings(prev => ({
                                                                         ...prev,
                                                                         crm: {
