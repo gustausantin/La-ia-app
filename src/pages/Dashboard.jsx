@@ -252,7 +252,7 @@ export default function Dashboard() {
                 logger.warn("Error cargando clientes:", allError || newError);
             }
 
-            return {
+                return {
                 totalCustomers: allCustomers?.length || 0,
                 newCustomersToday: newCustomers?.length || 0
             };
@@ -317,15 +317,16 @@ export default function Dashboard() {
         }
     }, [fetchRealReservations, fetchRealTables, fetchRealCustomers, fetchRealChannels]);
 
-    // Función de refresh
+    // Función de refresh mejorada
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
         try {
             await loadRealData();
-            toast.success("Dashboard actualizado con datos reales");
-        } catch (error) {
+            setLastUpdate(new Date());
+            toast.success("✅ Datos actualizados en tiempo real desde Supabase");
+                } catch (error) {
             logger.error("Error refreshing:", error);
-            toast.error("Error al actualizar");
+            toast.error("❌ Error al actualizar datos");
         } finally {
             setRefreshing(false);
         }
@@ -433,7 +434,10 @@ export default function Dashboard() {
                         </div>
                         <div className="text-xs text-blue-500 mt-1">
                             <button 
-                                onClick={() => navigate('/configuracion?tab=channels')}
+                                onClick={() => {
+                                    navigate('/configuracion?tab=channels');
+                                    toast.success('Navegando a Configuración → Canales');
+                                }}
                                 className="hover:underline"
                             >
                                 ⚙️ Configurar canales
@@ -470,7 +474,7 @@ export default function Dashboard() {
                     </div>
                     <div className="text-2xl font-bold text-purple-600">{realData.totalReservationsThisWeek}</div>
                     <div className="text-xs text-gray-500 mt-1">Últimos 7 días</div>
-                </div>
+            </div>
 
                 {/* Clientes - DATOS REALES */}
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
@@ -485,14 +489,14 @@ export default function Dashboard() {
                             'Sin clientes nuevos hoy'
                         }
                     </div>
-                </div>
+            </div>
 
                 {/* Hora Punta - CALCULADA REAL */}
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
                     <div className="flex items-center gap-3 mb-2">
                         <Clock className="w-5 h-5 text-orange-600" />
                         <span className="text-sm font-medium text-gray-700">Hora Punta</span>
-                    </div>
+                        </div>
                     <div className="text-2xl font-bold text-orange-600">
                         {realData.peakHour || '--'}
                     </div>
@@ -501,9 +505,9 @@ export default function Dashboard() {
                             'Calculado de reservas reales' : 
                             'Sin datos suficientes'
                         }
-                    </div>
-                </div>
-            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
             {/* Ocupación y Mesas - DATOS REALES */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -512,7 +516,7 @@ export default function Dashboard() {
                     <div className="flex items-center gap-3 mb-2">
                         <BarChart3 className="w-5 h-5 text-green-600" />
                         <span className="text-sm font-medium text-gray-700">Ocupación Hoy</span>
-                    </div>
+                                    </div>
                     <div className="text-2xl font-bold text-gray-900">{realData.currentOccupancyRate}%</div>
                     <div className="text-xs text-gray-500 mt-1">
                         {realData.totalReservationsToday}/{realData.totalTables} mesas reservadas
@@ -531,7 +535,7 @@ export default function Dashboard() {
                     </div>
                     {realData.totalTables === 0 && (
                         <div className="text-xs text-orange-500 mt-1">
-                            <button 
+                            <button
                                 onClick={() => navigate('/mesas')}
                                 className="hover:underline"
                             >
@@ -550,9 +554,9 @@ export default function Dashboard() {
                     <div className="text-2xl font-bold text-green-600">Operativo</div>
                     <div className="text-xs text-gray-500 mt-1">
                         Base interna funcionando
-                    </div>
-                </div>
-            </div>
+                                                    </div>
+                                                    </div>
+                                                </div>
 
             {/* Reservas de Hoy - DATOS REALES */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -564,7 +568,7 @@ export default function Dashboard() {
                     >
                         Ver todas →
                     </button>
-                </div>
+                                                </div>
 
                 {todayReservations.length > 0 ? (
                     <div className="space-y-3">
@@ -573,7 +577,7 @@ export default function Dashboard() {
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                                         <Users className="w-5 h-5 text-purple-600" />
-                                    </div>
+                                            </div>
                                     <div>
                                         <div className="font-medium text-gray-900">{reservation.customer_name}</div>
                                         <div className="text-sm text-gray-500">

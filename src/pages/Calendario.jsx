@@ -58,7 +58,8 @@ import {
     Phone,
     Mail,
     Sparkles,
-    Brain
+    Brain,
+    RefreshCw
 } from "lucide-react";
 import toast from "react-hot-toast";
 
