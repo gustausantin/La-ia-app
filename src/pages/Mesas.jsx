@@ -1435,6 +1435,42 @@ const TableModal = ({
         setLoading(true);
 
         try {
+            // 🔍 VALIDACIÓN CAPACIDAD MÁXIMA (COHERENCIA CON CONFIGURACIÓN)
+            if (!table) { // Solo validar al crear nueva mesa
+                // Obtener capacidad máxima configurada
+                const { data: restaurantData } = await supabase
+                    .from("restaurants")
+                    .select("settings")
+                    .eq("id", restaurantId)
+                    .single();
+                
+                const maxCapacity = restaurantData?.settings?.capacity_total || 0;
+                
+                if (maxCapacity > 0) {
+                    // Calcular capacidad actual de todas las mesas
+                    const { data: existingTables } = await supabase
+                        .from("tables")
+                        .select("capacity")
+                        .eq("restaurant_id", restaurantId)
+                        .eq("is_active", true);
+                    
+                    const currentCapacity = existingTables?.reduce((sum, t) => sum + (t.capacity || 0), 0) || 0;
+                    const newCapacity = currentCapacity + parseInt(formData.capacity);
+                    
+                    if (newCapacity > maxCapacity) {
+                        throw new Error(`⚠️ Capacidad máxima excedida: ${newCapacity}/${maxCapacity} comensales. Ajusta la capacidad máxima en Configuración → General o reduce la capacidad de esta mesa.`);
+                    }
+                    
+                    // Mostrar advertencia si está cerca del límite
+                    if (newCapacity > maxCapacity * 0.9) {
+                        toast(`⚠️ Cerca del límite: ${newCapacity}/${maxCapacity} comensales`, {
+                            icon: "🚨",
+                            duration: 4000
+                        });
+                    }
+                }
+            }
+
             const tableData = {
                 table_number: formData.table_number,
                 name: formData.name,

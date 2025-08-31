@@ -160,7 +160,7 @@ export default function Calendario() {
                 console.error("❌ Error cargando horarios:", scheduleError);
             }
 
-            const savedHours = restaurantData?.business_hours || {};
+            const savedHours = restaurantData?.settings?.operating_hours || {};
             
             console.log("🔄 Horarios cargados desde BD:", savedHours);
 
@@ -304,14 +304,14 @@ export default function Calendario() {
                 0: 'sunday'     // Domingo
             };
 
-            // Convertir schedule a formato business_hours (UNIFICADO)
-            const business_hours = {};
+            // Convertir schedule a formato operating_hours (UNIFICADO CON CONFIGURACIÓN)
+            const operating_hours = {};
             schedule.forEach(day => {
                 // day.day_of_week ya viene como string (monday, tuesday, etc.)
                 const dayName = day.day_of_week;
                 
                 if (!day.is_open || !day.slots || day.slots.length === 0) {
-                    business_hours[dayName] = {
+                    operating_hours[dayName] = {
                         open: "09:00",
                         close: "22:00",
                         closed: true
@@ -320,7 +320,7 @@ export default function Calendario() {
                     // Para múltiples turnos, usar el primer turno como principal
                     // y guardar todos los turnos en una propiedad adicional
                     const firstSlot = day.slots[0];
-                    business_hours[dayName] = {
+                    operating_hours[dayName] = {
                         open: firstSlot.start_time || "09:00",
                         close: firstSlot.end_time || "22:00",
                         closed: false,
@@ -334,7 +334,7 @@ export default function Calendario() {
                 }
             });
 
-            console.log("📊 Business hours a guardar:", business_hours);
+            console.log("📊 Operating hours a guardar:", operating_hours);
 
             // Obtener settings actuales para no sobrescribir otros datos
             const { data: currentRestaurant, error: fetchError } = await supabase
@@ -354,9 +354,9 @@ export default function Calendario() {
             const { error } = await supabase
                 .from("restaurants")
                 .update({
-                    business_hours: business_hours,
                     settings: {
                         ...currentSettings,
+                        operating_hours: operating_hours,
                         calendar_schedule: schedule // También guardar el schedule completo
                     },
                     updated_at: new Date().toISOString()
