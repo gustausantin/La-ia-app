@@ -199,9 +199,6 @@ const {
         // Campos adicionales importantes
         capacity_total: 0,
         price_range: "",
-        instagram: "",
-        facebook: "",
-        accepting_reservations: true,
         
         // Horarios de operación
         operating_hours: {
@@ -217,14 +214,11 @@ const {
         // Configuración de reservas
         reservation_settings: {
             enabled: true,
-            advance_booking_days: 30,
-            min_party_size: 1,
-            max_party_size: 12,
+            advance_booking_days: 45,
+            min_party_size: 2,
+            max_party_size: 120,
             turn_duration: 90,
             buffer_time: 15,
-            auto_confirm: false,
-            require_phone: true,
-            require_email: true,
             cancellation_window: 2,
             modification_window: 1
         },
@@ -233,7 +227,6 @@ const {
         agent: {
             enabled: true,
             name: "Asistente de " + (restaurant?.name || "Mi Restaurante"),
-            personality: "professional_friendly",
             language: "es",
             voice: "es-ES-Standard-A",
             auto_escalation: true,
@@ -395,7 +388,7 @@ const {
         },
         { 
             id: "hours", 
-            label: "Horarios", 
+            label: "Horarios y Calendario", 
             icon: <Clock className="w-4 h-4" /> 
         },
         {
@@ -421,30 +414,10 @@ const {
             icon: <MessageSquare className="w-4 h-4" />,
         },
         {
-            id: "workflows",
-            label: "Workflows",
-            icon: <Webhook className="w-4 h-4" />,
-        },
-        {
             id: "notifications",
             label: "Notificaciones",
             icon: <Bell className="w-4 h-4" />,
-        },
-        { 
-            id: "team", 
-            label: "Equipo", 
-            icon: <Users className="w-4 h-4" /> 
-        },
-        {
-            id: "billing",
-            label: "Facturación",
-            icon: <CreditCard className="w-4 h-4" />,
-        },
-        {
-            id: "integrations",
-            label: "Integraciones",
-            icon: <Link2 className="w-4 h-4" />,
-        },
+        }
     ];
 
     // Cargar configuración
@@ -688,10 +661,7 @@ const {
             description: settings.description,
             logo_url: settings.logo_url,
             capacity_total: settings.capacity_total,
-            price_range: settings.price_range,
-            instagram: settings.instagram,
-            facebook: settings.facebook,
-            accepting_reservations: settings.accepting_reservations
+            price_range: settings.price_range
         });
 
         if (!settings.name?.trim()) {
@@ -719,10 +689,7 @@ const {
             description: settings.description || "",
             logo_url: settings.logo_url || "",
             capacity_total: settings.capacity_total || 0,
-            price_range: settings.price_range || "",
-            instagram: settings.instagram || "",
-            facebook: settings.facebook || "",
-            accepting_reservations: settings.accepting_reservations !== false
+            price_range: settings.price_range || ""
         };
         
         console.log("💾 Nuevos settings a guardar:", newSettings);
@@ -1245,40 +1212,7 @@ const {
                                             </select>
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Instagram
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={settings.instagram}
-                                                onChange={(e) => handleInputChange("instagram", e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                placeholder="@turestaurante"
-                                            />
-                                        </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Facebook
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={settings.facebook}
-                                                onChange={(e) => handleInputChange("facebook", e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                placeholder="facebook.com/turestaurante"
-                                            />
-                                        </div>
-
-                                        <div className="col-span-2">
-                                            <ToggleSwitch
-                                                enabled={settings.accepting_reservations}
-                                                onChange={(enabled) => handleInputChange("accepting_reservations", enabled)}
-                                                label="Acepta reservas actualmente"
-                                                description="Desactiva temporalmente si no quieres recibir nuevas reservas"
-                                            />
-                                        </div>
 
                                         <div className="col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1499,36 +1433,18 @@ const {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-4">
-                                        <ToggleSwitch
-                                            enabled={settings.reservation_settings.auto_confirm}
-                                            onChange={(enabled) => setSettings(prev => ({
-                                                ...prev,
-                                                reservation_settings: { ...prev.reservation_settings, auto_confirm: enabled }
-                                            }))}
-                                            label="Confirmación automática"
-                                            description="Las reservas se confirman automáticamente si hay disponibilidad"
-                                        />
-
-                                        <ToggleSwitch
-                                            enabled={settings.reservation_settings.require_phone}
-                                            onChange={(enabled) => setSettings(prev => ({
-                                                ...prev,
-                                                reservation_settings: { ...prev.reservation_settings, require_phone: enabled }
-                                            }))}
-                                            label="Requerir teléfono"
-                                            description="El teléfono es obligatorio para hacer una reserva"
-                                        />
-
-                                        <ToggleSwitch
-                                            enabled={settings.reservation_settings.require_email}
-                                            onChange={(enabled) => setSettings(prev => ({
-                                                ...prev,
-                                                reservation_settings: { ...prev.reservation_settings, require_email: enabled }
-                                            }))}
-                                            label="Requerir email"
-                                            description="El email es obligatorio para hacer una reserva"
-                                        />
+                                    <div className="p-4 bg-blue-50 rounded-lg">
+                                        <div className="flex items-start gap-3">
+                                            <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+                                            <div>
+                                                <h4 className="text-sm font-medium text-blue-900 mb-1">
+                                                    Configuración automática
+                                                </h4>
+                                                <p className="text-sm text-blue-700">
+                                                    Las reservas se confirman automáticamente, y el teléfono y email son siempre obligatorios para garantizar la comunicación con los clientes.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1652,10 +1568,32 @@ const {
                                 {/* Optimización de mesas */}
                                 <SettingSection
                                     title="Optimización de Mesas"
-                                    description="Configura cómo el agente asigna mesas automáticamente"
+                                    description="El agente IA aprende de los datos históricos para asignar las mejores mesas"
                                     icon={<Target />}
                                 >
                                     <div className="space-y-6">
+                                        {/* Explicación detallada */}
+                                        <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
+                                            <div className="flex items-start gap-3">
+                                                <Brain className="w-6 h-6 text-purple-600 mt-0.5" />
+                                                <div>
+                                                    <h4 className="font-medium text-gray-900 mb-2">
+                                                        ¿Cómo funciona la optimización?
+                                                    </h4>
+                                                    <div className="text-sm text-gray-700 space-y-2">
+                                                        <p><strong>Fuentes de datos:</strong></p>
+                                                        <ul className="list-disc list-inside ml-4 space-y-1">
+                                                            <li>Historial de reservas y rotación de mesas</li>
+                                                            <li>Tiempos de servicio por mesa</li>
+                                                            <li>Satisfacción del cliente por ubicación</li>
+                                                            <li>Patrones de ocupación y flujo de clientes</li>
+                                                        </ul>
+                                                        <p className="mt-3"><strong>El agente considera:</strong> Tamaño del grupo, hora del día, preferencias del cliente y eficiencia operativa para sugerir la mesa óptima.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <ToggleSwitch
                                             enabled={settings.agent.table_optimization?.enabled || false}
                                             onChange={(enabled) =>
@@ -1670,8 +1608,8 @@ const {
                                                     }
                                                 }))
                                             }
-                                            label="Optimización automática de mesas"
-                                            description="El agente aprende qué mesas son mejores según histórico"
+                                            label="Activar optimización inteligente"
+                                            description="El agente usará IA para recomendar las mejores mesas disponibles"
                                         />
 
                                         {settings.agent.table_optimization?.enabled && (
@@ -1755,28 +1693,19 @@ const {
                                                         <p className="text-sm text-gray-600">Atención telefónica con IA</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <ToggleSwitch
-                                                        enabled={settings.channels.vapi.enabled}
-                                                        onChange={(enabled) => 
-                                                            setSettings(prev => ({
-                                                                ...prev,
-                                                                channels: {
-                                                                    ...prev.channels,
-                                                                    vapi: { ...prev.channels.vapi, enabled }
-                                                                }
-                                                            }))
-                                                        }
-                                                        label=""
-                                                    />
-                                                    <button
-                                                        onClick={() => testChannelConnection('VAPI')}
-                                                        disabled={testingConnection.VAPI}
-                                                        className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
-                                                    >
-                                                        {testingConnection.VAPI ? 'Probando...' : 'Probar'}
-                                                    </button>
-                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.channels.vapi.enabled}
+                                                    onChange={(enabled) => 
+                                                        setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev.channels,
+                                                                vapi: { ...prev.channels.vapi, enabled }
+                                                            }
+                                                        }))
+                                                    }
+                                                    label=""
+                                                />
                                             </div>
                                             {settings.channels.vapi.enabled && (
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1834,28 +1763,19 @@ const {
                                                         <p className="text-sm text-gray-600">Chat automático por WhatsApp</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <ToggleSwitch
-                                                        enabled={settings.channels.whatsapp.enabled}
-                                                        onChange={(enabled) => 
-                                                            setSettings(prev => ({
-                                                                ...prev,
-                                                                channels: {
-                                                                    ...prev.channels,
-                                                                    whatsapp: { ...prev.channels.whatsapp, enabled }
-                                                                }
-                                                            }))
-                                                        }
-                                                        label=""
-                                                    />
-                                                    <button
-                                                        onClick={() => testChannelConnection('WhatsApp')}
-                                                        disabled={testingConnection.WhatsApp}
-                                                        className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
-                                                    >
-                                                        {testingConnection.WhatsApp ? 'Probando...' : 'Probar'}
-                                                    </button>
-                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.channels.whatsapp.enabled}
+                                                    onChange={(enabled) => 
+                                                        setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev.channels,
+                                                                whatsapp: { ...prev.channels.whatsapp, enabled }
+                                                            }
+                                                        }))
+                                                    }
+                                                    label=""
+                                                />
                                             </div>
                                             {settings.channels.whatsapp.enabled && (
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1970,6 +1890,146 @@ const {
                                                             <option value="top-right">Arriba derecha</option>
                                                             <option value="top-left">Arriba izquierda</option>
                                                         </select>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Instagram */}
+                                        <div className="p-4 border border-gray-200 rounded-lg">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <Instagram className="w-5 h-5 text-pink-600" />
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-900">Instagram</h4>
+                                                        <p className="text-sm text-gray-600">Mensajería automática en Instagram</p>
+                                                    </div>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.channels.instagram?.enabled || false}
+                                                    onChange={(enabled) => 
+                                                        setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev.channels,
+                                                                instagram: { ...prev.channels.instagram, enabled }
+                                                            }
+                                                        }))
+                                                    }
+                                                    label=""
+                                                />
+                                            </div>
+                                            {settings.channels.instagram?.enabled && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Access Token
+                                                        </label>
+                                                        <input
+                                                            type="password"
+                                                            value={settings.channels.instagram?.access_token || ""}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        instagram: { ...prev.channels.instagram, access_token: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="Token de Instagram Business API"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Page ID
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={settings.channels.instagram?.page_id || ""}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        instagram: { ...prev.channels.instagram, page_id: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="ID de tu página de Instagram"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Facebook */}
+                                        <div className="p-4 border border-gray-200 rounded-lg">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <Facebook className="w-5 h-5 text-blue-600" />
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-900">Facebook</h4>
+                                                        <p className="text-sm text-gray-600">Mensajería automática en Facebook</p>
+                                                    </div>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.channels.facebook?.enabled || false}
+                                                    onChange={(enabled) => 
+                                                        setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev.channels,
+                                                                facebook: { ...prev.channels.facebook, enabled }
+                                                            }
+                                                        }))
+                                                    }
+                                                    label=""
+                                                />
+                                            </div>
+                                            {settings.channels.facebook?.enabled && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Access Token
+                                                        </label>
+                                                        <input
+                                                            type="password"
+                                                            value={settings.channels.facebook?.access_token || ""}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        facebook: { ...prev.channels.facebook, access_token: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="Token de Facebook Business API"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Page ID
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={settings.channels.facebook?.page_id || ""}
+                                                            onChange={(e) => 
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev.channels,
+                                                                        facebook: { ...prev.channels.facebook, page_id: e.target.value }
+                                                                    }
+                                                                }))
+                                                            }
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                            placeholder="ID de tu página de Facebook"
+                                                        />
                                                     </div>
                                                 </div>
                                             )}
