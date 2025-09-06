@@ -1178,6 +1178,46 @@ const Configuracion = () => {
                                             label=""
                                         />
                                     </div>
+                                    {settings.channels?.instagram?.enabled && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Usuario de Instagram
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.channels?.instagram?.username || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            instagram: { ...prev.channels?.instagram, username: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                                    placeholder="@turestaurante"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Access Token
+                                                </label>
+                                                <input
+                                                    type="password"
+                                                    value={settings.channels?.instagram?.access_token || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            instagram: { ...prev.channels?.instagram, access_token: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                                    placeholder="Token de acceso de Instagram"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Facebook */}
@@ -1204,6 +1244,46 @@ const Configuracion = () => {
                                             label=""
                                         />
                                     </div>
+                                    {settings.channels?.facebook?.enabled && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    ID de Página
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.channels?.facebook?.page_id || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            facebook: { ...prev.channels?.facebook, page_id: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    placeholder="ID de página de Facebook"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Page Token
+                                                </label>
+                                                <input
+                                                    type="password"
+                                                    value={settings.channels?.facebook?.page_token || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            facebook: { ...prev.channels?.facebook, page_token: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    placeholder="Token de página de Facebook"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* VAPI (Llamadas IA) */}
@@ -1230,6 +1310,46 @@ const Configuracion = () => {
                                             label=""
                                         />
                                     </div>
+                                    {settings.channels?.vapi?.enabled && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    API Key
+                                                </label>
+                                                <input
+                                                    type="password"
+                                                    value={settings.channels?.vapi?.api_key || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            vapi: { ...prev.channels?.vapi, api_key: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                    placeholder="API Key de VAPI"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Número de teléfono
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.channels?.vapi?.phone_number || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            vapi: { ...prev.channels?.vapi, phone_number: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                    placeholder="+34 600 000 000"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

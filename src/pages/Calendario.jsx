@@ -173,7 +173,8 @@ export default function Calendario() {
                 
                 console.log(`📅 ${day.name}:`, dayHours);
                 
-                const isOpen = dayHours ? !dayHours.closed : false;
+                // CORREGIDO: usar dayHours.open para determinar si está abierto
+                const isOpen = dayHours ? dayHours.open === true : false;
                 
                 return {
                     day_of_week: day.id,
@@ -183,8 +184,8 @@ export default function Calendario() {
                         {
                             id: 1,
                             name: "Horario Principal",
-                            start_time: dayHours?.open || "09:00",
-                            end_time: dayHours?.close || "22:00"
+                            start_time: dayHours?.start || "09:00",
+                            end_time: dayHours?.end || "22:00"
                         }
                     ] : []
                 };
@@ -220,8 +221,21 @@ export default function Calendario() {
                 return total + hours;
             }, 0);
 
-            // 3. Canales activos (desde hook)
-            const activeChannels = channelStats.active;
+            // 3. Canales activos (calculado desde configuración real)
+            let activeChannels = 0;
+            try {
+                const { data: restaurantData } = await supabase
+                    .from("restaurants")
+                    .select("settings")
+                    .eq("id", restaurantId)
+                    .single();
+                
+                const channels = restaurantData?.settings?.channels || {};
+                activeChannels = Object.values(channels).filter(channel => channel.enabled === true).length;
+            } catch (error) {
+                console.error("Error calculando canales activos:", error);
+                activeChannels = channelStats.active; // fallback
+            }
 
             // 4. Ocupación promedio (desde hook)
             const occupancy = occupancyData.average;
@@ -329,9 +343,9 @@ export default function Calendario() {
                 if (!day.is_open || !day.slots || day.slots.length === 0) {
                     // Día cerrado
                     operating_hours[dayName] = {
-                        open: "09:00",
-                        close: "22:00",
-                        closed: true
+                        start: "09:00",
+                        end: "22:00",
+                        open: false
                     };
                     calendar_schedule.push({
                         day_of_week: dayName,
@@ -350,15 +364,15 @@ export default function Calendario() {
                         // Usar el primer turno válido para operating_hours (compatibilidad)
                         const firstSlot = validSlots[0];
                     operating_hours[dayName] = {
-                            open: firstSlot.start_time,
-                            close: firstSlot.end_time,
-                        closed: false,
+                            start: firstSlot.start_time,
+                            end: firstSlot.end_time,
+                        open: true,
                             // GUARDAR TODOS LOS TURNOS
                             shifts: validSlots.map(slot => ({
                                 id: slot.id || Date.now() + Math.random(),
                                 name: slot.name || "Turno",
-                            start: slot.start_time,
-                                end: slot.end_time
+                            start_time: slot.start_time,
+                                end_time: slot.end_time
                         }))
                     };
                         

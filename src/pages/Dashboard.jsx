@@ -158,31 +158,35 @@ export default function Dashboard() {
         }
     }, [restaurantId]);
 
-    // Función para obtener canales REALES configurados
+    // Función para obtener canales REALES desde configuración
     const fetchRealChannels = useCallback(async () => {
         if (!restaurantId) return { count: 0, list: [] };
 
         try {
-            const { data: channels, error } = await supabase
-                .from('channel_credentials')
-                .select('*')
-                .eq('restaurant_id', restaurantId)
-                .eq('is_active', true);
+            const { data: restaurant, error } = await supabase
+                .from('restaurants')
+                .select('settings')
+                .eq('id', restaurantId)
+                .single();
 
             if (error) {
-                logger.warn("Error cargando canales:", error);
+                logger.warn("Error cargando configuración de canales:", error);
                 return { count: 0, list: [] };
             }
 
-            const channelsList = channels || [];
-            logger.info('✅ Canales reales cargados:', channelsList);
+            const channels = restaurant?.settings?.channels || {};
+            const activeChannels = Object.entries(channels)
+                .filter(([key, channel]) => channel.enabled === true)
+                .map(([key, channel]) => key);
+            
+            logger.info('✅ Canales activos desde configuración:', activeChannels);
             
             return {
-                count: channelsList.length,
-                list: channelsList.map(ch => ch.channel)
+                count: activeChannels.length,
+                list: activeChannels
             };
         } catch (error) {
-            logger.error("Error fetching channels:", error);
+            logger.error("Error fetching channels from configuration:", error);
             return { count: 0, list: [] };
         }
     }, [restaurantId]);
@@ -482,16 +486,22 @@ export default function Dashboard() {
                             <MessageSquare className="w-5 h-5 text-blue-600" />
                             <span className="text-sm font-medium text-gray-700">Canales Configurados</span>
                         </div>
-                        <div className="text-2xl font-bold text-blue-600">{realData.activeChannels}/6</div>
+                        <div className="text-2xl font-bold text-blue-600">{realData.activeChannels}/5</div>
                         <div className="text-xs text-gray-500 mt-1">
-                            {realData.channelsList.length > 0 ? 
-                                `Activos: ${realData.channelsList.join(', ')}` : 
-                                'Ningún canal configurado'
+                            {realData.activeChannels > 0 ? 
+                                `${realData.activeChannels} canal${realData.activeChannels > 1 ? 'es' : ''} activo${realData.activeChannels > 1 ? 's' : ''}` : 
+                                'Ningún canal activo'
                             }
                         </div>
                         <div className="text-xs text-blue-500 mt-1">
                             <button 
                                 onClick={() => {
+                                    navigate('/configuracion');
+                                    // Cambiar a la pestaña de canales después de navegar
+                                    setTimeout(() => {
+                                        const channelTab = document.querySelector('[data-tab="channels"]');
+                                        if (channelTab) channelTab.click();
+                                    }, 100);
                                     navigate('/configuracion?tab=channels');
                                     toast.success('Navegando a Configuración → Canales');
                                 }}
