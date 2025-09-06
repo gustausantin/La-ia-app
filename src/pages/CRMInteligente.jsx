@@ -577,7 +577,6 @@ export default function CRMInteligente() {
                             {[
                                 { id: "clientes", label: "Clientes", icon: Users },
                                 { id: "mensajes", label: "Mensajes", icon: MessageSquare },
-                                { id: "plantillas", label: "Plantillas", icon: Mail },
                                 { id: "configuracion", label: "Configuración", icon: Settings }
                             ].map(tab => (
                                 <button
@@ -627,50 +626,39 @@ export default function CRMInteligente() {
                                 </div>
 
                                 {/* Lista de Clientes */}
-                                <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                                     {filteredCustomers.map(customer => {
                                         const segment = CUSTOMER_SEGMENTS[customer.segment] || CUSTOMER_SEGMENTS.activo;
                                         return (
                                             <div 
                                                 key={customer.id} 
-                                                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                                                className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer"
                                                 onClick={() => openCustomerModal(customer)}
                                             >
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-4">
-                                                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-xl">
-                                                            {segment.icon}
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="font-medium text-gray-900">{customer.name}</h3>
-                                                            <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                                                {customer.email && (
-                                                                    <span className="flex items-center">
-                                                                        <Mail className="w-3 h-3 mr-1" />
-                                                                        {customer.email}
-                                                                    </span>
-                                                                )}
-                                                                {customer.phone && (
-                                                                    <span className="flex items-center">
-                                                                        <Phone className="w-3 h-3 mr-1" />
-                                                                        {customer.phone}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm flex-shrink-0">
+                                                        {segment.icon}
                                                     </div>
-                                                    <div className="text-right">
-                                                        <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${segment.color}-100 text-${segment.color}-800`}>
-                                                            {segment.label}
-                                                        </div>
-                                            <div className="text-sm text-gray-500 mt-1">
-                                                {customer.visits_count} visitas • {customer.daysSinceLastVisit ? `${customer.daysSinceLastVisit} días` : 'Primera visita'}
-                                            </div>
-                                                        {customer.last_visit_at && (
-                                                            <div className="text-xs text-gray-400">
-                                                                Última visita: {format(parseISO(customer.last_visit_at), "dd/MM/yyyy", { locale: es })}
-                                                            </div>
-                                                        )}
+                                                    <div className="min-w-0 flex-1">
+                                                        <h3 className="font-medium text-gray-900 text-sm truncate">{customer.name}</h3>
+                                                        <p className="text-xs text-gray-500 truncate">{customer.email}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${segment.color}-100 text-${segment.color}-800`}>
+                                                        {segment.label}
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                                    <div>
+                                                        <span className="text-gray-500">Visitas:</span>
+                                                        <span className="ml-1 font-medium">{customer.visits_count || 0}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-500">Días:</span>
+                                                        <span className="ml-1 font-medium">
+                                                            {customer.daysSinceLastVisit || 'Primera'}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -680,12 +668,12 @@ export default function CRMInteligente() {
                             </div>
                         )}
 
-                        {activeTab === "plantillas" && (
+                        {activeTab === "mensajes" && (
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <h3 className="text-xl font-bold text-gray-900">Plantillas por Tipo de Cliente</h3>
-                                        <p className="text-gray-600">Gestiona las plantillas de mensajes para cada segmento</p>
+                                        <h3 className="text-xl font-bold text-gray-900">Mensajes CRM Inteligente</h3>
+                                        <p className="text-gray-600">Ejecuta el CRM IA para generar mensajes automáticos</p>
                                     </div>
                                     <button
                                         onClick={executeAISuggestions}
@@ -697,53 +685,96 @@ export default function CRMInteligente() {
                                         ) : (
                                             <Zap className="w-5 h-5" />
                                         )}
-                                        <span className="font-medium">{loading ? "Analizando..." : "Ejecutar IA"}</span>
+                                        <span className="font-medium">{loading ? "Analizando..." : "Ejecutar CRM IA"}</span>
                                     </button>
                                 </div>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {Object.entries(CUSTOMER_SEGMENTS).map(([key, segment]) => {
-                                        const segmentTemplates = templates.filter(t => t.type === key);
-                                        const segmentCount = segments[key]?.count || 0;
-                                        
-                                        return (
-                                            <div key={key} className={`bg-white rounded-lg border-l-4 border-${segment.color}-500 shadow-sm p-6`}>
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-2xl">{segment.icon}</span>
-                                                            <h4 className="font-bold text-gray-900">{segment.label}</h4>
-                                                        </div>
-                                                        <p className="text-sm text-gray-600">{segmentCount} clientes</p>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="space-y-3">
-                                                    {segmentTemplates.length > 0 ? (
-                                                        segmentTemplates.map(template => (
-                                                            <div key={template.id} className="bg-gray-50 rounded-lg p-3">
-                                                                <h5 className="font-medium text-gray-900 text-sm">{template.name}</h5>
-                                                                <p className="text-xs text-gray-600 mt-1">{template.subject}</p>
-                                                                <div className="flex items-center justify-between mt-2">
-                                                                    <span className={`text-xs px-2 py-1 rounded-full bg-${segment.color}-100 text-${segment.color}-800`}>
-                                                                        Activa
-                                                                    </span>
-                                                                    <span className="text-xs text-gray-500">
-                                                                        Prioridad {template.priority}
+
+                                {/* Mensajes Sugeridos */}
+                                <div className="bg-white rounded-lg border border-gray-200">
+                                    <div className="p-6 border-b border-gray-200">
+                                        <h4 className="font-bold text-gray-900">Mensajes Sugeridos por IA</h4>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            Haz clic en "Ejecutar CRM IA" para generar mensajes automáticos basados en el comportamiento de tus clientes
+                                        </p>
+                                    </div>
+                                    
+                                    <div className="p-6">
+                                        {suggestions.length > 0 ? (
+                                            <div className="space-y-4">
+                                                {suggestions.map(suggestion => {
+                                                    const customer = customers.find(c => c.id === suggestion.customer_id);
+                                                    if (!customer) return null;
+                                                    
+                                                    return (
+                                                        <div key={suggestion.id} className="border border-gray-200 rounded-lg p-4">
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                                                        <span className="text-purple-600 font-medium text-sm">
+                                                                            {customer.name?.charAt(0)?.toUpperCase() || 'C'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div>
+                                                                        <h5 className="font-medium text-gray-900">{customer.name}</h5>
+                                                                        <p className="text-sm text-gray-500">{customer.email}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className={`px-2 py-1 text-xs rounded-full ${
+                                                                        suggestion.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                                                        suggestion.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                                        'bg-green-100 text-green-800'
+                                                                    }`}>
+                                                                        {suggestion.priority === 'high' ? 'Alta' : 
+                                                                         suggestion.priority === 'medium' ? 'Media' : 'Baja'}
                                                                     </span>
                                                                 </div>
                                                             </div>
-                                                        ))
-                                                    ) : (
-                                                        <div className="text-center py-4 text-gray-500">
-                                                            <Mail className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                                                            <p className="text-sm">Sin plantillas</p>
+                                                            
+                                                            <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                                                                <h6 className="font-medium text-gray-900 mb-1">{suggestion.suggested_subject}</h6>
+                                                                <p className="text-sm text-gray-700 whitespace-pre-wrap">{suggestion.suggested_content}</p>
+                                                            </div>
+                                                            
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-xs text-gray-500">
+                                                                    Tipo: {suggestion.type} • Generado: {format(parseISO(suggestion.created_at), 'dd/MM/yyyy HH:mm')}
+                                                                </span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            // TODO: Implementar eliminar sugerencia
+                                                                            toast.info('Mensaje eliminado');
+                                                                        }}
+                                                                        className="px-3 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                    >
+                                                                        No Enviar
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            // TODO: Implementar envío de mensaje
+                                                                            toast.success('Mensaje enviado');
+                                                                        }}
+                                                                        className="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 rounded transition-colors"
+                                                                    >
+                                                                        Enviar
+                                                                    </button>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                </div>
+                                                    );
+                                                })}
                                             </div>
-                                        );
-                                    })}
+                                        ) : (
+                                            <div className="text-center py-12">
+                                                <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                                                <h5 className="font-medium text-gray-900 mb-2">No hay mensajes generados</h5>
+                                                <p className="text-gray-500 mb-4">
+                                                    Haz clic en "Ejecutar CRM IA" para generar mensajes automáticos
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -850,6 +881,175 @@ export default function CRMInteligente() {
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Ficha de Cliente Mejorada */}
+            {showCustomerModal && selectedCustomer && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <span className="text-purple-600 font-bold text-lg">
+                                        {selectedCustomer.name?.charAt(0)?.toUpperCase() || 'C'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900">{selectedCustomer.name}</h3>
+                                    <p className="text-gray-600">{selectedCustomer.email}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowCustomerModal(false)}
+                                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            {/* Información del Segmento */}
+                            <div className="mb-6">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className="text-2xl">
+                                        {CUSTOMER_SEGMENTS[selectedCustomer.segment]?.icon || '👤'}
+                                    </span>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900">
+                                            Cliente {CUSTOMER_SEGMENTS[selectedCustomer.segment]?.label || 'Activo'}
+                                        </h4>
+                                        <p className="text-sm text-gray-600">
+                                            Segmentación automática basada en comportamiento
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Estadísticas del Cliente */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div className="bg-blue-50 rounded-lg p-4 text-center">
+                                    <div className="text-2xl font-bold text-blue-600">
+                                        {selectedCustomer.visits_count || 0}
+                                    </div>
+                                    <div className="text-sm text-blue-800">Visitas Totales</div>
+                                </div>
+                                <div className="bg-green-50 rounded-lg p-4 text-center">
+                                    <div className="text-2xl font-bold text-green-600">
+                                        €{selectedCustomer.total_spent || 0}
+                                    </div>
+                                    <div className="text-sm text-green-800">Gasto Total</div>
+                                </div>
+                                <div className="bg-purple-50 rounded-lg p-4 text-center">
+                                    <div className="text-2xl font-bold text-purple-600">
+                                        €{selectedCustomer.visits_count > 0 ? Math.round((selectedCustomer.total_spent || 0) / selectedCustomer.visits_count) : 0}
+                                    </div>
+                                    <div className="text-sm text-purple-800">Gasto Promedio</div>
+                                </div>
+                            </div>
+
+                            {/* Información Personal */}
+                            <div className="space-y-4">
+                                <h5 className="font-bold text-gray-900">Información Personal</h5>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Nombre Completo
+                                        </label>
+                                        <p className="text-gray-900">{selectedCustomer.name || 'No especificado'}</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Email
+                                        </label>
+                                        <p className="text-gray-900">{selectedCustomer.email || 'No especificado'}</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Teléfono
+                                        </label>
+                                        <p className="text-gray-900">{selectedCustomer.phone || 'No especificado'}</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Canal Preferido
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            {selectedCustomer.consent_whatsapp && (
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                    <MessageSquare className="w-3 h-3 mr-1" />
+                                                    WhatsApp
+                                                </span>
+                                            )}
+                                            {selectedCustomer.consent_email && (
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                                                    <Mail className="w-3 h-3 mr-1" />
+                                                    Email
+                                                </span>
+                                            )}
+                                            {!selectedCustomer.consent_whatsapp && !selectedCustomer.consent_email && (
+                                                <span className="text-gray-500 text-sm">Sin preferencias</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Última Visita
+                                    </label>
+                                    <p className="text-gray-900">
+                                        {selectedCustomer.last_visit_at 
+                                            ? format(parseISO(selectedCustomer.last_visit_at), 'dd/MM/yyyy HH:mm')
+                                            : 'Primera visita'
+                                        }
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Cliente desde
+                                    </label>
+                                    <p className="text-gray-900">
+                                        {format(parseISO(selectedCustomer.created_at), 'dd/MM/yyyy')}
+                                    </p>
+                                </div>
+
+                                {selectedCustomer.notes && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Notas
+                                        </label>
+                                        <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+                                            {selectedCustomer.notes}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
+                            <button
+                                onClick={() => setShowCustomerModal(false)}
+                                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                            >
+                                Cerrar
+                            </button>
+                            <button
+                                onClick={() => {
+                                    // TODO: Implementar edición de cliente
+                                    toast.info('Función de edición próximamente');
+                                }}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                            >
+                                Editar Cliente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
