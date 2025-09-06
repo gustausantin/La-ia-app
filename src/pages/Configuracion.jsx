@@ -201,11 +201,6 @@ const Configuracion = () => {
             label: "General",
             icon: <Building2 className="w-4 h-4" />,
         },
-        { 
-            id: "hours", 
-            label: "Horarios", 
-            icon: <Clock className="w-4 h-4" /> 
-        },
         {
             id: "reservations",
             label: "Política de Reservas",
