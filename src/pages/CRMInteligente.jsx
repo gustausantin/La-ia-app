@@ -8,7 +8,7 @@ import {
     Users, Settings, Brain, Crown, Clock, Mail, Phone, MessageSquare,
     TrendingUp, AlertTriangle, CheckCircle2, RefreshCw, Plus, Send,
     Filter, Search, Eye, Edit2, Trash2, Calendar, DollarSign,
-    Target, Zap, Award, Heart, Coffee, Sparkles
+    Target, Zap, Award, Heart, Coffee, Sparkles, Save, X
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -353,7 +353,7 @@ export default function CRMInteligente() {
                         case 'inactivo':
                             priority = 'high';
                             title = `Reactivar cliente inactivo: ${customer.name}`;
-                            description = `Cliente sin visitas por ${customer.daysSinceLastVisit} días`;
+                            description = `Cliente sin visitas por ${customer.daysSinceLastVisit || 'muchos'} días`;
                             break;
                         case 'nuevo':
                             priority = 'medium';
@@ -371,19 +371,19 @@ export default function CRMInteligente() {
                         case 'riesgo':
                             priority = 'high';
                             title = `Cliente en riesgo: ${customer.name}`;
-                            description = `Cliente con riesgo de pérdida, ${customer.daysSinceLastVisit} días sin visitar`;
+                            description = `Cliente con riesgo de pérdida, ${customer.daysSinceLastVisit || 'muchos'} días sin visitar`;
                             break;
                     }
                     
                     if (title) {
                         // Generar contenido personalizado
                         const personalizedContent = template.content
-                            .replace(/{restaurant_name}/g, restaurant?.name || 'nuestro restaurante')
+                            .replace(/{restaurant_name}/g, 'nuestro restaurante')
                             .replace(/{customer_name}/g, customer.name || 'Cliente')
                             .replace(/{last_visit_date}/g, customer.last_visit_at ? format(parseISO(customer.last_visit_at), "dd/MM/yyyy", { locale: es }) : 'hace tiempo');
                         
                         const personalizedSubject = template.subject
-                            .replace(/{restaurant_name}/g, restaurant?.name || 'nuestro restaurante')
+                            .replace(/{restaurant_name}/g, 'nuestro restaurante')
                             .replace(/{customer_name}/g, customer.name || 'Cliente');
                         
                         newSuggestions.push({
@@ -550,19 +550,19 @@ export default function CRMInteligente() {
                 </div>
 
                 {/* Métricas Principales */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
                     {Object.entries(CUSTOMER_SEGMENTS).map(([key, segment]) => {
                         const stats = segments[key] || { count: 0, totalValue: 0 };
                         return (
-                            <div key={key} className={`bg-white rounded-xl p-6 border-l-4 border-${segment.color}-500 shadow-sm`}>
+                            <div key={key} className={`bg-white rounded-lg p-4 border-l-4 border-${segment.color}-500 shadow-sm`}>
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm font-medium text-gray-600">{segment.label}</p>
-                                        <p className="text-3xl font-bold text-gray-900">{stats.count}</p>
+                                        <p className="text-xs font-medium text-gray-600">{segment.label}</p>
+                                        <p className="text-2xl font-bold text-gray-900">{stats.count}</p>
                                     </div>
-                                    <div className="text-3xl">{segment.icon}</div>
+                                    <div className="text-2xl">{segment.icon}</div>
                                 </div>
-                                <p className="text-sm text-gray-500 mt-2">
+                                <p className="text-xs text-gray-500 mt-2">
                                     {stats.totalVisits} visitas totales
                                 </p>
                             </div>
