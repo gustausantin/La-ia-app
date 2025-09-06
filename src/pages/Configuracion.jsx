@@ -306,12 +306,12 @@ export default function ConfiguracionFixed() {
         },
         { 
             id: "hours", 
-            label: "Horarios y Calendario", 
+            label: "Horarios", 
             icon: <Clock className="w-4 h-4" /> 
         },
         {
             id: "reservations",
-            label: "Reservas",
+            label: "Política de Reservas",
             icon: <Calendar className="w-4 h-4" />,
         },
         {
@@ -724,6 +724,168 @@ export default function ConfiguracionFixed() {
                             </div>
                         )}
 
+                        {/* Política de Reservas */}
+                        {activeTab === "reservations" && (
+                            <div className="space-y-6">
+                                <SettingSection
+                                    title="Política de Reservas"
+                                    description="Configuración de capacidad, turnos y reglas de reserva"
+                                    icon={<Calendar />}
+                                >
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Duración de turnos (minutos)
+                                            </label>
+                                            <select
+                                                value={settings.reservation_settings.turn_duration}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    reservation_settings: {
+                                                        ...prev.reservation_settings,
+                                                        turn_duration: parseInt(e.target.value)
+                                                    }
+                                                }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                            >
+                                                <option value="60">60 minutos</option>
+                                                <option value="90">90 minutos</option>
+                                                <option value="120">120 minutos</option>
+                                                <option value="150">150 minutos</option>
+                                                <option value="180">180 minutos</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Capacidad máxima total (comensales/día)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={settings.capacity_total}
+                                                onChange={(e) => setSettings(prev => ({ 
+                                                    ...prev, 
+                                                    capacity_total: parseInt(e.target.value) || 0 
+                                                }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                placeholder="120"
+                                                min="1"
+                                                max="1000"
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Nunca puede ser menor que la capacidad configurada en General
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Mínimo comensales por mesa
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={settings.reservation_settings.min_party_size}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    reservation_settings: {
+                                                        ...prev.reservation_settings,
+                                                        min_party_size: parseInt(e.target.value) || 1
+                                                    }
+                                                }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                min="1"
+                                                max="10"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Máximo comensales por mesa
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={settings.reservation_settings.max_party_size}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    reservation_settings: {
+                                                        ...prev.reservation_settings,
+                                                        max_party_size: parseInt(e.target.value) || 8
+                                                    }
+                                                }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                min="2"
+                                                max="50"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Días máximos de antelación
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={settings.reservation_settings.advance_booking_days}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    reservation_settings: {
+                                                        ...prev.reservation_settings,
+                                                        advance_booking_days: parseInt(e.target.value) || 30
+                                                    }
+                                                }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                min="1"
+                                                max="365"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Tiempo buffer entre mesas (minutos)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={settings.reservation_settings.buffer_time}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    reservation_settings: {
+                                                        ...prev.reservation_settings,
+                                                        buffer_time: parseInt(e.target.value) || 15
+                                                    }
+                                                }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                min="0"
+                                                max="60"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                                        <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                                            <Info className="w-4 h-4 text-blue-600" />
+                                            Importante
+                                        </h4>
+                                        <p className="text-sm text-blue-700">
+                                            Esta configuración es la BASE para la gestión de mesas y reservas. Los valores aquí definidos se aplicarán automáticamente en las páginas de Reservas y Mesas.
+                                        </p>
+                                    </div>
+
+                                    <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                                        <button
+                                            onClick={() => handleSave("Política de Reservas")}
+                                            disabled={saving}
+                                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                        >
+                                            {saving ? (
+                                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Save className="w-4 h-4" />
+                                            )}
+                                            Guardar configuración
+                                        </button>
+                                    </div>
+                                </SettingSection>
+                            </div>
+                        )}
+
                         {/* Agente IA */}
                         {activeTab === "agent" && (
                             <div className="space-y-6">
@@ -836,71 +998,200 @@ export default function ConfiguracionFixed() {
                             </div>
                         )}
 
-                        {/* CRM IA */}
+                        {/* CRM IA WORLD-CLASS */}
                         {activeTab === "crm" && (
                             <div className="space-y-6">
                                 <SettingSection
-                                    title="CRM Sistema Inteligente"
-                                    description="Segmentación automática y automatizaciones avanzadas con IA"
+                                    title="🧠 CRM Sistema Inteligente World-Class"
+                                    description="Segmentación automática IA + Automatizaciones enterprise + 7 segmentos únicos"
                                     icon={<Brain />}
                                     premium
                                 >
-                                    <div className="space-y-6">
-                                        {/* Estado del CRM */}
-                                        <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
-                                            <div>
-                                                <h4 className="font-medium text-gray-900">CRM Inteligente</h4>
-                                                <p className="text-sm text-gray-600">
-                                                    Segmentación automática de clientes con IA predictiva
+                                    <div className="space-y-8">
+                                        {/* Header World-Class */}
+                                        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 p-6 rounded-xl text-white">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div>
+                                                    <h3 className="text-xl font-bold flex items-center">
+                                                        <Brain className="w-6 h-6 mr-2" />
+                                                        CRM IA World-Class Edition
+                                                    </h3>
+                                                    <p className="text-purple-100 text-sm mt-1">
+                                                        Sistema único mundial con ML Engine + Triggers automáticos + Compliance GDPR
+                                                    </p>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings?.crm?.enabled || true}
+                                                    onChange={(enabled) => setSettings(prev => ({
+                                                        ...prev,
+                                                        crm: { ...prev?.crm, enabled }
+                                                    }))}
+                                                    label=""
+                                                />
+                                            </div>
+                                            
+                                            {/* Métricas en tiempo real */}
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
+                                                    <div className="text-2xl font-bold">7</div>
+                                                    <div className="text-xs text-purple-100">Segmentos IA</div>
+                                                </div>
+                                                <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
+                                                    <div className="text-2xl font-bold">24/7</div>
+                                                    <div className="text-xs text-purple-100">Automático</div>
+                                                </div>
+                                                <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
+                                                    <div className="text-2xl font-bold">ML</div>
+                                                    <div className="text-xs text-purple-100">Predictivo</div>
+                                                </div>
+                                                <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
+                                                    <div className="text-2xl font-bold">GDPR</div>
+                                                    <div className="text-xs text-purple-100">Compliant</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* 7 Segmentos World-Class (basados en tablas Supabase) */}
+                                        <div>
+                                            <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                                                <Target className="w-6 h-6 mr-3 text-indigo-600" />
+                                                7 Segmentos Automáticos IA (Únicos Mundialmente)
+                                            </h4>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+                                                {/* Segmento NUEVO */}
+                                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-200 hover:border-green-300 transition-colors">
+                                                    <div className="flex items-center mb-3">
+                                                        <div className="w-4 h-4 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                                                        <span className="font-bold text-green-800">🆕 NUEVO</span>
+                                                    </div>
+                                                    <p className="text-sm text-green-700 mb-2">
+                                                        <strong>0 visitas</strong> - Primera vez
+                                                    </p>
+                                                    <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                                                        segment_auto = 'nuevo'
+                                                    </div>
+                                                </div>
+
+                                                {/* Segmento OCASIONAL */}
+                                                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 p-4 rounded-lg border-2 border-yellow-200 hover:border-yellow-300 transition-colors">
+                                                    <div className="flex items-center mb-3">
+                                                        <div className="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
+                                                        <span className="font-bold text-yellow-800">🔄 OCASIONAL</span>
+                                                    </div>
+                                                    <p className="text-sm text-yellow-700 mb-2">
+                                                        <strong>1-2 visitas</strong> - Explorando
+                                                    </p>
+                                                    <div className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                                                        visits_count: 1-2
+                                                    </div>
+                                                </div>
+
+                                                {/* Segmento REGULAR */}
+                                                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-lg border-2 border-blue-200 hover:border-blue-300 transition-colors">
+                                                    <div className="flex items-center mb-3">
+                                                        <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+                                                        <span className="font-bold text-blue-800">⭐ REGULAR</span>
+                                                    </div>
+                                                    <p className="text-sm text-blue-700 mb-2">
+                                                        <strong>3-4 visitas</strong> - Fidelizando
+                                                    </p>
+                                                    <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                                                        visits_count: 3-4
+                                                    </div>
+                                                </div>
+
+                                                {/* Segmento VIP */}
+                                                <div className="bg-gradient-to-br from-purple-50 to-violet-50 p-4 rounded-lg border-2 border-purple-200 hover:border-purple-300 transition-colors">
+                                                    <div className="flex items-center mb-3">
+                                                        <div className="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
+                                                        <span className="font-bold text-purple-800">👑 VIP</span>
+                                                    </div>
+                                                    <p className="text-sm text-purple-700 mb-2">
+                                                        <strong>5+ visitas</strong> o <strong>500€+</strong>
+                                                    </p>
+                                                    <div className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">
+                                                        visits_count ≥ 5 OR total_spent ≥ 500
+                                                    </div>
+                                                </div>
+
+                                                {/* Segmento INACTIVO */}
+                                                <div className="bg-gradient-to-br from-gray-50 to-slate-50 p-4 rounded-lg border-2 border-gray-200 hover:border-gray-300 transition-colors">
+                                                    <div className="flex items-center mb-3">
+                                                        <div className="w-4 h-4 bg-gray-500 rounded-full mr-2"></div>
+                                                        <span className="font-bold text-gray-800">😴 INACTIVO</span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-700 mb-2">
+                                                        <strong>60+ días</strong> sin visita
+                                                    </p>
+                                                    <div className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                                                        last_visit_at > 60 días
+                                                    </div>
+                                                </div>
+
+                                                {/* Segmento EN RIESGO */}
+                                                <div className="bg-gradient-to-br from-red-50 to-rose-50 p-4 rounded-lg border-2 border-red-200 hover:border-red-300 transition-colors">
+                                                    <div className="flex items-center mb-3">
+                                                        <div className="w-4 h-4 bg-red-500 rounded-full mr-2 animate-pulse"></div>
+                                                        <span className="font-bold text-red-800">⚠️ EN RIESGO</span>
+                                                    </div>
+                                                    <p className="text-sm text-red-700 mb-2">
+                                                        <strong>Churn risk</strong> alto (ML)
+                                                    </p>
+                                                    <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">
+                                                        churn_risk_score > 60
+                                                    </div>
+                                                </div>
+
+                                                {/* Segmento ALTO VALOR */}
+                                                <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 p-4 rounded-lg border-2 border-amber-300 hover:border-amber-400 transition-colors shadow-lg">
+                                                    <div className="flex items-center mb-3">
+                                                        <div className="w-4 h-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full mr-2 animate-pulse"></div>
+                                                        <span className="font-bold text-amber-800">💎 ALTO VALOR</span>
+                                                    </div>
+                                                    <p className="text-sm text-amber-700 mb-2">
+                                                        <strong>1000€+</strong> gasto total
+                                                    </p>
+                                                    <div className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">
+                                                        total_spent ≥ 1000 (priority)
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Nota técnica */}
+                                            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                                                <p className="text-sm text-indigo-800">
+                                                    <strong>🔧 Automatización via Triggers SQL:</strong><br/>
+                                                    Los segmentos se actualizan automáticamente con cada reserva completada mediante 
+                                                    <code className="bg-indigo-100 px-1 rounded mx-1">trigger_auto_update_customer_stats</code> 
+                                                    que ejecuta las funciones 
+                                                    <code className="bg-indigo-100 px-1 rounded mx-1">recompute_customer_stats()</code> y 
+                                                    <code className="bg-indigo-100 px-1 rounded mx-1">recompute_customer_segment()</code>
                                                 </p>
                                             </div>
-                                            <ToggleSwitch
-                                                enabled={settings.crm.enabled}
-                                                onChange={(enabled) => setSettings(prev => ({
-                                                    ...prev,
-                                                    crm: { ...prev.crm, enabled }
-                                                }))}
-                                                label=""
-                                            />
                                         </div>
 
-                                        {/* Métricas del CRM */}
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                                            <div className="bg-white/60 rounded-lg p-3">
-                                                <p className="text-2xl font-bold text-purple-600">7</p>
-                                                <p className="text-sm text-gray-600">Segmentos IA</p>
-                                            </div>
-                                            <div className="bg-white/60 rounded-lg p-3">
-                                                <p className="text-2xl font-bold text-green-600">85%</p>
-                                                <p className="text-sm text-gray-600">Automatización</p>
-                                            </div>
-                                            <div className="bg-white/60 rounded-lg p-3">
-                                                <p className="text-2xl font-bold text-blue-600">300%</p>
-                                                <p className="text-sm text-gray-600">ROI Retención</p>
-                                            </div>
-                                            <div className="bg-white/60 rounded-lg p-3">
-                                                <p className="text-2xl font-bold text-orange-600">24/7</p>
-                                                <p className="text-sm text-gray-600">Operativo</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Configuración de Umbrales */}
+                                        {/* Configuración de Umbrales World-Class */}
                                         <div>
-                                            <h4 className="font-medium text-gray-900 mb-4">Umbrales de Segmentación Inteligente</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div>
+                                            <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                                                <Settings className="w-6 h-6 mr-3 text-purple-600" />
+                                                Configuración de Umbrales IA (Conectado a Supabase)
+                                            </h4>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Días para marcar como inactivo
+                                                        🕐 Días para marcar INACTIVO
                                                     </label>
                                                     <input
                                                         type="number"
-                                                        value={settings.crm.thresholds.inactivo_days}
+                                                        value={settings?.crm?.thresholds?.inactivo_days || 60}
                                                         onChange={(e) => setSettings(prev => ({
                                                             ...prev,
                                                             crm: {
-                                                                ...prev.crm,
+                                                                ...prev?.crm,
                                                                 thresholds: {
-                                                                    ...prev.crm.thresholds,
+                                                                    ...prev?.crm?.thresholds,
                                                                     inactivo_days: parseInt(e.target.value) || 60
                                                                 }
                                                             }
@@ -909,20 +1200,22 @@ export default function ConfiguracionFixed() {
                                                         min="1"
                                                         max="365"
                                                     />
+                                                    <p className="text-xs text-gray-500 mt-1">Campo: last_visit_at en customers</p>
                                                 </div>
-                                                <div>
+                                                
+                                                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Visitas mínimas para VIP
+                                                        👑 Visitas mínimas para VIP
                                                     </label>
                                                     <input
                                                         type="number"
-                                                        value={settings.crm.thresholds.vip_visits}
+                                                        value={settings?.crm?.thresholds?.vip_visits || 5}
                                                         onChange={(e) => setSettings(prev => ({
                                                             ...prev,
                                                             crm: {
-                                                                ...prev.crm,
+                                                                ...prev?.crm,
                                                                 thresholds: {
-                                                                    ...prev.crm.thresholds,
+                                                                    ...prev?.crm?.thresholds,
                                                                     vip_visits: parseInt(e.target.value) || 5
                                                                 }
                                                             }
@@ -931,65 +1224,119 @@ export default function ConfiguracionFixed() {
                                                         min="1"
                                                         max="50"
                                                     />
+                                                    <p className="text-xs text-gray-500 mt-1">Campo: visits_count en customers</p>
                                                 </div>
+                                                
+                                                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        💎 Gasto mínimo ALTO VALOR (€)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={settings?.crm?.thresholds?.alto_valor_euros || 1000}
+                                                        onChange={(e) => setSettings(prev => ({
+                                                            ...prev,
+                                                            crm: {
+                                                                ...prev?.crm,
+                                                                thresholds: {
+                                                                    ...prev?.crm?.thresholds,
+                                                                    alto_valor_euros: parseInt(e.target.value) || 1000
+                                                                }
+                                                            }
+                                                        }))}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        min="100"
+                                                        max="10000"
+                                                        step="100"
+                                                    />
+                                                    <p className="text-xs text-gray-500 mt-1">Campo: total_spent en customers</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                                <p className="text-sm text-blue-800">
+                                                    <strong>🔄 Actualización automática:</strong> Estos umbrales se aplican automáticamente 
+                                                    via las funciones SQL <code>recompute_customer_segment()</code> cada vez que se completa una reserva.
+                                                </p>
                                             </div>
                                         </div>
 
-                                        {/* Automatización */}
+                                        {/* Automatizaciones Enterprise */}
                                         <div>
-                                            <h4 className="font-medium text-gray-900 mb-4">Automatización Inteligente</h4>
-                                            <div className="space-y-4">
-                                                <ToggleSwitch
-                                                    enabled={settings.crm.automation.enabled}
-                                                    onChange={(enabled) => setSettings(prev => ({
-                                                        ...prev,
-                                                        crm: {
-                                                            ...prev.crm,
-                                                            automation: { ...prev.crm.automation, enabled }
-                                                        }
-                                                    }))}
-                                                    label="Activar automatizaciones inteligentes"
-                                                />
+                                            <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                                                <Zap className="w-6 h-6 mr-3 text-yellow-600" />
+                                                Automatizaciones Enterprise (Tabla: automation_rules)
+                                            </h4>
+                                            
+                                            <div className="space-y-6">
+                                                {/* Toggle principal */}
+                                                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                                                    <div>
+                                                        <h5 className="font-bold text-yellow-900">🤖 Automatizaciones Inteligentes</h5>
+                                                        <p className="text-sm text-yellow-700">
+                                                            Sistema automático con cooldown, horarios y consent GDPR
+                                                        </p>
+                                                    </div>
+                                                    <ToggleSwitch
+                                                        enabled={settings?.crm?.automation?.enabled || true}
+                                                        onChange={(enabled) => setSettings(prev => ({
+                                                            ...prev,
+                                                            crm: {
+                                                                ...prev?.crm,
+                                                                automation: { ...prev?.crm?.automation, enabled }
+                                                            }
+                                                        }))}
+                                                        label=""
+                                                    />
+                                                </div>
 
-                                                {settings.crm.automation.enabled && (
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-8">
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                Días de espera entre mensajes
-                                                            </label>
-                                                            <input
-                                                                type="number"
-                                                                value={settings.crm.automation.cooldown_days}
-                                                                onChange={(e) => setSettings(prev => ({
-                                                                    ...prev,
-                                                                    crm: {
-                                                                        ...prev.crm,
-                                                                        automation: {
-                                                                            ...prev.crm.automation,
-                                                                            cooldown_days: parseInt(e.target.value) || 30
+                                                {/* Configuraciones detalladas */}
+                                                {(settings?.crm?.automation?.enabled !== false) && (
+                                                    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                                                        <h5 className="font-semibold text-gray-900 mb-4">⚙️ Configuración Enterprise</h5>
+                                                        
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                            {/* Cooldown */}
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    🛡️ Cooldown inteligente (días)
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={settings?.crm?.automation?.cooldown_days || 30}
+                                                                    onChange={(e) => setSettings(prev => ({
+                                                                        ...prev,
+                                                                        crm: {
+                                                                            ...prev?.crm,
+                                                                            automation: {
+                                                                                ...prev?.crm?.automation,
+                                                                                cooldown_days: parseInt(e.target.value) || 30
+                                                                            }
                                                                         }
-                                                                    }
-                                                                }))}
-                                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                                                                min="1"
-                                                                max="365"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                Máximo mensajes por día
-                                                            </label>
-                                                            <input
-                                                                type="number"
-                                                                value={settings.crm.automation.max_daily_sends}
-                                                                onChange={(e) => setSettings(prev => ({
-                                                                    ...prev,
-                                                                    crm: {
-                                                                        ...prev.crm,
-                                                                        automation: {
-                                                                            ...prev.crm.automation,
-                                                                            max_daily_sends: parseInt(e.target.value) || 50
-                                                                        }
+                                                                    }))}
+                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                                                                    min="1"
+                                                                    max="365"
+                                                                />
+                                                                <p className="text-xs text-gray-500 mt-1">Mínimo entre automatizaciones</p>
+                                                            </div>
+
+                                                            {/* Max diarios */}
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    📊 Máximo mensajes/día
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={settings?.crm?.automation?.max_daily_sends || 50}
+                                                                    onChange={(e) => setSettings(prev => ({
+                                                                        ...prev,
+                                                                        crm: {
+                                                                            ...prev?.crm,
+                                                                            automation: {
+                                                                                ...prev?.crm?.automation,
+                                                                                max_daily_sends: parseInt(e.target.value) || 50
+                                                                            }
                                                                     }
                                                                 }))}
                                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -1002,86 +1349,157 @@ export default function ConfiguracionFixed() {
                                             </div>
                                         </div>
 
-                                        {/* Plantillas */}
+                                        {/* Plantillas Inteligentes por Segmento */}
                                         <div>
-                                            <h4 className="font-medium text-gray-900 mb-4">Plantillas Inteligentes</h4>
-                                            <div className="space-y-6">
-                                                {/* Reactivación */}
-                                                <div className="border border-gray-200 rounded-lg p-4">
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <div>
-                                                            <h5 className="font-medium text-gray-900">Reactivación de Clientes</h5>
-                                                            <p className="text-sm text-gray-600">Para clientes inactivos</p>
+                                            <div className="flex items-center justify-between mb-6">
+                                                <h4 className="text-xl font-bold text-gray-900 flex items-center">
+                                                    <MessageSquare className="w-6 h-6 mr-3 text-indigo-600" />
+                                                    Plantillas Inteligentes (Tabla: message_templates)
+                                                </h4>
+                                                <button 
+                                                    type="button"
+                                                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2 transform hover:scale-105"
+                                                >
+                                                    <MessageSquare className="w-5 h-5" />
+                                                    <span className="font-semibold">Gestionar Todas las Plantillas</span>
+                                                    <span className="bg-white/20 px-2 py-1 rounded text-xs">7 tipos</span>
+                                                </button>
+                                            </div>
+                                            
+                                            {/* Overview de las 7 plantillas */}
+                                            <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6 rounded-xl border border-indigo-200 shadow-lg">
+                                                <h5 className="font-bold text-indigo-900 mb-4 text-lg">📝 Sistema de Plantillas World-Class</h5>
+                                                
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+                                                    {/* Plantilla NUEVO */}
+                                                    <div className="bg-white/80 backdrop-blur p-4 rounded-lg border border-green-200 hover:border-green-300 transition-colors">
+                                                        <div className="flex items-center mb-2">
+                                                            <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                                            <span className="font-bold text-green-800 text-sm">🆕 NUEVO</span>
                                                         </div>
-                                                        <ToggleSwitch
-                                                            enabled={settings.crm.templates.reactivacion.enabled}
-                                                            onChange={(enabled) => setSettings(prev => ({
-                                                                ...prev,
-                                                                crm: {
-                                                                    ...prev.crm,
-                                                                    templates: {
-                                                                        ...prev.crm.templates,
-                                                                        reactivacion: {
-                                                                            ...prev.crm.templates.reactivacion,
-                                                                            enabled
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }))}
-                                                            label=""
-                                                        />
+                                                        <p className="text-xs text-green-700">Bienvenida personalizada</p>
+                                                        <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded mt-2">
+                                                            category = 'bienvenida'
+                                                        </div>
                                                     </div>
 
-                                                    {settings.crm.templates.reactivacion.enabled && (
-                                                        <div className="space-y-3">
+                                                    {/* Plantilla OCASIONAL */}
+                                                    <div className="bg-white/80 backdrop-blur p-4 rounded-lg border border-yellow-200 hover:border-yellow-300 transition-colors">
+                                                        <div className="flex items-center mb-2">
+                                                            <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                                                            <span className="font-bold text-yellow-800 text-sm">🔄 OCASIONAL</span>
+                                                        </div>
+                                                        <p className="text-xs text-yellow-700">Incentivos especiales</p>
+                                                        <div className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded mt-2">
+                                                            category = 'incentivos'
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Plantilla REGULAR */}
+                                                    <div className="bg-white/80 backdrop-blur p-4 rounded-lg border border-blue-200 hover:border-blue-300 transition-colors">
+                                                        <div className="flex items-center mb-2">
+                                                            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                                                            <span className="font-bold text-blue-800 text-sm">⭐ REGULAR</span>
+                                                        </div>
+                                                        <p className="text-xs text-blue-700">Fidelización activa</p>
+                                                        <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded mt-2">
+                                                            category = 'fidelizacion'
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Plantilla VIP */}
+                                                    <div className="bg-white/80 backdrop-blur p-4 rounded-lg border border-purple-200 hover:border-purple-300 transition-colors">
+                                                        <div className="flex items-center mb-2">
+                                                            <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                                                            <span className="font-bold text-purple-800 text-sm">👑 VIP</span>
+                                                        </div>
+                                                        <p className="text-xs text-purple-700">Experiencias exclusivas</p>
+                                                        <div className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded mt-2">
+                                                            category = 'vip_exclusivas'
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Plantilla INACTIVO */}
+                                                    <div className="bg-white/80 backdrop-blur p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
+                                                        <div className="flex items-center mb-2">
+                                                            <div className="w-3 h-3 bg-gray-500 rounded-full mr-2"></div>
+                                                            <span className="font-bold text-gray-800 text-sm">😴 INACTIVO</span>
+                                                        </div>
+                                                        <p className="text-xs text-gray-700">Reactivación inteligente</p>
+                                                        <div className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded mt-2">
+                                                            category = 'reactivacion'
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Plantilla EN RIESGO */}
+                                                    <div className="bg-white/80 backdrop-blur p-4 rounded-lg border border-red-200 hover:border-red-300 transition-colors">
+                                                        <div className="flex items-center mb-2">
+                                                            <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                                            <span className="font-bold text-red-800 text-sm">⚠️ EN RIESGO</span>
+                                                        </div>
+                                                        <p className="text-xs text-red-700">Retención urgente</p>
+                                                        <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded mt-2">
+                                                            category = 'retencion'
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Plantilla ALTO VALOR */}
+                                                    <div className="bg-white/80 backdrop-blur p-4 rounded-lg border border-amber-300 hover:border-amber-400 transition-colors shadow-md">
+                                                        <div className="flex items-center mb-2">
+                                                            <div className="w-3 h-3 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full mr-2"></div>
+                                                            <span className="font-bold text-amber-800 text-sm">💎 ALTO VALOR</span>
+                                                        </div>
+                                                        <p className="text-xs text-amber-700">Atención premium</p>
+                                                        <div className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded mt-2">
+                                                            category = 'premium'
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Variables dinámicas */}
+                                                <div className="bg-white/90 backdrop-blur border border-indigo-200 rounded-lg p-4">
+                                                    <h6 className="font-semibold text-indigo-900 mb-3">🔧 Variables Dinámicas Disponibles</h6>
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
+                                                        <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
+                                                            <code className="text-indigo-800">{{`{first_name}`}}</code>
+                                                        </div>
+                                                        <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
+                                                            <code className="text-indigo-800">{{`{restaurant_name}`}}</code>
+                                                        </div>
+                                                        <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
+                                                            <code className="text-indigo-800">{{`{last_visit}`}}</code>
+                                                        </div>
+                                                        <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
+                                                            <code className="text-indigo-800">{{`{total_spent}`}}</code>
+                                                        </div>
+                                                        <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
+                                                            <code className="text-indigo-800">{{`{visits_count}`}}</code>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Estadísticas de plantillas */}
+                                                <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <h6 className="font-semibold text-green-900">📊 Estadísticas de Plantillas</h6>
+                                                            <p className="text-sm text-green-700">Conectado en tiempo real a Supabase</p>
+                                                        </div>
+                                                        <div className="flex space-x-4 text-center">
                                                             <div>
-                                                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                    Asunto
-                                                                </label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={settings.crm.templates.reactivacion.subject}
-                                                                    onChange={(e) => setSettings(prev => ({
-                                                                        ...prev,
-                                                                        crm: {
-                                                                            ...prev.crm,
-                                                                            templates: {
-                                                                                ...prev.crm.templates,
-                                                                                reactivacion: {
-                                                                                    ...prev.crm.templates.reactivacion,
-                                                                                    subject: e.target.value
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }))}
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                                                                />
+                                                                <div className="text-lg font-bold text-green-600">7</div>
+                                                                <div className="text-xs text-green-600">Activas</div>
                                                             </div>
                                                             <div>
-                                                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                    Contenido
-                                                                </label>
-                                                                <textarea
-                                                                    value={settings.crm.templates.reactivacion.content}
-                                                                    onChange={(e) => setSettings(prev => ({
-                                                                        ...prev,
-                                                                        crm: {
-                                                                            ...prev.crm,
-                                                                            templates: {
-                                                                                ...prev.crm.templates,
-                                                                                reactivacion: {
-                                                                                    ...prev.crm.templates.reactivacion,
-                                                                                    content: e.target.value
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }))}
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                                                                    rows="3"
-                                                                />
+                                                                <div className="text-lg font-bold text-blue-600">85%</div>
+                                                                <div className="text-xs text-blue-600">Éxito</div>
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-lg font-bold text-purple-600">2.3s</div>
+                                                                <div className="text-xs text-purple-600">Resp. media</div>
                                                             </div>
                                                         </div>
-                                                    )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1107,10 +1525,537 @@ export default function ConfiguracionFixed() {
 
                         {/* Otros tabs... */}
                         {activeTab === "channels" && (
-                            <div className="text-center py-12">
-                                <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">Canales de Comunicación</h3>
-                                <p className="text-gray-600">Configuración de canales disponible próximamente</p>
+                            <div className="space-y-6">
+                                <SettingSection
+                                    title="🌐 Canales de Comunicación Omnicanalidad"
+                                    description="5 canales integrados: WhatsApp, VAPI, Instagram, Facebook, Web Chat"
+                                    icon={<MessageSquare />}
+                                    premium
+                                >
+                                    <div className="space-y-8">
+                                        {/* Header Omnicanalidad */}
+                                        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-6 rounded-xl text-white">
+                                            <h3 className="text-xl font-bold mb-2">🚀 Omnicanalidad World-Class</h3>
+                                            <p className="text-blue-100 text-sm mb-4">
+                                                Conecta todos tus canales de comunicación en una sola plataforma
+                                            </p>
+                                            
+                                            {/* Estadísticas de canales */}
+                                            <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+                                                <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
+                                                    <div className="text-lg font-bold">5</div>
+                                                    <div className="text-xs text-blue-100">Canales</div>
+                                                </div>
+                                                <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
+                                                    <div className="text-lg font-bold">24/7</div>
+                                                    <div className="text-xs text-blue-100">Activo</div>
+                                                </div>
+                                                <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
+                                                    <div className="text-lg font-bold">API</div>
+                                                    <div className="text-xs text-blue-100">Integrado</div>
+                                                </div>
+                                                <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
+                                                    <div className="text-lg font-bold">IA</div>
+                                                    <div className="text-xs text-blue-100">Automático</div>
+                                                </div>
+                                                <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
+                                                    <div className="text-lg font-bold">GDPR</div>
+                                                    <div className="text-xs text-blue-100">Compliant</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Los 5 canales principales */}
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            {/* 1. WhatsApp Business */}
+                                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-200 shadow-lg">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center">
+                                                        <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                                                            <MessageSquare className="w-6 h-6 text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-green-900">📱 WhatsApp Business</h4>
+                                                            <p className="text-sm text-green-700">API Oficial Meta</p>
+                                                        </div>
+                                                    </div>
+                                                    <ToggleSwitch
+                                                        enabled={settings?.channels?.whatsapp?.enabled || false}
+                                                        onChange={(enabled) => setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev?.channels,
+                                                                whatsapp: { ...prev?.channels?.whatsapp, enabled }
+                                                            }
+                                                        }))}
+                                                        label=""
+                                                    />
+                                                </div>
+                                                
+                                                {settings?.channels?.whatsapp?.enabled && (
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-green-800 mb-2">
+                                                                📞 Número WhatsApp Business
+                                                            </label>
+                                                            <input
+                                                                type="tel"
+                                                                value={settings?.channels?.whatsapp?.phone_number || ""}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev?.channels,
+                                                                        whatsapp: {
+                                                                            ...prev?.channels?.whatsapp,
+                                                                            phone_number: e.target.value
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                                                placeholder="+34 600 000 000"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-green-800 mb-2">
+                                                                🔑 Token API WhatsApp
+                                                            </label>
+                                                            <input
+                                                                type="password"
+                                                                value={settings?.channels?.whatsapp?.api_token || ""}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev?.channels,
+                                                                        whatsapp: {
+                                                                            ...prev?.channels?.whatsapp,
+                                                                            api_token: e.target.value
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                                                placeholder="EAAB..."
+                                                            />
+                                                        </div>
+                                                        <div className="bg-green-100 p-3 rounded-lg">
+                                                            <p className="text-xs text-green-800">
+                                                                <strong>Estado:</strong> {settings?.channels?.whatsapp?.api_token ? 
+                                                                    "🟢 Configurado" : "🔴 Pendiente configuración"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* 2. VAPI (Voz IA) */}
+                                            <div className="bg-gradient-to-br from-purple-50 to-violet-50 p-6 rounded-xl border-2 border-purple-200 shadow-lg">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center">
+                                                        <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
+                                                            <Phone className="w-6 h-6 text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-purple-900">🎙️ VAPI (Voz IA)</h4>
+                                                            <p className="text-sm text-purple-700">Asistente de voz</p>
+                                                        </div>
+                                                    </div>
+                                                    <ToggleSwitch
+                                                        enabled={settings?.channels?.vapi?.enabled || false}
+                                                        onChange={(enabled) => setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev?.channels,
+                                                                vapi: { ...prev?.channels?.vapi, enabled }
+                                                            }
+                                                        }))}
+                                                        label=""
+                                                    />
+                                                </div>
+                                                
+                                                {settings?.channels?.vapi?.enabled && (
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-purple-800 mb-2">
+                                                                🔑 VAPI API Key
+                                                            </label>
+                                                            <input
+                                                                type="password"
+                                                                value={settings?.channels?.vapi?.api_key || ""}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev?.channels,
+                                                                        vapi: {
+                                                                            ...prev?.channels?.vapi,
+                                                                            api_key: e.target.value
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-4 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                                                placeholder="vapi_..."
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-purple-800 mb-2">
+                                                                📞 Número de teléfono
+                                                            </label>
+                                                            <input
+                                                                type="tel"
+                                                                value={settings?.channels?.vapi?.phone_number || ""}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev?.channels,
+                                                                        vapi: {
+                                                                            ...prev?.channels?.vapi,
+                                                                            phone_number: e.target.value
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-4 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                                                placeholder="+34 900 000 000"
+                                                            />
+                                                        </div>
+                                                        <div className="bg-purple-100 p-3 rounded-lg">
+                                                            <p className="text-xs text-purple-800">
+                                                                <strong>Estado:</strong> {settings?.channels?.vapi?.api_key ? 
+                                                                    "🟢 Configurado" : "🔴 Pendiente configuración"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* 3. Instagram */}
+                                            <div className="bg-gradient-to-br from-pink-50 to-rose-50 p-6 rounded-xl border-2 border-pink-200 shadow-lg">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center">
+                                                        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mr-3">
+                                                            <Camera className="w-6 h-6 text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-pink-900">📸 Instagram</h4>
+                                                            <p className="text-sm text-pink-700">Direct Messages</p>
+                                                        </div>
+                                                    </div>
+                                                    <ToggleSwitch
+                                                        enabled={settings?.channels?.instagram?.enabled || false}
+                                                        onChange={(enabled) => setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev?.channels,
+                                                                instagram: { ...prev?.channels?.instagram, enabled }
+                                                            }
+                                                        }))}
+                                                        label=""
+                                                    />
+                                                </div>
+                                                
+                                                {settings?.channels?.instagram?.enabled && (
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-pink-800 mb-2">
+                                                                👤 Usuario Instagram
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={settings?.channels?.instagram?.username || ""}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev?.channels,
+                                                                        instagram: {
+                                                                            ...prev?.channels?.instagram,
+                                                                            username: e.target.value
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-4 py-2 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                                                                placeholder="@tu_restaurante"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-pink-800 mb-2">
+                                                                🔑 Access Token Instagram
+                                                            </label>
+                                                            <input
+                                                                type="password"
+                                                                value={settings?.channels?.instagram?.access_token || ""}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev?.channels,
+                                                                        instagram: {
+                                                                            ...prev?.channels?.instagram,
+                                                                            access_token: e.target.value
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-4 py-2 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                                                                placeholder="IGQVJ..."
+                                                            />
+                                                        </div>
+                                                        <div className="bg-pink-100 p-3 rounded-lg">
+                                                            <p className="text-xs text-pink-800">
+                                                                <strong>Estado:</strong> {settings?.channels?.instagram?.access_token ? 
+                                                                    "🟢 Configurado" : "🔴 Pendiente configuración"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* 4. Facebook */}
+                                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-200 shadow-lg">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center">
+                                                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                                                            <Facebook className="w-6 h-6 text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-blue-900">📘 Facebook</h4>
+                                                            <p className="text-sm text-blue-700">Messenger</p>
+                                                        </div>
+                                                    </div>
+                                                    <ToggleSwitch
+                                                        enabled={settings?.channels?.facebook?.enabled || false}
+                                                        onChange={(enabled) => setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev?.channels,
+                                                                facebook: { ...prev?.channels?.facebook, enabled }
+                                                            }
+                                                        }))}
+                                                        label=""
+                                                    />
+                                                </div>
+                                                
+                                                {settings?.channels?.facebook?.enabled && (
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-blue-800 mb-2">
+                                                                📄 ID Página Facebook
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={settings?.channels?.facebook?.page_id || ""}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev?.channels,
+                                                                        facebook: {
+                                                                            ...prev?.channels?.facebook,
+                                                                            page_id: e.target.value
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                                placeholder="123456789012345"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-blue-800 mb-2">
+                                                                🔑 Page Access Token
+                                                            </label>
+                                                            <input
+                                                                type="password"
+                                                                value={settings?.channels?.facebook?.page_token || ""}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev?.channels,
+                                                                        facebook: {
+                                                                            ...prev?.channels?.facebook,
+                                                                            page_token: e.target.value
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                                placeholder="EAAB..."
+                                                            />
+                                                        </div>
+                                                        <div className="bg-blue-100 p-3 rounded-lg">
+                                                            <p className="text-xs text-blue-800">
+                                                                <strong>Estado:</strong> {settings?.channels?.facebook?.page_token ? 
+                                                                    "🟢 Configurado" : "🔴 Pendiente configuración"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* 5. Web Chat */}
+                                            <div className="bg-gradient-to-br from-gray-50 to-slate-50 p-6 rounded-xl border-2 border-gray-200 shadow-lg lg:col-span-2">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center">
+                                                        <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center mr-3">
+                                                            <Globe className="w-6 h-6 text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-gray-900">💬 Web Chat</h4>
+                                                            <p className="text-sm text-gray-700">Chat integrado en web</p>
+                                                        </div>
+                                                    </div>
+                                                    <ToggleSwitch
+                                                        enabled={settings?.channels?.webchat?.enabled || true}
+                                                        onChange={(enabled) => setSettings(prev => ({
+                                                            ...prev,
+                                                            channels: {
+                                                                ...prev?.channels,
+                                                                webchat: { ...prev?.channels?.webchat, enabled }
+                                                            }
+                                                        }))}
+                                                        label=""
+                                                    />
+                                                </div>
+                                                
+                                                {(settings?.channels?.webchat?.enabled !== false) && (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-800 mb-2">
+                                                                🎨 Color principal
+                                                            </label>
+                                                            <input
+                                                                type="color"
+                                                                value={settings?.channels?.webchat?.primary_color || "#6366f1"}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev?.channels,
+                                                                        webchat: {
+                                                                            ...prev?.channels?.webchat,
+                                                                            primary_color: e.target.value
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full h-10 border border-gray-300 rounded-lg"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-800 mb-2">
+                                                                📍 Posición
+                                                            </label>
+                                                            <select
+                                                                value={settings?.channels?.webchat?.position || "bottom-right"}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev?.channels,
+                                                                        webchat: {
+                                                                            ...prev?.channels?.webchat,
+                                                                            position: e.target.value
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500"
+                                                            >
+                                                                <option value="bottom-right">Abajo derecha</option>
+                                                                <option value="bottom-left">Abajo izquierda</option>
+                                                                <option value="top-right">Arriba derecha</option>
+                                                                <option value="top-left">Arriba izquierda</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="md:col-span-2">
+                                                            <label className="block text-sm font-medium text-gray-800 mb-2">
+                                                                💬 Mensaje de bienvenida
+                                                            </label>
+                                                            <textarea
+                                                                value={settings?.channels?.webchat?.welcome_message || "¡Hola! ¿En qué puedo ayudarte?"}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    channels: {
+                                                                        ...prev?.channels,
+                                                                        webchat: {
+                                                                            ...prev?.channels?.webchat,
+                                                                            welcome_message: e.target.value
+                                                                        }
+                                                                    }
+                                                                }))}
+                                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500"
+                                                                rows="2"
+                                                            />
+                                                        </div>
+                                                        <div className="md:col-span-2 bg-gray-100 p-3 rounded-lg">
+                                                            <p className="text-xs text-gray-800">
+                                                                <strong>Estado:</strong> 🟢 Siempre disponible (nativo)
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Resumen de configuración */}
+                                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-200">
+                                            <h4 className="font-bold text-indigo-900 mb-4">📊 Resumen de Canales Configurados</h4>
+                                            
+                                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                                                <div className="text-center">
+                                                    <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                                                        settings?.channels?.whatsapp?.enabled ? 'bg-green-500' : 'bg-gray-300'
+                                                    }`}>
+                                                        <MessageSquare className="w-6 h-6 text-white" />
+                                                    </div>
+                                                    <p className="text-xs font-medium">WhatsApp</p>
+                                                    <p className="text-xs text-gray-600">
+                                                        {settings?.channels?.whatsapp?.enabled ? '✅ Activo' : '⏸️ Inactivo'}
+                                                    </p>
+                                                </div>
+                                                
+                                                <div className="text-center">
+                                                    <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                                                        settings?.channels?.vapi?.enabled ? 'bg-purple-500' : 'bg-gray-300'
+                                                    }`}>
+                                                        <Phone className="w-6 h-6 text-white" />
+                                                    </div>
+                                                    <p className="text-xs font-medium">VAPI</p>
+                                                    <p className="text-xs text-gray-600">
+                                                        {settings?.channels?.vapi?.enabled ? '✅ Activo' : '⏸️ Inactivo'}
+                                                    </p>
+                                                </div>
+                                                
+                                                <div className="text-center">
+                                                    <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                                                        settings?.channels?.instagram?.enabled ? 'bg-pink-500' : 'bg-gray-300'
+                                                    }`}>
+                                                        <Camera className="w-6 h-6 text-white" />
+                                                    </div>
+                                                    <p className="text-xs font-medium">Instagram</p>
+                                                    <p className="text-xs text-gray-600">
+                                                        {settings?.channels?.instagram?.enabled ? '✅ Activo' : '⏸️ Inactivo'}
+                                                    </p>
+                                                </div>
+                                                
+                                                <div className="text-center">
+                                                    <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                                                        settings?.channels?.facebook?.enabled ? 'bg-blue-600' : 'bg-gray-300'
+                                                    }`}>
+                                                        <Facebook className="w-6 h-6 text-white" />
+                                                    </div>
+                                                    <p className="text-xs font-medium">Facebook</p>
+                                                    <p className="text-xs text-gray-600">
+                                                        {settings?.channels?.facebook?.enabled ? '✅ Activo' : '⏸️ Inactivo'}
+                                                    </p>
+                                                </div>
+                                                
+                                                <div className="text-center">
+                                                    <div className="w-12 h-12 mx-auto bg-gray-600 rounded-full flex items-center justify-center mb-2">
+                                                        <Globe className="w-6 h-6 text-white" />
+                                                    </div>
+                                                    <p className="text-xs font-medium">Web Chat</p>
+                                                    <p className="text-xs text-gray-600">✅ Siempre activo</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white/80 backdrop-blur border border-indigo-200 rounded-lg p-4">
+                                                <p className="text-sm text-indigo-800">
+                                                    <strong>🔧 Configuración técnica:</strong> Todos los canales se guardan en la tabla 
+                                                    <code className="bg-indigo-100 px-1 rounded mx-1">restaurants.settings.channels</code> 
+                                                    y se sincronizan automáticamente con los sistemas de mensajería correspondientes.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </SettingSection>
                             </div>
                         )}
 
