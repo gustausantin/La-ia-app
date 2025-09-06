@@ -169,72 +169,29 @@ const Configuracion = () => {
         delivery_available: false,
         takeout_available: true,
 
-        // Configuración de reservas (como estaba originalmente)
-        min_party_size: 1,
-        max_party_size: 20, // Configurable por restaurante
-        reservation_duration: 120, // minutos
-        buffer_time: 15, // minutos entre reservas
-        advance_booking_days: 30,
-        same_day_cutoff: "12:00",
-        cancellation_hours: 2,
+        // Configuración de reservas - desde BD
+        min_party_size: 0,
+        max_party_size: 0,
+        reservation_duration: 0,
+        buffer_time: 0,
+        advance_booking_days: 0,
+        same_day_cutoff: "",
+        cancellation_hours: 0,
 
-        // CRM IA - ESTRUCTURA COMPLETA GARANTIZADA
-        crm: {
-            enabled: true,
-            thresholds: {
-                inactivo_days: 60,
-                vip_visits: 5,
-                alto_valor_euros: 1000
-            },
-            automation: {
-                enabled: true,
-                cooldown_days: 30,
-                max_daily_sends: 50,
-                start_time: "09:00",
-                end_time: "21:00",
-                require_email_consent: true,
-                require_sms_consent: true,
-                require_whatsapp_consent: false
-            }
-        },
+        // CRM IA - desde BD únicamente
+        crm: {},
 
-        // Agente IA - ESTRUCTURA COMPLETA GARANTIZADA
-        agent: {
-            enabled: true,
-            name: "Asistente Virtual",
-            language: "es",
-            personality: "amigable",
-            response_time: "immediate",
-            escalation_enabled: true,
-            escalation_triggers: ["complaint", "complex_request"],
-            working_hours: {
-                enabled: true,
-                start: "09:00",
-                end: "23:00"
-            },
-            capabilities: {
-                reservations: true,
-                menu_info: true,
-                hours_info: true,
-                location_info: true
-            }
-        },
+        // Agente IA - desde BD únicamente
+        agent: {},
 
-        // Canales
-        channels: {
-            whatsapp: { enabled: false, phone_number: "", api_token: "" },
-            vapi: { enabled: false, api_key: "", phone_number: "" },
-            instagram: { enabled: false, username: "", access_token: "" },
-            facebook: { enabled: false, page_id: "", page_token: "" },
-            webchat: { enabled: true, primary_color: "#6366f1", position: "bottom-right", welcome_message: "¡Hola! ¿En qué puedo ayudarte?" }
-        },
+        // Canales - desde BD únicamente
+        channels: {},
 
-        // Notificaciones
-        notifications: {
-            email_enabled: true,
-            sms_enabled: false,
-            push_enabled: true
-        }
+        // Notificaciones - desde BD únicamente
+        notifications: {},
+        
+        // Horarios - desde BD únicamente
+        operating_hours: {}
     });
 
     // Tabs de navegación
@@ -308,15 +265,17 @@ const Configuracion = () => {
                     const restaurantCrmConfig = restaurant.crm_config || {};
                     const restaurantAgentConfig = restaurant.agent_config || {};
 
-                    setSettings(prev => ({
-                        ...prev,
-                        // Información básica
+                    // CARGAR TODO DESDE SUPABASE - SIN HARDCODING
+                    const dbSettings = restaurant.settings || {};
+                    
+                    setSettings({
+                        // Información básica desde BD
                         name: restaurant.name || "",
-                        description: restaurant.description || "",
+                        description: dbSettings.description || "",
                         cuisine_type: restaurant.cuisine_type || "",
                         phone: restaurant.phone || "",
                         email: restaurant.email || "",
-                        website: restaurant.website || "",
+                        website: dbSettings.website || "",
                         address: restaurant.address || "",
                         city: restaurant.city || "",
                         postal_code: restaurant.postal_code || "",
@@ -324,38 +283,40 @@ const Configuracion = () => {
                         timezone: restaurant.timezone || "Europe/Madrid",
                         currency: restaurant.currency || "EUR",
                         language: restaurant.language || "es",
-                        logo_url: restaurant.logo_url || "",
-                        capacity_total: restaurant.capacity_total || 0,
-                        price_range: restaurant.price_range || "",
 
-                        // Fusionar CRM manteniendo estructura
-                        crm: {
-                            ...prev.crm,
-                            ...restaurantCrmConfig,
-                            thresholds: {
-                                ...prev.crm.thresholds,
-                                ...(restaurantCrmConfig.thresholds || {})
-                            },
-                            automation: {
-                                ...prev.crm.automation,
-                                ...(restaurantCrmConfig.automation || {})
-                            }
+                        // CRM desde BD únicamente
+                        crm: dbSettings.crm || {},
+
+                        // Agent desde BD únicamente  
+                        agent: dbSettings.agent || {
+                            enabled: true,
+                            name: "Asistente Virtual",
+                            personality: "amigable_profesional"
                         },
-
-                        // Fusionar Agent manteniendo estructura
-                        agent: {
-                            ...prev.agent,
-                            ...restaurantAgentConfig,
-                            working_hours: {
-                                ...prev.agent.working_hours,
-                                ...(restaurantAgentConfig.working_hours || {})
-                            },
-                            capabilities: {
-                                ...prev.agent.capabilities,
-                                ...(restaurantAgentConfig.capabilities || {})
-                            }
-                        }
-                    }));
+                        
+                        // Configuración de reservas desde BD
+                        min_party_size: dbSettings.min_party_size || 1,
+                        max_party_size: dbSettings.max_party_size || 10,
+                        reservation_duration: dbSettings.reservation_duration || 90,
+                        buffer_time: dbSettings.buffer_time || 15,
+                        advance_booking_days: dbSettings.advance_booking_days || 30,
+                        same_day_cutoff: dbSettings.same_day_cutoff || "12:00",
+                        cancellation_hours: dbSettings.cancellation_hours || 2,
+                        
+                        // Horarios desde BD
+                        operating_hours: dbSettings.operating_hours || {},
+                        
+                        // Canales desde BD
+                        channels: dbSettings.channels || {},
+                        
+                        // Notificaciones desde BD
+                        notifications: dbSettings.notifications || {},
+                        
+                        // Otros campos desde BD
+                        logo_url: dbSettings.logo_url || "",
+                        capacity_total: dbSettings.capacity_total || 0,
+                        price_range: dbSettings.price_range || ""
+                    });
 
                     console.log("✅ Configuración cargada completamente");
                 } else {
@@ -385,6 +346,15 @@ const Configuracion = () => {
             console.log(`💾 GUARDANDO SECCIÓN: ${section}`, settings);
 
             if (section === "Información General") {
+                // Obtener configuración actual para hacer merge
+                const { data: currentData } = await supabase
+                    .from("restaurants")
+                    .select("settings")
+                    .eq("id", restaurantId)
+                    .single();
+                    
+                const currentSettings = currentData?.settings || {};
+                
                 // Guardar campos directos en la tabla restaurants
                 const { error } = await supabase
                     .from("restaurants")
@@ -397,6 +367,7 @@ const Configuracion = () => {
                         postal_code: settings.postal_code,
                         cuisine_type: settings.cuisine_type,
                         settings: {
+                            ...currentSettings,
                             description: settings.description,
                             website: settings.website,
                             logo_url: settings.logo_url,
@@ -404,20 +375,6 @@ const Configuracion = () => {
                             price_range: settings.price_range,
                             instagram_handle: settings.instagram_handle,
                             facebook_page: settings.facebook_page,
-                            // Configuración del agente
-                            agent: {
-                                name: settings.agent?.name || 'Asistente Virtual',
-                                personality: 'amigable_profesional',
-                                enabled: settings.agent?.enabled !== false
-                            },
-                            // Configuración de reservas
-                            min_party_size: settings.min_party_size,
-                            max_party_size: settings.max_party_size,
-                            reservation_duration: settings.reservation_duration,
-                            buffer_time: settings.buffer_time,
-                            advance_booking_days: settings.advance_booking_days,
-                            same_day_cutoff: settings.same_day_cutoff,
-                            cancellation_hours: settings.cancellation_hours
                         },
                         updated_at: new Date().toISOString()
                     })
@@ -450,17 +407,45 @@ const Configuracion = () => {
                     .eq("id", restaurantId);
 
                 if (error) throw error;
-            } else {
-                // Para otras secciones, guardar en settings
+            } else if (section === "Horarios de operación") {
+                // Guardar horarios específicamente
+                const { data: currentData } = await supabase
+                    .from("restaurants")
+                    .select("settings")
+                    .eq("id", restaurantId)
+                    .single();
+                    
+                const currentSettings = currentData?.settings || {};
+                
                 const { error } = await supabase
                     .from("restaurants")
                     .update({
-                        settings: settings,
+                        settings: {
+                            ...currentSettings,
+                            operating_hours: settings.operating_hours
+                        },
                         updated_at: new Date().toISOString()
                     })
                     .eq("id", restaurantId);
 
                 if (error) throw error;
+                
+                // Disparar evento para que el calendario se actualice
+                window.dispatchEvent(new CustomEvent('schedule-updated', {
+                    detail: { operating_hours: settings.operating_hours }
+                }));
+                
+            } else {
+                // Para otras secciones, guardar en settings
+            const { error } = await supabase
+                .from("restaurants")
+                .update({
+                    settings: settings,
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", restaurantId);
+
+            if (error) throw error;
             }
 
             toast.success(`✅ ${section} guardado correctamente`);
@@ -671,19 +656,6 @@ const Configuracion = () => {
                                             />
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Capacidad total
-                                            </label>
-                                            <input
-                                                type="number"
-                                                value={settings.capacity_total}
-                                                onChange={(e) => setSettings(prev => ({ ...prev, capacity_total: parseInt(e.target.value) || 0 }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                                placeholder="120"
-                                                min="0"
-                                            />
-                                        </div>
 
                                         <div className="col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1271,27 +1243,77 @@ const Configuracion = () => {
                                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                                     <h4 className="font-medium text-gray-900 mb-3">Horarios de Operación</h4>
                                     <div className="space-y-3">
-                                        {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day, index) => (
-                                            <div key={day} className="flex items-center gap-4 p-3 bg-white rounded-lg">
-                                                <div className="w-20 font-medium text-gray-900">{day}</div>
-                                                <ToggleSwitch
-                                                    enabled={true}
-                                                    onChange={() => {}}
-                                                    label=""
-                                                />
-                                                <input
-                                                    type="time"
-                                                    value={index < 5 ? "09:00" : index === 5 ? "10:00" : "10:00"}
-                                                    className="px-3 py-1 border border-gray-300 rounded text-sm"
-                                                />
-                                                <span className="text-gray-500">a</span>
-                                                <input
-                                                    type="time"
-                                                    value={index < 4 ? "22:00" : index < 6 ? "23:00" : "22:00"}
-                                                    className="px-3 py-1 border border-gray-300 rounded text-sm"
-                                                />
-                                            </div>
-                                        ))}
+                                        {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((dayKey, index) => {
+                                            const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                                            const daySchedule = settings.operating_hours?.[dayKey] || { open: true, start: "09:00", end: "22:00" };
+                                            
+                                            return (
+                                                <div key={dayKey} className="flex items-center gap-4 p-3 bg-white rounded-lg">
+                                                    <div className="w-20 font-medium text-gray-900">{dayNames[index]}</div>
+                                                    <ToggleSwitch
+                                                        enabled={daySchedule.open}
+                                                        onChange={(enabled) => {
+                                                            setSettings(prev => ({
+                                                                ...prev,
+                                                                operating_hours: {
+                                                                    ...prev.operating_hours,
+                                                                    [dayKey]: {
+                                                                        ...daySchedule,
+                                                                        open: enabled
+                                                                    }
+                                                                }
+                                                            }));
+                                                        }}
+                                                        label=""
+                                                    />
+                                                    <input
+                                                        type="time"
+                                                        value={daySchedule.start}
+                                                        onChange={(e) => {
+                                                            setSettings(prev => ({
+                                                                ...prev,
+                                                                operating_hours: {
+                                                                    ...prev.operating_hours,
+                                                                    [dayKey]: {
+                                                                        ...daySchedule,
+                                                                        start: e.target.value
+                                                                    }
+                                                                }
+                                                            }));
+                                                        }}
+                                                        disabled={!daySchedule.open}
+                                                        className={`px-3 py-1 border rounded text-sm ${
+                                                            daySchedule.open 
+                                                                ? 'border-gray-300 bg-white' 
+                                                                : 'border-gray-200 bg-gray-100 text-gray-400'
+                                                        }`}
+                                                    />
+                                                    <span className="text-gray-500">a</span>
+                                                    <input
+                                                        type="time"
+                                                        value={daySchedule.end}
+                                                        onChange={(e) => {
+                                                            setSettings(prev => ({
+                                                                ...prev,
+                                                                operating_hours: {
+                                                                    ...prev.operating_hours,
+                                                                    [dayKey]: {
+                                                                        ...daySchedule,
+                                                                        end: e.target.value
+                                                                    }
+                                                                }
+                                                            }));
+                                                        }}
+                                                        disabled={!daySchedule.open}
+                                                        className={`px-3 py-1 border rounded text-sm ${
+                                                            daySchedule.open 
+                                                                ? 'border-gray-300 bg-white' 
+                                                                : 'border-gray-200 bg-gray-100 text-gray-400'
+                                                        }`}
+                                                    />
+                        </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
@@ -1348,7 +1370,7 @@ const Configuracion = () => {
                                                 min="1"
                                                 max="20"
                                             />
-                                        </div>
+                        </div>
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
