@@ -554,6 +554,35 @@ export default function ConfiguracionFixed() {
                                                 placeholder="Nombre de tu restaurante"
                                             />
                                         </div>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Tipo de cocina
+                                            </label>
+                                            <select
+                                                value={settings.cuisine_type}
+                                                onChange={(e) => setSettings(prev => ({ ...prev, cuisine_type: e.target.value }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                            >
+                                                <option value="">Selecciona el tipo</option>
+                                                <option value="Mediterránea">Mediterránea</option>
+                                                <option value="Española">Española</option>
+                                                <option value="Italiana">Italiana</option>
+                                                <option value="Asiática">Asiática</option>
+                                                <option value="Mexicana">Mexicana</option>
+                                                <option value="Francesa">Francesa</option>
+                                                <option value="Japonesa">Japonesa</option>
+                                                <option value="China">China</option>
+                                                <option value="India">India</option>
+                                                <option value="Americana">Americana</option>
+                                                <option value="Vegetariana/Vegana">Vegetariana/Vegana</option>
+                                                <option value="Marisquería">Marisquería</option>
+                                                <option value="Asador/Parrilla">Asador/Parrilla</option>
+                                                <option value="Tapas">Tapas</option>
+                                                <option value="Fusión">Fusión</option>
+                                            </select>
+                                        </div>
+
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Email de contacto
@@ -565,6 +594,115 @@ export default function ConfiguracionFixed() {
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                                 placeholder="contacto@restaurante.com"
                                             />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Teléfono
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                value={settings.phone}
+                                                onChange={(e) => setSettings(prev => ({ ...prev, phone: e.target.value }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                placeholder="+34 600 000 000"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Sitio web
+                                            </label>
+                                            <input
+                                                type="url"
+                                                value={settings.website}
+                                                onChange={(e) => setSettings(prev => ({ ...prev, website: e.target.value }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                placeholder="https://www.turestaurante.com"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Capacidad total
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={settings.capacity_total}
+                                                onChange={(e) => setSettings(prev => ({ ...prev, capacity_total: parseInt(e.target.value) || 0 }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                placeholder="120"
+                                                min="0"
+                                            />
+                                        </div>
+
+                                        <div className="col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Descripción del restaurante
+                                            </label>
+                                            <textarea
+                                                value={settings.description}
+                                                onChange={(e) => setSettings(prev => ({ ...prev, description: e.target.value }))}
+                                                rows="3"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                placeholder="Describe tu restaurante, especialidades, ambiente..."
+                                            />
+                                        </div>
+
+                                        <div className="col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Dirección completa
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.address}
+                                                onChange={(e) => setSettings(prev => ({ ...prev, address: e.target.value }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                placeholder="Calle Mayor 123, Madrid"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Ciudad
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.city}
+                                                onChange={(e) => setSettings(prev => ({ ...prev, city: e.target.value }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                placeholder="Madrid"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Código postal
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.postal_code}
+                                                onChange={(e) => setSettings(prev => ({ ...prev, postal_code: e.target.value }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                placeholder="28001"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Rango de precios
+                                            </label>
+                                            <select
+                                                value={settings.price_range}
+                                                onChange={(e) => setSettings(prev => ({ ...prev, price_range: e.target.value }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                            >
+                                                <option value="">Selecciona el rango</option>
+                                                <option value="€ - Económico (0-15€)">€ - Económico (0-15€)</option>
+                                                <option value="€€ - Moderado (15-30€)">€€ - Moderado (15-30€)</option>
+                                                <option value="€€€ - Alto (30-50€)">€€€ - Alto (30-50€)</option>
+                                                <option value="€€€€ - Premium (+50€)">€€€€ - Premium (+50€)</option>
+                                            </select>
                                         </div>
                                     </div>
 
