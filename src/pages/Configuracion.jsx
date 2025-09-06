@@ -1461,19 +1461,19 @@ export default function ConfiguracionFixed() {
                                                     <h6 className="font-semibold text-indigo-900 mb-3">🔧 Variables Dinámicas Disponibles</h6>
                                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
                                                         <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
-                                                            <code className="text-indigo-800">{{`{first_name}`}}</code>
+                                                            <code className="text-indigo-800">{"{{first_name}}"}</code>
                                                         </div>
                                                         <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
-                                                            <code className="text-indigo-800">{{`{restaurant_name}`}}</code>
+                                                            <code className="text-indigo-800">{"{{restaurant_name}}"}</code>
                                                         </div>
                                                         <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
-                                                            <code className="text-indigo-800">{{`{last_visit}`}}</code>
+                                                            <code className="text-indigo-800">{"{{last_visit}}"}</code>
                                                         </div>
                                                         <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
-                                                            <code className="text-indigo-800">{{`{total_spent}`}}</code>
+                                                            <code className="text-indigo-800">{"{{total_spent}}"}</code>
                                                         </div>
                                                         <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
-                                                            <code className="text-indigo-800">{{`{visits_count}`}}</code>
+                                                            <code className="text-indigo-800">{"{{visits_count}}"}</code>
                                                         </div>
                                                     </div>
                                                 </div>
