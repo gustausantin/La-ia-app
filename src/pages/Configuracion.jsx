@@ -135,14 +135,89 @@ export default function ConfiguracionFixed() {
     const [settings, setSettings] = useState({
         // Información general
         name: "",
-        email: "",
+        description: "",
+        cuisine_type: "",
         phone: "",
+        email: "",
+        website: "",
         address: "",
         city: "",
-        description: "",
+        postal_code: "",
+        country: "ES",
+        timezone: "Europe/Madrid",
+        currency: "EUR",
+        language: "es",
         logo_url: "",
-        website: "",
         capacity_total: 0,
+        price_range: "",
+
+        // Horarios de operación con turnos de comida y cena
+        operating_hours: {
+            monday: {
+                open: "13:00",
+                close: "16:00", 
+                dinner_open: "20:00",
+                dinner_close: "23:30",
+                closed: false
+            },
+            tuesday: {
+                open: "13:00",
+                close: "16:00",
+                dinner_open: "20:00", 
+                dinner_close: "23:30",
+                closed: false
+            },
+            wednesday: {
+                open: "13:00",
+                close: "16:00",
+                dinner_open: "20:00",
+                dinner_close: "23:30", 
+                closed: false
+            },
+            thursday: {
+                open: "13:00",
+                close: "16:00",
+                dinner_open: "20:00",
+                dinner_close: "23:30",
+                closed: false
+            },
+            friday: {
+                open: "13:00", 
+                close: "16:00",
+                dinner_open: "20:00",
+                dinner_close: "00:00",
+                closed: false
+            },
+            saturday: {
+                open: "13:00",
+                close: "16:00", 
+                dinner_open: "20:00",
+                dinner_close: "00:00",
+                closed: false
+            },
+            sunday: {
+                open: "13:00",
+                close: "16:00",
+                dinner_open: "20:00", 
+                dinner_close: "23:30",
+                closed: true
+            }
+        },
+
+        // Configuración de reservas completa
+        reservation_settings: {
+            enabled: true,
+            advance_booking_days: 45,
+            min_party_size: 2,
+            max_party_size: 120,
+            turn_duration: 90,
+            buffer_time: 15,
+            cancellation_window: 2,
+            modification_window: 1,
+            auto_confirm: true,
+            require_phone: true,
+            require_email: true
+        },
         
         // CRM IA - ESTRUCTURA COMPLETA GARANTIZADA
         crm: {
