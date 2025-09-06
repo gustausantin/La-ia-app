@@ -349,18 +349,18 @@ export default function Calendario() {
                     if (validSlots.length > 0) {
                         // Usar el primer turno válido para operating_hours (compatibilidad)
                         const firstSlot = validSlots[0];
-                        operating_hours[dayName] = {
+                    operating_hours[dayName] = {
                             open: firstSlot.start_time,
                             close: firstSlot.end_time,
-                            closed: false,
+                        closed: false,
                             // GUARDAR TODOS LOS TURNOS
                             shifts: validSlots.map(slot => ({
                                 id: slot.id || Date.now() + Math.random(),
                                 name: slot.name || "Turno",
-                                start: slot.start_time,
+                            start: slot.start_time,
                                 end: slot.end_time
-                            }))
-                        };
+                        }))
+                    };
                         
                         calendar_schedule.push({
                             day_of_week: dayName,
@@ -416,7 +416,7 @@ export default function Calendario() {
 
             // Evento de sincronización
             try {
-                window.dispatchEvent(new CustomEvent('schedule-updated', { 
+            window.dispatchEvent(new CustomEvent('schedule-updated', { 
                     detail: { 
                         scheduleData: calendar_schedule, 
                         operatingHours: operating_hours,
@@ -630,40 +630,40 @@ export default function Calendario() {
                                                                 </button>
                                                             )}
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <input
-                                                                type="time"
+                                                                <div className="flex items-center gap-2">
+                                                                <input
+                                                                        type="time"
                                                                 value={slot.start_time}
-                                                                onChange={(e) => {
-                                                                    const newSchedule = [...schedule];
+                                                        onChange={(e) => {
+                                                            const newSchedule = [...schedule];
                                                                     newSchedule[index].slots[slotIndex].start_time = e.target.value;
-                                                                    setSchedule(newSchedule);
-                                                                }}
+                                                            setSchedule(newSchedule);
+                                                        }}
                                                                 className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                            />
+                                                                    />
                                                             <span className="text-gray-500 text-xs">a</span>
-                                                            <input
-                                                                type="time"
+                                                                    <input
+                                                                        type="time"
                                                                 value={slot.end_time}
-                                                                onChange={(e) => {
-                                                                    const newSchedule = [...schedule];
+                                                        onChange={(e) => {
+                                                            const newSchedule = [...schedule];
                                                                     newSchedule[index].slots[slotIndex].end_time = e.target.value;
-                                                                    setSchedule(newSchedule);
-                                                                }}
+                                                            setSchedule(newSchedule);
+                                                        }}
                                                                 className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                            />
-                                                        </div>
+                                                                    />
+                                                                </div>
                                                     </div>
                                                 ))}
                                                 
                                                 {/* Botón para añadir NUEVO turno */}
-                                                <button
+                                                                                                <button
                                                     className="w-full text-sm text-purple-600 hover:text-purple-800 py-2 border border-dashed border-purple-300 rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
                                                     onClick={(e) => {
                                                         e.preventDefault();
                                                         e.stopPropagation();
                                                         
-                                                        const newSchedule = [...schedule];
+                                                            const newSchedule = [...schedule];
                                                         const currentSlots = newSchedule[index].slots || [];
                                                         
                                                         // Sugerir horarios diferentes según el número de turno
@@ -677,7 +677,7 @@ export default function Calendario() {
                                                         
                                                         const nextTurno = turnosSugeridos[currentSlots.length] || turnosSugeridos[1];
                                                         
-                                                        const newSlot = {
+                                                            const newSlot = {
                                                             id: Date.now(),
                                                             name: nextTurno.name,
                                                             start_time: nextTurno.start,
@@ -685,16 +685,16 @@ export default function Calendario() {
                                                         };
                                                         
                                                         newSchedule[index].slots.push(newSlot);
-                                                        setSchedule(newSchedule);
-                                                        
+                                                            setSchedule(newSchedule);
+                                                            
                                                         toast.success(`✅ ${nextTurno.name} añadido para ${day.day_name}`);
                                                     }}
                                                 >
                                                     <Plus className="w-4 h-4" />
                                                     Añadir turno
-                                                </button>
-                                            </div>
-                                        )}
+                                </button>
+                        </div>
+                    )}
                                                         </div>
                                 ))}
                                                     </div>

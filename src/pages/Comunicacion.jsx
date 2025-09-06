@@ -1026,7 +1026,7 @@ export default function Comunicacion() {
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [showTemplatesManager, setShowTemplatesManager] = useState(false);
     const [activeView, setActiveView] = useState("conversations"); // conversations, analytics, settings
-
+    
     // Estados para plantillas REALES
     const [realTemplates, setRealTemplates] = useState({
         whatsapp: [],
@@ -1213,7 +1213,7 @@ export default function Comunicacion() {
             const totalConversations = Object.values(channelCounts).reduce((sum, count) => sum + count, 0);
             const channelDistribution = Object.entries(channelCounts).map(([channel, count]) => ({
                 channel: COMMUNICATION_CHANNELS[channel]?.label || channel,
-                count,
+                    count,
                 percentage: totalConversations > 0 ? Math.round((count / totalConversations) * 100) : 0
             }));
 
@@ -1256,14 +1256,14 @@ export default function Comunicacion() {
                     date: format(date, "dd/MM"),
                     satisfaction: 85, // TODO: Obtener de customer_feedback cuando esté disponible
                     conversations: dayConversations,
-                });
+            });
             }
 
             // 6. Horas pico REALES
             const hourlyConversations = {};
             (channelData || []).forEach(conv => {
                 if (conv.created_at) {
-                    const hour = new Date(conv.created_at).getHours();
+                const hour = new Date(conv.created_at).getHours();
                     hourlyConversations[hour] = (hourlyConversations[hour] || 0) + 1;
                 }
             });
@@ -2817,7 +2817,7 @@ export default function Comunicacion() {
                                                         </div>
                                                         {isConnected ? (
                                                             <div className="flex items-center gap-2">
-                                                                <CheckCheck className="w-5 h-5 text-green-600" />
+                                                            <CheckCheck className="w-5 h-5 text-green-600" />
                                                                 <button
                                                                     onClick={() => {
                                                                         navigate('/configuracion?tab=channels');
@@ -2873,7 +2873,7 @@ export default function Comunicacion() {
                             </p>
                             </div>
                             
-                                                    <div className="p-6 overflow-auto max-h-[70vh]">
+                            <div className="p-6 overflow-auto max-h-[70vh]">
                             {loadingTemplates ? (
                                 <div className="flex items-center justify-center py-12">
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
@@ -3014,7 +3014,7 @@ export default function Comunicacion() {
                                                         <div className="flex gap-2 mt-2">
                                                             <button className="text-xs text-blue-600 hover:underline">Editar</button>
                                                             <button className="text-xs text-gray-500 hover:underline">Duplicar</button>
-                                                        </div>
+                                    </div>
                                                     </div>
                                                 ))
                                             ) : (
@@ -3085,12 +3085,12 @@ export default function Comunicacion() {
 
                                                 <div className="p-6 border-t border-gray-200 bg-gray-50">
                             <div className="flex items-center justify-between">
-                                <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-gray-600">
                                     <span className="font-medium">
                                         {Object.values(realTemplates).reduce((total, templates) => total + templates.length, 0)} plantillas activas
                                     </span> • 
                                     <span className="ml-1">Datos reales de Supabase</span>
-                                </div>
+                                    </div>
                                     <div className="flex gap-3">
                                         <button
                                         onClick={() => setShowTemplatesManager(false)}
