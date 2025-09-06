@@ -1,4 +1,4 @@
-// Configuracion.jsx - Panel de Configuración COMPLETO SIN ERRORES
+﻿// Configuracion.jsx - Panel de ConfiguraciÃ³n COMPLETO SIN ERRORES
 import React, { useState, useEffect } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -139,7 +139,7 @@ const Configuracion = () => {
     
     // ESTADO ULTRA ROBUSTO - ESTRUCTURA COMPLETA GARANTIZADA
     const [settings, setSettings] = useState({
-        // Información general
+        // InformaciÃ³n general
         name: "",
         description: "",
         cuisine_type: "",
@@ -155,7 +155,7 @@ const Configuracion = () => {
         language: "es",
         logo_url: "",
         capacity_total: 0, // Configurable por cada restaurante
-        price_range: "€€ - Moderado (25-45€)",
+        price_range: "â‚¬â‚¬ - Moderado (25-45â‚¬)",
         instagram_handle: "",
         facebook_page: "",
         tripadvisor_url: "",
@@ -169,7 +169,7 @@ const Configuracion = () => {
         delivery_available: false,
         takeout_available: true,
 
-        // Configuración de reservas - desde BD
+        // ConfiguraciÃ³n de reservas - desde BD
         min_party_size: 0,
         max_party_size: 0,
         reservation_duration: 0,
@@ -178,23 +178,23 @@ const Configuracion = () => {
         same_day_cutoff: "",
         cancellation_hours: 0,
 
-        // CRM IA - desde BD únicamente
+        // CRM IA - desde BD Ãºnicamente
         crm: {},
 
-        // Agente IA - desde BD únicamente
+        // Agente IA - desde BD Ãºnicamente
         agent: {},
 
-        // Canales - desde BD únicamente
+        // Canales - desde BD Ãºnicamente
         channels: {},
 
-        // Notificaciones - desde BD únicamente
+        // Notificaciones - desde BD Ãºnicamente
         notifications: {},
         
-        // Horarios - desde BD únicamente
+        // Horarios - desde BD Ãºnicamente
         operating_hours: {}
     });
 
-    // Tabs de navegación
+    // Tabs de navegaciÃ³n
     const settingsTabs = [
         {
             id: "general",
@@ -203,18 +203,13 @@ const Configuracion = () => {
         },
         {
             id: "reservations",
-            label: "Política de Reservas",
+            label: "PolÃ­tica de Reservas",
             icon: <Calendar className="w-4 h-4" />,
         },
         {
             id: "agent",
             label: "Agente IA",
             icon: <Bot className="w-4 h-4" />,
-        },
-        {
-            id: "crm",
-            label: "CRM IA",
-            icon: <Brain className="w-4 h-4" />,
         },
         {
             id: "channels",
@@ -228,18 +223,18 @@ const Configuracion = () => {
         }
     ];
 
-    // Cargar configuración
+    // Cargar configuraciÃ³n
     useEffect(() => {
         const loadSettings = async () => {
             if (!restaurantId) {
-                console.log("❌ No restaurant ID available");
+                console.log("âŒ No restaurant ID available");
                 setLoading(false);
                 return;
             }
 
             try {
                 setLoading(true);
-                console.log("🔄 Cargando configuración para restaurant:", restaurantId);
+                console.log("ðŸ”„ Cargando configuraciÃ³n para restaurant:", restaurantId);
 
                 const { data: restaurant, error } = await supabase
                     .from("restaurants")
@@ -248,12 +243,12 @@ const Configuracion = () => {
                     .single();
 
                 if (error) {
-                    console.error("❌ Error cargando restaurant:", error);
+                    console.error("âŒ Error cargando restaurant:", error);
                     throw error;
                 }
 
                 if (restaurant) {
-                    console.log("✅ Restaurant cargado:", restaurant);
+                    console.log("âœ… Restaurant cargado:", restaurant);
 
                     // Fusionar configuraciones manteniendo estructura completa
                     const restaurantSettings = restaurant.settings || {};
@@ -264,7 +259,7 @@ const Configuracion = () => {
                     const dbSettings = restaurant.settings || {};
                     
                     setSettings({
-                        // Información básica desde BD
+                        // InformaciÃ³n bÃ¡sica desde BD
                         name: restaurant.name || "",
                         description: dbSettings.description || "",
                         cuisine_type: restaurant.cuisine_type || "",
@@ -279,17 +274,17 @@ const Configuracion = () => {
                         currency: restaurant.currency || "EUR",
                         language: restaurant.language || "es",
 
-                        // CRM desde BD únicamente
+                        // CRM desde BD Ãºnicamente
                         crm: dbSettings.crm || {},
 
-                        // Agent desde BD únicamente  
+                        // Agent desde BD Ãºnicamente  
                         agent: dbSettings.agent || {
                             enabled: true,
                             name: "Asistente Virtual",
                             personality: "amigable_profesional"
                         },
                         
-                        // Configuración de reservas desde BD
+                        // ConfiguraciÃ³n de reservas desde BD
                         min_party_size: dbSettings.min_party_size || 1,
                         max_party_size: dbSettings.max_party_size || 10,
                         reservation_duration: dbSettings.reservation_duration || 90,
@@ -313,14 +308,14 @@ const Configuracion = () => {
                         price_range: dbSettings.price_range || ""
                     });
 
-                    console.log("✅ Configuración cargada completamente");
+                    console.log("âœ… ConfiguraciÃ³n cargada completamente");
                 } else {
-                    console.log("⚠️ No se encontró restaurant");
+                    console.log("âš ï¸ No se encontrÃ³ restaurant");
                 }
 
             } catch (error) {
-                console.error("❌ Error cargando configuración:", error);
-                toast.error("Error al cargar la configuración");
+                console.error("âŒ Error cargando configuraciÃ³n:", error);
+                toast.error("Error al cargar la configuraciÃ³n");
             } finally {
                 setLoading(false);
             }
@@ -329,19 +324,19 @@ const Configuracion = () => {
         loadSettings();
     }, [restaurantId]);
 
-    // Función de guardado mejorada
+    // FunciÃ³n de guardado mejorada
     const handleSave = async (section) => {
         if (!restaurantId) {
-            toast.error("No se encontró el ID del restaurante");
+            toast.error("No se encontrÃ³ el ID del restaurante");
             return;
         }
 
         try {
             setSaving(true);
-            console.log(`💾 GUARDANDO SECCIÓN: ${section}`, settings);
+            console.log(`ðŸ’¾ GUARDANDO SECCIÃ“N: ${section}`, settings);
 
-            if (section === "Información General") {
-                // Obtener configuración actual para hacer merge
+            if (section === "InformaciÃ³n General") {
+                // Obtener configuraciÃ³n actual para hacer merge
                 const { data: currentData } = await supabase
                     .from("restaurants")
                     .select("settings")
@@ -376,8 +371,8 @@ const Configuracion = () => {
                     .eq("id", restaurantId);
 
                 if (error) throw error;
-            } else if (section === "Configuración del Agente") {
-                // Guardar configuración del agente específicamente
+            } else if (section === "ConfiguraciÃ³n del Agente") {
+                // Guardar configuraciÃ³n del agente especÃ­ficamente
                 const { data: currentData } = await supabase
                     .from("restaurants")
                     .select("settings")
@@ -402,8 +397,8 @@ const Configuracion = () => {
                     .eq("id", restaurantId);
 
                 if (error) throw error;
-            } else if (section === "Horarios de operación") {
-                // Guardar horarios específicamente
+            } else if (section === "Horarios de operaciÃ³n") {
+                // Guardar horarios especÃ­ficamente
                 const { data: currentData } = await supabase
                     .from("restaurants")
                     .select("settings")
@@ -430,8 +425,8 @@ const Configuracion = () => {
                     detail: { operating_hours: settings.operating_hours }
                 }));
                 
-            } else if (section === "Canales de comunicación") {
-                // Guardar configuración de canales específicamente
+            } else if (section === "Canales de comunicaciÃ³n") {
+                // Guardar configuraciÃ³n de canales especÃ­ficamente
                 const { data: currentData } = await supabase
                     .from("restaurants")
                     .select("settings")
@@ -465,11 +460,11 @@ const Configuracion = () => {
             if (error) throw error;
             }
 
-            toast.success(`✅ ${section} guardado correctamente`);
+            toast.success(`âœ… ${section} guardado correctamente`);
             
         } catch (error) {
-            console.error("❌ Error guardando:", error);
-            toast.error("Error al guardar la configuración");
+            console.error("âŒ Error guardando:", error);
+            toast.error("Error al guardar la configuraciÃ³n");
         } finally {
             setSaving(false);
         }
@@ -480,7 +475,7 @@ const Configuracion = () => {
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-                    <p className="text-gray-600">Cargando configuración...</p>
+                    <p className="text-gray-600">Cargando configuraciÃ³n...</p>
                 </div>
             </div>
         );
@@ -493,10 +488,10 @@ const Configuracion = () => {
                 <div className="mb-8 text-center">
                     <div className="flex items-center justify-center gap-3 mb-4">
                         <SettingsIcon className="w-8 h-8 text-purple-600" />
-                        <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
+                        <h1 className="text-3xl font-bold text-gray-900">ConfiguraciÃ³n</h1>
                     </div>
                     <p className="text-gray-600 max-w-2xl mx-auto">
-                        Centro de control completo para tu restaurante. Configura CRM IA, canales de comunicación y todas las funcionalidades avanzadas.
+                        Centro de control completo para tu restaurante. Configura CRM IA, canales de comunicaciÃ³n y todas las funcionalidades avanzadas.
                     </p>
                 </div>
 
@@ -531,8 +526,8 @@ const Configuracion = () => {
                     {activeTab === "general" && (
                         <div className="space-y-6">
                             <SettingSection
-                                title="Información General"
-                                description="Configuración básica de tu restaurante"
+                                title="InformaciÃ³n General"
+                                description="ConfiguraciÃ³n bÃ¡sica de tu restaurante"
                                 icon={<Building2 />}
                             >
                                 <div className="space-y-6">
@@ -585,7 +580,7 @@ const Configuracion = () => {
                                                         Subir logo profesional
                                                     </button>
                                                     <p className="text-xs text-gray-500">
-                                                        PNG, JPG o SVG (máx. 5MB) • Recomendado: 400x400px
+                                                        PNG, JPG o SVG (mÃ¡x. 5MB) â€¢ Recomendado: 400x400px
                                                     </p>
                                                 </div>
                                             </div>
@@ -616,10 +611,10 @@ const Configuracion = () => {
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                             >
                                                 <option value="">Selecciona el tipo</option>
-                                                <option value="Mediterránea">Mediterránea</option>
-                                                <option value="Española">Española</option>
+                                                <option value="MediterrÃ¡nea">MediterrÃ¡nea</option>
+                                                <option value="EspaÃ±ola">EspaÃ±ola</option>
                                                 <option value="Italiana">Italiana</option>
-                                                <option value="Asiática">Asiática</option>
+                                                <option value="AsiÃ¡tica">AsiÃ¡tica</option>
                                                 <option value="Mexicana">Mexicana</option>
                                                 <option value="Francesa">Francesa</option>
                                                 <option value="Japonesa">Japonesa</option>
@@ -627,10 +622,10 @@ const Configuracion = () => {
                                                 <option value="India">India</option>
                                                 <option value="Americana">Americana</option>
                                                 <option value="Vegetariana/Vegana">Vegetariana/Vegana</option>
-                                                <option value="Marisquería">Marisquería</option>
+                                                <option value="MarisquerÃ­a">MarisquerÃ­a</option>
                                                 <option value="Asador/Parrilla">Asador/Parrilla</option>
                                                 <option value="Tapas">Tapas</option>
-                                                <option value="Fusión">Fusión</option>
+                                                <option value="FusiÃ³n">FusiÃ³n</option>
                                             </select>
                                         </div>
 
@@ -649,7 +644,7 @@ const Configuracion = () => {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Teléfono
+                                                TelÃ©fono
                                             </label>
                                             <input
                                                 type="tel"
@@ -676,7 +671,7 @@ const Configuracion = () => {
 
                                         <div className="col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Descripción del restaurante
+                                                DescripciÃ³n del restaurante
                                             </label>
                                             <textarea
                                                 value={settings.description}
@@ -689,7 +684,7 @@ const Configuracion = () => {
 
                                         <div className="col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Dirección completa
+                                                DirecciÃ³n completa
                                             </label>
                                             <input
                                                 type="text"
@@ -715,7 +710,7 @@ const Configuracion = () => {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Código postal
+                                                CÃ³digo postal
                                             </label>
                                             <input
                                                 type="text"
@@ -736,10 +731,10 @@ const Configuracion = () => {
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                             >
                                                 <option value="">Selecciona el rango</option>
-                                                <option value="€ - Económico (10-20€)">€ - Económico (10-20€)</option>
-                                                <option value="€€ - Moderado (20-35€)">€€ - Moderado (20-35€)</option>
-                                                <option value="€€€ - Alto (35-60€)">€€€ - Alto (35-60€)</option>
-                                                <option value="€€€€ - Premium (+60€)">€€€€ - Premium (+60€)</option>
+                                                <option value="â‚¬ - EconÃ³mico (10-20â‚¬)">â‚¬ - EconÃ³mico (10-20â‚¬)</option>
+                                                <option value="â‚¬â‚¬ - Moderado (20-35â‚¬)">â‚¬â‚¬ - Moderado (20-35â‚¬)</option>
+                                                <option value="â‚¬â‚¬â‚¬ - Alto (35-60â‚¬)">â‚¬â‚¬â‚¬ - Alto (35-60â‚¬)</option>
+                                                <option value="â‚¬â‚¬â‚¬â‚¬ - Premium (+60â‚¬)">â‚¬â‚¬â‚¬â‚¬ - Premium (+60â‚¬)</option>
                                             </select>
                                         </div>
 
@@ -758,7 +753,7 @@ const Configuracion = () => {
                                                 required
                                             />
                                             <p className="text-xs text-gray-500 mt-1">
-                                                Este límite se aplicará en todas las reservas
+                                                Este lÃ­mite se aplicarÃ¡ en todas las reservas
                                             </p>
                                         </div>
 
@@ -766,7 +761,7 @@ const Configuracion = () => {
 
                                     <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
                                         <button
-                                            onClick={() => handleSave("Información General")}
+                                            onClick={() => handleSave("InformaciÃ³n General")}
                                             disabled={saving}
                                             className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
                                         >
@@ -783,237 +778,9 @@ const Configuracion = () => {
                         </div>
                     )}
 
-                    {/* CRM IA WORLD-CLASS */}
-                    {activeTab === "crm" && (
-                        <div className="space-y-6">
-                            <SettingSection
-                                title="🧠 CRM Sistema Inteligente World-Class"
-                                description="Segmentación automática IA + Automatizaciones enterprise + 7 segmentos únicos"
-                                icon={<Brain />}
-                                premium
-                            >
-                                <div className="space-y-8">
-                                    {/* Header World-Class */}
-                                    <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 p-6 rounded-xl text-white">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div>
-                                                <h3 className="text-xl font-bold flex items-center">
-                                                    <Brain className="w-6 h-6 mr-2" />
-                                                    CRM IA World-Class Edition
-                                                </h3>
-                                                <p className="text-purple-100 text-sm mt-1">
-                                                    Sistema único mundial con ML Engine + Triggers automáticos + Compliance GDPR
-                                                </p>
-                                            </div>
-                                            <ToggleSwitch
-                                                enabled={settings?.crm?.enabled || true}
-                                                onChange={(enabled) => setSettings(prev => ({
-                                                    ...prev,
-                                                    crm: { ...prev?.crm, enabled }
-                                                }))}
-                                                label=""
-                                            />
-                                        </div>
-                                        
-                                        {/* Métricas en tiempo real */}
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
-                                                <div className="text-2xl font-bold">7</div>
-                                                <div className="text-xs text-purple-100">Segmentos IA</div>
-                                            </div>
-                                            <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
-                                                <div className="text-2xl font-bold">24/7</div>
-                                                <div className="text-xs text-purple-100">Automático</div>
-                                            </div>
-                                            <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
-                                                <div className="text-2xl font-bold">ML</div>
-                                                <div className="text-xs text-purple-100">Predictivo</div>
-                                            </div>
-                                            <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
-                                                <div className="text-2xl font-bold">GDPR</div>
-                                                <div className="text-xs text-purple-100">Compliant</div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* 7 Segmentos World-Class */}
-                                    <div>
-                                        <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                                            <Target className="w-6 h-6 mr-3 text-indigo-600" />
-                                            7 Segmentos Automáticos IA (Únicos Mundialmente)
-                                        </h4>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
-                                            {/* Segmento NUEVO */}
-                                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-200 hover:border-green-300 transition-colors">
-                                                <div className="flex items-center mb-3">
-                                                    <div className="w-4 h-4 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                                                    <span className="font-bold text-green-800">🆕 NUEVO</span>
-                                                </div>
-                                                <p className="text-sm text-green-700 mb-2">
-                                                    <strong>0 visitas</strong> - Primera vez
-                                                </p>
-                                                <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                                                    segment_auto = nuevo
-                                                </div>
-                                            </div>
-
-                                            {/* Segmento OCASIONAL */}
-                                            <div className="bg-gradient-to-br from-yellow-50 to-amber-50 p-4 rounded-lg border-2 border-yellow-200 hover:border-yellow-300 transition-colors">
-                                                <div className="flex items-center mb-3">
-                                                    <div className="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
-                                                    <span className="font-bold text-yellow-800">🔄 OCASIONAL</span>
-                                                </div>
-                                                <p className="text-sm text-yellow-700 mb-2">
-                                                    <strong>1-2 visitas</strong> - Explorando
-                                                </p>
-                                                <div className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
-                                                    visits_count: 1-2
-                                                </div>
-                                            </div>
-
-                                            {/* Segmento REGULAR */}
-                                            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-lg border-2 border-blue-200 hover:border-blue-300 transition-colors">
-                                                <div className="flex items-center mb-3">
-                                                    <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
-                                                    <span className="font-bold text-blue-800">⭐ REGULAR</span>
-                                                </div>
-                                                <p className="text-sm text-blue-700 mb-2">
-                                                    <strong>3-4 visitas</strong> - Fidelizando
-                                                </p>
-                                                <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                                                    visits_count: 3-4
-                                                </div>
-                                            </div>
-
-                                            {/* Segmento VIP */}
-                                            <div className="bg-gradient-to-br from-purple-50 to-violet-50 p-4 rounded-lg border-2 border-purple-200 hover:border-purple-300 transition-colors">
-                                                <div className="flex items-center mb-3">
-                                                    <div className="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
-                                                    <span className="font-bold text-purple-800">👑 VIP</span>
-                                                </div>
-                                                <p className="text-sm text-purple-700 mb-2">
-                                                    <strong>5+ visitas</strong> o <strong>500€+</strong>
-                                                </p>
-                                                <div className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">
-                                                    visits_count mayor igual 5 OR total_spent mayor igual 500
-                                                </div>
-                                            </div>
-
-                                            {/* Segmento INACTIVO */}
-                                            <div className="bg-gradient-to-br from-gray-50 to-slate-50 p-4 rounded-lg border-2 border-gray-200 hover:border-gray-300 transition-colors">
-                                                <div className="flex items-center mb-3">
-                                                    <div className="w-4 h-4 bg-gray-500 rounded-full mr-2"></div>
-                                                    <span className="font-bold text-gray-800">😴 INACTIVO</span>
-                                                </div>
-                                                <p className="text-sm text-gray-700 mb-2">
-                                                    <strong>60+ días</strong> sin visita
-                                                </p>
-                                                <div className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                                                    last_visit_at mayor 60 días
-                                                </div>
-                                            </div>
-
-                                            {/* Segmento EN RIESGO */}
-                                            <div className="bg-gradient-to-br from-red-50 to-rose-50 p-4 rounded-lg border-2 border-red-200 hover:border-red-300 transition-colors">
-                                                <div className="flex items-center mb-3">
-                                                    <div className="w-4 h-4 bg-red-500 rounded-full mr-2 animate-pulse"></div>
-                                                    <span className="font-bold text-red-800">⚠️ EN RIESGO</span>
-                                                </div>
-                                                <p className="text-sm text-red-700 mb-2">
-                                                    <strong>Churn risk</strong> alto (ML)
-                                                </p>
-                                                <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">
-                                                    churn_risk_score mayor 60
-                                                </div>
-                                            </div>
-
-                                            {/* Segmento ALTO VALOR */}
-                                            <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 p-4 rounded-lg border-2 border-amber-300 hover:border-amber-400 transition-colors shadow-lg">
-                                                <div className="flex items-center mb-3">
-                                                    <div className="w-4 h-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full mr-2 animate-pulse"></div>
-                                                    <span className="font-bold text-amber-800">💎 ALTO VALOR</span>
-                                                </div>
-                                                <p className="text-sm text-amber-700 mb-2">
-                                                    <strong>1000€+</strong> gasto total
-                                                </p>
-                                                <div className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">
-                                                    total_spent mayor igual 1000 (priority)
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Plantillas Inteligentes */}
-                                    <div>
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h4 className="text-xl font-bold text-gray-900 flex items-center">
-                                                <MessageSquare className="w-6 h-6 mr-3 text-indigo-600" />
-                                                Plantillas Inteligentes por Segmento
-                                            </h4>
-                                            <button 
-                                                type="button"
-                                                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2 transform hover:scale-105"
-                                            >
-                                                <MessageSquare className="w-5 h-5" />
-                                                <span className="font-semibold">Gestionar Todas las Plantillas</span>
-                                                <span className="bg-white/20 px-2 py-1 rounded text-xs">7 tipos</span>
-                                            </button>
-                                        </div>
-                                        
-                                        <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6 rounded-xl border border-indigo-200 shadow-lg">
-                                            <h5 className="font-bold text-indigo-900 mb-4 text-lg">📝 Sistema de Plantillas World-Class</h5>
-                                            
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
-                                                {/* Variables dinámicas disponibles */}
-                                                <div className="xl:col-span-4 bg-white/90 backdrop-blur border border-indigo-200 rounded-lg p-4">
-                                                    <h6 className="font-semibold text-indigo-900 mb-3">🔧 Variables Dinámicas</h6>
-                                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-                                                        <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
-                                                            <code className="text-indigo-800">nombre</code>
-                                                        </div>
-                                                        <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
-                                                            <code className="text-indigo-800">restaurante</code>
-                                                        </div>
-                                                        <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
-                                                            <code className="text-indigo-800">ultima_visita</code>
-                                                        </div>
-                                                        <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
-                                                            <code className="text-indigo-800">total_gastado</code>
-                                                        </div>
-                                                        <div className="bg-indigo-50 px-3 py-2 rounded border border-indigo-200">
-                                                            <code className="text-indigo-800">num_visitas</code>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
-                                    <button
-                                        onClick={() => handleSave("CRM Sistema Inteligente")}
-                                        disabled={saving}
-                                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-                                    >
-                                        {saving ? (
-                                            <RefreshCw className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <Save className="w-4 h-4" />
-                                        )}
-                                        Guardar CRM IA
-                                    </button>
-                                </div>
-                            </SettingSection>
-                        </div>
-                    )}
-
-                    {/* Otros tabs simplificados para evitar errores */}
-                    {activeTab === "channels" && (
                         <SettingSection
-                            title="Canales de Comunicación Enterprise"
-                            description="Gestión omnicanal con integración automática IA"
+                            title="Canales de ComunicaciÃ³n Enterprise"
+                            description="GestiÃ³n omnicanal con integraciÃ³n automÃ¡tica IA"
                             icon={<MessageSquare />}
                         >
                             <div className="space-y-6">
@@ -1026,7 +793,7 @@ const Configuracion = () => {
                                             </div>
                                             <div>
                                                 <h4 className="font-medium text-gray-900">WhatsApp Business</h4>
-                                                <p className="text-sm text-gray-600">Canal principal de comunicación</p>
+                                                <p className="text-sm text-gray-600">Canal principal de comunicaciÃ³n</p>
                                             </div>
                                         </div>
                                         <ToggleSwitch
@@ -1045,7 +812,7 @@ const Configuracion = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Número de teléfono
+                                                    NÃºmero de telÃ©fono
                                                 </label>
                                                 <input
                                                     type="text"
@@ -1128,7 +895,7 @@ const Configuracion = () => {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Posición
+                                                    PosiciÃ³n
                                                 </label>
                                                 <select
                                                     value={settings.channels?.webchat?.position || "bottom-right"}
@@ -1158,7 +925,7 @@ const Configuracion = () => {
                                             </div>
                                             <div>
                                                 <h4 className="font-medium text-gray-900">Instagram</h4>
-                                                <p className="text-sm text-gray-600">Mensajes directos automáticos</p>
+                                                <p className="text-sm text-gray-600">Mensajes directos automÃ¡ticos</p>
                                             </div>
                                         </div>
                                         <ToggleSwitch
@@ -1224,7 +991,7 @@ const Configuracion = () => {
                                             </div>
                                             <div>
                                                 <h4 className="font-medium text-gray-900">Facebook Messenger</h4>
-                                                <p className="text-sm text-gray-600">Chat de página de Facebook</p>
+                                                <p className="text-sm text-gray-600">Chat de pÃ¡gina de Facebook</p>
                                             </div>
                                         </div>
                                         <ToggleSwitch
@@ -1243,7 +1010,7 @@ const Configuracion = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    ID de Página
+                                                    ID de PÃ¡gina
                                                 </label>
                                                 <input
                                                     type="text"
@@ -1256,7 +1023,7 @@ const Configuracion = () => {
                                                         }
                                                     }))}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="ID de página de Facebook"
+                                                    placeholder="ID de pÃ¡gina de Facebook"
                                                 />
                                             </div>
                                             <div>
@@ -1274,7 +1041,7 @@ const Configuracion = () => {
                                                         }
                                                     }))}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="Token de página de Facebook"
+                                                    placeholder="Token de pÃ¡gina de Facebook"
                                                 />
                                             </div>
                                         </div>
@@ -1290,7 +1057,7 @@ const Configuracion = () => {
                                             </div>
                                             <div>
                                                 <h4 className="font-medium text-gray-900">VAPI - Llamadas IA</h4>
-                                                <p className="text-sm text-gray-600">Asistente telefónico inteligente</p>
+                                                <p className="text-sm text-gray-600">Asistente telefÃ³nico inteligente</p>
                                             </div>
                                         </div>
                                         <ToggleSwitch
@@ -1327,7 +1094,7 @@ const Configuracion = () => {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Número de teléfono
+                                                    NÃºmero de telÃ©fono
                                                 </label>
                                                 <input
                                                     type="text"
@@ -1350,7 +1117,7 @@ const Configuracion = () => {
 
                             <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
                                 <button
-                                    onClick={() => handleSave("Canales de comunicación")}
+                                    onClick={() => handleSave("Canales de comunicaciÃ³n")}
                                     disabled={saving}
                                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                                 >
@@ -1377,7 +1144,7 @@ const Configuracion = () => {
                         <div className="space-y-6">
                             <SettingSection
                                 title="Agente IA Conversacional Enterprise"
-                                description="Asistente virtual inteligente que atiende 24/7 con capacidad de reservas y escalamiento automático"
+                                description="Asistente virtual inteligente que atiende 24/7 con capacidad de reservas y escalamiento automÃ¡tico"
                                 icon={<Bot />}
                                 premium
                             >
@@ -1411,7 +1178,7 @@ const Configuracion = () => {
                                             </div>
                                             <div className="bg-white/60 rounded-lg p-3">
                                                 <p className="text-2xl font-bold text-blue-600">{settings.capacity_total || "N/A"}</p>
-                                                <p className="text-sm text-gray-600">Cap. Máx</p>
+                                                <p className="text-sm text-gray-600">Cap. MÃ¡x</p>
                                             </div>
                                             <div className="bg-white/60 rounded-lg p-3">
                                                 <p className="text-2xl font-bold text-orange-600">Auto</p>
@@ -1420,7 +1187,7 @@ const Configuracion = () => {
                                         </div>
                                     </div>
 
-                                    {/* Configuración básica */}
+                                    {/* ConfiguraciÃ³n bÃ¡sica */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1464,8 +1231,8 @@ const Configuracion = () => {
                                                     <Check className="w-3 h-3 text-white" />
                                                 </div>
                                                 <div>
-                                                    <h5 className="font-medium text-gray-900">Gestión de Reservas</h5>
-                                                    <p className="text-sm text-gray-600">Crear, modificar y cancelar reservas automáticamente</p>
+                                                    <h5 className="font-medium text-gray-900">GestiÃ³n de Reservas</h5>
+                                                    <p className="text-sm text-gray-600">Crear, modificar y cancelar reservas automÃ¡ticamente</p>
                                                 </div>
                                             </div>
                                             
@@ -1484,7 +1251,7 @@ const Configuracion = () => {
                                                     <Check className="w-3 h-3 text-white" />
                                                 </div>
                                                 <div>
-                                                    <h5 className="font-medium text-gray-900">Información de Menú</h5>
+                                                    <h5 className="font-medium text-gray-900">InformaciÃ³n de MenÃº</h5>
                                                     <p className="text-sm text-gray-600">Responder sobre platos y precios</p>
                                                 </div>
                                             </div>
@@ -1494,8 +1261,8 @@ const Configuracion = () => {
                                                     <Check className="w-3 h-3 text-white" />
                                                 </div>
                                                 <div>
-                                                    <h5 className="font-medium text-gray-900">Optimización de Mesas</h5>
-                                                    <p className="text-sm text-gray-600">Asignar las mejores mesas automáticamente</p>
+                                                    <h5 className="font-medium text-gray-900">OptimizaciÃ³n de Mesas</h5>
+                                                    <p className="text-sm text-gray-600">Asignar las mejores mesas automÃ¡ticamente</p>
                                                 </div>
                                             </div>
                                             
@@ -1504,8 +1271,8 @@ const Configuracion = () => {
                                                     <Check className="w-3 h-3 text-white" />
                                                 </div>
                                                 <div>
-                                                    <h5 className="font-medium text-gray-900">Horarios y Ubicación</h5>
-                                                    <p className="text-sm text-gray-600">Informar sobre horarios y cómo llegar</p>
+                                                    <h5 className="font-medium text-gray-900">Horarios y UbicaciÃ³n</h5>
+                                                    <p className="text-sm text-gray-600">Informar sobre horarios y cÃ³mo llegar</p>
                                                 </div>
                                             </div>
                                             
@@ -1522,25 +1289,25 @@ const Configuracion = () => {
                                         <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                                             <p className="text-sm text-blue-800">
                                                 <Info className="w-4 h-4 inline mr-1" />
-                                                Todas estas capacidades están incluidas en el MVP y no se pueden desactivar.
+                                                Todas estas capacidades estÃ¡n incluidas en el MVP y no se pueden desactivar.
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* Configuración de escalamiento */}
+                                    {/* ConfiguraciÃ³n de escalamiento */}
                                     <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
-                                        <h4 className="font-medium text-gray-900 mb-4">Escalamiento Automático</h4>
+                                        <h4 className="font-medium text-gray-900 mb-4">Escalamiento AutomÃ¡tico</h4>
                                         <div className="space-y-4">
                                             <div className="grid grid-cols-2 gap-4">
                                                 <ToggleSwitch
                                                     enabled={settings.agent?.escalation_enabled !== false}
                                                     onChange={() => {}}
                                                     label="Escalamiento activado"
-                                                    description="Derivar a humano automáticamente"
+                                                    description="Derivar a humano automÃ¡ticamente"
                                                 />
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Tiempo máximo respuesta (seg)
+                                                        Tiempo mÃ¡ximo respuesta (seg)
                                                     </label>
                                                     <input
                                                         type="number"
@@ -1553,26 +1320,26 @@ const Configuracion = () => {
                                             </div>
                                             <div className="bg-orange-100 p-3 rounded-lg">
                                                 <p className="text-sm text-orange-800">
-                                                    <strong>Triggers de escalamiento:</strong> Quejas, consultas complejas, múltiples intentos, sentimiento negativo
+                                                    <strong>Triggers de escalamiento:</strong> Quejas, consultas complejas, mÃºltiples intentos, sentimiento negativo
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Información de integración */}
+                                    {/* InformaciÃ³n de integraciÃ³n */}
                                     <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
                                         <div className="flex items-start gap-3">
                                             <Info className="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" />
                                             <div>
                                                 <h4 className="font-medium text-blue-900 mb-2">
-                                                    Integración Completa del Sistema
+                                                    IntegraciÃ³n Completa del Sistema
                                                 </h4>
                                                 <div className="text-sm text-blue-800 space-y-1">
-                                                    <p>• <strong>Reservas:</strong> Utiliza la capacidad máxima configurada y turnos establecidos</p>
-                                                    <p>• <strong>Mesas:</strong> Optimización automática basada en disponibilidad</p>
-                                                    <p>• <strong>Horarios:</strong> Respeta los horarios de operación configurados</p>
-                                                    <p>• <strong>CRM:</strong> Identifica clientes VIP y aplica tratamiento especial</p>
-                                                    <p>• <strong>Canales:</strong> Funciona en WhatsApp, teléfono, web y redes sociales</p>
+                                                    <p>â€¢ <strong>Reservas:</strong> Utiliza la capacidad mÃ¡xima configurada y turnos establecidos</p>
+                                                    <p>â€¢ <strong>Mesas:</strong> OptimizaciÃ³n automÃ¡tica basada en disponibilidad</p>
+                                                    <p>â€¢ <strong>Horarios:</strong> Respeta los horarios de operaciÃ³n configurados</p>
+                                                    <p>â€¢ <strong>CRM:</strong> Identifica clientes VIP y aplica tratamiento especial</p>
+                                                    <p>â€¢ <strong>Canales:</strong> Funciona en WhatsApp, telÃ©fono, web y redes sociales</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -1581,7 +1348,7 @@ const Configuracion = () => {
 
                                 <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
                                     <button
-                                        onClick={() => handleSave("Configuración del Agente")}
+                                        onClick={() => handleSave("ConfiguraciÃ³n del Agente")}
                                         disabled={saving}
                                         className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg disabled:opacity-50"
                                     >
@@ -1600,15 +1367,15 @@ const Configuracion = () => {
                     {activeTab === "hours" && (
                         <SettingSection
                             title="Horarios y Calendario Enterprise"
-                            description="Configuración completa de horarios de operación con integración al calendario"
+                            description="ConfiguraciÃ³n completa de horarios de operaciÃ³n con integraciÃ³n al calendario"
                             icon={<Clock />}
                         >
                             <div className="space-y-6">
                                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                    <h4 className="font-medium text-gray-900 mb-3">Horarios de Operación</h4>
+                                    <h4 className="font-medium text-gray-900 mb-3">Horarios de OperaciÃ³n</h4>
                                     <div className="space-y-3">
                                         {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((dayKey, index) => {
-                                            const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                                            const dayNames = ['Lunes', 'Martes', 'MiÃ©rcoles', 'Jueves', 'Viernes', 'SÃ¡bado', 'Domingo'];
                                             const daySchedule = settings.operating_hours?.[dayKey] || { open: true, start: "09:00", end: "22:00" };
                                             
                                             return (
@@ -1685,9 +1452,9 @@ const Configuracion = () => {
                                     <div className="flex items-start gap-3">
                                         <Info className="w-5 h-5 text-green-600 mt-0.5" />
                                         <div>
-                                            <h4 className="font-medium text-green-900 mb-2">Integración Automática</h4>
+                                            <h4 className="font-medium text-green-900 mb-2">IntegraciÃ³n AutomÃ¡tica</h4>
                                             <p className="text-sm text-green-800">
-                                                Los horarios configurados se sincronizan automáticamente con el Calendario, 
+                                                Los horarios configurados se sincronizan automÃ¡ticamente con el Calendario, 
                                                 las Reservas y el Agente IA para garantizar coherencia en todo el sistema.
                                             </p>
                                         </div>
@@ -1697,7 +1464,7 @@ const Configuracion = () => {
 
                             <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
                                 <button
-                                    onClick={() => handleSave("Horarios de operación")}
+                                    onClick={() => handleSave("Horarios de operaciÃ³n")}
                                     disabled={saving}
                                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                                 >
@@ -1714,17 +1481,17 @@ const Configuracion = () => {
 
                     {activeTab === "reservations" && (
                         <SettingSection
-                            title="Política de Reservas Enterprise"
-                            description="Configuración completa para gestión profesional de reservas con capacidad personalizable"
+                            title="PolÃ­tica de Reservas Enterprise"
+                            description="ConfiguraciÃ³n completa para gestiÃ³n profesional de reservas con capacidad personalizable"
                             icon={<Calendar />}
                         >
                             <div className="space-y-6">
                                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                    <h4 className="font-medium text-gray-900 mb-3">Configuración Principal</h4>
+                                    <h4 className="font-medium text-gray-900 mb-3">ConfiguraciÃ³n Principal</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Tamaño mínimo de grupo
+                                                TamaÃ±o mÃ­nimo de grupo
                                             </label>
                                             <input
                                                 type="number"
@@ -1738,7 +1505,7 @@ const Configuracion = () => {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Tamaño máximo de grupo
+                                                TamaÃ±o mÃ¡ximo de grupo
                                             </label>
                                             <input
                                                 type="number"
@@ -1749,12 +1516,12 @@ const Configuracion = () => {
                                                 max="100"
                                             />
                                             <p className="text-xs text-gray-500 mt-1">
-                                                Máximo de personas por reserva individual
+                                                MÃ¡ximo de personas por reserva individual
                                             </p>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Días de antelación máxima
+                                                DÃ­as de antelaciÃ³n mÃ¡xima
                                             </label>
                                             <input
                                                 type="number"
@@ -1769,11 +1536,11 @@ const Configuracion = () => {
                                 </div>
 
                                 <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                                    <h4 className="font-medium text-gray-900 mb-3">Duración Estándar de Reserva</h4>
+                                    <h4 className="font-medium text-gray-900 mb-3">DuraciÃ³n EstÃ¡ndar de Reserva</h4>
                                     <div className="grid grid-cols-1 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Duración estándar de reserva (minutos)
+                                                DuraciÃ³n estÃ¡ndar de reserva (minutos)
                                             </label>
                                             <select
                                                 value={settings.reservation_duration}
@@ -1787,7 +1554,7 @@ const Configuracion = () => {
                                                 <option value="180">180 minutos</option>
                                             </select>
                                             <p className="text-xs text-gray-500 mt-1">
-                                                Tiempo estimado que cada mesa estará ocupada
+                                                Tiempo estimado que cada mesa estarÃ¡ ocupada
                                             </p>
                                         </div>
                                     </div>
@@ -1795,7 +1562,7 @@ const Configuracion = () => {
 
                                 <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
                                     <button
-                                        onClick={() => handleSave("Configuración de reservas")}
+                                        onClick={() => handleSave("ConfiguraciÃ³n de reservas")}
                                         disabled={saving}
                                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                                     >
@@ -1804,7 +1571,7 @@ const Configuracion = () => {
                                         ) : (
                                             <Save className="w-4 h-4" />
                                         )}
-                                        Guardar Política de Reservas
+                                        Guardar PolÃ­tica de Reservas
                                     </button>
                                 </div>
                             </div>

@@ -21,6 +21,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Reservas = lazy(() => import('./pages/Reservas'));
 const Clientes = lazy(() => import('./pages/Clientes'));
 const CRMInteligente = lazy(() => import('./pages/CRMInteligente'));
+const PlantillasCRM = lazy(() => import('./pages/PlantillasCRM'));
 const Mesas = lazy(() => import('./pages/Mesas'));
 const Calendario = lazy(() => import('./pages/Calendario'));
 const Comunicacion = lazy(() => 
@@ -129,6 +130,14 @@ function AppContent() {
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <CRMInteligente />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/plantillas" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <PlantillasCRM />
                   </Suspense>
                 } 
               />

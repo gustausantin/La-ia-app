@@ -117,6 +117,12 @@ export default function CRMInteligente() {
     const [templates, setTemplates] = useState([]);
     const [selectedCustomers, setSelectedCustomers] = useState([]);
     
+    // Estados para modales
+    const [showTemplateModal, setShowTemplateModal] = useState(false);
+    const [editingTemplate, setEditingTemplate] = useState(null);
+    const [showCustomerModal, setShowCustomerModal] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
+    
     // Estados de filtros y búsqueda
     const [filters, setFilters] = useState({
         search: "",
@@ -161,8 +167,15 @@ export default function CRMInteligente() {
             setSegments(segmentStats);
             
             // Generar sugerencias IA
-            const aiSuggestions = generateAISuggestions(processedCustomers);
-            setSuggestions(aiSuggestions);
+            // Cargar sugerencias existentes desde Supabase
+            const { data: suggestionsData } = await supabase
+                .from("crm_suggestions")
+                .select("*")
+                .eq("restaurant_id", restaurantId)
+                .eq("status", "pending")
+                .order("priority", { ascending: false });
+                
+            setSuggestions(suggestionsData || []);
             
             // Cargar configuración CRM
             const { data: crmSettingsData } = await supabase
@@ -207,7 +220,13 @@ export default function CRMInteligente() {
         const daysSinceLastVisit = lastVisit ? differenceInDays(now, lastVisit) : 999;
         
         // Usar configuración de Supabase para segmentación
-        const config = crmConfig;
+        const config = crmConfig || {
+            days_new_customer: 7,
+            days_active_customer: 30,
+            days_inactive_customer: 60,
+            visits_bib_customer: 10,
+            days_risk_customer: 45
+        };
         
         // Lógica de segmentación inteligente basada en configuración
         if (daysSinceCreated <= (config.days_new_customer || 7)) {
@@ -406,6 +425,43 @@ export default function CRMInteligente() {
         }
     };
 
+    // GUARDAR PLANTILLA MODIFICADA
+    const saveTemplate = async (templateData) => {
+        try {
+            const { error } = await supabase
+                .from("crm_templates")
+                .update({
+                    name: templateData.name,
+                    subject: templateData.subject,
+                    content: templateData.content,
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", templateData.id);
+                
+            if (error) throw error;
+            
+            toast.success("✅ Plantilla guardada correctamente");
+            setShowTemplateModal(false);
+            setEditingTemplate(null);
+            loadCRMData(); // Recargar datos
+        } catch (error) {
+            console.error("Error guardando plantilla:", error);
+            toast.error("Error al guardar la plantilla");
+        }
+    };
+
+    // ABRIR MODAL DE PLANTILLA
+    const openTemplateModal = (template) => {
+        setEditingTemplate(template);
+        setShowTemplateModal(true);
+    };
+
+    // ABRIR MODAL DE CLIENTE
+    const openCustomerModal = (customer) => {
+        setSelectedCustomer(customer);
+        setShowCustomerModal(true);
+    };
+
     // Cargar datos al montar
     useEffect(() => {
         loadCRMData();
@@ -575,7 +631,11 @@ export default function CRMInteligente() {
                                     {filteredCustomers.map(customer => {
                                         const segment = CUSTOMER_SEGMENTS[customer.segment] || CUSTOMER_SEGMENTS.activo;
                                         return (
-                                            <div key={customer.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                            <div 
+                                                key={customer.id} 
+                                                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                                                onClick={() => openCustomerModal(customer)}
+                                            >
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center space-x-4">
                                                         <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-xl">

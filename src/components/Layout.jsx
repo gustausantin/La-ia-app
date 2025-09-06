@@ -78,6 +78,12 @@ export default function Layout() {
             icon: Brain,
             badge: null, // TODO: Implementar contador de sugerencias IA
         },
+        {
+            name: "Plantillas CRM",
+            path: "/plantillas",
+            icon: Mail,
+            badge: null, // TODO: Implementar contador de plantillas
+        },
         { name: "Mesas", path: "/mesas", icon: Briefcase, badge: null },
         {
             name: "Calendario",
