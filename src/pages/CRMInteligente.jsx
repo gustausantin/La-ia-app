@@ -18,28 +18,28 @@ const CUSTOMER_SEGMENTS = {
         label: "Nuevo", 
         icon: "👋", 
         color: "blue",
-        description: "Cliente recién registrado (< 7 días)",
+        description: "Cliente recién registrado",
         priority: 1
     },
     activo: { 
         label: "Activo", 
         icon: "⭐", 
         color: "green",
-        description: "Cliente con visitas regulares (< 30 días)",
+        description: "Cliente con visitas regulares",
         priority: 2
     },
-    vip: { 
-        label: "VIP", 
+    bib: { 
+        label: "BIB", 
         icon: "👑", 
         color: "purple",
-        description: "Cliente frecuente y alto valor",
+        description: "Best In Business - Cliente prioritario",
         priority: 5
     },
     inactivo: { 
         label: "Inactivo", 
         icon: "😴", 
         color: "gray",
-        description: "Sin visitas por más de 60 días",
+        description: "Sin visitas recientes",
         priority: 3
     },
     riesgo: { 
@@ -84,23 +84,23 @@ Un saludo,
 El equipo de {restaurant_name}`,
         variables: ["restaurant_name", "customer_name", "visit_date"]
     },
-    vip: {
-        title: "Promoción a VIP",
-        subject: "¡Felicidades! Ahora eres cliente VIP de {restaurant_name}",
+    bib: {
+        title: "Promoción a BIB",
+        subject: "¡Felicidades! Ahora eres cliente BIB de {restaurant_name}",
         content: `¡Hola {customer_name}!
 
-Nos complace informarte que ahora formas parte de nuestro programa VIP en {restaurant_name}.
+Nos complace informarte que ahora formas parte de nuestro programa BIB (Best In Business) en {restaurant_name}.
 
-Como cliente VIP, disfrutarás de:
+Como cliente BIB, disfrutarás de:
 • Reservas prioritarias
-• Descuentos especiales
-• Invitaciones a eventos exclusivos
 • Atención personalizada
+• Invitaciones a eventos exclusivos
+• Experiencias únicas
 
 ¡Gracias por tu fidelidad!
 
 El equipo de {restaurant_name}`,
-        variables: ["restaurant_name", "customer_name", "vip_benefits"]
+        variables: ["restaurant_name", "customer_name", "bib_benefits"]
     }
 };
 
@@ -114,6 +114,8 @@ export default function CRMInteligente() {
     const [segments, setSegments] = useState({});
     const [suggestions, setSuggestions] = useState([]);
     const [crmConfig, setCrmConfig] = useState({});
+    const [templates, setTemplates] = useState([]);
+    const [selectedCustomers, setSelectedCustomers] = useState([]);
     
     // Estados de filtros y búsqueda
     const [filters, setFilters] = useState({
@@ -163,13 +165,29 @@ export default function CRMInteligente() {
             setSuggestions(aiSuggestions);
             
             // Cargar configuración CRM
-            const { data: restaurantData } = await supabase
-                .from("restaurants")
-                .select("settings")
-                .eq("id", restaurantId)
+            const { data: crmSettingsData } = await supabase
+                .from("crm_settings")
+                .select("*")
+                .eq("restaurant_id", restaurantId)
                 .single();
                 
-            setCrmConfig(restaurantData?.settings?.crm || {});
+            setCrmConfig(crmSettingsData || {
+                days_new_customer: 7,
+                days_active_customer: 30,
+                days_inactive_customer: 60,
+                visits_bib_customer: 10,
+                days_risk_customer: 45
+            });
+            
+            // Cargar plantillas CRM
+            const { data: templatesData } = await supabase
+                .from("crm_templates")
+                .select("*")
+                .eq("restaurant_id", restaurantId)
+                .eq("active", true)
+                .order("priority");
+                
+            setTemplates(templatesData || []);
             
         } catch (error) {
             console.error("Error cargando datos CRM:", error);
@@ -188,16 +206,19 @@ export default function CRMInteligente() {
         const daysSinceCreated = differenceInDays(now, createdAt);
         const daysSinceLastVisit = lastVisit ? differenceInDays(now, lastVisit) : 999;
         
-        // Lógica de segmentación inteligente
-        if (daysSinceCreated <= 7) {
+        // Usar configuración de Supabase para segmentación
+        const config = crmConfig;
+        
+        // Lógica de segmentación inteligente basada en configuración
+        if (daysSinceCreated <= (config.days_new_customer || 7)) {
             return 'nuevo';
-        } else if (customer.visits_count >= 10 && customer.total_spent >= 500) {
-            return 'vip';
-        } else if (daysSinceLastVisit > 60) {
+        } else if (customer.visits_count >= (config.visits_bib_customer || 10)) {
+            return 'bib';
+        } else if (daysSinceLastVisit > (config.days_inactive_customer || 60)) {
             return 'inactivo';
-        } else if (daysSinceLastVisit > 30 && customer.churn_risk_score > 70) {
+        } else if (daysSinceLastVisit > (config.days_risk_customer || 45) && customer.churn_risk_score > 70) {
             return 'riesgo';
-        } else if (daysSinceLastVisit <= 30) {
+        } else if (daysSinceLastVisit <= (config.days_active_customer || 30)) {
             return 'activo';
         } else {
             return 'inactivo';
@@ -212,9 +233,9 @@ export default function CRMInteligente() {
             const segmentCustomers = customers.filter(c => c.segment === segment);
             stats[segment] = {
                 count: segmentCustomers.length,
-                totalValue: segmentCustomers.reduce((sum, c) => sum + (c.total_spent || 0), 0),
-                avgTicket: segmentCustomers.length > 0 
-                    ? segmentCustomers.reduce((sum, c) => sum + (c.avg_ticket || 0), 0) / segmentCustomers.length 
+                totalVisits: segmentCustomers.reduce((sum, c) => sum + (c.visits_count || 0), 0),
+                avgVisits: segmentCustomers.length > 0 
+                    ? segmentCustomers.reduce((sum, c) => sum + (c.visits_count || 0), 0) / segmentCustomers.length 
                     : 0
             };
         });
@@ -237,7 +258,7 @@ export default function CRMInteligente() {
                 description: `${inactiveCustomers.length} clientes llevan más de 60 días sin visitar`,
                 customers: inactiveCustomers.slice(0, 5), // Mostrar solo los primeros 5
                 template: 'reactivacion',
-                estimatedImpact: inactiveCustomers.length * 45 // Estimación de ingresos
+                estimatedImpact: inactiveCustomers.length // Clientes a reactivar
             });
         }
         
@@ -252,26 +273,25 @@ export default function CRMInteligente() {
                 description: `${newCustomers.length} clientes nuevos necesitan mensaje de bienvenida`,
                 customers: newCustomers,
                 template: 'bienvenida',
-                estimatedImpact: newCustomers.length * 25
+                estimatedImpact: newCustomers.length // Clientes nuevos
             });
         }
         
-        // Sugerencias para promoción a VIP
-        const potentialVIPs = customers.filter(c => 
+        // Sugerencias para promoción a BIB
+        const potentialBIBs = customers.filter(c => 
             c.segment === 'activo' && 
-            c.visits_count >= 8 && 
-            c.total_spent >= 300
+            c.visits_count >= 8
         );
-        if (potentialVIPs.length > 0) {
+        if (potentialBIBs.length > 0) {
             suggestions.push({
-                id: 'promote_vip',
-                type: 'vip',
+                id: 'promote_bib',
+                type: 'bib',
                 priority: 'high',
-                title: `Promover ${potentialVIPs.length} clientes a VIP`,
-                description: `${potentialVIPs.length} clientes califican para ser VIP`,
-                customers: potentialVIPs,
-                template: 'vip',
-                estimatedImpact: potentialVIPs.length * 75
+                title: `Promover ${potentialBIBs.length} clientes a BIB`,
+                description: `${potentialBIBs.length} clientes califican para ser BIB`,
+                customers: potentialBIBs,
+                template: 'bib',
+                estimatedImpact: potentialBIBs.length // Clientes BIB
             });
         }
         
@@ -279,6 +299,111 @@ export default function CRMInteligente() {
             const priorityOrder = { high: 3, medium: 2, low: 1 };
             return priorityOrder[b.priority] - priorityOrder[a.priority];
         });
+    };
+
+    // EJECUTAR SUGERENCIAS IA - BOTÓN FUNCIONAL
+    const executeAISuggestions = async () => {
+        if (!restaurantId) return;
+        
+        try {
+            setLoading(true);
+            toast.info("Analizando clientes y generando sugerencias...");
+            
+            // Limpiar sugerencias anteriores
+            await supabase
+                .from("crm_suggestions")
+                .delete()
+                .eq("restaurant_id", restaurantId)
+                .eq("status", "pending");
+            
+            const newSuggestions = [];
+            
+            // Analizar cada cliente y generar sugerencias
+            for (const customer of customers) {
+                const segment = determineCustomerSegment(customer);
+                const template = templates.find(t => t.type === segment);
+                
+                if (template) {
+                    // Crear sugerencia basada en segmento
+                    let suggestionType = segment;
+                    let priority = 'medium';
+                    let title = '';
+                    let description = '';
+                    
+                    switch (segment) {
+                        case 'inactivo':
+                            priority = 'high';
+                            title = `Reactivar cliente inactivo: ${customer.name}`;
+                            description = `Cliente sin visitas por ${customer.daysSinceLastVisit} días`;
+                            break;
+                        case 'nuevo':
+                            priority = 'medium';
+                            title = `Dar bienvenida a: ${customer.name}`;
+                            description = `Cliente nuevo registrado hace ${differenceInDays(new Date(), parseISO(customer.created_at))} días`;
+                            break;
+                        case 'activo':
+                            if (customer.visits_count >= (crmConfig.visits_bib_customer || 10) - 2) {
+                                priority = 'high';
+                                suggestionType = 'bib';
+                                title = `Promover a BIB: ${customer.name}`;
+                                description = `Cliente con ${customer.visits_count} visitas, candidato a BIB`;
+                            }
+                            break;
+                        case 'riesgo':
+                            priority = 'high';
+                            title = `Cliente en riesgo: ${customer.name}`;
+                            description = `Cliente con riesgo de pérdida, ${customer.daysSinceLastVisit} días sin visitar`;
+                            break;
+                    }
+                    
+                    if (title) {
+                        // Generar contenido personalizado
+                        const personalizedContent = template.content
+                            .replace(/{restaurant_name}/g, restaurant?.name || 'nuestro restaurante')
+                            .replace(/{customer_name}/g, customer.name || 'Cliente')
+                            .replace(/{last_visit_date}/g, customer.last_visit_at ? format(parseISO(customer.last_visit_at), "dd/MM/yyyy", { locale: es }) : 'hace tiempo');
+                        
+                        const personalizedSubject = template.subject
+                            .replace(/{restaurant_name}/g, restaurant?.name || 'nuestro restaurante')
+                            .replace(/{customer_name}/g, customer.name || 'Cliente');
+                        
+                        newSuggestions.push({
+                            restaurant_id: restaurantId,
+                            customer_id: customer.id,
+                            template_id: template.id,
+                            type: suggestionType,
+                            priority: priority,
+                            title: title,
+                            description: description,
+                            suggested_subject: personalizedSubject,
+                            suggested_content: personalizedContent
+                        });
+                    }
+                }
+            }
+            
+            // Insertar sugerencias en Supabase
+            if (newSuggestions.length > 0) {
+                const { error } = await supabase
+                    .from("crm_suggestions")
+                    .insert(newSuggestions);
+                    
+                if (error) throw error;
+                
+                toast.success(`✅ ${newSuggestions.length} sugerencias generadas correctamente`);
+                
+                // Recargar datos
+                await loadCRMData();
+            } else {
+                toast.info("No se encontraron nuevas sugerencias para generar");
+            }
+            
+        } catch (error) {
+            console.error("Error ejecutando sugerencias IA:", error);
+            toast.error("Error al generar sugerencias automáticas");
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Cargar datos al montar
@@ -348,7 +473,7 @@ export default function CRMInteligente() {
                                     <div className="text-3xl">{segment.icon}</div>
                                 </div>
                                 <p className="text-sm text-gray-500 mt-2">
-                                    €{stats.totalValue.toFixed(0)} total
+                                    {stats.totalVisits} visitas totales
                                 </p>
                             </div>
                         );
@@ -372,11 +497,15 @@ export default function CRMInteligente() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm bg-white/20 px-2 py-1 rounded">
-                                                +€{suggestion.estimatedImpact}
+                                                {suggestion.estimatedImpact} clientes
                                             </span>
-                                            <button className="bg-white text-purple-600 px-3 py-1 rounded text-sm font-medium hover:bg-purple-50">
-                                                Ejecutar
-                                            </button>
+                            <button 
+                                onClick={executeAISuggestions}
+                                disabled={loading}
+                                className="bg-white text-purple-600 px-3 py-1 rounded text-sm font-medium hover:bg-purple-50 disabled:opacity-50"
+                            >
+                                {loading ? "Procesando..." : "Ejecutar"}
+                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -474,9 +603,9 @@ export default function CRMInteligente() {
                                                         <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${segment.color}-100 text-${segment.color}-800`}>
                                                             {segment.label}
                                                         </div>
-                                                        <div className="text-sm text-gray-500 mt-1">
-                                                            {customer.visits_count} visitas • €{customer.total_spent || 0}
-                                                        </div>
+                                            <div className="text-sm text-gray-500 mt-1">
+                                                {customer.visits_count} visitas • {customer.daysSinceLastVisit ? `${customer.daysSinceLastVisit} días` : 'Primera visita'}
+                                            </div>
                                                         {customer.last_visit_at && (
                                                             <div className="text-xs text-gray-400">
                                                                 Última visita: {format(parseISO(customer.last_visit_at), "dd/MM/yyyy", { locale: es })}
@@ -491,25 +620,170 @@ export default function CRMInteligente() {
                             </div>
                         )}
 
+                        {activeTab === "plantillas" && (
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900">Plantillas por Tipo de Cliente</h3>
+                                        <p className="text-gray-600">Gestiona las plantillas de mensajes para cada segmento</p>
+                                    </div>
+                                    <button
+                                        onClick={executeAISuggestions}
+                                        disabled={loading}
+                                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg disabled:opacity-50"
+                                    >
+                                        {loading ? (
+                                            <RefreshCw className="w-5 h-5 animate-spin" />
+                                        ) : (
+                                            <Zap className="w-5 h-5" />
+                                        )}
+                                        <span className="font-medium">{loading ? "Analizando..." : "Ejecutar IA"}</span>
+                                    </button>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {Object.entries(CUSTOMER_SEGMENTS).map(([key, segment]) => {
+                                        const segmentTemplates = templates.filter(t => t.type === key);
+                                        const segmentCount = segments[key]?.count || 0;
+                                        
+                                        return (
+                                            <div key={key} className={`bg-white rounded-lg border-l-4 border-${segment.color}-500 shadow-sm p-6`}>
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-2xl">{segment.icon}</span>
+                                                            <h4 className="font-bold text-gray-900">{segment.label}</h4>
+                                                        </div>
+                                                        <p className="text-sm text-gray-600">{segmentCount} clientes</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="space-y-3">
+                                                    {segmentTemplates.length > 0 ? (
+                                                        segmentTemplates.map(template => (
+                                                            <div key={template.id} className="bg-gray-50 rounded-lg p-3">
+                                                                <h5 className="font-medium text-gray-900 text-sm">{template.name}</h5>
+                                                                <p className="text-xs text-gray-600 mt-1">{template.subject}</p>
+                                                                <div className="flex items-center justify-between mt-2">
+                                                                    <span className={`text-xs px-2 py-1 rounded-full bg-${segment.color}-100 text-${segment.color}-800`}>
+                                                                        Activa
+                                                                    </span>
+                                                                    <span className="text-xs text-gray-500">
+                                                                        Prioridad {template.priority}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="text-center py-4 text-gray-500">
+                                                            <Mail className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                                                            <p className="text-sm">Sin plantillas</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         {activeTab === "configuracion" && (
                             <div className="space-y-6">
                                 <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 p-6 rounded-xl text-white">
                                     <h3 className="text-xl font-bold mb-2">Configuración CRM Inteligente</h3>
                                     <p className="text-purple-100">
-                                        Configura los parámetros de segmentación automática y plantillas inteligentes
+                                        Define las reglas de segmentación automática de clientes
                                     </p>
                                 </div>
                                 
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                    <div className="flex items-center">
-                                        <Brain className="w-5 h-5 text-blue-600 mr-2" />
-                                        <p className="text-blue-800 font-medium">
-                                            Configuración CRM integrada desde la página principal
-                                        </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                                        <h4 className="font-bold text-gray-900 mb-4">Reglas de Segmentación</h4>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Cliente Nuevo (días desde registro)
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <input 
+                                                        type="number" 
+                                                        value={crmConfig.days_new_customer || 7}
+                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                                        disabled
+                                                    />
+                                                    <span className="text-sm text-gray-500">días</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Cliente Activo (días desde última visita)
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <input 
+                                                        type="number" 
+                                                        value={crmConfig.days_active_customer || 30}
+                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                                        disabled
+                                                    />
+                                                    <span className="text-sm text-gray-500">días</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Cliente BIB (visitas mínimas)
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <input 
+                                                        type="number" 
+                                                        value={crmConfig.visits_bib_customer || 10}
+                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                                        disabled
+                                                    />
+                                                    <span className="text-sm text-gray-500">visitas</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Cliente Inactivo (días sin visitar)
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <input 
+                                                        type="number" 
+                                                        value={crmConfig.days_inactive_customer || 60}
+                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                                        disabled
+                                                    />
+                                                    <span className="text-sm text-gray-500">días</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <p className="text-blue-600 text-sm mt-1">
-                                        Todas las configuraciones se centralizan aquí para evitar dispersión de información
-                                    </p>
+                                    
+                                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                                        <h4 className="font-bold text-gray-900 mb-4">Estado del Sistema</h4>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-medium text-gray-700">Segmentación Automática</span>
+                                                <span className="text-sm text-green-600 font-medium">✅ Activa</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-medium text-gray-700">Sugerencias IA</span>
+                                                <span className="text-sm text-green-600 font-medium">✅ Activa</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-medium text-gray-700">Plantillas Cargadas</span>
+                                                <span className="text-sm text-blue-600 font-medium">{templates.length} plantillas</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-medium text-gray-700">Clientes Totales</span>
+                                                <span className="text-sm text-purple-600 font-medium">{customers.length} clientes</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
