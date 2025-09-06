@@ -435,6 +435,28 @@ const Configuracion = () => {
                     detail: { operating_hours: settings.operating_hours }
                 }));
                 
+            } else if (section === "Canales de comunicación") {
+                // Guardar configuración de canales específicamente
+                const { data: currentData } = await supabase
+                    .from("restaurants")
+                    .select("settings")
+                    .eq("id", restaurantId)
+                    .single();
+                    
+                const currentSettings = currentData?.settings || {};
+                
+                const { error } = await supabase
+                    .from("restaurants")
+                    .update({
+                        settings: {
+                            ...currentSettings,
+                            channels: settings.channels || {}
+                        },
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("id", restaurantId);
+
+                if (error) throw error;
             } else {
                 // Para otras secciones, guardar en settings
             const { error } = await supabase
@@ -994,11 +1016,238 @@ const Configuracion = () => {
 
                     {/* Otros tabs simplificados para evitar errores */}
                     {activeTab === "channels" && (
-                        <div className="text-center py-12">
-                            <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">Canales de Comunicación</h3>
-                            <p className="text-gray-600">5 canales implementados: WhatsApp, VAPI, Instagram, Facebook, Web Chat</p>
+                        <SettingSection
+                            title="Canales de Comunicación Enterprise"
+                            description="Gestión omnicanal con integración automática IA"
+                            icon={<MessageSquare />}
+                        >
+                            <div className="space-y-6">
+                                {/* WhatsApp */}
+                                <div className="bg-green-50 p-6 rounded-xl border border-green-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                                                <MessageSquare className="w-4 h-4 text-white" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-medium text-gray-900">WhatsApp Business</h4>
+                                                <p className="text-sm text-gray-600">Canal principal de comunicación</p>
+                                            </div>
+                                        </div>
+                                        <ToggleSwitch
+                                            enabled={settings.channels?.whatsapp?.enabled || false}
+                                            onChange={(enabled) => setSettings(prev => ({
+                                                ...prev,
+                                                channels: {
+                                                    ...prev.channels,
+                                                    whatsapp: { ...prev.channels?.whatsapp, enabled }
+                                                }
+                                            }))}
+                                            label=""
+                                        />
+                                    </div>
+                                    {settings.channels?.whatsapp?.enabled && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Número de teléfono
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.channels?.whatsapp?.phone_number || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            whatsapp: { ...prev.channels?.whatsapp, phone_number: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                    placeholder="+34 600 000 000"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Token API
+                                                </label>
+                                                <input
+                                                    type="password"
+                                                    value={settings.channels?.whatsapp?.api_token || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            whatsapp: { ...prev.channels?.whatsapp, api_token: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                    placeholder="Token de WhatsApp Business API"
+                                                />
+                                            </div>
                         </div>
+                                    )}
+                                </div>
+
+                                {/* Webchat */}
+                                <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                                <MessageSquare className="w-4 h-4 text-white" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-medium text-gray-900">Web Chat</h4>
+                                                <p className="text-sm text-gray-600">Chat integrado en la web</p>
+                                            </div>
+                                        </div>
+                                        <ToggleSwitch
+                                            enabled={settings.channels?.webchat?.enabled !== false}
+                                            onChange={(enabled) => setSettings(prev => ({
+                                                ...prev,
+                                                channels: {
+                                                    ...prev.channels,
+                                                    webchat: { ...prev.channels?.webchat, enabled }
+                                                }
+                                            }))}
+                                            label=""
+                                        />
+                                    </div>
+                                    {settings.channels?.webchat?.enabled !== false && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Color principal
+                                                </label>
+                                                <input
+                                                    type="color"
+                                                    value={settings.channels?.webchat?.primary_color || "#6366f1"}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            webchat: { ...prev.channels?.webchat, primary_color: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full h-10 border border-gray-300 rounded-lg"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Posición
+                                                </label>
+                                                <select
+                                                    value={settings.channels?.webchat?.position || "bottom-right"}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            webchat: { ...prev.channels?.webchat, position: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                >
+                                                    <option value="bottom-right">Abajo Derecha</option>
+                                                    <option value="bottom-left">Abajo Izquierda</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Instagram */}
+                                <div className="bg-pink-50 p-6 rounded-xl border border-pink-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center">
+                                                <MessageSquare className="w-4 h-4 text-white" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-medium text-gray-900">Instagram</h4>
+                                                <p className="text-sm text-gray-600">Mensajes directos automáticos</p>
+                                            </div>
+                                        </div>
+                                        <ToggleSwitch
+                                            enabled={settings.channels?.instagram?.enabled || false}
+                                            onChange={(enabled) => setSettings(prev => ({
+                                                ...prev,
+                                                channels: {
+                                                    ...prev.channels,
+                                                    instagram: { ...prev.channels?.instagram, enabled }
+                                                }
+                                            }))}
+                                            label=""
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Facebook */}
+                                <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center">
+                                                <MessageSquare className="w-4 h-4 text-white" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-medium text-gray-900">Facebook Messenger</h4>
+                                                <p className="text-sm text-gray-600">Chat de página de Facebook</p>
+                                            </div>
+                                        </div>
+                                        <ToggleSwitch
+                                            enabled={settings.channels?.facebook?.enabled || false}
+                                            onChange={(enabled) => setSettings(prev => ({
+                                                ...prev,
+                                                channels: {
+                                                    ...prev.channels,
+                                                    facebook: { ...prev.channels?.facebook, enabled }
+                                                }
+                                            }))}
+                                            label=""
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* VAPI (Llamadas IA) */}
+                                <div className="bg-purple-50 p-6 rounded-xl border border-purple-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                                                <Phone className="w-4 h-4 text-white" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-medium text-gray-900">VAPI - Llamadas IA</h4>
+                                                <p className="text-sm text-gray-600">Asistente telefónico inteligente</p>
+                                            </div>
+                                        </div>
+                                        <ToggleSwitch
+                                            enabled={settings.channels?.vapi?.enabled || false}
+                                            onChange={(enabled) => setSettings(prev => ({
+                                                ...prev,
+                                                channels: {
+                                                    ...prev.channels,
+                                                    vapi: { ...prev.channels?.vapi, enabled }
+                                                }
+                                            }))}
+                                            label=""
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                                <button
+                                    onClick={() => handleSave("Canales de comunicación")}
+                                    disabled={saving}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                >
+                                    {saving ? (
+                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Save className="w-4 h-4" />
+                                    )}
+                                    Guardar Canales
+                                </button>
+                            </div>
+                        </SettingSection>
                     )}
 
                     {activeTab === "notifications" && (

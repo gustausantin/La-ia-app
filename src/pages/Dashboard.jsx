@@ -61,6 +61,10 @@ export default function Dashboard() {
         activeChannels: 0,
         channelsList: [],
         
+        // Datos de horarios y operación
+        daysOpen: 0,
+        weeklyHours: 0,
+        
         // Datos de clientes
         totalCustomers: 0,
         newCustomersToday: 0,
@@ -105,6 +109,54 @@ export default function Dashboard() {
         
         return `${peakHour}h`;
     };
+
+    // Función para calcular métricas de horarios REALES desde configuración
+    const fetchScheduleMetrics = useCallback(async () => {
+        if (!restaurantId) return { daysOpen: 0, weeklyHours: 0 };
+
+        try {
+            const { data: restaurant, error } = await supabase
+                .from('restaurants')
+                .select('settings')
+                .eq('id', restaurantId)
+                .single();
+
+            if (error) {
+                logger.warn("Error cargando configuración de horarios:", error);
+                return { daysOpen: 0, weeklyHours: 0 };
+            }
+
+            const operatingHours = restaurant?.settings?.operating_hours || {};
+            
+            let daysOpen = 0;
+            let totalMinutes = 0;
+
+            Object.values(operatingHours).forEach(day => {
+                if (day.open && day.start && day.end) {
+                    daysOpen++;
+                    
+                    // Calcular minutos del día
+                    const [startHour, startMin] = day.start.split(':').map(Number);
+                    const [endHour, endMin] = day.end.split(':').map(Number);
+                    
+                    const startTotalMin = startHour * 60 + startMin;
+                    const endTotalMin = endHour * 60 + endMin;
+                    
+                    totalMinutes += endTotalMin - startTotalMin;
+                }
+            });
+
+            const weeklyHours = Math.round(totalMinutes / 60 * 10) / 10; // Redondear a 1 decimal
+
+            logger.info('✅ Métricas de horarios calculadas:', { daysOpen, weeklyHours });
+            
+            return { daysOpen, weeklyHours };
+            
+        } catch (error) {
+            logger.error("Error calculando métricas de horarios:", error);
+            return { daysOpen: 0, weeklyHours: 0 };
+        }
+    }, [restaurantId]);
 
     // Función para obtener canales REALES configurados
     const fetchRealChannels = useCallback(async () => {
@@ -268,11 +320,12 @@ export default function Dashboard() {
         try {
             logger.info('🔄 Cargando datos reales del dashboard...');
 
-            const [reservationsData, tablesData, customersData, channelsData] = await Promise.all([
+            const [reservationsData, tablesData, customersData, channelsData, scheduleData] = await Promise.all([
                 fetchRealReservations(),
                 fetchRealTables(),
                 fetchRealCustomers(),
-                fetchRealChannels()
+                fetchRealChannels(),
+                fetchScheduleMetrics()
             ]);
 
             // Calcular ocupación REAL
@@ -294,6 +347,10 @@ export default function Dashboard() {
                 // Canales REALES
                 activeChannels: channelsData.count,
                 channelsList: channelsData.list,
+                
+                // Horarios REALES desde configuración
+                daysOpen: scheduleData.daysOpen,
+                weeklyHours: scheduleData.weeklyHours,
                 
                 // Clientes REALES
                 totalCustomers: customersData.totalCustomers,
