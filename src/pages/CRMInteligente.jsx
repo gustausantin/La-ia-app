@@ -212,35 +212,35 @@ export default function CRMInteligente() {
 
     // DETERMINAR SEGMENTO DE CLIENTE AUTOMÁTICAMENTE
     const determineCustomerSegment = (customer) => {
+        if (!customer) return 'activo';
+        
         const now = new Date();
-        const createdAt = parseISO(customer.created_at);
+        const createdAt = customer.created_at ? parseISO(customer.created_at) : now;
         const lastVisit = customer.last_visit_at ? parseISO(customer.last_visit_at) : null;
         
         const daysSinceCreated = differenceInDays(now, createdAt);
         const daysSinceLastVisit = lastVisit ? differenceInDays(now, lastVisit) : 999;
         
-        // Usar configuración de Supabase para segmentación
-        const config = crmConfig || {
-            days_new_customer: 7,
-            days_active_customer: 30,
-            days_inactive_customer: 60,
-            visits_bib_customer: 10,
-            days_risk_customer: 45
+        // Usar configuración de Supabase para segmentación con valores por defecto
+        const config = {
+            days_new_customer: crmConfig?.days_new_customer || 7,
+            days_active_customer: crmConfig?.days_active_customer || 30,
+            days_inactive_customer: crmConfig?.days_inactive_customer || 60,
+            visits_bib_customer: crmConfig?.visits_bib_customer || 10,
+            days_risk_customer: crmConfig?.days_risk_customer || 45
         };
         
         // Lógica de segmentación inteligente basada en configuración
-        if (daysSinceCreated <= (config.days_new_customer || 7)) {
+        if (daysSinceCreated <= config.days_new_customer) {
             return 'nuevo';
-        } else if (customer.visits_count >= (config.visits_bib_customer || 10)) {
+        } else if ((customer.visits_count || 0) >= config.visits_bib_customer) {
             return 'bib';
-        } else if (daysSinceLastVisit > (config.days_inactive_customer || 60)) {
+        } else if (daysSinceLastVisit > config.days_inactive_customer) {
             return 'inactivo';
-        } else if (daysSinceLastVisit > (config.days_risk_customer || 45) && customer.churn_risk_score > 70) {
+        } else if (daysSinceLastVisit > config.days_risk_customer) {
             return 'riesgo';
-        } else if (daysSinceLastVisit <= (config.days_active_customer || 30)) {
-            return 'activo';
         } else {
-            return 'inactivo';
+            return 'activo';
         }
     };
 
@@ -460,6 +460,40 @@ export default function CRMInteligente() {
     const openCustomerModal = (customer) => {
         setSelectedCustomer(customer);
         setShowCustomerModal(true);
+    };
+
+    // GUARDAR CONFIGURACIÓN CRM
+    const saveCrmConfig = async () => {
+        try {
+            setLoading(true);
+            
+            const { error } = await supabase
+                .from("crm_settings")
+                .upsert({
+                    restaurant_id: restaurantId,
+                    days_new_customer: crmConfig.days_new_customer || 7,
+                    days_active_customer: crmConfig.days_active_customer || 30,
+                    days_inactive_customer: crmConfig.days_inactive_customer || 60,
+                    visits_bib_customer: crmConfig.visits_bib_customer || 10,
+                    days_risk_customer: crmConfig.days_risk_customer || 45,
+                    auto_suggestions: true,
+                    auto_segmentation: true,
+                    updated_at: new Date().toISOString()
+                });
+                
+            if (error) throw error;
+            
+            toast.success("✅ Configuración CRM guardada correctamente");
+            
+            // Recargar datos para aplicar nueva configuración
+            await loadCRMData();
+            
+        } catch (error) {
+            console.error("Error guardando configuración CRM:", error);
+            toast.error("Error al guardar la configuración");
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Cargar datos al montar
@@ -800,8 +834,13 @@ export default function CRMInteligente() {
                                                     <input 
                                                         type="number" 
                                                         value={crmConfig.days_new_customer || 7}
-                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                                        disabled
+                                                        onChange={(e) => setCrmConfig(prev => ({
+                                                            ...prev,
+                                                            days_new_customer: parseInt(e.target.value) || 7
+                                                        }))}
+                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        min="1"
+                                                        max="365"
                                                     />
                                                     <span className="text-sm text-gray-500">días</span>
                                                 </div>
@@ -815,8 +854,13 @@ export default function CRMInteligente() {
                                                     <input 
                                                         type="number" 
                                                         value={crmConfig.days_active_customer || 30}
-                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                                        disabled
+                                                        onChange={(e) => setCrmConfig(prev => ({
+                                                            ...prev,
+                                                            days_active_customer: parseInt(e.target.value) || 30
+                                                        }))}
+                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        min="1"
+                                                        max="365"
                                                     />
                                                     <span className="text-sm text-gray-500">días</span>
                                                 </div>
@@ -830,8 +874,13 @@ export default function CRMInteligente() {
                                                     <input 
                                                         type="number" 
                                                         value={crmConfig.visits_bib_customer || 10}
-                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                                        disabled
+                                                        onChange={(e) => setCrmConfig(prev => ({
+                                                            ...prev,
+                                                            visits_bib_customer: parseInt(e.target.value) || 10
+                                                        }))}
+                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        min="1"
+                                                        max="100"
                                                     />
                                                     <span className="text-sm text-gray-500">visitas</span>
                                                 </div>
@@ -845,8 +894,33 @@ export default function CRMInteligente() {
                                                     <input 
                                                         type="number" 
                                                         value={crmConfig.days_inactive_customer || 60}
-                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                                        disabled
+                                                        onChange={(e) => setCrmConfig(prev => ({
+                                                            ...prev,
+                                                            days_inactive_customer: parseInt(e.target.value) || 60
+                                                        }))}
+                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        min="1"
+                                                        max="365"
+                                                    />
+                                                    <span className="text-sm text-gray-500">días</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Cliente En Riesgo (días desde última visita)
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <input 
+                                                        type="number" 
+                                                        value={crmConfig.days_risk_customer || 45}
+                                                        onChange={(e) => setCrmConfig(prev => ({
+                                                            ...prev,
+                                                            days_risk_customer: parseInt(e.target.value) || 45
+                                                        }))}
+                                                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        min="1"
+                                                        max="365"
                                                     />
                                                     <span className="text-sm text-gray-500">días</span>
                                                 </div>
@@ -855,7 +929,21 @@ export default function CRMInteligente() {
                                     </div>
                                     
                                     <div className="bg-white rounded-lg border border-gray-200 p-6">
-                                        <h4 className="font-bold text-gray-900 mb-4">Estado del Sistema</h4>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="font-bold text-gray-900">Estado del Sistema</h4>
+                                            <button
+                                                onClick={saveCrmConfig}
+                                                disabled={loading}
+                                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                                            >
+                                                {loading ? (
+                                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Save className="w-4 h-4" />
+                                                )}
+                                                Guardar Configuración
+                                            </button>
+                                        </div>
                                         <div className="space-y-4">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm font-medium text-gray-700">Segmentación Automática</span>
@@ -911,11 +999,11 @@ export default function CRMInteligente() {
                             <div className="mb-6">
                                 <div className="flex items-center gap-3 mb-4">
                                     <span className="text-2xl">
-                                        {CUSTOMER_SEGMENTS[selectedCustomer.segment]?.icon || '👤'}
+                                        {CUSTOMER_SEGMENTS[determineCustomerSegment(selectedCustomer)]?.icon || '👤'}
                                     </span>
                                     <div>
                                         <h4 className="font-bold text-gray-900">
-                                            Cliente {CUSTOMER_SEGMENTS[selectedCustomer.segment]?.label || 'Activo'}
+                                            Cliente {CUSTOMER_SEGMENTS[determineCustomerSegment(selectedCustomer)]?.label || 'Activo'}
                                         </h4>
                                         <p className="text-sm text-gray-600">
                                             Segmentación automática basada en comportamiento
