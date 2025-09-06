@@ -1,4 +1,4 @@
-// ConfiguracionFixed.jsx - VERSIÓN ULTRA ROBUSTA PARA PRODUCCIÓN
+// Configuracion.jsx - Panel de Configuración COMPLETO y MEJORADO para Son-IA
 import React, { useState, useEffect } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -228,6 +228,16 @@ export default function ConfiguracionFixed() {
             id: "general",
             label: "General",
             icon: <Building2 className="w-4 h-4" />,
+        },
+        { 
+            id: "hours", 
+            label: "Horarios y Calendario", 
+            icon: <Clock className="w-4 h-4" /> 
+        },
+        {
+            id: "reservations",
+            label: "Reservas",
+            icon: <Calendar className="w-4 h-4" />,
         },
         {
             id: "agent",
