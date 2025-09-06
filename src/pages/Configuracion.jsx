@@ -161,7 +161,6 @@ const Configuracion = () => {
         tripadvisor_url: "",
         google_maps_url: "",
         opening_year: new Date().getFullYear(),
-        chef_name: "",
         parking_available: false,
         wifi_available: true,
         accepts_groups: true,
@@ -374,7 +373,7 @@ const Configuracion = () => {
         loadSettings();
     }, [restaurantId]);
 
-    // Función de guardado
+    // Función de guardado mejorada
     const handleSave = async (section) => {
         if (!restaurantId) {
             toast.error("No se encontró el ID del restaurante");
@@ -385,15 +384,84 @@ const Configuracion = () => {
             setSaving(true);
             console.log(`💾 GUARDANDO SECCIÓN: ${section}`, settings);
 
-            const { error } = await supabase
-                .from("restaurants")
-                .update({
-                    settings: settings,
-                    updated_at: new Date().toISOString()
-                })
-                .eq("id", restaurantId);
+            if (section === "Información General") {
+                // Guardar campos directos en la tabla restaurants
+                const { error } = await supabase
+                    .from("restaurants")
+                    .update({
+                        name: settings.name,
+                        email: settings.email,
+                        phone: settings.phone,
+                        address: settings.address,
+                        city: settings.city,
+                        postal_code: settings.postal_code,
+                        cuisine_type: settings.cuisine_type,
+                        settings: {
+                            description: settings.description,
+                            website: settings.website,
+                            logo_url: settings.logo_url,
+                            capacity_total: settings.capacity_total,
+                            price_range: settings.price_range,
+                            instagram_handle: settings.instagram_handle,
+                            facebook_page: settings.facebook_page,
+                            // Configuración del agente
+                            agent: {
+                                name: settings.agent?.name || 'Asistente Virtual',
+                                personality: 'amigable_profesional',
+                                enabled: settings.agent?.enabled !== false
+                            },
+                            // Configuración de reservas
+                            min_party_size: settings.min_party_size,
+                            max_party_size: settings.max_party_size,
+                            reservation_duration: settings.reservation_duration,
+                            buffer_time: settings.buffer_time,
+                            advance_booking_days: settings.advance_booking_days,
+                            same_day_cutoff: settings.same_day_cutoff,
+                            cancellation_hours: settings.cancellation_hours
+                        },
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("id", restaurantId);
 
-            if (error) throw error;
+                if (error) throw error;
+            } else if (section === "Configuración del Agente") {
+                // Guardar configuración del agente específicamente
+                const { data: currentData } = await supabase
+                    .from("restaurants")
+                    .select("settings")
+                    .eq("id", restaurantId)
+                    .single();
+                    
+                const currentSettings = currentData?.settings || {};
+                
+                const { error } = await supabase
+                    .from("restaurants")
+                    .update({
+                        settings: {
+                            ...currentSettings,
+                            agent: {
+                                name: settings.agent?.name || 'Asistente Virtual',
+                                personality: 'amigable_profesional',
+                                enabled: settings.agent?.enabled !== false
+                            }
+                        },
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("id", restaurantId);
+
+                if (error) throw error;
+            } else {
+                // Para otras secciones, guardar en settings
+                const { error } = await supabase
+                    .from("restaurants")
+                    .update({
+                        settings: settings,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("id", restaurantId);
+
+                if (error) throw error;
+            }
 
             toast.success(`✅ ${section} guardado correctamente`);
             
@@ -705,18 +773,6 @@ const Configuracion = () => {
                                             </p>
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Chef Principal
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={settings.chef_name}
-                                                onChange={(e) => setSettings(prev => ({ ...prev, chef_name: e.target.value }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                                placeholder="Nombre del chef ejecutivo"
-                                            />
-                                        </div>
                                     </div>
 
                                     <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
@@ -1051,62 +1107,87 @@ const Configuracion = () => {
                                                 Personalidad
                                             </label>
                                             <select
-                                                value={settings.agent?.personality || 'amigable'}
-                                                onChange={(e) => setSettings(prev => ({
-                                                    ...prev,
-                                                    agent: { ...prev.agent, personality: e.target.value }
-                                                }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                value="amigable_profesional"
+                                                disabled
+                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
                                             >
-                                                <option value="profesional">Profesional</option>
-                                                <option value="amigable">Amigable</option>
-                                                <option value="casual">Casual</option>
-                                                <option value="formal">Formal</option>
-                                                <option value="entusiasta">Entusiasta</option>
+                                                <option value="amigable_profesional">Amigable y Profesional</option>
                                             </select>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Personalidad fija para MVP - Amigable y profesional
+                                            </p>
                                         </div>
                                     </div>
 
-                                    {/* Capacidades del Agente */}
+                                    {/* Capacidades del Agente - Solo informativas */}
                                     <div className="bg-green-50 p-6 rounded-xl border border-green-200">
-                                        <h4 className="font-medium text-gray-900 mb-4">Capacidades del Agente IA</h4>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                            <ToggleSwitch
-                                                enabled={settings.agent?.capabilities?.reservations !== false}
-                                                onChange={() => {}}
-                                                label="Gestión de Reservas"
-                                                description="Crear, modificar y cancelar reservas automáticamente"
-                                            />
-                                            <ToggleSwitch
-                                                enabled={settings.agent?.capabilities?.menu_info !== false}
-                                                onChange={() => {}}
-                                                label="Información de Menú"
-                                                description="Responder sobre platos y precios"
-                                            />
-                                            <ToggleSwitch
-                                                enabled={settings.agent?.capabilities?.hours_info !== false}
-                                                onChange={() => {}}
-                                                label="Horarios y Ubicación"
-                                                description="Informar sobre horarios y cómo llegar"
-                                            />
-                                            <ToggleSwitch
-                                                enabled={true}
-                                                onChange={() => {}}
-                                                label="Escalamiento Inteligente"
-                                                description="Derivar a humano cuando sea necesario"
-                                            />
-                                            <ToggleSwitch
-                                                enabled={true}
-                                                onChange={() => {}}
-                                                label="Optimización de Mesas"
-                                                description="Asignar las mejores mesas automáticamente"
-                                            />
-                                            <ToggleSwitch
-                                                enabled={true}
-                                                onChange={() => {}}
-                                                label="Respuesta Inmediata"
-                                                description="Tiempo de respuesta < 30 segundos"
-                                            />
+                                        <h4 className="font-medium text-gray-900 mb-4">Capacidades del Agente IA (Incluidas en MVP)</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
+                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
+                                                    <Check className="w-3 h-3 text-white" />
+                                                </div>
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Gestión de Reservas</h5>
+                                                    <p className="text-sm text-gray-600">Crear, modificar y cancelar reservas automáticamente</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
+                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
+                                                    <Check className="w-3 h-3 text-white" />
+                                                </div>
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Escalamiento Inteligente</h5>
+                                                    <p className="text-sm text-gray-600">Derivar a humano cuando sea necesario</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
+                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
+                                                    <Check className="w-3 h-3 text-white" />
+                                                </div>
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Información de Menú</h5>
+                                                    <p className="text-sm text-gray-600">Responder sobre platos y precios</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
+                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
+                                                    <Check className="w-3 h-3 text-white" />
+                                                </div>
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Optimización de Mesas</h5>
+                                                    <p className="text-sm text-gray-600">Asignar las mejores mesas automáticamente</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
+                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
+                                                    <Check className="w-3 h-3 text-white" />
+                                                </div>
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Horarios y Ubicación</h5>
+                                                    <p className="text-sm text-gray-600">Informar sobre horarios y cómo llegar</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
+                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
+                                                    <Check className="w-3 h-3 text-white" />
+                                                </div>
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Respuesta Inmediata</h5>
+                                                    <p className="text-sm text-gray-600">Tiempo de respuesta menor a 30 segundos</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                            <p className="text-sm text-blue-800">
+                                                <Info className="w-4 h-4 inline mr-1" />
+                                                Todas estas capacidades están incluidas en el MVP y no se pueden desactivar.
+                                            </p>
                                         </div>
                                     </div>
 
