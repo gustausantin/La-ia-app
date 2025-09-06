@@ -180,14 +180,22 @@ export default function Calendario() {
                     day_of_week: day.id,
                     day_name: day.name,
                     is_open: isOpen,
-                    slots: isOpen ? [
-                        {
-                            id: 1,
-                            name: "Horario Principal",
-                            start_time: dayHours?.start || "09:00",
-                            end_time: dayHours?.end || "22:00"
-                        }
-                    ] : []
+                    slots: isOpen ? (
+                        // CARGAR TURNOS GUARDADOS o crear uno por defecto
+                        dayHours?.shifts && dayHours.shifts.length > 0 
+                            ? dayHours.shifts.map(shift => ({
+                                id: shift.id || Date.now() + Math.random(),
+                                name: shift.name || "Turno",
+                                start_time: shift.start_time,
+                                end_time: shift.end_time
+                            }))
+                            : [{
+                                id: 1,
+                                name: "Horario Principal",
+                                start_time: dayHours?.start || "09:00",
+                                end_time: dayHours?.end || "22:00"
+                            }]
+                    ) : []
                 };
             });
 
