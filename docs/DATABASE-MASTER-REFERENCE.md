@@ -6,15 +6,15 @@
 
 **📅 Última actualización:** 31 Enero 2025 - APLICACIÓN DE PRODUCCIÓN REAL  
 **🎯 Estado:** 100% DATOS REALES - ZERO MOCK DATA - PRODUCTION READY  
-**📋 Total tablas:** 38+ tablas enterprise con integridad completa
+**📋 Total tablas:** 41+ tablas enterprise con integridad completa
 
 ---
 
 ## 🎯 **RESUMEN EJECUTIVO WORLD-CLASS**
 
 ### **📊 ESTADÍSTICAS FINALES:**
-- **38+ TABLAS ENTERPRISE** ✅
-- **15+ Tablas CRM IA avanzadas** ✅
+- **41+ TABLAS ENTERPRISE** ✅
+- **18+ Tablas CRM IA avanzadas** ✅
 - **23+ Tablas core funcionalidad** ✅
 - **Todas con UUID como PRIMARY KEY**
 - **Relaciones por `restaurant_id`**
@@ -159,6 +159,65 @@ updated_at           TIMESTAMPTZ DEFAULT timezone('utc', now())
 ```
 **🎯 Función:** CRM REVOLUCIONARIO con IA automática
 **🌟 Diferenciador Mundial:** Segmentación automática + predicciones ML ÚNICO
+
+### **📧 `crm_templates`** (Plantillas CRM Inteligentes)
+```sql
+id                UUID PRIMARY KEY DEFAULT gen_random_uuid()
+restaurant_id     UUID NOT NULL → restaurants(id)
+name              VARCHAR NOT NULL
+type              VARCHAR NOT NULL -- 'nuevo', 'activo', 'bib', 'inactivo', 'riesgo'
+subject           VARCHAR NOT NULL
+content           TEXT NOT NULL
+variables         JSONB DEFAULT '[]' -- Variables dinámicas como {restaurant_name}, {customer_name}
+active            BOOLEAN DEFAULT true
+priority          INTEGER DEFAULT 1 -- 1-5 prioridad de la plantilla
+created_at        TIMESTAMPTZ DEFAULT timezone('utc', now())
+updated_at        TIMESTAMPTZ DEFAULT timezone('utc', now())
+```
+**🎯 Función:** Plantillas específicas por segmento de cliente
+**🌟 Diferenciador:** Variables dinámicas + priorización automática
+
+### **⚙️ `crm_settings`** (Configuración Reglas CRM)
+```sql
+id                        UUID PRIMARY KEY DEFAULT gen_random_uuid()
+restaurant_id             UUID NOT NULL → restaurants(id)
+days_new_customer         INTEGER DEFAULT 7 -- Qué significa "nuevo"
+days_active_customer      INTEGER DEFAULT 30 -- Qué significa "activo" 
+days_inactive_customer    INTEGER DEFAULT 60 -- Qué significa "inactivo"
+visits_bib_customer       INTEGER DEFAULT 10 -- Visitas para ser BIB
+days_risk_customer        INTEGER DEFAULT 45 -- Días para estar "en riesgo"
+frequency_reactivation    INTEGER DEFAULT 90 -- Cada cuántos días sugerir reactivación
+frequency_welcome         INTEGER DEFAULT 1 -- Días después del registro para bienvenida
+frequency_bib_promotion   INTEGER DEFAULT 180 -- Días para evaluar promoción BIB
+auto_suggestions          BOOLEAN DEFAULT true -- Activar sugerencias automáticas
+auto_segmentation         BOOLEAN DEFAULT true -- Activar segmentación automática
+created_at                TIMESTAMPTZ DEFAULT timezone('utc', now())
+updated_at                TIMESTAMPTZ DEFAULT timezone('utc', now())
+UNIQUE(restaurant_id) -- Solo una configuración por restaurante
+```
+**🎯 Función:** Reglas parametrizables de segmentación automática
+**🌟 Diferenciador:** Configuración granular + automatización total
+
+### **🤖 `crm_suggestions`** (Sugerencias IA Automáticas)
+```sql
+id                  UUID PRIMARY KEY DEFAULT gen_random_uuid()
+restaurant_id       UUID NOT NULL → restaurants(id)
+customer_id         UUID NOT NULL → customers(id)
+template_id         UUID → crm_templates(id)
+type                VARCHAR NOT NULL -- 'reactivacion', 'bienvenida', 'bib', etc.
+priority            VARCHAR DEFAULT 'medium' -- 'high', 'medium', 'low'
+title               VARCHAR NOT NULL
+description         TEXT
+status              VARCHAR DEFAULT 'pending' -- 'pending', 'sent', 'dismissed'
+suggested_at        TIMESTAMPTZ DEFAULT timezone('utc', now())
+executed_at         TIMESTAMPTZ
+suggested_subject   VARCHAR
+suggested_content   TEXT
+created_at          TIMESTAMPTZ DEFAULT timezone('utc', now())
+updated_at          TIMESTAMPTZ DEFAULT timezone('utc', now())
+```
+**🎯 Función:** Sugerencias automáticas generadas por IA
+**🌟 Diferenciador:** Contenido personalizado + tracking completo
 
 ---
 
