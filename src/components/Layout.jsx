@@ -14,6 +14,7 @@ import {
     Clock,
     MessageSquare,
     Bot,
+    Brain,
     Bell,
     ChevronDown,
     LogOut,
@@ -72,10 +73,10 @@ export default function Layout() {
         },
         { name: "Clientes", path: "/clientes", icon: Users, badge: null },
         {
-            name: "CRM Mensajes",
-            path: "/crm/mensajes",
-            icon: Zap,
-            badge: null, // TODO: Implementar contador de mensajes programados
+            name: "CRM Inteligente",
+            path: "/crm",
+            icon: Brain,
+            badge: null, // TODO: Implementar contador de sugerencias IA
         },
         { name: "Mesas", path: "/mesas", icon: Briefcase, badge: null },
         {
