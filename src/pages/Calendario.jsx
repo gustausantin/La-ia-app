@@ -296,10 +296,18 @@ export default function Calendario() {
             return;
         }
 
-        // Validaciones antes de guardar
+        // VALIDACIONES MEJORADAS PARA MÚLTIPLES TURNOS
         const invalidDays = schedule.filter(day => {
             if (!day.is_open) return false;
-            return !day.slots || day.slots.length === 0 || !day.slots[0].start_time || !day.slots[0].end_time;
+            
+            // Verificar que tenga slots y que todos los slots tengan horarios válidos
+            if (!day.slots || day.slots.length === 0) return true;
+            
+            // Verificar cada slot individualmente
+            return day.slots.some(slot => 
+                !slot.start_time || !slot.end_time || 
+                slot.start_time === "" || slot.end_time === ""
+            );
         });
 
         if (invalidDays.length > 0) {
@@ -309,99 +317,132 @@ export default function Calendario() {
 
         setSaving(true);
         try {
-            console.log("🔄 Guardando horarios en calendario...", schedule);
+            console.log("🔄 Guardando horarios con múltiples turnos...", schedule);
             
-            // Mapear números de día a nombres
-            const dayMapping = {
-                1: 'monday',    // Lunes
-                2: 'tuesday',   // Martes  
-                3: 'wednesday', // Miércoles
-                4: 'thursday',  // Jueves
-                5: 'friday',    // Viernes
-                6: 'saturday',  // Sábado
-                0: 'sunday'     // Domingo
-            };
-
-            // Convertir schedule a formato operating_hours (UNIFICADO CON CONFIGURACIÓN)
+            // CONVERSIÓN ROBUSTA A FORMATO SUPABASE
             const operating_hours = {};
+            const calendar_schedule = [];
+            
             schedule.forEach(day => {
-                // day.day_of_week ya viene como string (monday, tuesday, etc.)
                 const dayName = day.day_of_week;
                 
                 if (!day.is_open || !day.slots || day.slots.length === 0) {
+                    // Día cerrado
                     operating_hours[dayName] = {
                         open: "09:00",
                         close: "22:00",
                         closed: true
                     };
+                    calendar_schedule.push({
+                        day_of_week: dayName,
+                        day_name: day.day_name,
+                        is_open: false,
+                        slots: []
+                    });
                 } else {
-                    // Para múltiples turnos, usar el primer turno como principal
-                    // y guardar todos los turnos en una propiedad adicional
-                    const firstSlot = day.slots[0];
-                    operating_hours[dayName] = {
-                        open: firstSlot.start_time || "09:00",
-                        close: firstSlot.end_time || "22:00",
-                        closed: false,
-                        // Guardar todos los turnos para uso futuro
-                        shifts: day.slots.map(slot => ({
-                            start: slot.start_time,
-                            end: slot.end_time,
-                            name: slot.name
-                        }))
-                    };
+                    // Día abierto con turnos
+                    const validSlots = day.slots.filter(slot => 
+                        slot.start_time && slot.end_time && 
+                        slot.start_time !== "" && slot.end_time !== ""
+                    );
+                    
+                    if (validSlots.length > 0) {
+                        // Usar el primer turno válido para operating_hours (compatibilidad)
+                        const firstSlot = validSlots[0];
+                        operating_hours[dayName] = {
+                            open: firstSlot.start_time,
+                            close: firstSlot.end_time,
+                            closed: false,
+                            // GUARDAR TODOS LOS TURNOS
+                            shifts: validSlots.map(slot => ({
+                                id: slot.id || Date.now() + Math.random(),
+                                name: slot.name || "Turno",
+                                start: slot.start_time,
+                                end: slot.end_time
+                            }))
+                        };
+                        
+                        calendar_schedule.push({
+                            day_of_week: dayName,
+                            day_name: day.day_name,
+                            is_open: true,
+                            slots: validSlots.map(slot => ({
+                                id: slot.id || Date.now() + Math.random(),
+                                name: slot.name || "Turno",
+                                start_time: slot.start_time,
+                                end_time: slot.end_time
+                            }))
+                        });
+                    }
                 }
             });
 
-            console.log("📊 Operating hours a guardar:", operating_hours);
+            console.log("📊 Datos a guardar:", { operating_hours, calendar_schedule });
 
-            // Obtener settings actuales para no sobrescribir otros datos
+            // GUARDADO ROBUSTO EN SUPABASE
             const { data: currentRestaurant, error: fetchError } = await supabase
                 .from("restaurants")
                 .select("settings")
                 .eq("id", restaurantId)
                 .single();
 
-            if (fetchError) {
+            if (fetchError && fetchError.code !== 'PGRST116') {
                 console.error("Error obteniendo configuración actual:", fetchError);
                 throw fetchError;
             }
 
             const currentSettings = currentRestaurant?.settings || {};
 
-            // Actualizar en la base de datos
+            // Actualizar con estructura completa
             const { error } = await supabase
                 .from("restaurants")
                 .update({
                     settings: {
                         ...currentSettings,
                         operating_hours: operating_hours,
-                        calendar_schedule: schedule // También guardar el schedule completo
+                        calendar_schedule: calendar_schedule
                     },
                     updated_at: new Date().toISOString()
                 })
                 .eq("id", restaurantId);
 
             if (error) {
-                console.error("Error en actualización Supabase:", error);
+                console.error("❌ Error Supabase:", error);
                 throw error;
             }
 
-            // Disparar evento para sync con Configuración
-            window.dispatchEvent(new CustomEvent('schedule-updated', { 
-                detail: { scheduleData: schedule, restaurantId } 
-            }));
+            // ACTUALIZAR ESTADO LOCAL
+            setSchedule(calendar_schedule);
 
-            toast.success("✅ Horarios actualizados correctamente");
-            console.log("✅ Horarios guardados exitosamente");
+            // Evento de sincronización
+            try {
+                window.dispatchEvent(new CustomEvent('schedule-updated', { 
+                    detail: { 
+                        scheduleData: calendar_schedule, 
+                        operatingHours: operating_hours,
+                        restaurantId 
+                    } 
+                }));
+            } catch (eventError) {
+                console.warn("Error disparando evento:", eventError);
+            }
+
+            toast.success("✅ Turnos guardados correctamente en Supabase");
+            console.log("✅ Guardado exitoso con múltiples turnos");
             
         } catch (error) {
-            console.error("❌ Error guardando horarios:", error);
+            console.error("❌ Error guardando turnos:", error);
             
-            // Mensajes de error más específicos
-            let errorMessage = "Error al guardar los horarios";
-            if (error.message?.includes('permission')) {
+            // MENSAJES DE ERROR ESPECÍFICOS
+            let errorMessage = "Error al guardar los turnos";
+            
+            if (error.code === 'PGRST301') {
                 errorMessage = "Sin permisos para actualizar horarios";
-            } else if (error.message?.includes('network')) {
+            } else if (error.code === '23505') {
+                errorMessage = "Conflicto en los datos. Intenta de nuevo";
+            } else if (error.message?.includes('permission')) {
+                errorMessage = "Sin permisos para actualizar horarios";
+            } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
                 errorMessage = "Error de conexión. Verifica tu internet";
             } else if (error.message?.includes('validation')) {
                 errorMessage = "Datos de horarios inválidos";
