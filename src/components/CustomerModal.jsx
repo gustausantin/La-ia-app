@@ -176,6 +176,13 @@ const CustomerModal = ({
     // Inicializar datos del cliente
     useEffect(() => {
         if (customer && isOpen) {
+            console.log('=== DEBUGGING CUSTOMER DATA ===');
+            console.log('Customer object:', customer);
+            console.log('customer.name:', customer.name);
+            console.log('customer.first_name:', customer.first_name);
+            console.log('customer.last_name1:', customer.last_name1);
+            console.log('customer.last_name2:', customer.last_name2);
+            
             setFormData({
                 name: customer.name || '',
                 first_name: customer.first_name || '',
