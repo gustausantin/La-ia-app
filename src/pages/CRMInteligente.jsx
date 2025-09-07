@@ -929,15 +929,13 @@ export default function CRMInteligente() {
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    
-                                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h4 className="font-bold text-gray-900">Estado del Sistema</h4>
+                                        
+                                        {/* Botón Guardar Configuración */}
+                                        <div className="mt-6 pt-4 border-t border-gray-200">
                                             <button
                                                 onClick={saveCrmConfig}
                                                 disabled={loading}
-                                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                                             >
                                                 {loading ? (
                                                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -947,6 +945,10 @@ export default function CRMInteligente() {
                                                 Guardar Configuración
                                             </button>
                                         </div>
+                                    </div>
+                                    
+                                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                                        <h4 className="font-bold text-gray-900 mb-4">Estado del Sistema</h4>
                                         <div className="space-y-4">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm font-medium text-gray-700">Segmentación Automática</span>

@@ -229,22 +229,38 @@ const CustomerModal = ({
         try {
             setSaving(true);
             
+            // Validaciones básicas
+            if (!formData.first_name?.trim()) {
+                toast.error('❌ El nombre es obligatorio');
+                setSaving(false);
+                return;
+            }
+            
+            if (!restaurantId) {
+                toast.error('❌ Error: No se encontró el ID del restaurante');
+                setSaving(false);
+                return;
+            }
+            
+            // Generar nombre completo automáticamente
+            const fullName = `${formData.first_name} ${formData.last_name1 || ''} ${formData.last_name2 || ''}`.trim();
+            
             // Preparar datos para guardar
             const dataToSave = {
                 restaurant_id: restaurantId,
-                name: formData.name,
-                first_name: formData.first_name,
-                last_name1: formData.last_name1,
-                last_name2: formData.last_name2,
-                email: formData.email,
-                phone: formData.phone,
-                consent_email: formData.consent_email,
-                consent_sms: formData.consent_sms,
-                consent_whatsapp: formData.consent_whatsapp,
-                preferences: formData.preferences,
-                tags: formData.tags,
-                notes: formData.notes,
-                segment_manual: formData.segment_manual,
+                name: fullName,
+                first_name: formData.first_name?.trim() || null,
+                last_name1: formData.last_name1?.trim() || null,
+                last_name2: formData.last_name2?.trim() || null,
+                email: formData.email?.trim() || null,
+                phone: formData.phone?.trim() || null,
+                consent_email: Boolean(formData.consent_email),
+                consent_sms: Boolean(formData.consent_sms),
+                consent_whatsapp: Boolean(formData.consent_whatsapp),
+                preferences: formData.preferences || {},
+                tags: formData.tags || [],
+                notes: formData.notes?.trim() || null,
+                segment_manual: formData.segment_manual?.trim() || null,
                 updated_at: new Date().toISOString()
             };
 
@@ -391,29 +407,23 @@ const CustomerModal = ({
                                         Información Personal
                                     </h3>
                                     
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Nombre completo *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={formData.name}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                            disabled={!isEditing}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
-                                            placeholder="Juan Pérez García"
-                                        />
-                                    </div>
-
                                     <div className="grid grid-cols-1 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Nombre
+                                                Nombre *
                                             </label>
                                             <input
                                                 type="text"
                                                 value={formData.first_name}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
+                                                onChange={(e) => {
+                                                    const firstName = e.target.value;
+                                                    setFormData(prev => ({ 
+                                                        ...prev, 
+                                                        first_name: firstName,
+                                                        // Actualizar nombre completo automáticamente
+                                                        name: `${firstName} ${prev.last_name1 || ''} ${prev.last_name2 || ''}`.trim()
+                                                    }));
+                                                }}
                                                 disabled={!isEditing}
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
                                                 placeholder="Juan"
@@ -427,7 +437,15 @@ const CustomerModal = ({
                                                 <input
                                                     type="text"
                                                     value={formData.last_name1}
-                                                    onChange={(e) => setFormData(prev => ({ ...prev, last_name1: e.target.value }))}
+                                                    onChange={(e) => {
+                                                        const lastName1 = e.target.value;
+                                                        setFormData(prev => ({ 
+                                                            ...prev, 
+                                                            last_name1: lastName1,
+                                                            // Actualizar nombre completo automáticamente
+                                                            name: `${prev.first_name || ''} ${lastName1} ${prev.last_name2 || ''}`.trim()
+                                                        }));
+                                                    }}
                                                     disabled={!isEditing}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
                                                     placeholder="Pérez"
@@ -440,7 +458,15 @@ const CustomerModal = ({
                                                 <input
                                                     type="text"
                                                     value={formData.last_name2}
-                                                    onChange={(e) => setFormData(prev => ({ ...prev, last_name2: e.target.value }))}
+                                                    onChange={(e) => {
+                                                        const lastName2 = e.target.value;
+                                                        setFormData(prev => ({ 
+                                                            ...prev, 
+                                                            last_name2: lastName2,
+                                                            // Actualizar nombre completo automáticamente
+                                                            name: `${prev.first_name || ''} ${prev.last_name1 || ''} ${lastName2}`.trim()
+                                                        }));
+                                                    }}
                                                     disabled={!isEditing}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
                                                     placeholder="García"
@@ -724,7 +750,7 @@ const CustomerModal = ({
                         </button>
                         <button
                             onClick={handleSave}
-                            disabled={saving || !formData.name.trim()}
+                            disabled={saving || !formData.first_name?.trim()}
                             className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
                         >
                             {saving ? (
