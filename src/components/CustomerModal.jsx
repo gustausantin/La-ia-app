@@ -237,7 +237,10 @@ const CustomerModal = ({
     }, [customer, isOpen, mode]);
 
     const handleSave = async () => {
+        console.log('🚨 FUNCIÓN HANDLERSAVE LLAMADA');
+        
         try {
+            console.log('🔥 ENTRANDO EN TRY BLOCK');
             setSaving(true);
             
             // Debug inicial
@@ -387,21 +390,33 @@ const CustomerModal = ({
             onClose();
             
         } catch (error) {
-            console.error('=== ERROR COMPLETO AL GUARDAR ===');
+            console.error('🚨🚨🚨 ERROR CAPTURADO EN HANDLERSAVE 🚨🚨🚨');
+            console.error('Error type:', typeof error);
+            console.error('Error constructor:', error.constructor.name);
             console.error('Error object:', error);
             console.error('Error message:', error.message);
-            console.error('Error details:', error.details);
-            console.error('Error hint:', error.hint);
-            console.error('Error code:', error.code);
-            console.error('Full error:', JSON.stringify(error, null, 2));
+            console.error('Error stack:', error.stack);
+            
+            // Si es error de Supabase
+            if (error.details) {
+                console.error('Supabase error details:', error.details);
+            }
+            if (error.hint) {
+                console.error('Supabase error hint:', error.hint);
+            }
+            if (error.code) {
+                console.error('Supabase error code:', error.code);
+            }
             
             // Log completo para debugging
-            console.log('=== DEBUGGING INFO ===');
+            console.log('=== DEBUGGING INFO COMPLETO ===');
             console.log('Data being saved:', dataToSave);
             console.log('Customer ID:', customer?.id);
             console.log('Restaurant ID:', restaurantId);
             console.log('Mode:', mode);
             console.log('Form data:', formData);
+            console.log('Is dataToSave defined?', typeof dataToSave !== 'undefined');
+            console.log('Supabase client available?', typeof supabase !== 'undefined');
             
             // Mostrar error más específico
             let errorMessage = '❌ Error al guardar cliente.';
@@ -420,7 +435,12 @@ const CustomerModal = ({
             }
             
             toast.error(errorMessage);
+            
+            // Alert adicional para debugging
+            alert(`ERROR CRÍTICO: ${error.message || 'Error desconocido'}\nRevisa la consola para más detalles.`);
+            
         } finally {
+            console.log('🔄 FINALLY BLOCK - Estableciendo saving=false');
             setSaving(false);
         }
     };
