@@ -46,9 +46,10 @@ export default function Clientes() {
             const { data: customers, error } = await supabase
                 .from("customers")
                 .select(`
-                    id, restaurant_id, name, email, phone, 
-                    visits_count, total_spent, last_visit_at, created_at,
-                    consent_whatsapp, consent_email, notes
+                    id, restaurant_id, name, email, phone, first_name, last_name1, last_name2,
+                    segment_auto, segment_manual, visits_count, last_visit_at, total_spent, avg_ticket,
+                    churn_risk_score, predicted_ltv, consent_email, consent_sms, consent_whatsapp,
+                    preferences, tags, notes, created_at, updated_at
                 `)
                 .eq("restaurant_id", restaurantId)
                 .order("created_at", { ascending: false });
