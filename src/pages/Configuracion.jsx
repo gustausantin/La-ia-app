@@ -201,9 +201,9 @@ const Configuracion = () => {
             label: "General",
             icon: <Building2 className="w-4 h-4" />,
         },
-        {
-            id: "hours",
-            label: "Horarios",
+        { 
+            id: "hours", 
+            label: "Horarios", 
             icon: <Clock className="w-4 h-4" />,
         },
         {
@@ -491,7 +491,7 @@ const Configuracion = () => {
             
         } catch (error) {
             console.error("âŒ Error guardando:", error);
-                toast.error("Error al guardar la configuración");
+            toast.error("Error al guardar la configuración");
         } finally {
             setSaving(false);
         }
@@ -806,7 +806,7 @@ const Configuracion = () => {
                     )}
 
                     {activeTab === "channels" && (
-                        <SettingSection
+                            <SettingSection
                             title="Canales de Comunicación Enterprise"
                             description="Gestión omnicanal con integración automática IA"
                             icon={<MessageSquare />}
@@ -814,7 +814,7 @@ const Configuracion = () => {
                             <div className="space-y-6">
                                 {/* WhatsApp */}
                                 <div className="bg-green-50 p-6 rounded-xl border border-green-200">
-                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                                                 <MessageSquare className="w-4 h-4 text-white" />
@@ -823,18 +823,18 @@ const Configuracion = () => {
                                                 <h4 className="font-medium text-gray-900">WhatsApp Business</h4>
                                                 <p className="text-sm text-gray-600">Canal principal de comunicación</p>
                                             </div>
-                                        </div>
-                                        <ToggleSwitch
+                                            </div>
+                                            <ToggleSwitch
                                             enabled={settings.channels?.whatsapp?.enabled || false}
-                                            onChange={(enabled) => setSettings(prev => ({
-                                                ...prev,
+                                                onChange={(enabled) => setSettings(prev => ({
+                                                    ...prev,
                                                 channels: {
                                                     ...prev.channels,
                                                     whatsapp: { ...prev.channels?.whatsapp, enabled }
                                                 }
-                                            }))}
-                                            label=""
-                                        />
+                                                }))}
+                                                label=""
+                                            />
                                     </div>
                                     {settings.channels?.whatsapp?.enabled && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -876,8 +876,8 @@ const Configuracion = () => {
                                             </div>
                         </div>
                                     )}
-                                </div>
-
+                                        </div>
+                                        
                                 {/* Webchat */}
                                 <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
                                     <div className="flex items-center justify-between mb-4">
@@ -889,7 +889,7 @@ const Configuracion = () => {
                                                 <h4 className="font-medium text-gray-900">Web Chat</h4>
                                                 <p className="text-sm text-gray-600">Chat integrado en la web</p>
                                             </div>
-                                        </div>
+                                            </div>
                                         <ToggleSwitch
                                             enabled={settings.channels?.webchat?.enabled !== false}
                                             onChange={(enabled) => setSettings(prev => ({
@@ -901,7 +901,7 @@ const Configuracion = () => {
                                             }))}
                                             label=""
                                         />
-                                    </div>
+                                            </div>
                                     {settings.channels?.webchat?.enabled !== false && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
@@ -920,7 +920,7 @@ const Configuracion = () => {
                                                     }))}
                                                     className="w-full h-10 border border-gray-300 rounded-lg"
                                                 />
-                                            </div>
+                                        </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                                     Posición
@@ -942,7 +942,7 @@ const Configuracion = () => {
                                             </div>
                                         </div>
                                     )}
-                                </div>
+                                    </div>
 
                                 {/* Instagram */}
                                 <div className="bg-pink-50 p-6 rounded-xl border border-pink-200">
@@ -951,7 +951,7 @@ const Configuracion = () => {
                                             <div className="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center">
                                                 <MessageSquare className="w-4 h-4 text-white" />
                                             </div>
-                                            <div>
+                                    <div>
                                                 <h4 className="font-medium text-gray-900">Instagram</h4>
                                                 <p className="text-sm text-gray-600">Mensajes directos automáticos</p>
                                             </div>
@@ -1281,8 +1281,8 @@ const Configuracion = () => {
                                                     }))}
                                                 />
                                             </div>
-                                        </div>
-                                    </div>
+                                                </div>
+                                            </div>
 
                                     {/* Notificaciones del Sistema */}
                                     <div className="bg-green-50 p-6 rounded-xl border border-green-200">
@@ -1339,8 +1339,8 @@ const Configuracion = () => {
                                                     }))}
                                                 />
                                             </div>
-                                        </div>
-                                    </div>
+                                                </div>
+                                            </div>
 
                                     {/* Configuración de Horarios */}
                                     <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
@@ -1365,7 +1365,7 @@ const Configuracion = () => {
                                                     }))}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                                 />
-                                            </div>
+                                                </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                                     Horario de fin
@@ -1387,8 +1387,8 @@ const Configuracion = () => {
                                         <p className="text-xs text-gray-500 mt-2">
                                             Las notificaciones solo se enviarán dentro de este horario
                                         </p>
-                                    </div>
-                                </div>
+                                                </div>
+                                            </div>
 
                                 <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
                                     <button
@@ -1403,7 +1403,7 @@ const Configuracion = () => {
                                         )}
                                         Guardar Notificaciones
                                     </button>
-                                </div>
+                                                </div>
                             </SettingSection>
                         </div>
                     )}
@@ -1452,8 +1452,8 @@ const Configuracion = () => {
                                                 <p className="text-2xl font-bold text-orange-600">Auto</p>
                                                 <p className="text-sm text-gray-600">Reservas</p>
                                             </div>
-                                        </div>
-                                    </div>
+                                                </div>
+                                            </div>
 
                                         {/* Configuración básica */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1471,7 +1471,7 @@ const Configuracion = () => {
                                                 placeholder="Ej: Julia, tu asistente"
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                             />
-                                        </div>
+                                                </div>
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1487,8 +1487,8 @@ const Configuracion = () => {
                                             <p className="text-xs text-gray-500 mt-1">
                                                 Personalidad fija para MVP - Amigable y profesional
                                             </p>
-                                        </div>
-                                    </div>
+                                                </div>
+                                            </div>
 
                                     {/* Capacidades del Agente - Solo informativas */}
                                     <div className="bg-green-50 p-6 rounded-xl border border-green-200">
@@ -1503,7 +1503,7 @@ const Configuracion = () => {
                                                     <p className="text-sm text-gray-600">Crear, modificar y cancelar reservas automÃ¡ticamente</p>
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
                                                 <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
                                                     <Check className="w-3 h-3 text-white" />
@@ -1521,19 +1521,19 @@ const Configuracion = () => {
                                                 <div>
                                                     <h5 className="font-medium text-gray-900">Información de Menú</h5>
                                                     <p className="text-sm text-gray-600">Responder sobre platos y precios</p>
-                                                </div>
-                                            </div>
-                                            
+                                        </div>
+                                    </div>
+
                                             <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
                                                 <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
                                                     <Check className="w-3 h-3 text-white" />
                                                 </div>
-                                                <div>
+                                    <div>
                                                     <h5 className="font-medium text-gray-900">Optimización de Mesas</h5>
                                                     <p className="text-sm text-gray-600">Asignar las mejores mesas automÃ¡ticamente</p>
                                                 </div>
-                                            </div>
-                                            
+                                        </div>
+                                        
                                             <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
                                                 <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
                                                     <Check className="w-3 h-3 text-white" />
@@ -1547,20 +1547,20 @@ const Configuracion = () => {
                                             <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
                                                 <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
                                                     <Check className="w-3 h-3 text-white" />
-                                                </div>
+                                                        </div>
                                                 <div>
                                                     <h5 className="font-medium text-gray-900">Respuesta Inmediata</h5>
                                                     <p className="text-sm text-gray-600">Tiempo de respuesta menor a 30 segundos</p>
-                                                </div>
-                                            </div>
-                                        </div>
+                                                        </div>
+                                                        </div>
+                                                        </div>
                                         <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                                             <p className="text-sm text-blue-800">
                                                 <Info className="w-4 h-4 inline mr-1" />
                                                 Todas estas capacidades están incluidas en el MVP y no se pueden desactivar.
                                             </p>
-                                        </div>
-                                    </div>
+                                                        </div>
+                                                    </div>
 
                                         {/* Configuración de escalamiento */}
                                     <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
@@ -1725,7 +1725,7 @@ const Configuracion = () => {
                                                 Los horarios configurados se sincronizan automÃ¡ticamente con el Calendario, 
                                                 las Reservas y el Agente IA para garantizar coherencia en todo el sistema.
                                             </p>
-                                        </div>
+                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1743,7 +1743,7 @@ const Configuracion = () => {
                                     )}
                                     Guardar Horarios
                                 </button>
-                            </div>
+                        </div>
                         </SettingSection>
                     )}
 

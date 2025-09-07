@@ -262,22 +262,22 @@ const CustomerModal = ({
             // Generar nombre completo automáticamente
             const fullName = `${formData.first_name} ${formData.last_name1 || ''} ${formData.last_name2 || ''}`.trim();
             
-            // Preparar datos para guardar - Versión simplificada
+            // Preparar datos para guardar - Versión corregida para constraints
             const dataToSave = {
                 restaurant_id: restaurantId,
                 name: fullName,
                 first_name: formData.first_name.trim(),
-                last_name1: formData.last_name1?.trim() || '',
-                last_name2: formData.last_name2?.trim() || '',
-                email: formData.email?.trim() || '',
-                phone: formData.phone?.trim() || '',
+                last_name1: formData.last_name1?.trim() || null,
+                last_name2: formData.last_name2?.trim() || null,
+                email: formData.email?.trim() || null,
+                phone: formData.phone?.trim() || null,
                 consent_email: Boolean(formData.consent_email),
                 consent_sms: Boolean(formData.consent_sms),
                 consent_whatsapp: Boolean(formData.consent_whatsapp),
                 preferences: formData.preferences || {},
                 tags: formData.tags || [],
-                notes: formData.notes?.trim() || '',
-                segment_manual: formData.segment_manual?.trim() || '',
+                notes: formData.notes?.trim() || null,
+                segment_manual: formData.segment_manual?.trim() || null,
                 updated_at: new Date().toISOString()
             };
             
