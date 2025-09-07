@@ -236,6 +236,16 @@ const CustomerModal = ({
                 return;
             }
             
+            // Validar email si se proporciona
+            if (formData.email?.trim()) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(formData.email.trim())) {
+                    toast.error('❌ El email no tiene un formato válido');
+                    setSaving(false);
+                    return;
+                }
+            }
+            
             if (!restaurantId) {
                 toast.error('❌ Error: No se encontró el ID del restaurante');
                 setSaving(false);
@@ -249,20 +259,34 @@ const CustomerModal = ({
             const dataToSave = {
                 restaurant_id: restaurantId,
                 name: fullName,
-                first_name: formData.first_name?.trim() || null,
-                last_name1: formData.last_name1?.trim() || null,
-                last_name2: formData.last_name2?.trim() || null,
-                email: formData.email?.trim() || null,
-                phone: formData.phone?.trim() || null,
+                first_name: formData.first_name?.trim(),
                 consent_email: Boolean(formData.consent_email),
                 consent_sms: Boolean(formData.consent_sms),
                 consent_whatsapp: Boolean(formData.consent_whatsapp),
                 preferences: formData.preferences || {},
                 tags: formData.tags || [],
-                notes: formData.notes?.trim() || null,
-                segment_manual: formData.segment_manual?.trim() || null,
                 updated_at: new Date().toISOString()
             };
+
+            // Solo agregar campos opcionales si tienen valor
+            if (formData.last_name1?.trim()) {
+                dataToSave.last_name1 = formData.last_name1.trim();
+            }
+            if (formData.last_name2?.trim()) {
+                dataToSave.last_name2 = formData.last_name2.trim();
+            }
+            if (formData.email?.trim()) {
+                dataToSave.email = formData.email.trim();
+            }
+            if (formData.phone?.trim()) {
+                dataToSave.phone = formData.phone.trim();
+            }
+            if (formData.notes?.trim()) {
+                dataToSave.notes = formData.notes.trim();
+            }
+            if (formData.segment_manual?.trim()) {
+                dataToSave.segment_manual = formData.segment_manual.trim();
+            }
 
             let result;
             if (mode === 'create') {
@@ -300,7 +324,21 @@ const CustomerModal = ({
             
         } catch (error) {
             console.error('Error saving customer:', error);
-            toast.error('❌ Error al guardar cliente');
+            
+            // Mostrar error más específico
+            if (error.message) {
+                toast.error(`❌ Error: ${error.message}`);
+            } else if (error.details) {
+                toast.error(`❌ Error: ${error.details}`);
+            } else {
+                toast.error('❌ Error al guardar cliente. Revisa los datos e intenta de nuevo.');
+            }
+            
+            // Log completo para debugging
+            console.log('Data being saved:', dataToSave);
+            console.log('Customer ID:', customer?.id);
+            console.log('Restaurant ID:', restaurantId);
+            console.log('Mode:', mode);
         } finally {
             setSaving(false);
         }
@@ -634,20 +672,67 @@ const CustomerModal = ({
                                     <Tag className="w-5 h-5 text-blue-600" />
                                     Etiquetas
                                 </h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {formData.tags.length > 0 ? (
-                                        formData.tags.map((tag, index) => (
-                                            <span
-                                                key={index}
-                                                className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-                                            >
-                                                {tag}
-                                            </span>
-                                        ))
-                                    ) : (
-                                        <span className="text-gray-500 text-sm">Sin etiquetas asignadas</span>
-                                    )}
-                                </div>
+                                {isEditing ? (
+                                    <div className="space-y-3">
+                                        <input
+                                            type="text"
+                                            placeholder="Agregar etiqueta (presiona Enter)"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter' && e.target.value.trim()) {
+                                                    const newTag = e.target.value.trim();
+                                                    if (!formData.tags.includes(newTag)) {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            tags: [...prev.tags, newTag]
+                                                        }));
+                                                    }
+                                                    e.target.value = '';
+                                                }
+                                            }}
+                                        />
+                                        <div className="flex flex-wrap gap-2">
+                                            {formData.tags.map((tag, index) => (
+                                                <span
+                                                    key={index}
+                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                                                >
+                                                    {tag}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                tags: prev.tags.filter((_, i) => i !== index)
+                                                            }));
+                                                        }}
+                                                        className="ml-1 text-blue-600 hover:text-blue-800"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                            {formData.tags.length === 0 && (
+                                                <span className="text-gray-500 text-sm">Agrega etiquetas para organizar mejor a tus clientes</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-wrap gap-2">
+                                        {formData.tags.length > 0 ? (
+                                            formData.tags.map((tag, index) => (
+                                                <span
+                                                    key={index}
+                                                    className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                                                >
+                                                    {tag}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-gray-500 text-sm">Sin etiquetas asignadas</span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
