@@ -1,8 +1,7 @@
 // CustomerModal.jsx - Ficha de Cliente Unificada WORLD-CLASS
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { format, parseISO, differenceInDays } from "date-fns";
-import { es } from "date-fns/locale";
+// Removed date-fns imports to fix JavaScript errors
 import {
     X, Save, Mail, Phone, Calendar, DollarSign, TrendingUp,
     Crown, AlertTriangle, CheckCircle2, Clock, Edit2, User,
@@ -75,10 +74,13 @@ const determineCustomerSegment = (customer, crmConfig = {}) => {
     let daysSinceLastVisit = null;
     if (lastVisitDate) {
         try {
-            const lastVisit = typeof lastVisitDate === 'string' ? parseISO(lastVisitDate) : lastVisitDate;
-            daysSinceLastVisit = differenceInDays(new Date(), lastVisit);
+            const lastVisit = typeof lastVisitDate === 'string' ? new Date(lastVisitDate) : lastVisitDate;
+            if (lastVisit && !isNaN(lastVisit.getTime())) {
+                daysSinceLastVisit = Math.floor((new Date() - lastVisit) / (1000 * 60 * 60 * 24));
+            }
         } catch (error) {
             console.warn('Error parsing last visit date:', error);
+            daysSinceLastVisit = null;
         }
     }
 
@@ -372,11 +374,14 @@ const CustomerModal = ({
     if (formData.last_visit_at) {
         try {
             const lastVisit = typeof formData.last_visit_at === 'string' 
-                ? parseISO(formData.last_visit_at) 
+                ? new Date(formData.last_visit_at) 
                 : formData.last_visit_at;
-            daysSinceLastVisit = differenceInDays(new Date(), lastVisit);
+            if (lastVisit && !isNaN(lastVisit.getTime())) {
+                daysSinceLastVisit = Math.floor((new Date() - lastVisit) / (1000 * 60 * 60 * 24));
+            }
         } catch (error) {
             console.warn('Error calculating days since last visit:', error);
+            daysSinceLastVisit = null;
         }
     }
 
@@ -399,7 +404,7 @@ const CustomerModal = ({
                                 </span>
                                 {customer && (
                                     <span className="text-sm text-gray-500">
-                                        Cliente desde {format(parseISO(customer.created_at), 'MMM yyyy', { locale: es })}
+                                        Cliente desde {new Date(customer.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'short' })}
                                     </span>
                                 )}
                             </div>
@@ -631,7 +636,7 @@ const CustomerModal = ({
                                         <div>
                                             <p className="text-sm text-gray-600">Última visita:</p>
                                             <p className="font-medium">
-                                                {format(parseISO(formData.last_visit_at), 'dd/MM/yyyy HH:mm', { locale: es })}
+                                                {new Date(formData.last_visit_at).toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                                             </p>
                                             {daysSinceLastVisit !== null && (
                                                 <p className="text-sm text-gray-500 mt-1">
