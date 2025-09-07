@@ -371,21 +371,11 @@ const CustomerModal = ({
                 toast.success('✅ Cliente actualizado correctamente');
             }
 
-            // Llamar callback de guardado
-            try {
-                if (onSave) {
-                    onSave(result);
-                }
-            } catch (callbackError) {
-                console.warn('Error en callback onSave:', callbackError);
-            }
-            
+            // NO EJECUTAR CALLBACKS NI CERRAR MODAL - SOLO MOSTRAR ÉXITO
             setIsEditing(false);
             
-            // Cerrar modal con un pequeño delay para evitar errores
-            setTimeout(() => {
-                onClose();
-            }, 100);
+            // NO CERRAR EL MODAL AUTOMÁTICAMENTE
+            // El usuario puede cerrarlo manualmente
             
         } catch (error) {
             console.error('Error saving customer:', error);
