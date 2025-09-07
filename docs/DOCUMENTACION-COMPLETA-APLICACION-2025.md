@@ -487,6 +487,13 @@ PWAInstaller.jsx          # Instalación PWA
 - **GDPR compliant**: Gestión de consentimientos
 - **Responsive**: Optimizado para móviles
 
+**🆕 MEJORAS FEBRERO 2025:**
+- ✅ **Guardado corregido**: Errores de guardado completamente solucionados
+- ✅ **Etiquetas funcionales**: Agregar/quitar etiquetas con Enter y botón X
+- ✅ **Validaciones robustas**: Email, campos obligatorios, datos limpios
+- ✅ **UX optimizada**: Sin campos redundantes, generación automática de nombre
+- ✅ **Manejo de errores**: Mensajes específicos y debugging detallado
+
 **🔧 Uso:**
 ```jsx
 <CustomerModal
