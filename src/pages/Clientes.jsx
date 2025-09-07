@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
-// Removido date-fns para evitar errores - usando JavaScript nativo
+import { format, parseISO, differenceInDays, subDays } from "date-fns";
 import {
     Search, Plus, Users, Mail, Phone, Edit2, X, 
     AlertTriangle, RefreshCw, Settings, Crown,
@@ -191,10 +191,7 @@ export default function Clientes() {
                             <div>
                                 <p className="text-sm text-gray-600">Nuevos (30d)</p>
                                 <p className="text-2xl font-bold text-green-600">
-                                    {customers.filter(c => {
-                                        const daysDiff = Math.floor((new Date() - new Date(c.created_at)) / (1000 * 60 * 60 * 24));
-                                        return daysDiff <= 30;
-                                    }).length}
+                                    {customers.filter(c => differenceInDays(new Date(), new Date(c.created_at)) <= 30).length}
                                 </p>
                             </div>
                             <TrendingUp className="w-8 h-8 text-green-500" />
@@ -216,11 +213,7 @@ export default function Clientes() {
                             <div>
                                 <p className="text-sm text-gray-600">Activos</p>
                                 <p className="text-2xl font-bold text-emerald-600">
-                                    {customers.filter(c => {
-                                        if (!c.last_visit_at) return false;
-                                        const daysDiff = Math.floor((new Date() - new Date(c.last_visit_at)) / (1000 * 60 * 60 * 24));
-                                        return daysDiff <= 60;
-                                    }).length}
+                                    {customers.filter(c => c.last_visit_at && differenceInDays(new Date(), new Date(c.last_visit_at)) <= 60).length}
                                 </p>
                             </div>
                             <CheckCircle2 className="w-8 h-8 text-emerald-500" />
