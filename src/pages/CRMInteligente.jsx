@@ -326,7 +326,7 @@ export default function CRMInteligente() {
         
         try {
             setLoading(true);
-            toast.info("Analizando clientes y generando sugerencias...");
+            toast("Analizando clientes y generando sugerencias...");
             
             // Limpiar sugerencias anteriores
             await supabase
@@ -414,7 +414,7 @@ export default function CRMInteligente() {
                 // Recargar datos
                 await loadCRMData();
             } else {
-                toast.info("No se encontraron nuevas sugerencias para generar");
+                toast("No se encontraron nuevas sugerencias para generar");
             }
             
         } catch (error) {
@@ -479,6 +479,8 @@ export default function CRMInteligente() {
                     auto_suggestions: true,
                     auto_segmentation: true,
                     updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'restaurant_id'
                 });
                 
             if (error) throw error;
@@ -778,7 +780,7 @@ export default function CRMInteligente() {
                                                                     <button
                                                                         onClick={() => {
                                                                             // TODO: Implementar eliminar sugerencia
-                                                                            toast.info('Mensaje eliminado');
+                                                                            toast.success('Mensaje eliminado');
                                                                         }}
                                                                         className="px-3 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
                                                                     >
@@ -1128,7 +1130,8 @@ export default function CRMInteligente() {
                             <button
                                 onClick={() => {
                                     // TODO: Implementar edición de cliente
-                                    toast.info('Función de edición próximamente');
+                                    setSelectedCustomer(customer);
+                                    setShowCustomerModal(true);
                                 }}
                                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                             >
