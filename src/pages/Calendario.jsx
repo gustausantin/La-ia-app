@@ -190,8 +190,8 @@ export default function Calendario() {
                                 end_time: shift.end_time
                             }))
                             : [{
-                                id: 1,
-                                name: "Horario Principal",
+                            id: 1,
+                            name: "Horario Principal",
                                 start_time: dayHours?.start || "09:00",
                                 end_time: dayHours?.end || "22:00"
                             }]
