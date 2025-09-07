@@ -262,7 +262,7 @@ const CustomerModal = ({
             // Generar nombre completo automáticamente
             const fullName = `${formData.first_name} ${formData.last_name1 || ''} ${formData.last_name2 || ''}`.trim();
             
-            // Preparar datos BÁSICOS para guardar - SIN CAMPOS PROBLEMÁTICOS
+            // Preparar datos para guardar - CORRIGIENDO MANEJO DE CAMPOS OPCIONALES
             const dataToSave = {
                 restaurant_id: restaurantId,
                 name: fullName,
@@ -270,10 +270,12 @@ const CustomerModal = ({
                 consent_email: Boolean(formData.consent_email),
                 consent_sms: Boolean(formData.consent_sms),
                 consent_whatsapp: Boolean(formData.consent_whatsapp),
+                preferences: formData.preferences || {},
+                tags: formData.tags || [],
                 updated_at: new Date().toISOString()
             };
 
-            // Agregar campos opcionales SOLO si tienen valor
+            // Agregar campos opcionales solo si tienen valor real
             if (formData.last_name1?.trim()) {
                 dataToSave.last_name1 = formData.last_name1.trim();
             }
@@ -289,10 +291,9 @@ const CustomerModal = ({
             if (formData.notes?.trim()) {
                 dataToSave.notes = formData.notes.trim();
             }
-            // TEMPORALMENTE REMOVIDO segment_manual - CAUSA CONSTRAINT ERROR
-            // if (formData.segment_manual?.trim()) {
-            //     dataToSave.segment_manual = formData.segment_manual.trim();
-            // }
+            if (formData.segment_manual?.trim()) {
+                dataToSave.segment_manual = formData.segment_manual.trim();
+            }
             
             console.log('=== DATOS PREPARADOS ===');
             console.log('Data to save:', dataToSave);
