@@ -229,6 +229,13 @@ const CustomerModal = ({
         try {
             setSaving(true);
             
+            // Debug inicial
+            console.log('=== INICIANDO GUARDADO ===');
+            console.log('Mode:', mode);
+            console.log('Customer:', customer);
+            console.log('Restaurant ID:', restaurantId);
+            console.log('Form Data:', formData);
+            
             // Validaciones básicas
             if (!formData.first_name?.trim()) {
                 toast.error('❌ El nombre es obligatorio');
@@ -255,38 +262,27 @@ const CustomerModal = ({
             // Generar nombre completo automáticamente
             const fullName = `${formData.first_name} ${formData.last_name1 || ''} ${formData.last_name2 || ''}`.trim();
             
-            // Preparar datos para guardar
+            // Preparar datos para guardar - Versión simplificada
             const dataToSave = {
                 restaurant_id: restaurantId,
                 name: fullName,
-                first_name: formData.first_name?.trim(),
+                first_name: formData.first_name.trim(),
+                last_name1: formData.last_name1?.trim() || '',
+                last_name2: formData.last_name2?.trim() || '',
+                email: formData.email?.trim() || '',
+                phone: formData.phone?.trim() || '',
                 consent_email: Boolean(formData.consent_email),
                 consent_sms: Boolean(formData.consent_sms),
                 consent_whatsapp: Boolean(formData.consent_whatsapp),
                 preferences: formData.preferences || {},
                 tags: formData.tags || [],
+                notes: formData.notes?.trim() || '',
+                segment_manual: formData.segment_manual?.trim() || '',
                 updated_at: new Date().toISOString()
             };
-
-            // Solo agregar campos opcionales si tienen valor
-            if (formData.last_name1?.trim()) {
-                dataToSave.last_name1 = formData.last_name1.trim();
-            }
-            if (formData.last_name2?.trim()) {
-                dataToSave.last_name2 = formData.last_name2.trim();
-            }
-            if (formData.email?.trim()) {
-                dataToSave.email = formData.email.trim();
-            }
-            if (formData.phone?.trim()) {
-                dataToSave.phone = formData.phone.trim();
-            }
-            if (formData.notes?.trim()) {
-                dataToSave.notes = formData.notes.trim();
-            }
-            if (formData.segment_manual?.trim()) {
-                dataToSave.segment_manual = formData.segment_manual.trim();
-            }
+            
+            console.log('=== DATOS PREPARADOS ===');
+            console.log('Data to save:', dataToSave);
 
             let result;
             if (mode === 'create') {
@@ -302,6 +298,13 @@ const CustomerModal = ({
                 toast.success('✅ Cliente creado correctamente');
             } else {
                 // Actualizar cliente existente
+                if (!customer?.id) {
+                    throw new Error('ID del cliente no encontrado. No se puede actualizar.');
+                }
+                
+                console.log('Actualizando cliente con ID:', customer.id);
+                console.log('Datos a guardar:', dataToSave);
+                
                 const { data, error } = await supabase
                     .from('customers')
                     .update(dataToSave)
