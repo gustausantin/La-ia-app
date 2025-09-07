@@ -262,24 +262,37 @@ const CustomerModal = ({
             // Generar nombre completo automáticamente
             const fullName = `${formData.first_name} ${formData.last_name1 || ''} ${formData.last_name2 || ''}`.trim();
             
-            // Preparar datos para guardar - Versión corregida para constraints
+            // Preparar datos BÁSICOS para guardar - SIN CAMPOS PROBLEMÁTICOS
             const dataToSave = {
                 restaurant_id: restaurantId,
                 name: fullName,
                 first_name: formData.first_name.trim(),
-                last_name1: formData.last_name1?.trim() || null,
-                last_name2: formData.last_name2?.trim() || null,
-                email: formData.email?.trim() || null,
-                phone: formData.phone?.trim() || null,
                 consent_email: Boolean(formData.consent_email),
                 consent_sms: Boolean(formData.consent_sms),
                 consent_whatsapp: Boolean(formData.consent_whatsapp),
-                preferences: formData.preferences || {},
-                tags: formData.tags || [],
-                notes: formData.notes?.trim() || null,
-                segment_manual: formData.segment_manual?.trim() || null,
                 updated_at: new Date().toISOString()
             };
+
+            // Agregar campos opcionales SOLO si tienen valor
+            if (formData.last_name1?.trim()) {
+                dataToSave.last_name1 = formData.last_name1.trim();
+            }
+            if (formData.last_name2?.trim()) {
+                dataToSave.last_name2 = formData.last_name2.trim();
+            }
+            if (formData.email?.trim()) {
+                dataToSave.email = formData.email.trim();
+            }
+            if (formData.phone?.trim()) {
+                dataToSave.phone = formData.phone.trim();
+            }
+            if (formData.notes?.trim()) {
+                dataToSave.notes = formData.notes.trim();
+            }
+            // TEMPORALMENTE REMOVIDO segment_manual - CAUSA CONSTRAINT ERROR
+            // if (formData.segment_manual?.trim()) {
+            //     dataToSave.segment_manual = formData.segment_manual.trim();
+            // }
             
             console.log('=== DATOS PREPARADOS ===');
             console.log('Data to save:', dataToSave);
