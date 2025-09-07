@@ -372,12 +372,20 @@ const CustomerModal = ({
             }
 
             // Llamar callback de guardado
-            if (onSave) {
-                onSave(result);
+            try {
+                if (onSave) {
+                    onSave(result);
+                }
+            } catch (callbackError) {
+                console.warn('Error en callback onSave:', callbackError);
             }
             
             setIsEditing(false);
-            onClose();
+            
+            // Cerrar modal con un pequeño delay para evitar errores
+            setTimeout(() => {
+                onClose();
+            }, 100);
             
         } catch (error) {
             console.error('Error saving customer:', error);
