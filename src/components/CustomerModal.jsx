@@ -282,8 +282,8 @@ const CustomerModal = ({
                 consent_sms: Boolean(formData.consent_sms),
                 consent_whatsapp: Boolean(formData.consent_whatsapp),
                 preferences: formData.preferences || {},
-                tags: formData.tags || [],
-                updated_at: new Date().toISOString()
+                tags: formData.tags || []
+                // Removido updated_at - Supabase puede manejarlo automáticamente
             };
 
             // Agregar campos opcionales solo si tienen valor real
@@ -308,18 +308,47 @@ const CustomerModal = ({
             
             console.log('=== DATOS PREPARADOS ===');
             console.log('Data to save:', dataToSave);
+            
+            // Validaciones adicionales antes de guardar
+            if (!dataToSave.restaurant_id) {
+                throw new Error('restaurant_id es requerido');
+            }
+            
+            if (!dataToSave.name || dataToSave.name.trim() === '') {
+                throw new Error('El nombre generado está vacío');
+            }
+            
+            if (!dataToSave.first_name || dataToSave.first_name.trim() === '') {
+                throw new Error('first_name es requerido');
+            }
+            
+            // Validar que preferences y tags sean objetos válidos
+            if (typeof dataToSave.preferences !== 'object' || Array.isArray(dataToSave.preferences)) {
+                dataToSave.preferences = {};
+            }
+            
+            if (!Array.isArray(dataToSave.tags)) {
+                dataToSave.tags = [];
+            }
 
             let result;
             if (mode === 'create') {
                 // Crear nuevo cliente
+                console.log('=== CREANDO NUEVO CLIENTE ===');
+                console.log('Datos para INSERT:', JSON.stringify(dataToSave, null, 2));
+                
                 const { data, error } = await supabase
                     .from('customers')
                     .insert([dataToSave])
                     .select()
                     .single();
                     
-                if (error) throw error;
+                if (error) {
+                    console.error('Error en INSERT:', error);
+                    throw error;
+                }
                 result = data;
+                console.log('Cliente creado exitosamente:', result);
                 toast.success('✅ Cliente creado correctamente');
             } else {
                 // Actualizar cliente existente
@@ -327,8 +356,9 @@ const CustomerModal = ({
                     throw new Error('ID del cliente no encontrado. No se puede actualizar.');
                 }
                 
-                console.log('Actualizando cliente con ID:', customer.id);
-                console.log('Datos a guardar:', dataToSave);
+                console.log('=== ACTUALIZANDO CLIENTE EXISTENTE ===');
+                console.log('Customer ID:', customer.id);
+                console.log('Datos para UPDATE:', JSON.stringify(dataToSave, null, 2));
                 
                 const { data, error } = await supabase
                     .from('customers')
@@ -337,8 +367,14 @@ const CustomerModal = ({
                     .select()
                     .single();
                     
-                if (error) throw error;
+                if (error) {
+                    console.error('Error en UPDATE:', error);
+                    console.error('Customer ID usado:', customer.id);
+                    console.error('Datos enviados:', JSON.stringify(dataToSave, null, 2));
+                    throw error;
+                }
                 result = data;
+                console.log('Cliente actualizado exitosamente:', result);
                 toast.success('✅ Cliente actualizado correctamente');
             }
 
@@ -351,22 +387,39 @@ const CustomerModal = ({
             onClose();
             
         } catch (error) {
-            console.error('Error saving customer:', error);
-            
-            // Mostrar error más específico
-            if (error.message) {
-                toast.error(`❌ Error: ${error.message}`);
-            } else if (error.details) {
-                toast.error(`❌ Error: ${error.details}`);
-            } else {
-                toast.error('❌ Error al guardar cliente. Revisa los datos e intenta de nuevo.');
-            }
+            console.error('=== ERROR COMPLETO AL GUARDAR ===');
+            console.error('Error object:', error);
+            console.error('Error message:', error.message);
+            console.error('Error details:', error.details);
+            console.error('Error hint:', error.hint);
+            console.error('Error code:', error.code);
+            console.error('Full error:', JSON.stringify(error, null, 2));
             
             // Log completo para debugging
+            console.log('=== DEBUGGING INFO ===');
             console.log('Data being saved:', dataToSave);
             console.log('Customer ID:', customer?.id);
             console.log('Restaurant ID:', restaurantId);
             console.log('Mode:', mode);
+            console.log('Form data:', formData);
+            
+            // Mostrar error más específico
+            let errorMessage = '❌ Error al guardar cliente.';
+            
+            if (error.message) {
+                errorMessage = `❌ Error: ${error.message}`;
+            } else if (error.details) {
+                errorMessage = `❌ Error: ${error.details}`;
+            } else if (error.hint) {
+                errorMessage = `❌ Error: ${error.hint}`;
+            }
+            
+            // Agregar código de error si existe
+            if (error.code) {
+                errorMessage += ` (Código: ${error.code})`;
+            }
+            
+            toast.error(errorMessage);
         } finally {
             setSaving(false);
         }
