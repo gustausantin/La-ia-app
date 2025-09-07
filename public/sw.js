@@ -1,6 +1,6 @@
 // Service Worker para La-IA PWA
 // Versión del cache - cambiar para forzar actualización
-const CACHE_NAME = 'la-ia-pwa-v1.0.1';
+const CACHE_NAME = 'la-ia-pwa-v1.0.2-debug';
 const OFFLINE_URL = '/offline.html';
 
 // Archivos esenciales para funcionalidad offline
@@ -72,7 +72,9 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// ===== INTERCEPTAR REQUESTS (CACHE STRATEGY) =====
+// ===== INTERCEPTAR REQUESTS (CACHE STRATEGY) - TEMPORALMENTE DESACTIVADO =====
+// COMENTADO TEMPORALMENTE PARA DEBUGGING - ESTABA BLOQUEANDO REQUESTS DE SUPABASE
+/*
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -87,6 +89,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(handleGetRequest(request));
   }
 });
+*/
 
 // ===== ESTRATEGIAS DE CACHE =====
 
