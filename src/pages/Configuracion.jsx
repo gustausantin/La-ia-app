@@ -452,6 +452,28 @@ const Configuracion = () => {
                     .eq("id", restaurantId);
 
                 if (error) throw error;
+            } else if (section === "Configuración de notificaciones") {
+                // Guardar configuración de notificaciones específicamente
+                const { data: currentData } = await supabase
+                    .from("restaurants")
+                    .select("settings")
+                    .eq("id", restaurantId)
+                    .single();
+                    
+                const currentSettings = currentData?.settings || {};
+                
+                const { error } = await supabase
+                    .from("restaurants")
+                    .update({
+                        settings: {
+                            ...currentSettings,
+                            notifications: settings.notifications || {}
+                        },
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("id", restaurantId);
+
+                if (error) throw error;
             } else {
                 // Para otras secciones, guardar en settings
             const { error } = await supabase
@@ -1139,10 +1161,250 @@ const Configuracion = () => {
                     )}
 
                     {activeTab === "notifications" && (
-                        <div className="text-center py-12">
-                            <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">Notificaciones</h3>
-                            <p className="text-gray-600">Sistema de notificaciones configurado</p>
+                        <div className="space-y-6">
+                            <SettingSection
+                                title="Sistema de Notificaciones Enterprise"
+                                description="Configuración completa de alertas y notificaciones automáticas para tu restaurante"
+                                icon={<Bell />}
+                            >
+                                <div className="space-y-6">
+                                    {/* Notificaciones de Reservas */}
+                                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                                        <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                            <Calendar className="w-5 h-5 text-blue-600" />
+                                            Notificaciones de Reservas
+                                        </h4>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Nueva reserva confirmada</h5>
+                                                    <p className="text-sm text-gray-600">Notificar cuando se confirme una nueva reserva</p>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.notifications?.new_reservation || true}
+                                                    onChange={(enabled) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            new_reservation: enabled
+                                                        }
+                                                    }))}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Reserva cancelada</h5>
+                                                    <p className="text-sm text-gray-600">Alerta cuando se cancele una reserva</p>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.notifications?.cancelled_reservation || true}
+                                                    onChange={(enabled) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            cancelled_reservation: enabled
+                                                        }
+                                                    }))}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Recordatorio de reserva</h5>
+                                                    <p className="text-sm text-gray-600">Recordatorio 2 horas antes de la reserva</p>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.notifications?.reservation_reminder || true}
+                                                    onChange={(enabled) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            reservation_reminder: enabled
+                                                        }
+                                                    }))}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Notificaciones CRM */}
+                                    <div className="bg-purple-50 p-6 rounded-xl border border-purple-200">
+                                        <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                            <Users className="w-5 h-5 text-purple-600" />
+                                            Notificaciones CRM
+                                        </h4>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Nuevo cliente registrado</h5>
+                                                    <p className="text-sm text-gray-600">Notificar cuando se registre un nuevo cliente</p>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.notifications?.new_customer || true}
+                                                    onChange={(enabled) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            new_customer: enabled
+                                                        }
+                                                    }))}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Cliente BIB promocionado</h5>
+                                                    <p className="text-sm text-gray-600">Alerta cuando un cliente se convierta en BIB</p>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.notifications?.bib_promotion || true}
+                                                    onChange={(enabled) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            bib_promotion: enabled
+                                                        }
+                                                    }))}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Cliente en riesgo</h5>
+                                                    <p className="text-sm text-gray-600">Alerta cuando un cliente esté en riesgo de pérdida</p>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.notifications?.customer_at_risk || true}
+                                                    onChange={(enabled) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            customer_at_risk: enabled
+                                                        }
+                                                    }))}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Notificaciones del Sistema */}
+                                    <div className="bg-green-50 p-6 rounded-xl border border-green-200">
+                                        <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                            <Settings className="w-5 h-5 text-green-600" />
+                                            Notificaciones del Sistema
+                                        </h4>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Agente IA desconectado</h5>
+                                                    <p className="text-sm text-gray-600">Alerta si el agente IA deja de funcionar</p>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.notifications?.agent_offline || true}
+                                                    onChange={(enabled) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            agent_offline: enabled
+                                                        }
+                                                    }))}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Errores de integración</h5>
+                                                    <p className="text-sm text-gray-600">Notificar errores en canales o integraciones</p>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.notifications?.integration_errors || true}
+                                                    onChange={(enabled) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            integration_errors: enabled
+                                                        }
+                                                    }))}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h5 className="font-medium text-gray-900">Resumen diario</h5>
+                                                    <p className="text-sm text-gray-600">Resumen diario de actividad del restaurante</p>
+                                                </div>
+                                                <ToggleSwitch
+                                                    enabled={settings.notifications?.daily_summary || true}
+                                                    onChange={(enabled) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            daily_summary: enabled
+                                                        }
+                                                    }))}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Configuración de Horarios */}
+                                    <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
+                                        <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                            <Clock className="w-5 h-5 text-orange-600" />
+                                            Horarios de Notificaciones
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Horario de inicio
+                                                </label>
+                                                <input
+                                                    type="time"
+                                                    value={settings.notifications?.start_time || "08:00"}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            start_time: e.target.value
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Horario de fin
+                                                </label>
+                                                <input
+                                                    type="time"
+                                                    value={settings.notifications?.end_time || "22:00"}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            end_time: e.target.value
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Las notificaciones solo se enviarán dentro de este horario
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                                    <button
+                                        onClick={() => handleSave("Configuración de notificaciones")}
+                                        disabled={saving}
+                                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                    >
+                                        {saving ? (
+                                            <RefreshCw className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Save className="w-4 h-4" />
+                                        )}
+                                        Guardar Notificaciones
+                                    </button>
+                                </div>
+                            </SettingSection>
                         </div>
                     )}
 
@@ -1341,11 +1603,11 @@ const Configuracion = () => {
                                                     Integración Completa del Sistema
                                                 </h4>
                                                 <div className="text-sm text-blue-800 space-y-1">
-                                                    <p>â€¢ <strong>Reservas:</strong> Utiliza la capacidad mÃ¡xima configurada y turnos establecidos</p>
+                                                    <p>• <strong>Reservas:</strong> Utiliza la capacidad máxima configurada y turnos establecidos</p>
                                                     <p>• <strong>Mesas:</strong> Optimización automática basada en disponibilidad</p>
                                                     <p>• <strong>Horarios:</strong> Respeta los horarios de operación configurados</p>
-                                                    <p>â€¢ <strong>CRM:</strong> Identifica clientes VIP y aplica tratamiento especial</p>
-                                                    <p>â€¢ <strong>Canales:</strong> Funciona en WhatsApp, telÃ©fono, web y redes sociales</p>
+                                                    <p>• <strong>CRM:</strong> Identifica clientes VIP y aplica tratamiento especial</p>
+                                                    <p>• <strong>Canales:</strong> Funciona en WhatsApp, teléfono, web y redes sociales</p>
                                                 </div>
                                             </div>
                                         </div>

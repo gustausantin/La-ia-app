@@ -11,6 +11,7 @@ import {
     Target, Zap, Award, Heart, Coffee, Sparkles, Save, X
 } from "lucide-react";
 import toast from "react-hot-toast";
+import CustomerModal from "../components/CustomerModal";
 
 // SEGMENTACIÓN INTELIGENTE - CORAZÓN DEL CRM
 const CUSTOMER_SEGMENTS = {
@@ -972,175 +973,25 @@ export default function CRMInteligente() {
                 </div>
             </div>
 
-            {/* Modal de Ficha de Cliente Mejorada */}
-            {showCustomerModal && selectedCustomer && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <span className="text-purple-600 font-bold text-lg">
-                                        {selectedCustomer.name?.charAt(0)?.toUpperCase() || 'C'}
-                                    </span>
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900">{selectedCustomer.name}</h3>
-                                    <p className="text-gray-600">{selectedCustomer.email}</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setShowCustomerModal(false)}
-                                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <div className="p-6">
-                            {/* Información del Segmento */}
-                            <div className="mb-6">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <span className="text-2xl">
-                                        {CUSTOMER_SEGMENTS[determineCustomerSegment(selectedCustomer)]?.icon || '👤'}
-                                    </span>
-                                    <div>
-                                        <h4 className="font-bold text-gray-900">
-                                            Cliente {CUSTOMER_SEGMENTS[determineCustomerSegment(selectedCustomer)]?.label || 'Activo'}
-                                        </h4>
-                                        <p className="text-sm text-gray-600">
-                                            Segmentación automática basada en comportamiento
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Estadísticas del Cliente */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                <div className="bg-blue-50 rounded-lg p-4 text-center">
-                                    <div className="text-2xl font-bold text-blue-600">
-                                        {selectedCustomer.visits_count || 0}
-                                    </div>
-                                    <div className="text-sm text-blue-800">Visitas Totales</div>
-                                </div>
-                                <div className="bg-green-50 rounded-lg p-4 text-center">
-                                    <div className="text-2xl font-bold text-green-600">
-                                        €{selectedCustomer.total_spent || 0}
-                                    </div>
-                                    <div className="text-sm text-green-800">Gasto Total</div>
-                                </div>
-                                <div className="bg-purple-50 rounded-lg p-4 text-center">
-                                    <div className="text-2xl font-bold text-purple-600">
-                                        €{selectedCustomer.visits_count > 0 ? Math.round((selectedCustomer.total_spent || 0) / selectedCustomer.visits_count) : 0}
-                                    </div>
-                                    <div className="text-sm text-purple-800">Gasto Promedio</div>
-                                </div>
-                            </div>
-
-                            {/* Información Personal */}
-                            <div className="space-y-4">
-                                <h5 className="font-bold text-gray-900">Información Personal</h5>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Nombre Completo
-                                        </label>
-                                        <p className="text-gray-900">{selectedCustomer.name || 'No especificado'}</p>
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Email
-                                        </label>
-                                        <p className="text-gray-900">{selectedCustomer.email || 'No especificado'}</p>
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Teléfono
-                                        </label>
-                                        <p className="text-gray-900">{selectedCustomer.phone || 'No especificado'}</p>
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Canal Preferido
-                                        </label>
-                                        <div className="flex items-center gap-2">
-                                            {selectedCustomer.consent_whatsapp && (
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                                                    <MessageSquare className="w-3 h-3 mr-1" />
-                                                    WhatsApp
-                                                </span>
-                                            )}
-                                            {selectedCustomer.consent_email && (
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                                                    <Mail className="w-3 h-3 mr-1" />
-                                                    Email
-                                                </span>
-                                            )}
-                                            {!selectedCustomer.consent_whatsapp && !selectedCustomer.consent_email && (
-                                                <span className="text-gray-500 text-sm">Sin preferencias</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Última Visita
-                                    </label>
-                                    <p className="text-gray-900">
-                                        {selectedCustomer.last_visit_at 
-                                            ? format(parseISO(selectedCustomer.last_visit_at), 'dd/MM/yyyy HH:mm')
-                                            : 'Primera visita'
-                                        }
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Cliente desde
-                                    </label>
-                                    <p className="text-gray-900">
-                                        {format(parseISO(selectedCustomer.created_at), 'dd/MM/yyyy')}
-                                    </p>
-                                </div>
-
-                                {selectedCustomer.notes && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Notas
-                                        </label>
-                                        <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
-                                            {selectedCustomer.notes}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
-                            <button
-                                onClick={() => setShowCustomerModal(false)}
-                                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                            >
-                                Cerrar
-                            </button>
-                            <button
-                                onClick={() => {
-                                    // TODO: Implementar edición de cliente
-                                    setSelectedCustomer(customer);
-                                    setShowCustomerModal(true);
-                                }}
-                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                            >
-                                Editar Cliente
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Modal Unificado de Cliente */}
+            <CustomerModal
+                customer={selectedCustomer}
+                isOpen={showCustomerModal}
+                onClose={() => {
+                    setShowCustomerModal(false);
+                    setSelectedCustomer(null);
+                }}
+                onSave={(updatedCustomer) => {
+                    // Actualizar cliente en la lista
+                    setCustomers(prev => prev.map(c => 
+                        c.id === updatedCustomer.id ? updatedCustomer : c
+                    ));
+                    // Recargar datos del CRM
+                    loadCRMData();
+                }}
+                restaurantId={restaurantId}
+                mode="view"
+            />
         </div>
     );
 }
