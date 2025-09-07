@@ -344,18 +344,26 @@ export default function Clientes() {
                     setModalMode('view');
                 }}
                 onSave={(updatedCustomer) => {
-                    // Actualizar cliente en la lista
-                    setCustomers(prev => {
-                        if (modalMode === 'create') {
-                            return [...prev, updatedCustomer];
-                        } else {
-                            return prev.map(c => 
-                                c.id === updatedCustomer.id ? updatedCustomer : c
-                            );
-                        }
-                    });
-                    // Recargar datos completos
-                    loadCustomers();
+                    try {
+                        // Actualizar cliente en la lista
+                        setCustomers(prev => {
+                            if (modalMode === 'create') {
+                                return [...prev, updatedCustomer];
+                            } else {
+                                return prev.map(c => 
+                                    c.id === updatedCustomer.id ? updatedCustomer : c
+                                );
+                            }
+                        });
+                        // NO recargar datos - ya tenemos los datos actualizados
+                        console.log('Cliente actualizado en la lista local');
+                    } catch (error) {
+                        console.error('Error actualizando lista de clientes:', error);
+                        // Si hay error, intentar recargar datos
+                        setTimeout(() => {
+                            loadCustomers();
+                        }, 1000);
+                    }
                 }}
                 restaurantId={restaurantId}
                 mode={modalMode}
