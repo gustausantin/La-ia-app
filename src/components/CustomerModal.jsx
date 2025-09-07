@@ -182,6 +182,8 @@ const CustomerModal = ({
             console.log('customer.first_name:', customer.first_name);
             console.log('customer.last_name1:', customer.last_name1);
             console.log('customer.last_name2:', customer.last_name2);
+            console.log('customer.segment_manual:', customer.segment_manual);
+            console.log('customer.segment_auto:', customer.segment_auto);
             
             setFormData({
                 name: customer.name || '',

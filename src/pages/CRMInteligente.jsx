@@ -142,8 +142,8 @@ export default function CRMInteligente() {
             const { data: customersData, error: customersError } = await supabase
                 .from("customers")
                 .select(`
-                    id, restaurant_id, name, email, phone, first_name, last_name1,
-                    segment_auto, visits_count, last_visit_at, total_spent, avg_ticket,
+                    id, restaurant_id, name, email, phone, first_name, last_name1, last_name2,
+                    segment_auto, segment_manual, visits_count, last_visit_at, total_spent, avg_ticket,
                     churn_risk_score, predicted_ltv, consent_email, consent_sms, consent_whatsapp,
                     preferences, tags, notes, created_at, updated_at
                 `)
@@ -459,6 +459,13 @@ export default function CRMInteligente() {
 
     // ABRIR MODAL DE CLIENTE
     const openCustomerModal = (customer) => {
+        console.log('=== OPENING CUSTOMER MODAL ===');
+        console.log('Opening modal with customer:', customer);
+        console.log('Customer name:', customer.name);
+        console.log('Customer first_name:', customer.first_name);
+        console.log('Customer last_name1:', customer.last_name1);
+        console.log('Customer last_name2:', customer.last_name2);
+        
         setSelectedCustomer(customer);
         setShowCustomerModal(true);
     };
