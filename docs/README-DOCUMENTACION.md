@@ -172,13 +172,14 @@
 | ⚡ **Optimizaciones** | `PERFORMANCE-OPTIMIZATION-COMPLETA.md` |
 | 📱 **PWA funcionalidades** | `PWA-GUIA-COMPLETA.md` |
 | 🧠 **IA avanzada** | `IA-EXPANSION-COMPLETA.md` |
+| 🔧 **Mejoras ficha cliente** | `MEJORAS-FICHA-CLIENTE-2025.md` |
 
 ---
 
 ## ✅ **ESTADO FINAL DE DOCUMENTACIÓN**
 
 ### 📊 **ESTADÍSTICAS:**
-- **📁 Documentos actuales:** 9 archivos esenciales
+- **📁 Documentos actuales:** 12 archivos esenciales
 - **🗑️ Documentos eliminados:** 9 archivos obsoletos  
 - **📈 Reducción:** 47% menos archivos
 - **🎯 Calidad:** 100% documentos actualizados y relevantes
