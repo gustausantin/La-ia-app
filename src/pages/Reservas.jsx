@@ -1403,10 +1403,59 @@ const ReservationFormModal = ({
         status: reservation?.status || "confirmada",
     });
 
+    // Estados para búsqueda inteligente de clientes
+    const [searchingCustomer, setSearchingCustomer] = useState(false);
+    const [foundCustomers, setFoundCustomers] = useState([]);
+    const [phoneSearched, setPhoneSearched] = useState('');
+
     const [errors, setErrors] = useState({});
 
     // FUNCIONALIDAD ACTUAL: La vinculación automática funciona en handleCustomerLinking()
     // Se buscan automáticamente clientes existentes por teléfono/email y se actualizan las métricas
+
+    // 🔍 NUEVA FUNCIONALIDAD: Búsqueda inteligente en tiempo real por teléfono
+    const searchCustomerByPhone = async (phone) => {
+        if (!phone || phone.length < 3) {
+            setFoundCustomers([]);
+            return;
+        }
+
+        setSearchingCustomer(true);
+        setPhoneSearched(phone);
+
+        try {
+            const { data: customers, error } = await supabase
+                .from("customers")
+                .select("*")
+                .eq("restaurant_id", restaurantId)
+                .or(`phone.ilike.%${phone}%,name.ilike.%${phone}%`)
+                .order('last_visit_at', { ascending: false })
+                .limit(5);
+
+            if (error) throw error;
+
+            setFoundCustomers(customers || []);
+        } catch (error) {
+            console.error("Error buscando clientes:", error);
+            setFoundCustomers([]);
+        } finally {
+            setSearchingCustomer(false);
+        }
+    };
+
+    // 🎯 FUNCIONALIDAD: Auto-completar datos cuando se selecciona cliente existente
+    const handleSelectExistingCustomer = (customer) => {
+        setFormData({
+            ...formData,
+            clientType: 'existing',
+            selectedCustomer: customer,
+            customer_name: customer.name,
+            customer_phone: customer.phone || '',
+            customer_email: customer.email || '',
+        });
+        setFoundCustomers([]);
+        toast.success(`Cliente ${customer.name} seleccionado - ${customer.visits_count || 0} visitas previas`);
+    };
 
     // Función para vincular reserva con cliente existente y actualizar métricas
     const handleCustomerLinking = async (reservationData) => {
@@ -1660,41 +1709,28 @@ const ReservationFormModal = ({
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    {/* Selector Cliente Existente vs Nuevo */}
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                        <h4 className="font-medium text-gray-900 mb-3">Tipo de Cliente</h4>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setFormData({...formData, clientType: 'existing'})}
-                                className={`p-3 rounded-lg border-2 transition-colors ${
-                                    formData.clientType === 'existing'
-                                        ? 'border-blue-500 bg-blue-100 text-blue-900'
-                                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Users className="w-4 h-4" />
-                                    <span className="font-medium">Cliente Existente</span>
-                                </div>
-                                <p className="text-xs mt-1">Buscar en base de datos</p>
-                            </button>
-                            
-                            <button
-                                type="button"
-                                onClick={() => setFormData({...formData, clientType: 'new'})}
-                                className={`p-3 rounded-lg border-2 transition-colors ${
-                                    formData.clientType === 'new'
-                                        ? 'border-green-500 bg-green-100 text-green-900'
-                                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Plus className="w-4 h-4" />
-                                    <span className="font-medium">Cliente Nuevo</span>
-                                </div>
-                                <p className="text-xs mt-1">Crear nuevo cliente</p>
-                            </button>
+                    {/* 🎯 FLUJO MEJORADO: Información sobre el matching inteligente */}
+                    <div className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border border-blue-200">
+                        <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <Search className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-medium text-gray-900 mb-1">Sistema Inteligente de Clientes</h4>
+                                <p className="text-sm text-gray-600 mb-2">
+                                    Al escribir el teléfono, buscaremos automáticamente si el cliente ya existe en tu base de datos.
+                                </p>
+                                {formData.selectedCustomer && (
+                                    <div className="bg-green-100 p-2 rounded border border-green-200">
+                                        <p className="text-sm text-green-800">
+                                            ✅ <strong>Cliente seleccionado:</strong> {formData.selectedCustomer.name}
+                                            <span className="ml-2 text-xs">
+                                                ({formData.selectedCustomer.visits_count || 0} visitas previas)
+                                            </span>
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -1725,29 +1761,92 @@ const ReservationFormModal = ({
                             )}
                         </div>
 
-                        <div>
+                        <div className="relative">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Teléfono
+                                {searchingCustomer && (
+                                    <span className="ml-2 text-xs text-blue-600">
+                                        <RefreshCw className="w-3 h-3 inline animate-spin mr-1" />
+                                        Buscando...
+                                    </span>
+                                )}
                             </label>
                             <input
                                 type="tel"
                                 value={formData.customer_phone}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                    const phone = e.target.value;
                                     setFormData({
                                         ...formData,
-                                        customer_phone: e.target.value,
-                                    })
-                                }
+                                        customer_phone: phone,
+                                    });
+                                    
+                                    // 🔍 Búsqueda automática al escribir teléfono
+                                    if (formData.clientType === 'new' && phone.length >= 3) {
+                                        searchCustomerByPhone(phone);
+                                    }
+                                }}
                                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
                                     errors.customer_phone
                                         ? "border-red-300"
                                         : "border-gray-300"
                                 }`}
+                                placeholder="Ej: +34 600 000 000"
                             />
                             {errors.customer_phone && (
                                 <p className="text-xs text-red-600 mt-1">
                                     {errors.customer_phone}
                                 </p>
+                            )}
+                            
+                            {/* 🎯 DROPDOWN DE CLIENTES ENCONTRADOS */}
+                            {foundCustomers.length > 0 && formData.clientType === 'new' && (
+                                <div className="absolute top-full left-0 right-0 z-10 bg-white border border-gray-200 rounded-lg shadow-lg mt-1">
+                                    <div className="p-2 border-b border-gray-100 bg-yellow-50">
+                                        <p className="text-xs text-yellow-800 font-medium">
+                                            📋 Se encontraron clientes existentes:
+                                        </p>
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto">
+                                        {foundCustomers.map((customer) => (
+                                            <button
+                                                key={customer.id}
+                                                type="button"
+                                                onClick={() => handleSelectExistingCustomer(customer)}
+                                                className="w-full p-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">{customer.name}</p>
+                                                        <p className="text-xs text-gray-600">{customer.phone}</p>
+                                                        {customer.email && (
+                                                            <p className="text-xs text-gray-500">{customer.email}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-xs font-medium text-blue-600">
+                                                            {customer.visits_count || 0} visitas
+                                                        </p>
+                                                        {customer.last_visit_at && (
+                                                            <p className="text-xs text-gray-500">
+                                                                Última: {format(new Date(customer.last_visit_at), 'dd/MM/yyyy')}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="p-2 border-t border-gray-100 bg-gray-50">
+                                        <button
+                                            type="button"
+                                            onClick={() => setFoundCustomers([])}
+                                            className="text-xs text-gray-600 hover:text-gray-800"
+                                        >
+                                            ✕ Cerrar y crear cliente nuevo
+                                        </button>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
