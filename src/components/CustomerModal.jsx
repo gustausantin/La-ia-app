@@ -371,26 +371,11 @@ const CustomerModal = ({
                 toast.success('✅ Cliente actualizado correctamente');
             }
 
-            // Llamar callback de guardado PROTEGIDO
-            try {
-                if (onSave) {
-                    onSave(result);
-                }
-            } catch (callbackError) {
-                console.error('Error en callback onSave (ignorado):', callbackError);
-                // Continuar sin fallar
-            }
-            
+            // SOLUCIÓN EXTREMA: NO HACER NADA DESPUÉS DEL GUARDADO
+            // Solo cambiar a modo vista
             setIsEditing(false);
             
-            // Cerrar modal después de un delay
-            setTimeout(() => {
-                try {
-                    onClose();
-                } catch (closeError) {
-                    console.error('Error cerrando modal (ignorado):', closeError);
-                }
-            }, 500);
+            console.log('✅ GUARDADO COMPLETADO - NO SE EJECUTA NADA MÁS');
             
         } catch (error) {
             console.error('Error saving customer:', error);
@@ -398,6 +383,9 @@ const CustomerModal = ({
         } finally {
             setSaving(false);
         }
+        
+        // PREVENIR CUALQUIER ERROR ADICIONAL
+        return;
     };
 
     if (!isOpen) return null;
