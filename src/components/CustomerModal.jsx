@@ -895,33 +895,42 @@ const CustomerModal = ({
                                 if (!formData.first_name?.trim()) return;
                                 
                                 try {
+                                    // GUARDADO COMPLETO - TODOS LOS CAMPOS
+                                    const dataToSave = {
+                                        name: `${formData.first_name} ${formData.last_name1 || ''}`.trim(),
+                                        first_name: formData.first_name,
+                                        last_name1: formData.last_name1 || null,
+                                        last_name2: formData.last_name2 || null,
+                                        email: formData.email || null,
+                                        phone: formData.phone || null,
+                                        birthdate: formData.birthdate || null,
+                                        notes: formData.notes || null,
+                                        tags: formData.tags || null,
+                                        preferences: formData.preferences || null,
+                                        consent_email: formData.consent_email || false,
+                                        consent_sms: formData.consent_sms || false,
+                                        consent_whatsapp: formData.consent_whatsapp || false,
+                                        segment_manual: formData.segment_manual || null
+                                    };
+                                    
                                     const { error } = await supabase
                                         .from('customers')
-                                        .update({ 
-                                            name: `${formData.first_name} ${formData.last_name1 || ''}`.trim(),
-                                            first_name: formData.first_name,
-                                            last_name1: formData.last_name1 || null,
-                                            email: formData.email || null,
-                                            phone: formData.phone || null
-                                        })
+                                        .update(dataToSave)
                                         .eq('id', customer?.id);
                                     
                                     if (error) throw error;
                                     
-                                    alert('✅ GUARDADO EXITOSO - Recargando página...');
-                                    
-                                    // SOLUCIÓN DEFINITIVA: Recargar página
-                                    setTimeout(() => {
-                                        window.location.reload();
-                                    }, 500);
+                                    // SIN ALERT - SIN REDIRECCIÓN - SOLO CERRAR MODAL
+                                    setIsEditing(false);
+                                    if (onClose) onClose();
                                     
                                 } catch (error) {
-                                    alert('❌ ERROR SIMPLE: ' + error.message);
+                                    alert('❌ ERROR: ' + error.message);
                                 }
                             }}
                             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                         >
-                            ✅ GUARDAR DEFINITIVO
+                            ✅ GUARDAR COMPLETO
                         </button>
                         
                         <button
