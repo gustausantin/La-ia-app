@@ -1392,9 +1392,22 @@ const ReservationFormModal = ({
     const [formData, setFormData] = useState({
         clientType: 'new', // 'existing' o 'new'
         selectedCustomer: null,
-        customer_name: reservation?.customer_name || "",
+        
+        // 👤 DATOS DEL CLIENTE (UNIFICADO CON CustomerModal)
+        first_name: reservation?.customer_name?.split(' ')[0] || "",
+        last_name1: reservation?.customer_name?.split(' ')[1] || "",
+        last_name2: reservation?.customer_name?.split(' ')[2] || "",
+        customer_name: reservation?.customer_name || "", // Campo calculado automáticamente
         customer_phone: reservation?.customer_phone || "",
         customer_email: reservation?.customer_email || "",
+        notes: "",
+        
+        // 🔐 PERMISOS GDPR (UNIFICADO CON CustomerModal)
+        consent_email: false,
+        consent_sms: false,
+        consent_whatsapp: false,
+        
+        // 📅 DATOS DE LA RESERVA
         date: reservation?.reservation_date || format(new Date(), "yyyy-MM-dd"),
         time: reservation?.reservation_time || "",
         party_size: reservation?.party_size || 2,
@@ -1449,12 +1462,28 @@ const ReservationFormModal = ({
             ...formData,
             clientType: 'existing',
             selectedCustomer: customer,
-            customer_name: customer.name,
+            
+            // 👤 DATOS COMPLETOS DEL CLIENTE
+            first_name: customer.first_name || customer.name?.split(' ')[0] || '',
+            last_name1: customer.last_name1 || customer.name?.split(' ')[1] || '',
+            last_name2: customer.last_name2 || customer.name?.split(' ')[2] || '',
+            customer_name: customer.name || '',
             customer_phone: customer.phone || '',
             customer_email: customer.email || '',
+            notes: customer.notes || '',
+            
+            // 🔐 PERMISOS EXISTENTES
+            consent_email: customer.consent_email || false,
+            consent_sms: customer.consent_sms || false,
+            consent_whatsapp: customer.consent_whatsapp || false,
         });
         setFoundCustomers([]);
         toast.success(`Cliente ${customer.name} seleccionado - ${customer.visits_count || 0} visitas previas`);
+    };
+
+    // 🔄 FUNCIONALIDAD: Actualizar nombre completo automáticamente
+    const updateFullName = (firstName, lastName1, lastName2) => {
+        return `${firstName || ''} ${lastName1 || ''} ${lastName2 || ''}`.trim();
     };
 
     // Función para vincular reserva con cliente existente y actualizar métricas
@@ -1497,21 +1526,38 @@ const ReservationFormModal = ({
 
                 console.log(`Cliente ${customer.name} actualizado: ${updatedData.visits_count} visitas`);
             } else {
-                // Cliente nuevo: crear automáticamente usando esquema real
+                // Cliente nuevo: crear automáticamente usando esquema COMPLETO (UNIFICADO)
                 const newCustomer = {
+                    // 👤 DATOS PERSONALES COMPLETOS
                     name: reservationData.customer_name,
+                    first_name: reservationData.first_name || reservationData.customer_name?.split(' ')[0] || '',
+                    last_name1: reservationData.last_name1 || reservationData.customer_name?.split(' ')[1] || '',
+                    last_name2: reservationData.last_name2 || reservationData.customer_name?.split(' ')[2] || '',
+                    
+                    // 📞 CONTACTO
                     phone: reservationData.customer_phone,
                     email: reservationData.customer_email || null,
+                    
+                    // 📝 NOTAS
+                    notes: reservationData.notes || "Cliente creado automáticamente desde reserva",
+                    
+                    // 🔐 PERMISOS GDPR
+                    consent_email: reservationData.consent_email || false,
+                    consent_sms: reservationData.consent_sms || false,
+                    consent_whatsapp: reservationData.consent_whatsapp || false,
+                    
+                    // 🏪 RESTAURANT DATA
                     restaurant_id: restaurantId,
                     visits_count: 1,
                     last_visit_at: reservationData.reservation_date,
                     total_spent: 0,
+                    
+                    // 🎯 SEGMENTACIÓN
                     preferences: {
                         segment: "nuevo",
                         created_automatically: true,
                         created_from: "reservation"
                     },
-                    notes: "Cliente creado automáticamente desde reserva",
                 };
 
                 await supabase
@@ -1625,7 +1671,7 @@ const ReservationFormModal = ({
         setLoading(true);
 
         try {
-            // CORREGIDO: Solo enviar campos que existen en la tabla reservations
+            // 📋 DATOS DE LA RESERVA (para tabla reservations)
             const reservationData = {
                 customer_name: formData.customer_name,
                 customer_email: formData.customer_email || null,
@@ -1639,7 +1685,15 @@ const ReservationFormModal = ({
                 restaurant_id: restaurantId,
                 status: "confirmed",
                 source: "manual",
-                channel: "manual"
+                channel: "manual",
+                
+                // 👤 DATOS COMPLETOS DEL CLIENTE (para crear cliente automáticamente)
+                first_name: formData.first_name,
+                last_name1: formData.last_name1,
+                last_name2: formData.last_name2,
+                consent_email: formData.consent_email,
+                consent_sms: formData.consent_sms,
+                consent_whatsapp: formData.consent_whatsapp,
             };
 
             if (reservation) {
@@ -1734,34 +1788,98 @@ const ReservationFormModal = ({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Nombre del cliente
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.customer_name}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        customer_name: e.target.value,
-                                    })
-                                }
-                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                                    errors.customer_name
-                                        ? "border-red-300"
-                                        : "border-gray-300"
-                                }`}
-                            />
-                            {errors.customer_name && (
-                                <p className="text-xs text-red-600 mt-1">
-                                    {errors.customer_name}
-                                </p>
-                            )}
+                    {/* 👤 SECCIÓN: DATOS PERSONALES DEL CLIENTE (UNIFICADO CON CustomerModal) */}
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                            <User className="w-4 h-4 text-blue-600" />
+                            Información Personal del Cliente
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Nombre *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.first_name}
+                                    onChange={(e) => {
+                                        const firstName = e.target.value;
+                                        const fullName = updateFullName(firstName, formData.last_name1, formData.last_name2);
+                                        setFormData({
+                                            ...formData,
+                                            first_name: firstName,
+                                            customer_name: fullName
+                                        });
+                                    }}
+                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                                        errors.customer_name
+                                            ? "border-red-300"
+                                            : "border-gray-300"
+                                    }`}
+                                    placeholder="Juan"
+                                />
+                                {errors.customer_name && (
+                                    <p className="text-xs text-red-600 mt-1">
+                                        {errors.customer_name}
+                                    </p>
+                                )}
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Primer apellido
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.last_name1}
+                                        onChange={(e) => {
+                                            const lastName1 = e.target.value;
+                                            const fullName = updateFullName(formData.first_name, lastName1, formData.last_name2);
+                                            setFormData({
+                                                ...formData,
+                                                last_name1: lastName1,
+                                                customer_name: fullName
+                                            });
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Pérez"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Segundo apellido
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.last_name2}
+                                        onChange={(e) => {
+                                            const lastName2 = e.target.value;
+                                            const fullName = updateFullName(formData.first_name, formData.last_name1, lastName2);
+                                            setFormData({
+                                                ...formData,
+                                                last_name2: lastName2,
+                                                customer_name: fullName
+                                            });
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        placeholder="García"
+                                    />
+                                </div>
+                            </div>
                         </div>
+                    </div>
 
-                        <div className="relative">
+                    {/* 📞 SECCIÓN: INFORMACIÓN DE CONTACTO */}
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-green-600" />
+                            Información de Contacto
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="relative">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Teléfono
                                 {searchingCustomer && (
@@ -1849,23 +1967,130 @@ const ReservationFormModal = ({
                                 </div>
                             )}
                         </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Email (opcional)
+                                </label>
+                                <input
+                                    type="email"
+                                    value={formData.customer_email}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            customer_email: e.target.value,
+                                        })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    placeholder="juan@email.com"
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email (opcional)
-                        </label>
-                        <input
-                            type="email"
-                            value={formData.customer_email}
-                            onChange={(e) =>
-                                setFormData({
+                    {/* 📝 SECCIÓN: NOTAS ADICIONALES */}
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-yellow-600" />
+                            Notas del Cliente
+                        </h4>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Notas adicionales
+                            </label>
+                            <textarea
+                                value={formData.notes}
+                                onChange={(e) => setFormData({
                                     ...formData,
-                                    customer_email: e.target.value,
-                                })
-                            }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        />
+                                    notes: e.target.value
+                                })}
+                                rows="3"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="Alergias, preferencias, celebraciones..."
+                            />
+                        </div>
+                    </div>
+
+                    {/* 🔐 SECCIÓN: PERMISOS GDPR (UNIFICADO CON CustomerModal) */}
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                            <Shield className="w-4 h-4 text-purple-600" />
+                            Gestión de Consentimientos (GDPR)
+                        </h4>
+                        
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <div className="flex items-center gap-3">
+                                    <Mail className="w-4 h-4 text-blue-600" />
+                                    <div>
+                                        <h5 className="text-sm font-medium text-gray-900">Comunicación por Email</h5>
+                                        <p className="text-xs text-gray-600">Autorización para emails promocionales</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.consent_email}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            consent_email: e.target.checked
+                                        })}
+                                        className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    />
+                                    <span className="text-xs font-medium">
+                                        {formData.consent_email ? 'Autorizado' : 'No autorizado'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                                <div className="flex items-center gap-3">
+                                    <MessageSquare className="w-4 h-4 text-green-600" />
+                                    <div>
+                                        <h5 className="text-sm font-medium text-gray-900">Comunicación por SMS</h5>
+                                        <p className="text-xs text-gray-600">Autorización para mensajes SMS</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.consent_sms}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            consent_sms: e.target.checked
+                                        })}
+                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                                    />
+                                    <span className="text-xs font-medium">
+                                        {formData.consent_sms ? 'Autorizado' : 'No autorizado'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                <div className="flex items-center gap-3">
+                                    <Phone className="w-4 h-4 text-emerald-600" />
+                                    <div>
+                                        <h5 className="text-sm font-medium text-gray-900">Comunicación por WhatsApp</h5>
+                                        <p className="text-xs text-gray-600">Autorización para mensajes WhatsApp</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.consent_whatsapp}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            consent_whatsapp: e.target.checked
+                                        })}
+                                        className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                                    />
+                                    <span className="text-xs font-medium">
+                                        {formData.consent_whatsapp ? 'Autorizado' : 'No autorizado'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
