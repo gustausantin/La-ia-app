@@ -908,15 +908,20 @@ const CustomerModal = ({
                                     
                                     if (error) throw error;
                                     
-                                    alert('✅ GUARDADO SIMPLE EXITOSO');
+                                    alert('✅ GUARDADO Y CERRANDO...');
+                                    
+                                    // Actualizar la UI y cerrar
+                                    setIsEditing(false);
+                                    if (onSave) onSave();
+                                    if (onClose) onClose();
                                     
                                 } catch (error) {
                                     alert('❌ ERROR SIMPLE: ' + error.message);
                                 }
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                         >
-                            🔥 GUARDAR SIMPLE
+                            ✅ GUARDAR Y CERRAR
                         </button>
                         
                         <button
