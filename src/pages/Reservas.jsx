@@ -1993,7 +1993,7 @@ const ReservationFormModal = ({
                     {/* 📅 SECCIÓN: FECHA Y HORA DE LA RESERVA (PRIORIDAD ALTA) */}
                     <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
                         <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-orange-600" />
+                            <CalendarIcon className="w-4 h-4 text-orange-600" />
                             Fecha y Hora de la Reserva
                         </h4>
                         
