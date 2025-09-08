@@ -908,20 +908,52 @@ const CustomerModal = ({
                                     
                                     if (error) throw error;
                                     
-                                    alert('✅ GUARDADO Y CERRANDO...');
+                                    alert('✅ GUARDADO - SOLO onSave()');
                                     
-                                    // Actualizar la UI y cerrar
+                                    // SOLO onSave
                                     setIsEditing(false);
                                     if (onSave) onSave();
+                                    
+                                } catch (error) {
+                                    alert('❌ ERROR SIMPLE: ' + error.message);
+                                }
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                            🔵 SOLO onSave
+                        </button>
+                        
+                        <button
+                            onClick={async () => {
+                                if (!formData.first_name?.trim()) return;
+                                
+                                try {
+                                    const { error } = await supabase
+                                        .from('customers')
+                                        .update({ 
+                                            name: `${formData.first_name} ${formData.last_name1 || ''}`.trim(),
+                                            first_name: formData.first_name,
+                                            last_name1: formData.last_name1 || null,
+                                            email: formData.email || null,
+                                            phone: formData.phone || null
+                                        })
+                                        .eq('id', customer?.id);
+                                    
+                                    if (error) throw error;
+                                    
+                                    alert('✅ GUARDADO - SOLO onClose()');
+                                    
+                                    // SOLO onClose
+                                    setIsEditing(false);
                                     if (onClose) onClose();
                                     
                                 } catch (error) {
                                     alert('❌ ERROR SIMPLE: ' + error.message);
                                 }
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                         >
-                            ✅ GUARDAR Y CERRAR
+                            🟠 SOLO onClose
                         </button>
                         
                         <button
