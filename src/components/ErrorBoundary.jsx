@@ -30,6 +30,12 @@ class ErrorBoundary extends React.Component {
     });
 
     // Log del error
+    console.error('🚨🚨🚨 ERROR BOUNDARY CAPTURÓ ERROR 🚨🚨🚨');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Component stack:', errorInfo.componentStack);
+    console.error('Error ID:', errorId);
+    
     logger.error('Error Boundary capturó un error', {
       error: error.message,
       stack: error.stack,
