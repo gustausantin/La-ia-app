@@ -895,7 +895,7 @@ const CustomerModal = ({
                                 if (!formData.first_name?.trim()) return;
                                 
                                 try {
-                                    // GUARDADO COMPLETO - TODOS LOS CAMPOS INCLUYENDO ETIQUETAS
+                                    // GUARDADO COMPLETO - SIN ETIQUETAS (CAUSAN PROBLEMAS)
                                     const dataToSave = {
                                         name: `${formData.first_name} ${formData.last_name1 || ''}`.trim(),
                                         first_name: formData.first_name,
@@ -904,7 +904,7 @@ const CustomerModal = ({
                                         email: formData.email || null,
                                         phone: formData.phone || null,
                                         notes: formData.notes || null,
-                                        tags: formData.tags || null, // ✅ ETIQUETAS HABILITADAS
+                                        // tags: QUITADO - NO SE GUARDA
                                         preferences: formData.preferences || null,
                                         consent_email: formData.consent_email || false,
                                         consent_sms: formData.consent_sms || false,
@@ -923,9 +923,9 @@ const CustomerModal = ({
                                     setIsEditing(false);
                                     if (onClose) onClose();
                                     
-                                    // RECARGAR PÁGINA PARA VER CAMBIOS INMEDIATAMENTE
+                                    // RECARGAR PÁGINA MANTENIENDO LA URL ACTUAL (NO VA AL DASHBOARD)
                                     setTimeout(() => {
-                                        window.location.reload();
+                                        window.location.href = window.location.href;
                                     }, 300);
                                     
                                 } catch (error) {
