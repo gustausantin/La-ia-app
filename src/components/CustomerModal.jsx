@@ -891,6 +891,35 @@ const CustomerModal = ({
                             Cancelar
                         </button>
                         <button
+                            onClick={async () => {
+                                if (!formData.first_name?.trim()) return;
+                                
+                                try {
+                                    const { error } = await supabase
+                                        .from('customers')
+                                        .update({ 
+                                            name: `${formData.first_name} ${formData.last_name1 || ''}`.trim(),
+                                            first_name: formData.first_name,
+                                            last_name1: formData.last_name1 || null,
+                                            email: formData.email || null,
+                                            phone: formData.phone || null
+                                        })
+                                        .eq('id', customer?.id);
+                                    
+                                    if (error) throw error;
+                                    
+                                    alert('✅ GUARDADO SIMPLE EXITOSO');
+                                    
+                                } catch (error) {
+                                    alert('❌ ERROR SIMPLE: ' + error.message);
+                                }
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                        >
+                            🔥 GUARDAR SIMPLE
+                        </button>
+                        
+                        <button
                             onClick={handleSave}
                             disabled={saving || !formData.first_name?.trim()}
                             className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
@@ -900,7 +929,7 @@ const CustomerModal = ({
                             ) : (
                                 <Save className="w-4 h-4" />
                             )}
-                            {mode === 'create' ? 'Crear Cliente' : 'Guardar Cambios'}
+                            {mode === 'create' ? 'Crear Cliente' : 'Guardar Original'}
                         </button>
                     </div>
                 )}
