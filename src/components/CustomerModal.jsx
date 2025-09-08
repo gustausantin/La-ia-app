@@ -342,7 +342,8 @@ const CustomerModal = ({
                 }
                 result = data;
                 console.log('Cliente creado exitosamente:', result);
-                toast.success('✅ Cliente creado correctamente');
+                // toast.success('✅ Cliente creado correctamente');
+                alert('✅ Cliente creado correctamente');
             } else {
                 // Actualizar cliente existente
                 if (!customer?.id) {
@@ -368,7 +369,8 @@ const CustomerModal = ({
                 }
                 result = data;
                 console.log('Cliente actualizado exitosamente:', result);
-                toast.success('✅ Cliente actualizado correctamente');
+                // toast.success('✅ Cliente actualizado correctamente');
+                alert('✅ Cliente actualizado correctamente');
             }
 
             // SOLUCIÓN EXTREMA: NO HACER NADA DESPUÉS DEL GUARDADO
@@ -379,7 +381,8 @@ const CustomerModal = ({
             
         } catch (error) {
             console.error('Error saving customer:', error);
-            toast.error('❌ Error al guardar cliente. Intenta de nuevo.');
+            // toast.error('❌ Error al guardar cliente. Intenta de nuevo.');
+            alert('❌ Error al guardar cliente: ' + error.message);
         } finally {
             setSaving(false);
         }
