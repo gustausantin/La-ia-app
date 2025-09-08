@@ -895,7 +895,7 @@ const CustomerModal = ({
                                 if (!formData.first_name?.trim()) return;
                                 
                                 try {
-                                    // GUARDADO COMPLETO - SOLO CAMPOS QUE EXISTEN EN SUPABASE
+                                    // GUARDADO COMPLETO - TODOS LOS CAMPOS INCLUYENDO ETIQUETAS
                                     const dataToSave = {
                                         name: `${formData.first_name} ${formData.last_name1 || ''}`.trim(),
                                         first_name: formData.first_name,
@@ -903,9 +903,8 @@ const CustomerModal = ({
                                         last_name2: formData.last_name2 || null,
                                         email: formData.email || null,
                                         phone: formData.phone || null,
-                                        // birthdate: NO EXISTE EN SUPABASE - QUITADO
                                         notes: formData.notes || null,
-                                        tags: formData.tags || null,
+                                        tags: formData.tags || null, // ✅ ETIQUETAS HABILITADAS
                                         preferences: formData.preferences || null,
                                         consent_email: formData.consent_email || false,
                                         consent_sms: formData.consent_sms || false,
@@ -920,9 +919,14 @@ const CustomerModal = ({
                                     
                                     if (error) throw error;
                                     
-                                    // SIN ALERT - SIN REDIRECCIÓN - SOLO CERRAR MODAL
+                                    // ACTUALIZAR UI AUTOMÁTICAMENTE + CERRAR MODAL
                                     setIsEditing(false);
                                     if (onClose) onClose();
+                                    
+                                    // RECARGAR PÁGINA PARA VER CAMBIOS INMEDIATAMENTE
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 300);
                                     
                                 } catch (error) {
                                     alert('❌ ERROR: ' + error.message);
