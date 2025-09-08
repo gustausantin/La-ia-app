@@ -374,10 +374,10 @@ const CustomerModal = ({
             }
 
             // SOLUCIÓN EXTREMA: NO HACER NADA DESPUÉS DEL GUARDADO
-            // Solo cambiar a modo vista
-            setIsEditing(false);
-            
             console.log('✅ GUARDADO COMPLETADO - NO SE EJECUTA NADA MÁS');
+            
+            // NO CAMBIAR ESTADO - PUEDE CAUSAR RE-RENDER PROBLEMÁTICO
+            // setIsEditing(false);
             
         } catch (error) {
             console.error('Error saving customer:', error);
@@ -393,9 +393,16 @@ const CustomerModal = ({
 
     if (!isOpen) return null;
 
-    // Determinar segmento actual
-    const currentSegment = customer ? determineCustomerSegment(customer, crmConfig) : 'nuevo';
-    const segmentInfo = CUSTOMER_SEGMENTS[currentSegment] || CUSTOMER_SEGMENTS.nuevo;
+    // Determinar segmento actual - PROTEGIDO CONTRA ERRORES
+    let currentSegment = 'nuevo';
+    let segmentInfo = CUSTOMER_SEGMENTS.nuevo;
+    
+    try {
+        currentSegment = customer ? determineCustomerSegment(customer, crmConfig) : 'nuevo';
+        segmentInfo = CUSTOMER_SEGMENTS[currentSegment] || CUSTOMER_SEGMENTS.nuevo;
+    } catch (segmentError) {
+        console.error('Error determinando segmento (ignorado):', segmentError);
+    }
 
     // Calcular días desde última visita
     let daysSinceLastVisit = null;
