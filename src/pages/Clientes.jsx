@@ -12,12 +12,60 @@ import {
 import toast from "react-hot-toast";
 import CustomerModal from "../components/CustomerModal";
 
-// Segmentación básica
+// SEGMENTACIÓN INTELIGENTE - UNIFICADA CON CRM
 const CUSTOMER_SEGMENTS = {
-    nuevo: { label: "Nuevo", icon: "👋", color: "blue" },
-    regular: { label: "Regular", icon: "⭐", color: "green" },
-    vip: { label: "VIP", icon: "👑", color: "purple" },
-    inactivo: { label: "Inactivo", icon: "😴", color: "gray" }
+    nuevo: { 
+        label: "Nuevo", 
+        icon: "👋", 
+        color: "blue",
+        description: "Cliente recién registrado",
+        priority: 1
+    },
+    activo: { 
+        label: "Activo", 
+        icon: "⭐", 
+        color: "green",
+        description: "Cliente con visitas regulares",
+        priority: 2
+    },
+    bib: { 
+        label: "BIB", 
+        icon: "👑", 
+        color: "purple",
+        description: "Best In Business - Cliente prioritario",
+        priority: 5
+    },
+    inactivo: { 
+        label: "Inactivo", 
+        icon: "😴", 
+        color: "gray",
+        description: "Sin visitas recientes",
+        priority: 3
+    },
+    riesgo: { 
+        label: "En Riesgo", 
+        icon: "⚠️", 
+        color: "orange",
+        description: "Cliente que puede perderse",
+        priority: 4
+    }
+};
+
+// FUNCIÓN PARA DETERMINAR SEGMENTO DEL CLIENTE
+const determineCustomerSegment = (customer) => {
+    if (!customer) return 'nuevo';
+    
+    const visitas = customer.visits_count || 0;
+    const ultimaVisita = customer.last_visit_at;
+    const diasSinVisita = ultimaVisita ? 
+        Math.floor((new Date() - new Date(ultimaVisita)) / (1000 * 60 * 60 * 24)) : null;
+    
+    // Lógica de segmentación
+    if (visitas === 0) return 'nuevo';
+    if (visitas >= 10) return 'bib'; // BIB = 10+ visitas
+    if (diasSinVisita && diasSinVisita > 60) return 'inactivo';
+    if (diasSinVisita && diasSinVisita > 30) return 'riesgo';
+    return 'activo';
 };
 
 // Componente principal
@@ -56,8 +104,17 @@ export default function Clientes() {
 
             if (error) throw error;
 
-            console.log("✅ Clientes cargados:", customers?.length || 0);
-            setCustomers(customers || []);
+            // Procesar clientes con segmentación automática
+            const processedCustomers = customers?.map(customer => ({
+                ...customer,
+                segment: determineCustomerSegment(customer),
+                daysSinceLastVisit: customer.last_visit_at 
+                    ? Math.floor((new Date() - new Date(customer.last_visit_at)) / (1000 * 60 * 60 * 24))
+                    : null
+            })) || [];
+
+            console.log("✅ Clientes procesados:", processedCustomers.length);
+            setCustomers(processedCustomers);
 
         } catch (error) {
             console.error("❌ Error cargando clientes:", error);
@@ -275,13 +332,26 @@ export default function Clientes() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3">
+                                                {/* Avatar con inicial */}
                                                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                                                     {customer.name.charAt(0).toUpperCase()}
                                                 </div>
+                                                
+                                                {/* Icono de segmento - NUEVA FUNCIONALIDAD */}
+                                                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-lg flex-shrink-0">
+                                                    {CUSTOMER_SEGMENTS[customer.segment]?.icon || "👤"}
+                                                </div>
+                                                
                                                 <div className="flex-1 min-w-0">
-                                                    <h3 className="text-sm font-medium text-gray-900 truncate">
-                                                        {customer.name}
-                                                    </h3>
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="text-sm font-medium text-gray-900 truncate">
+                                                            {customer.name}
+                                                        </h3>
+                                                        {/* Etiqueta de segmento - NUEVA FUNCIONALIDAD */}
+                                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${CUSTOMER_SEGMENTS[customer.segment]?.color || 'gray'}-100 text-${CUSTOMER_SEGMENTS[customer.segment]?.color || 'gray'}-800`}>
+                                                            {CUSTOMER_SEGMENTS[customer.segment]?.label || 'Cliente'}
+                                                        </span>
+                                                    </div>
                                                     <div className="flex items-center gap-4 mt-1">
                                                         {customer.email && (
                                                             <p className="text-sm text-gray-600 flex items-center gap-1">
@@ -300,22 +370,36 @@ export default function Clientes() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4 text-sm text-gray-600">
+                                            {/* Visitas */}
                                             <div className="text-center">
                                                 <p className="font-medium text-gray-900">{customer.visits_count || 0}</p>
                                                 <p className="text-xs">Visitas</p>
                                             </div>
+                                            
+                                            {/* Total gastado */}
                                             <div className="text-center">
                                                 <p className="font-medium text-gray-900">€{(customer.total_spent || 0).toFixed(2)}</p>
                                                 <p className="text-xs">Gastado</p>
                                             </div>
+                                            
+                                            {/* Días desde última visita - NUEVA FUNCIONALIDAD */}
+                                            <div className="text-center">
+                                                <p className="font-medium text-gray-900">
+                                                    {customer.daysSinceLastVisit !== null ? `${customer.daysSinceLastVisit}d` : 'Nueva'}
+                                                </p>
+                                                <p className="text-xs">Última</p>
+                                            </div>
+                                            
+                                            {/* Fecha última visita */}
                                             {customer.last_visit_at && (
                                                 <div className="text-center">
                                                     <p className="font-medium text-gray-900">
                                                         {format(parseISO(customer.last_visit_at), 'dd/MM')}
                                                     </p>
-                                                    <p className="text-xs">Última</p>
+                                                    <p className="text-xs">Fecha</p>
                                                 </div>
                                             )}
+                                            
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
