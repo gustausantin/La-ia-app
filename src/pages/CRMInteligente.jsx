@@ -157,7 +157,7 @@ export default function CRMInteligente() {
                 ...customer,
                 segment: determineCustomerSegment(customer),
                 daysSinceLastVisit: customer.last_visit_at 
-                    ? differenceInDays(new Date(), parseISO(customer.last_visit_at))
+                    ? Math.floor((new Date() - new Date(customer.last_visit_at)) / (1000 * 60 * 60 * 24))
                     : null
             })) || [];
 

@@ -908,11 +908,20 @@ const CustomerModal = ({
                                     
                                     if (error) throw error;
                                     
-                                    alert('✅ GUARDADO - SOLO onSave()');
+                                    alert('✅ GUARDADO - onSave() PROTEGIDO');
                                     
-                                    // SOLO onSave
+                                    // onSave PROTEGIDO
                                     setIsEditing(false);
-                                    if (onSave) onSave();
+                                    if (onSave) {
+                                        try {
+                                            console.log('🔍 EJECUTANDO onSave...');
+                                            onSave();
+                                            console.log('✅ onSave EJECUTADO EXITOSAMENTE');
+                                        } catch (saveError) {
+                                            console.error('❌ ERROR EN onSave:', saveError);
+                                            alert('❌ ERROR EN onSave: ' + saveError.message);
+                                        }
+                                    }
                                     
                                 } catch (error) {
                                     alert('❌ ERROR SIMPLE: ' + error.message);
@@ -920,7 +929,7 @@ const CustomerModal = ({
                             }}
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                         >
-                            🔵 SOLO onSave
+                            🔵 onSave PROTEGIDO
                         </button>
                         
                         <button
