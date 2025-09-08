@@ -40,6 +40,8 @@ import {
     CheckSquare,
     Square,
     ChevronRight,
+    User,
+    FileText,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { processReservationCompletion } from "../services/CRMService";
