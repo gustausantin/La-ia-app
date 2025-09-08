@@ -895,7 +895,7 @@ const CustomerModal = ({
                                 if (!formData.first_name?.trim()) return;
                                 
                                 try {
-                                    // GUARDADO COMPLETO - TODOS LOS CAMPOS
+                                    // GUARDADO COMPLETO - SOLO CAMPOS QUE EXISTEN EN SUPABASE
                                     const dataToSave = {
                                         name: `${formData.first_name} ${formData.last_name1 || ''}`.trim(),
                                         first_name: formData.first_name,
@@ -903,7 +903,7 @@ const CustomerModal = ({
                                         last_name2: formData.last_name2 || null,
                                         email: formData.email || null,
                                         phone: formData.phone || null,
-                                        birthdate: formData.birthdate || null,
+                                        // birthdate: NO EXISTE EN SUPABASE - QUITADO
                                         notes: formData.notes || null,
                                         tags: formData.tags || null,
                                         preferences: formData.preferences || null,
