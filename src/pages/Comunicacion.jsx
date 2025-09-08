@@ -1078,7 +1078,10 @@ export default function Comunicacion() {
 
             if (convError) {
                 console.error("Error cargando conversaciones:", convError);
-                throw convError;
+                // No hacer throw, mostrar estado vacío pero funcional
+                setConversations([]);
+                setLoading(false);
+                return;
             }
 
             // Procesar conversaciones reales (simplificado para evitar errores)
@@ -1132,7 +1135,9 @@ export default function Comunicacion() {
 
                 if (error) {
                     console.error("Error cargando mensajes:", error);
-                    throw error;
+                    // No hacer throw, mostrar mensajes vacíos
+                    setMessages([]);
+                    return;
                 }
 
                 // Procesar mensajes reales
@@ -1357,7 +1362,15 @@ export default function Comunicacion() {
 
             if (error) {
                 console.error("Error cargando plantillas:", error);
-                throw error;
+                // No hacer throw, usar plantillas vacías
+                setRealTemplates({
+                    whatsapp: [],
+                    email: [],
+                    sms: [],
+                    instagram: [],
+                    facebook: []
+                });
+                return;
             }
 
             // Organizar plantillas por canal
@@ -1413,7 +1426,9 @@ export default function Comunicacion() {
 
             if (error) {
                 console.error("Error cargando configuración de canales:", error);
-                throw error;
+                // No hacer throw, usar configuración vacía
+                setChannelsConfig({});
+                return;
             }
 
             const channels = restaurantData?.settings?.channels || {};
