@@ -1,5 +1,8 @@
 import React, { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { format } from 'date-fns';
+import { useAuthContext } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import {
   Brain,
   Zap,
@@ -28,6 +31,7 @@ import { conversationalAI } from '../../services/ConversationalAI.js';
  */
 
 const AIDashboard = memo(() => {
+  const { restaurantId } = useAuthContext();
   const [aiStatus, setAiStatus] = useState({
     mlEngine: 'active',
     conversationalAI: 'active',
@@ -80,15 +84,75 @@ const AIDashboard = memo(() => {
   };
 
   const getAIPerformanceMetrics = async () => {
-    // Simular métricas de performance de IA
-    return {
-      accuracy: 94.7,
-      responseTime: 0.3,
-      learningRate: 0.85,
-      satisfactionScore: 4.6,
-      automationLevel: 78,
-      costSavings: 24000
+    if (!restaurantId) return {
+      accuracy: 0,
+      responseTime: 0,
+      learningRate: 0,
+      satisfactionScore: 0,
+      automationLevel: 0,
+      costSavings: 0
     };
+
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd');
+
+      // Obtener métricas reales del agente
+      const { data: agentMetrics, error } = await supabase
+        .from('agent_metrics')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('date', today)
+        .single();
+
+      // Obtener conversaciones para calcular accuracy
+      const { data: conversations } = await supabase
+        .from('agent_conversations')
+        .select('booking_created, satisfaction_score')
+        .eq('restaurant_id', restaurantId)
+        .gte('started_at', `${today}T00:00:00`)
+        .lt('started_at', `${today}T23:59:59`);
+
+      if (error || !agentMetrics) {
+        return {
+          accuracy: 0,
+          responseTime: 0,
+          learningRate: 0,
+          satisfactionScore: 0,
+          automationLevel: 0,
+          costSavings: 0
+        };
+      }
+
+      const conversationsList = conversations || [];
+      const successfulBookings = conversationsList.filter(c => c.booking_created).length;
+      const accuracy = conversationsList.length > 0 ? 
+        (successfulBookings / conversationsList.length) * 100 : 0;
+
+      const satisfactionScores = conversationsList
+        .filter(c => c.satisfaction_score)
+        .map(c => c.satisfaction_score);
+      const avgSatisfaction = satisfactionScores.length > 0 ?
+        satisfactionScores.reduce((sum, score) => sum + score, 0) / satisfactionScores.length : 0;
+
+      return {
+        accuracy: Math.round(accuracy * 10) / 10,
+        responseTime: agentMetrics.avg_response_time || 0,
+        learningRate: 0.85, // Valor fijo por ahora
+        satisfactionScore: avgSatisfaction,
+        automationLevel: agentMetrics.total_conversations > 0 ? 78 : 0, // Porcentaje fijo por ahora
+        costSavings: agentMetrics.successful_bookings * 25 // €25 por reserva automatizada
+      };
+    } catch (error) {
+      console.error('Error obteniendo métricas de IA:', error);
+      return {
+        accuracy: 0,
+        responseTime: 0,
+        learningRate: 0,
+        satisfactionScore: 0,
+        automationLevel: 0,
+        costSavings: 0
+      };
+    }
   };
 
   if (isLoading) {

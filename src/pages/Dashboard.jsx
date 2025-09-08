@@ -318,18 +318,136 @@ export default function Dashboard() {
         }
     }, [restaurantId]);
 
+    // Función para obtener datos REALES de canales de comunicación
+    const fetchRealChannels = useCallback(async () => {
+        if (!restaurantId) return { count: 0, list: [] };
+
+        try {
+            // Contar configuraciones de canales activas desde restaurant_settings
+            const { data: channelSettings, error } = await supabase
+                .from('restaurant_settings')
+                .select('setting_key, setting_value')
+                .eq('restaurant_id', restaurantId)
+                .eq('category', 'channels')
+                .eq('setting_value->>enabled', 'true');
+
+            if (error) {
+                logger.warn("Error cargando canales:", error);
+                return { count: 0, list: [] };
+            }
+
+            const channels = channelSettings || [];
+            return {
+                count: channels.length,
+                list: channels.map(ch => ch.setting_key)
+            };
+        } catch (error) {
+            logger.error("Error fetching channels:", error);
+            return { count: 0, list: [] };
+        }
+    }, [restaurantId]);
+
+    // Función para obtener métricas REALES de horarios
+    const fetchScheduleMetrics = useCallback(async () => {
+        if (!restaurantId) return { daysOpen: 0, weeklyHours: 0 };
+
+        try {
+            // Obtener configuración de horarios desde restaurants.business_hours
+            const { data: restaurant, error } = await supabase
+                .from('restaurants')
+                .select('business_hours')
+                .eq('id', restaurantId)
+                .single();
+
+            if (error || !restaurant?.business_hours) {
+                logger.warn("Error cargando horarios:", error);
+                return { daysOpen: 7, weeklyHours: 84 }; // Valores por defecto
+            }
+
+            const businessHours = restaurant.business_hours;
+            let daysOpen = 0;
+            let totalHours = 0;
+
+            // Contar días abiertos y horas totales
+            Object.entries(businessHours).forEach(([day, schedule]) => {
+                if (schedule && schedule.isOpen) {
+                    daysOpen++;
+                    if (schedule.openTime && schedule.closeTime) {
+                        const openHour = parseInt(schedule.openTime.split(':')[0]);
+                        const closeHour = parseInt(schedule.closeTime.split(':')[0]);
+                        totalHours += (closeHour - openHour);
+                    }
+                }
+            });
+
+            return {
+                daysOpen: daysOpen,
+                weeklyHours: totalHours
+            };
+        } catch (error) {
+            logger.error("Error fetching schedule:", error);
+            return { daysOpen: 7, weeklyHours: 84 };
+        }
+    }, [restaurantId]);
+
+    // Función para obtener métricas REALES del Agente IA
+    const fetchAgentMetrics = useCallback(async () => {
+        if (!restaurantId) return { agentReservations: 0, agentConversions: 0, averageResponseTime: 0 };
+
+        try {
+            const today = format(new Date(), 'yyyy-MM-dd');
+
+            // 1. Obtener conversaciones del agente IA hoy
+            const { data: agentConversations, error: conversationsError } = await supabase
+                .from('agent_conversations')
+                .select('id, booking_created, satisfaction_score')
+                .eq('restaurant_id', restaurantId)
+                .gte('started_at', `${today}T00:00:00`)
+                .lt('started_at', `${today}T23:59:59`);
+
+            // 2. Obtener métricas del agente de hoy
+            const { data: agentMetrics, error: metricsError } = await supabase
+                .from('agent_metrics')
+                .select('total_conversations, successful_bookings, avg_response_time, conversion_rate')
+                .eq('restaurant_id', restaurantId)
+                .eq('date', today)
+                .single();
+
+            if (conversationsError && metricsError) {
+                logger.warn("Error cargando métricas del agente:", conversationsError || metricsError);
+                return { agentReservations: 0, agentConversions: 0, averageResponseTime: 0 };
+            }
+
+            // Calcular métricas reales
+            const conversations = agentConversations || [];
+            const reservationsCreated = conversations.filter(conv => conv.booking_created).length;
+            const conversionRate = conversations.length > 0 ? 
+                Math.round((reservationsCreated / conversations.length) * 100) : 0;
+
+            return {
+                agentReservations: agentMetrics?.successful_bookings || reservationsCreated,
+                agentConversions: agentMetrics?.conversion_rate || conversionRate,
+                averageResponseTime: agentMetrics?.avg_response_time || 0
+            };
+        } catch (error) {
+            logger.error("Error fetching agent metrics:", error);
+            return { agentReservations: 0, agentConversions: 0, averageResponseTime: 0 };
+        }
+    }, [restaurantId]);
+
     // Función principal para cargar TODOS los datos reales
     const loadRealData = useCallback(async () => {
         setIsLoading(true);
         try {
             logger.info('🔄 Cargando datos reales del dashboard...');
 
-            const [reservationsData, tablesData, customersData, channelsData, scheduleData] = await Promise.all([
+            const [reservationsData, tablesData, customersData, channelsData, scheduleData, agentData] = await Promise.all([
                 fetchRealReservations(),
                 fetchRealTables(),
                 fetchRealCustomers(),
                 fetchRealChannels(),
-                fetchScheduleMetrics()
+                fetchScheduleMetrics(),
+                fetchAgentMetrics()
             ]);
 
             // Calcular ocupación REAL
@@ -360,10 +478,10 @@ export default function Dashboard() {
                 totalCustomers: customersData.totalCustomers,
                 newCustomersToday: customersData.newCustomersToday,
                 
-                // Agente IA (REALES - por ahora 0 hasta conectar APIs)
-                agentReservations: 0,
-                agentConversions: 0,
-                averageResponseTime: 0
+                // Agente IA (REALES desde agent_conversations y agent_metrics)
+                agentReservations: agentData.agentReservations,
+                agentConversions: agentData.agentConversions,
+                averageResponseTime: agentData.averageResponseTime
             };
 
             setRealData(newRealData);
@@ -376,7 +494,7 @@ export default function Dashboard() {
         } finally {
             setIsLoading(false);
         }
-    }, [fetchRealReservations, fetchRealTables, fetchRealCustomers, fetchRealChannels]);
+    }, [fetchRealReservations, fetchRealTables, fetchRealCustomers, fetchRealChannels, fetchScheduleMetrics, fetchAgentMetrics]);
 
     // Función de refresh mejorada
     const handleRefresh = useCallback(async () => {
