@@ -669,45 +669,93 @@ export default function CRMInteligente() {
                                     </select>
                                 </div>
 
-                                {/* Lista de Clientes */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
-                                    {filteredCustomers.map(customer => {
-                                        const segment = CUSTOMER_SEGMENTS[customer.segment] || CUSTOMER_SEGMENTS.activo;
-                                        return (
-                                            <div 
-                                                key={customer.id} 
-                                                className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer"
-                                                onClick={() => openCustomerModal(customer)}
-                                            >
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm flex-shrink-0">
-                                                        {segment.icon}
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <h3 className="font-medium text-gray-900 text-sm truncate">{customer.name}</h3>
-                                                        <p className="text-xs text-gray-500 truncate">{customer.email}</p>
+                                {/* Lista de Clientes - FORMATO LISTA COMO CLIENTES */}
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                                    <div className="divide-y divide-gray-200">
+                                        {filteredCustomers.map(customer => {
+                                            const segment = CUSTOMER_SEGMENTS[customer.segment] || CUSTOMER_SEGMENTS.activo;
+                                            return (
+                                                <div 
+                                                    key={customer.id} 
+                                                    className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                                                    onClick={() => openCustomerModal(customer)}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-3">
+                                                                {/* Avatar con inicial */}
+                                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                                                    {customer.name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                                
+                                                                {/* Icono de segmento */}
+                                                                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-lg flex-shrink-0">
+                                                                    {segment.icon}
+                                                                </div>
+                                                                
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <h3 className="text-sm font-medium text-gray-900 truncate">
+                                                                            {customer.name}
+                                                                        </h3>
+                                                                        {/* Etiqueta de segmento */}
+                                                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${segment.color}-100 text-${segment.color}-800`}>
+                                                                            {segment.label}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-4 mt-1">
+                                                                        {customer.email && (
+                                                                            <p className="text-sm text-gray-600 flex items-center gap-1">
+                                                                                <Mail className="w-3 h-3" />
+                                                                                {customer.email}
+                                                                            </p>
+                                                                        )}
+                                                                        {customer.phone && (
+                                                                            <p className="text-sm text-gray-600 flex items-center gap-1">
+                                                                                <Phone className="w-3 h-3" />
+                                                                                {customer.phone}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                                                            {/* Visitas */}
+                                                            <div className="text-center">
+                                                                <p className="font-medium text-gray-900">{customer.visits_count || 0}</p>
+                                                                <p className="text-xs">Visitas</p>
+                                                            </div>
+                                                            
+                                                            {/* Total gastado */}
+                                                            <div className="text-center">
+                                                                <p className="font-medium text-gray-900">€{(customer.total_spent || 0).toFixed(2)}</p>
+                                                                <p className="text-xs">Gastado</p>
+                                                            </div>
+                                                            
+                                                            {/* Días desde última visita */}
+                                                            <div className="text-center">
+                                                                <p className="font-medium text-gray-900">
+                                                                    {customer.daysSinceLastVisit !== null ? `${customer.daysSinceLastVisit}d` : 'Nueva'}
+                                                                </p>
+                                                                <p className="text-xs">Última</p>
+                                                            </div>
+                                                            
+                                                            {/* Fecha última visita */}
+                                                            {customer.last_visit_at && (
+                                                                <div className="text-center">
+                                                                    <p className="font-medium text-gray-900">
+                                                                        {format(parseISO(customer.last_visit_at), 'dd/MM')}
+                                                                    </p>
+                                                                    <p className="text-xs">Fecha</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${segment.color}-100 text-${segment.color}-800`}>
-                                                        {segment.label}
-                                                    </div>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2 text-xs">
-                                                    <div>
-                                                        <span className="text-gray-500">Visitas:</span>
-                                                        <span className="ml-1 font-medium">{customer.visits_count || 0}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-gray-500">Días:</span>
-                                                        <span className="ml-1 font-medium">
-                                                            {customer.daysSinceLastVisit || 'Primera'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             </div>
                         )}
