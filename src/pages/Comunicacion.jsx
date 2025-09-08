@@ -1186,39 +1186,29 @@ export default function Comunicacion() {
         if (!restaurantId) return;
 
         try {
-            // 1. Obtener datos reales de conversaciones por canal (simplificado)
-            // NOTA: Si no existe la tabla, usar datos simulados
+            // 1. Obtener datos reales de conversaciones por canal
             const { data: channelData, error: channelError } = await supabase
                 .from('conversations')
-                .select('id, channel, created_at')
-                .eq('restaurant_id', restaurantId);
+                .select(`
+                    id, 
+                    channel, 
+                    created_at,
+                    status,
+                    priority,
+                    customer_name,
+                    customer_phone
+                `)
+                .eq('restaurant_id', restaurantId)
+                .order('created_at', { ascending: false });
                 
-            // Si hay error de tabla no encontrada, usar datos simulados
-            if (channelError && channelError.code === '42P01') {
-                console.warn('Tabla conversations no existe, usando datos simulados para Analytics');
+            // Si hay error, mostrar estado vacío en lugar de datos simulados
+            if (channelError) {
+                console.error('Error cargando conversations:', channelError);
                 setAnalyticsData({
-                    responseTimeChart: Array.from({ length: 24 }, (_, hour) => ({
-                        hour: `${hour}:00`,
-                        ai: Math.floor(Math.random() * 10),
-                        human: Math.floor(Math.random() * 5)
-                    })),
-                    channelDistribution: [
-                        { channel: "WhatsApp", count: 45, percentage: 45 },
-                        { channel: "Web Chat", count: 30, percentage: 30 },
-                        { channel: "Facebook", count: 15, percentage: 15 },
-                        { channel: "Instagram", count: 10, percentage: 10 }
-                    ],
-                    satisfactionTrend: Array.from({ length: 7 }, (_, i) => ({
-                        date: format(subDays(new Date(), 6 - i), "dd/MM"),
-                        satisfaction: 85 + Math.floor(Math.random() * 10),
-                        conversations: Math.floor(Math.random() * 50) + 10
-                    })),
-                    peakHours: [
-                        { hour: "11:00-13:00", conversations: 25 },
-                        { hour: "13:00-15:00", conversations: 35 },
-                        { hour: "19:00-21:00", conversations: 45 },
-                        { hour: "21:00-23:00", conversations: 30 }
-                    ]
+                    responseTimeChart: [],
+                    channelDistribution: [],
+                    satisfactionTrend: [],
+                    peakHours: []
                 });
                 return;
             }
@@ -1230,8 +1220,15 @@ export default function Comunicacion() {
                 if (conversationIds.length > 0) {
                     const { data: msgs, error: messagesError } = await supabase
                         .from('messages')
-                        .select('created_at, response_time, ai_generated')
-                        .in('conversation_id', conversationIds);
+                        .select(`
+                            created_at, 
+                            direction,
+                            channel,
+                            status,
+                            message_type,
+                            metadata
+                        `)
+                        .eq('restaurant_id', restaurantId);
                     
                     if (!messagesError) {
                         messagesData = msgs || [];
@@ -1253,29 +1250,27 @@ export default function Comunicacion() {
                 percentage: totalConversations > 0 ? Math.round((count / totalConversations) * 100) : 0
             }));
 
-            // 4. Procesar tiempos de respuesta por hora REALES
-            const hourlyData = {};
+            // 4. Distribución de mensajes por hora (usando datos reales)
+            const hourlyMessageCounts = {};
             (messagesData || []).forEach(msg => {
                 const hour = new Date(msg.created_at).getHours();
-                if (!hourlyData[hour]) {
-                    hourlyData[hour] = { ai: [], human: [] };
+                if (!hourlyMessageCounts[hour]) {
+                    hourlyMessageCounts[hour] = { inbound: 0, outbound: 0 };
                 }
-                if (msg.response_time) {
-                    if (msg.ai_generated) {
-                        hourlyData[hour].ai.push(msg.response_time);
-                    } else {
-                        hourlyData[hour].human.push(msg.response_time);
-                    }
+                if (msg.direction === 'inbound') {
+                    hourlyMessageCounts[hour].inbound++;
+                } else if (msg.direction === 'outbound') {
+                    hourlyMessageCounts[hour].outbound++;
                 }
             });
 
             const responseTimeChart = [];
             for (let hour = 0; hour < 24; hour++) {
-                const data = hourlyData[hour];
+                const data = hourlyMessageCounts[hour];
                 responseTimeChart.push({
                     hour: `${hour}:00`,
-                    ai: data?.ai.length > 0 ? Math.round(data.ai.reduce((sum, time) => sum + time, 0) / data.ai.length) : 0,
-                    human: data?.human.length > 0 ? Math.round(data.human.reduce((sum, time) => sum + time, 0) / data.human.length) : 0,
+                    ai: data?.outbound || 0,  // Mensajes salientes (respuestas)
+                    human: data?.inbound || 0,  // Mensajes entrantes (consultas)
                 });
             }
 
@@ -1288,11 +1283,21 @@ export default function Comunicacion() {
                     conv.created_at && conv.created_at.startsWith(dayStart)
                 ).length;
                 
+                // Calcular satisfacción basada en conversaciones resueltas exitosamente
+                const dayConversationsData = (channelData || []).filter(conv => 
+                    conv.created_at && conv.created_at.startsWith(dayStart)
+                );
+                const resolvedConversations = dayConversationsData.filter(conv => 
+                    conv.status === 'resolved' || conv.status === 'closed'
+                ).length;
+                const satisfaction = dayConversations > 0 ? 
+                    Math.round((resolvedConversations / dayConversations) * 100) : 0;
+                
                 satisfactionTrend.push({
                     date: format(date, "dd/MM"),
-                    satisfaction: 85, // TODO: Obtener de customer_feedback cuando esté disponible
+                    satisfaction: satisfaction,
                     conversations: dayConversations,
-            });
+                });
             }
 
             // 6. Horas pico REALES
