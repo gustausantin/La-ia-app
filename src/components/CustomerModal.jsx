@@ -852,7 +852,22 @@ const CustomerModal = ({
                                     
                                     if (error) throw error;
                                     
-                                    // SOLO CERRAR MODAL - SIN RECARGA - SIN DASHBOARD
+                                    // ACTUALIZAR UI AUTOMÁTICAMENTE
+                                    const updatedCustomer = {
+                                        ...customer,
+                                        ...dataToSave
+                                    };
+                                    
+                                    // Actualizar la lista local (esto actualiza la UI sin F5)
+                                    if (onSave) {
+                                        try {
+                                            onSave(updatedCustomer);
+                                        } catch (saveError) {
+                                            console.error('Error en onSave:', saveError);
+                                        }
+                                    }
+                                    
+                                    // CERRAR MODAL
                                     setIsEditing(false);
                                     if (onClose) onClose();
                                     
