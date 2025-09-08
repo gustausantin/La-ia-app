@@ -2757,11 +2757,14 @@ export default function Comunicacion() {
                                     personalizadas para tu restaurante
                                 </p>
                                 <button
-                                    onClick={() => setShowTemplatesManager(true)}
+                                    onClick={() => {
+                                        navigate('/plantillas');
+                                        toast.success('Navegando a Gestión de Plantillas...');
+                                    }}
                                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
                                 >
                                     <FileText className="w-4 h-4" />
-                                    Gestionar plantillas
+                                    Gestión de Plantillas
                                 </button>
                             </div>
 

@@ -357,6 +357,8 @@ const Configuracion = () => {
                         name: settings.name,
                         email: settings.email,
                         phone: settings.phone,
+                        contact_email: settings.email,
+                        contact_phone: settings.phone,
                         address: settings.address,
                         city: settings.city,
                         postal_code: settings.postal_code,
