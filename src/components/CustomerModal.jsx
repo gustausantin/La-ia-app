@@ -829,7 +829,7 @@ const CustomerModal = ({
                                 if (!formData.first_name?.trim()) return;
                                 
                                 try {
-                                    // GUARDADO COMPLETO - SIN ETIQUETAS (CAUSAN PROBLEMAS)
+                                    // GUARDADO COMPLETO - SIN ETIQUETAS - SIN RECARGA
                                     const dataToSave = {
                                         name: `${formData.first_name} ${formData.last_name1 || ''}`.trim(),
                                         first_name: formData.first_name,
@@ -838,7 +838,6 @@ const CustomerModal = ({
                                         email: formData.email || null,
                                         phone: formData.phone || null,
                                         notes: formData.notes || null,
-                                        // tags: QUITADO - NO SE GUARDA
                                         preferences: formData.preferences || null,
                                         consent_email: formData.consent_email || false,
                                         consent_sms: formData.consent_sms || false,
@@ -853,61 +852,14 @@ const CustomerModal = ({
                                     
                                     if (error) throw error;
                                     
-                                    // ACTUALIZAR UI AUTOMÁTICAMENTE + CERRAR MODAL
+                                    // SOLO CERRAR MODAL - SIN RECARGA - SIN DASHBOARD
                                     setIsEditing(false);
                                     if (onClose) onClose();
-                                    
-                                    // RECARGAR PÁGINA SIN IR AL DASHBOARD
-                                    setTimeout(() => {
-                                        // Forzar recarga completa manteniendo la URL exacta
-                                        const currentUrl = window.location.pathname + window.location.search + window.location.hash;
-                                        window.location.replace(currentUrl);
-                                    }, 300);
                                     
                                 } catch (error) {
                                     alert('❌ ERROR: ' + error.message);
                                 }
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                        >
-                            ✅ GUARDAR COMPLETO
-                        </button>
-                        
-                        <button
-                            onClick={async () => {
-                                if (!formData.first_name?.trim()) return;
-                                
-                                try {
-                                    const { error } = await supabase
-                                        .from('customers')
-                                        .update({ 
-                                            name: `${formData.first_name} ${formData.last_name1 || ''}`.trim(),
-                                            first_name: formData.first_name,
-                                            last_name1: formData.last_name1 || null,
-                                            email: formData.email || null,
-                                            phone: formData.phone || null
-                                        })
-                                        .eq('id', customer?.id);
-                                    
-                                    if (error) throw error;
-                                    
-                                    alert('✅ GUARDADO - SOLO onClose()');
-                                    
-                                    // SOLO onClose
-                                    setIsEditing(false);
-                                    if (onClose) onClose();
-                                    
-                                } catch (error) {
-                                    alert('❌ ERROR SIMPLE: ' + error.message);
-                                }
-                            }}
-                            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-                        >
-                            🟠 SOLO onClose
-                        </button>
-                        
-                        <button
-                            onClick={handleSave}
                             disabled={saving || !formData.first_name?.trim()}
                             className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
                         >
@@ -916,7 +868,7 @@ const CustomerModal = ({
                             ) : (
                                 <Save className="w-4 h-4" />
                             )}
-                            {mode === 'create' ? 'Crear Cliente' : 'Guardar Original'}
+                            {mode === 'create' ? 'Crear Cliente' : 'Guardar Cambios'}
                         </button>
                     </div>
                 )}
