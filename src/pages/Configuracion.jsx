@@ -1,6 +1,7 @@
 ﻿// Configuracion.jsx - Panel de Configuración COMPLETO SIN ERRORES
 import React, { useState, useEffect } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
+import { useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import {
     Settings as SettingsIcon,
@@ -133,9 +134,60 @@ const SettingSection = ({ title, description, icon, premium, children }) => {
 
 const Configuracion = () => {
     const { restaurantId } = useAuthContext();
-    const [activeTab, setActiveTab] = useState("general");
+    const location = useLocation();
+    
+    // 🎯 DETECTAR TAB DESDE URL PARAMS
+    const getInitialTab = () => {
+        const params = new URLSearchParams(location.search);
+        const tabParam = params.get('tab');
+        
+        // Mapear tabs válidos
+        const validTabs = {
+            'general': 'general',
+            'hours': 'hours', 
+            'reservations': 'reservations',
+            'agent': 'agent',
+            'crm': 'crm',
+            'channels': 'channels',
+            'workflows': 'workflows',
+            'notifications': 'notifications',
+            'team': 'team',
+            'billing': 'billing',
+            'integrations': 'integrations'
+        };
+        
+        return validTabs[tabParam] || 'general';
+    };
+    
+    const [activeTab, setActiveTab] = useState(getInitialTab());
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    
+    // 🎯 ESCUCHAR CAMBIOS EN URL PARAMS
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const tabParam = params.get('tab');
+        
+        if (tabParam && tabParam !== activeTab) {
+            const validTabs = {
+                'general': 'general',
+                'hours': 'hours', 
+                'reservations': 'reservations',
+                'agent': 'agent',
+                'crm': 'crm',
+                'channels': 'channels',
+                'workflows': 'workflows',
+                'notifications': 'notifications',
+                'team': 'team',
+                'billing': 'billing',
+                'integrations': 'integrations'
+            };
+            
+            if (validTabs[tabParam]) {
+                setActiveTab(validTabs[tabParam]);
+            }
+        }
+    }, [location.search, activeTab]);
     
     // ESTADO ULTRA ROBUSTO - ESTRUCTURA COMPLETA GARANTIZADA
     const [settings, setSettings] = useState({

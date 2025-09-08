@@ -1990,6 +1990,158 @@ const ReservationFormModal = ({
                         </div>
                     </div>
 
+                    {/* 📅 SECCIÓN: FECHA Y HORA DE LA RESERVA (PRIORIDAD ALTA) */}
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-orange-600" />
+                            Fecha y Hora de la Reserva
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Fecha
+                                </label>
+                                <input
+                                    type="date"
+                                    value={formData.date}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            date: e.target.value,
+                                        })
+                                    }
+                                    min={format(new Date(), "yyyy-MM-dd")}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Hora
+                                </label>
+                                <input
+                                    type="time"
+                                    value={formData.time}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            time: e.target.value,
+                                        })
+                                    }
+                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 ${
+                                        errors.time
+                                            ? "border-red-300"
+                                            : "border-gray-300"
+                                    }`}
+                                />
+                                {errors.time && (
+                                    <p className="text-xs text-red-600 mt-1">
+                                        {errors.time}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Personas
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="20"
+                                    value={formData.party_size}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            party_size:
+                                                parseInt(e.target.value) || 1,
+                                        })
+                                    }
+                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 ${
+                                        errors.party_size
+                                            ? "border-red-300"
+                                            : "border-gray-300"
+                                    }`}
+                                />
+                                {errors.party_size && (
+                                    <p className="text-xs text-red-600 mt-1">
+                                        {errors.party_size}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Mesa (opcional)
+                                </label>
+                                <select
+                                    value={formData.table_id}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            table_id: e.target.value,
+                                        })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                                >
+                                    <option value="">Sin asignar</option>
+                                    {tables.map((table) => (
+                                        <option key={table.id} value={table.id}>
+                                            {table.name} - {table.zone}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Estado
+                                </label>
+                                <select
+                                    value={formData.status}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            status: e.target.value,
+                                        })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                                >
+                                    <option value="pendiente">Pendiente</option>
+                                    <option value="confirmada">Confirmada</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 🎯 SECCIÓN: SOLICITUDES ESPECIALES */}
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-purple-600" />
+                            Solicitudes Especiales
+                        </h4>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Solicitudes especiales (opcional)
+                            </label>
+                            <textarea
+                                value={formData.special_requests}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        special_requests: e.target.value,
+                                    })
+                                }
+                                rows="3"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                placeholder="Celebraciones, ubicación preferida, peticiones especiales..."
+                            />
+                        </div>
+                    </div>
+
                     {/* 📝 SECCIÓN: NOTAS ADICIONALES */}
                     <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                         <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
@@ -2095,142 +2247,6 @@ const ReservationFormModal = ({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Fecha
-                            </label>
-                            <input
-                                type="date"
-                                value={formData.date}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        date: e.target.value,
-                                    })
-                                }
-                                min={format(new Date(), "yyyy-MM-dd")}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Hora
-                            </label>
-                            <input
-                                type="time"
-                                value={formData.time}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        time: e.target.value,
-                                    })
-                                }
-                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                                    errors.time
-                                        ? "border-red-300"
-                                        : "border-gray-300"
-                                }`}
-                            />
-                            {errors.time && (
-                                <p className="text-xs text-red-600 mt-1">
-                                    {errors.time}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Personas
-                            </label>
-                            <input
-                                type="number"
-                                min="1"
-                                max="20"
-                                value={formData.party_size}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        party_size:
-                                            parseInt(e.target.value) || 1,
-                                    })
-                                }
-                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                                    errors.party_size
-                                        ? "border-red-300"
-                                        : "border-gray-300"
-                                }`}
-                            />
-                            {errors.party_size && (
-                                <p className="text-xs text-red-600 mt-1">
-                                    {errors.party_size}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Mesa (opcional)
-                            </label>
-                            <select
-                                value={formData.table_id}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        table_id: e.target.value,
-                                    })
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Sin asignar</option>
-                                {tables.map((table) => (
-                                    <option key={table.id} value={table.id}>
-                                        {table.name} - {table.zone}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Estado
-                            </label>
-                            <select
-                                value={formData.status}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        status: e.target.value,
-                                    })
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="pendiente">Pendiente</option>
-                                <option value="confirmada">Confirmada</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Solicitudes especiales (opcional)
-                        </label>
-                        <textarea
-                            value={formData.special_requests}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    special_requests: e.target.value,
-                                })
-                            }
-                            rows="3"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            placeholder="Alergias, preferencias, celebraciones..."
-                        />
-                    </div>
 
                     <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                         <p className="text-sm text-gray-600 flex items-center gap-2">
