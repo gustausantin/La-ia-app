@@ -908,28 +908,20 @@ const CustomerModal = ({
                                     
                                     if (error) throw error;
                                     
-                                    alert('✅ GUARDADO - onSave() PROTEGIDO');
+                                    alert('✅ GUARDADO EXITOSO - Recargando página...');
                                     
-                                    // onSave PROTEGIDO
-                                    setIsEditing(false);
-                                    if (onSave) {
-                                        try {
-                                            console.log('🔍 EJECUTANDO onSave...');
-                                            onSave();
-                                            console.log('✅ onSave EJECUTADO EXITOSAMENTE');
-                                        } catch (saveError) {
-                                            console.error('❌ ERROR EN onSave:', saveError);
-                                            alert('❌ ERROR EN onSave: ' + saveError.message);
-                                        }
-                                    }
+                                    // SOLUCIÓN DEFINITIVA: Recargar página
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 500);
                                     
                                 } catch (error) {
                                     alert('❌ ERROR SIMPLE: ' + error.message);
                                 }
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                         >
-                            🔵 onSave PROTEGIDO
+                            ✅ GUARDAR DEFINITIVO
                         </button>
                         
                         <button
