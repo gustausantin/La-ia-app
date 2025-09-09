@@ -1879,7 +1879,7 @@ const ReservationFormModal = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="relative">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Teléfono * (busca automáticamente clientes existentes)
+                                Teléfono *
                                 {searchingCustomer && (
                                     <span className="ml-2 text-xs text-blue-600">
                                         <RefreshCw className="w-3 h-3 inline animate-spin mr-1" />
