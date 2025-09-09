@@ -852,15 +852,15 @@ export default function Reservas() {
 
                 switch (action) {
                     case "confirm":
-                        newStatus = "confirmada";
+                        newStatus = "confirmed";
                         message = "Reserva confirmada";
                         break;
                     case "seat":
-                        newStatus = "sentada";
+                        newStatus = "seated";
                         message = "Mesa ocupada";
                         break;
                     case "complete":
-                        newStatus = "completada";
+                        newStatus = "completed";
                         message = "Reserva completada";
                         break;
                     case "cancel":
@@ -871,7 +871,7 @@ export default function Reservas() {
                         ) {
                             return;
                         }
-                        newStatus = "cancelada";
+                        newStatus = "cancelled";
                         message = "Reserva cancelada";
                         break;
                     case "edit":
@@ -904,7 +904,7 @@ export default function Reservas() {
                 if (error) throw error;
 
                 // 🎯 CRM INTEGRATION: Procesar automáticamente cuando se completa reserva
-                if (newStatus === "completada") {
+                if (newStatus === "completed") {
                     console.log("🎯 CRM: Procesando completación de reserva", reservation.id);
                     
                     try {
@@ -975,11 +975,11 @@ export default function Reservas() {
 
                 switch (action) {
                     case "confirm":
-                        newStatus = "confirmada";
+                        newStatus = "confirmed";
                         message = `${reservationIds.length} reservas confirmadas`;
                         break;
                     case "cancel":
-                        newStatus = "cancelada";
+                        newStatus = "cancelled";
                         message = `${reservationIds.length} reservas canceladas`;
                         break;
                     default:
@@ -1014,10 +1014,10 @@ export default function Reservas() {
     const stats = useMemo(() => {
         const total = filteredReservations.length;
         const confirmed = filteredReservations.filter(
-            (r) => r.status === "confirmada",
+            (r) => r.status === "confirmed",
         ).length;
         const pending = filteredReservations.filter(
-            (r) => r.status === "pendiente",
+            (r) => r.status === "pending",
         ).length;
         const covers = filteredReservations.reduce(
             (sum, r) => sum + r.party_size,
