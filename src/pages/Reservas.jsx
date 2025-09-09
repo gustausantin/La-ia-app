@@ -463,31 +463,49 @@ export default function Reservas() {
             // 1. Reservas del agente desde reservations
             const agentReservations = reservations.filter(r => r.source === "agent").length;
 
-            // 2. Obtener métricas reales del agente_metrics
-            const { data: agentMetrics, error: metricsError } = await supabase
-                .from('agent_metrics')
-                .select('total_conversations, successful_bookings, avg_response_time, conversion_rate')
-                .eq('restaurant_id', restaurantId)
-                .eq('date', today)
-                .single();
+            // 2. Obtener métricas reales del agente_metrics (con manejo profesional de errores)
+            let agentMetrics = null;
+            try {
+                const { data } = await supabase
+                    .from('agent_metrics')
+                    .select('total_conversations, successful_bookings, avg_response_time, conversion_rate')
+                    .eq('restaurant_id', restaurantId)
+                    .eq('date', today)
+                    .single();
+                agentMetrics = data;
+            } catch (error) {
+                console.log('📊 Agent metrics no disponibles (normal si no hay datos)');
+            }
 
-            // 3. Obtener conversaciones del agente
-            const { data: agentConversations, error: conversationsError } = await supabase
-                .from('agent_conversations')
-                .select('id, booking_created, satisfaction_score')
-                .eq('restaurant_id', restaurantId)
-                .gte('started_at', `${today}T00:00:00`)
-                .lt('started_at', `${today}T23:59:59`);
+            // 3. Obtener conversaciones del agente (con manejo profesional de errores)
+            let agentConversations = [];
+            try {
+                const { data } = await supabase
+                    .from('agent_conversations')
+                    .select('id, booking_created, satisfaction_score')
+                    .eq('restaurant_id', restaurantId)
+                    .gte('started_at', `${today}T00:00:00`)
+                    .lt('started_at', `${today}T23:59:59`);
+                agentConversations = data || [];
+            } catch (error) {
+                console.log('💬 Agent conversations no disponibles (normal si no hay datos)');
+            }
 
-            // 4. Obtener canal más usado desde channel_performance
-            const { data: channelPerformance, error: channelError } = await supabase
-                .from('channel_performance')
-                .select('channel, bookings')
-                .eq('restaurant_id', restaurantId)
-                .eq('date', today)
-                .order('bookings', { ascending: false })
-                .limit(1)
-                .single();
+            // 4. Obtener canal más usado desde channel_performance (con manejo profesional de errores)
+            let channelPerformance = null;
+            try {
+                const { data } = await supabase
+                    .from('channel_performance')
+                    .select('channel, bookings')
+                    .eq('restaurant_id', restaurantId)
+                    .eq('date', today)
+                    .order('bookings', { ascending: false })
+                    .limit(1)
+                    .single();
+                channelPerformance = data;
+            } catch (error) {
+                console.log('📈 Channel performance no disponible (normal si no hay datos)');
+            }
 
             // Calcular estadísticas reales
             const conversations = agentConversations || [];
@@ -559,7 +577,10 @@ export default function Reservas() {
             setReservations(reservations);
 
             // Calcular estadísticas del agente usando datos reales
-            await loadAgentStats(reservations);
+            // Cargar estadísticas del agente de forma NO BLOQUEANTE
+            loadAgentStats(reservations).catch(error => {
+                console.log('📊 Estadísticas del agente no disponibles:', error.message);
+            });
         } catch (error) {
             toast.error("Error al cargar las reservas");
         } finally {
