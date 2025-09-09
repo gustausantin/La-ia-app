@@ -889,7 +889,6 @@ export default function Reservas() {
                     .from("reservations")
                     .update({
                         status: newStatus,
-                        updated_at: new Date().toISOString(),
                     })
                     .eq("id", reservation.id);
 
@@ -982,7 +981,6 @@ export default function Reservas() {
                     .from("reservations")
                     .update({
                         status: newStatus,
-                        updated_at: new Date().toISOString(),
                     })
                     .in("id", reservationIds);
 

@@ -21,7 +21,7 @@ export default defineConfig({
     },
   },
   
-  // ===== BUILD CONFIGURATION ENTERPRISE =====
+  // ===== BUILD CONFIGURATION ENTERPRISE ===== 
   build: {
     outDir: 'dist',
     sourcemap: false,
