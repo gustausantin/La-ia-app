@@ -1552,7 +1552,7 @@ const ReservationFormModal = ({
     };
 
     // Función para vincular reserva con cliente existente y actualizar métricas
-    const handleCustomerLinking = async (reservationData) => {
+    const handleCustomerLinking = async (reservationData, customerData = {}) => {
         try {
             // Buscar cliente existente por teléfono o email
             const { data: existingCustomers, error: searchError } = await supabase
@@ -1595,21 +1595,21 @@ const ReservationFormModal = ({
                 const newCustomer = {
                     // 👤 DATOS PERSONALES COMPLETOS
                     name: reservationData.customer_name,
-                    first_name: reservationData.first_name || reservationData.customer_name?.split(' ')[0] || '',
-                    last_name1: reservationData.last_name1 || reservationData.customer_name?.split(' ')[1] || '',
-                    last_name2: reservationData.last_name2 || reservationData.customer_name?.split(' ')[2] || '',
+                    first_name: customerData.first_name || reservationData.customer_name?.split(' ')[0] || '',
+                    last_name1: customerData.last_name1 || reservationData.customer_name?.split(' ')[1] || '',
+                    last_name2: customerData.last_name2 || reservationData.customer_name?.split(' ')[2] || '',
                     
                     // 📞 CONTACTO
                     phone: reservationData.customer_phone,
                     email: reservationData.customer_email || null,
                     
                     // 📝 NOTAS
-                    notes: reservationData.notes || "Cliente creado automáticamente desde reserva",
+                    notes: customerData.notes || "Cliente creado automáticamente desde reserva",
                     
                     // 🔐 PERMISOS GDPR
-                    consent_email: reservationData.consent_email || false,
-                    consent_sms: reservationData.consent_sms || false,
-                    consent_whatsapp: reservationData.consent_whatsapp || false,
+                    consent_email: customerData.consent_email || false,
+                    consent_sms: customerData.consent_sms || false,
+                    consent_whatsapp: customerData.consent_whatsapp || false,
                     
                     // 🏪 RESTAURANT DATA
                     restaurant_id: restaurantId,
@@ -1736,7 +1736,7 @@ const ReservationFormModal = ({
         setLoading(true);
 
         try {
-            // 📋 DATOS DE LA RESERVA (para tabla reservations)
+            // 📋 DATOS DE LA RESERVA (SOLO campos válidos para tabla reservations)
             const reservationData = {
                 customer_name: formData.customer_name,
                 customer_email: formData.customer_email || null,
@@ -1751,14 +1751,7 @@ const ReservationFormModal = ({
                 status: "confirmed",
                 source: "manual",
                 channel: "manual",
-                
-                // 👤 DATOS COMPLETOS DEL CLIENTE (para crear cliente automáticamente)
-                first_name: formData.first_name,
-                last_name1: formData.last_name1,
-                last_name2: formData.last_name2,
-                consent_email: formData.consent_email,
-                consent_sms: formData.consent_sms,
-                consent_whatsapp: formData.consent_whatsapp,
+                table_id: formData.table_id || null
             };
 
             if (reservation) {
@@ -1776,7 +1769,17 @@ const ReservationFormModal = ({
                 if (error) throw error;
 
                 // NUEVO: Vincular con cliente existente y actualizar métricas
-                await handleCustomerLinking(reservationData);
+                // Pasar datos del cliente por separado
+                const customerData = {
+                    first_name: formData.first_name,
+                    last_name1: formData.last_name1,
+                    last_name2: formData.last_name2,
+                    notes: formData.notes,
+                    consent_email: formData.consent_email,
+                    consent_sms: formData.consent_sms,
+                    consent_whatsapp: formData.consent_whatsapp,
+                };
+                await handleCustomerLinking(reservationData, customerData);
             }
 
             onSave();
@@ -1788,7 +1791,18 @@ const ReservationFormModal = ({
             // MEJORADO: Mensajes de error más descriptivos y orientativos
             let errorMessage = 'Error desconocido';
             
-            if (error.message && error.message.includes('created_by')) {
+            console.error("Error completo:", {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code,
+                status: error.status,
+                full_error: error
+            });
+            
+            if (error.status === 400 || error.code === '400') {
+                errorMessage = "❌ Error 400: Datos inválidos enviados a la base de datos.\n\n🔍 Posibles causas:\n• Campo requerido vacío\n• Formato de fecha/hora incorrecto\n• Referencia a mesa inexistente\n\n📋 Revisa que todos los campos obligatorios estén completos.";
+            } else if (error.message && error.message.includes('created_by')) {
                 errorMessage = "Faltan datos de configuración del restaurante. Ve a Configuración para completar tu perfil.";
             } else if (error.message && error.message.includes('column')) {
                 if (tables.length === 0) {
@@ -1796,6 +1810,8 @@ const ReservationFormModal = ({
                 } else {
                     errorMessage = `Error en la base de datos: ${error.message}. Contacta con soporte si persiste.`;
                 }
+            } else if (error.message && error.message.includes('duplicate key')) {
+                errorMessage = "⚠️ Ya existe una reserva con estos datos. Revisa fecha, hora y cliente.";
             } else if (error.hint) {
                 errorMessage = `Error: ${error.hint}`;
             } else if (error.message) {
@@ -1853,7 +1869,124 @@ const ReservationFormModal = ({
                         </div>
                     </div>
 
-                    {/* 👤 SECCIÓN: DATOS PERSONALES DEL CLIENTE (UNIFICADO CON CustomerModal) */}
+                    {/* 📞 SECCIÓN: INFORMACIÓN DE CONTACTO (PRIMERO PARA BÚSQUEDA) */}
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-green-600" />
+                            🔍 Información de Contacto (para búsqueda automática)
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="relative">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Teléfono * (busca automáticamente clientes existentes)
+                                {searchingCustomer && (
+                                    <span className="ml-2 text-xs text-blue-600">
+                                        <RefreshCw className="w-3 h-3 inline animate-spin mr-1" />
+                                        Buscando...
+                                    </span>
+                                )}
+                            </label>
+                            <input
+                                type="tel"
+                                value={formData.customer_phone}
+                                onChange={(e) => {
+                                    const phone = e.target.value;
+                                    setFormData({
+                                        ...formData,
+                                        customer_phone: phone,
+                                    });
+                                    
+                                    // 🔍 Búsqueda automática al escribir teléfono
+                                    if (formData.clientType === 'new' && phone.length >= 3) {
+                                        searchCustomerByPhone(phone);
+                                    }
+                                }}
+                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 ${
+                                    errors.customer_phone
+                                        ? "border-red-300"
+                                        : "border-gray-300"
+                                }`}
+                                placeholder="Ej: +34 600 000 000"
+                            />
+                            {errors.customer_phone && (
+                                <p className="text-xs text-red-600 mt-1">
+                                    {errors.customer_phone}
+                                </p>
+                            )}
+                            
+                            {/* 🎯 DROPDOWN DE CLIENTES ENCONTRADOS */}
+                            {foundCustomers.length > 0 && formData.clientType === 'new' && (
+                                <div className="absolute top-full left-0 right-0 z-10 bg-white border border-gray-200 rounded-lg shadow-lg mt-1">
+                                    <div className="p-2 border-b border-gray-100 bg-yellow-50">
+                                        <p className="text-xs text-yellow-800 font-medium">
+                                            📋 Se encontraron clientes existentes:
+                                        </p>
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto">
+                                        {foundCustomers.map((customer) => (
+                            <button
+                                                key={customer.id}
+                                type="button"
+                                                onClick={() => handleSelectExistingCustomer(customer)}
+                                                className="w-full p-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">{customer.name}</p>
+                                                        <p className="text-xs text-gray-600">{customer.phone}</p>
+                                                        {customer.email && (
+                                                            <p className="text-xs text-gray-500">{customer.email}</p>
+                                                        )}
+                                </div>
+                                                    <div className="text-right">
+                                                        <p className="text-xs font-medium text-blue-600">
+                                                            {customer.visits_count || 0} visitas
+                                                        </p>
+                                                        {customer.last_visit_at && (
+                                                            <p className="text-xs text-gray-500">
+                                                                Última: {format(new Date(customer.last_visit_at), 'dd/MM/yyyy')}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="p-2 border-t border-gray-100 bg-gray-50">
+                            <button
+                                type="button"
+                                            onClick={() => setFoundCustomers([])}
+                                            className="text-xs text-gray-600 hover:text-gray-800"
+                                        >
+                                            ✕ Cerrar y crear cliente nuevo
+                            </button>
+                        </div>
+                                </div>
+                            )}
+                    </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Email (opcional)
+                            </label>
+                            <input
+                                    type="email"
+                                    value={formData.customer_email}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                            customer_email: e.target.value,
+                                        })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                    placeholder="juan@email.com"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 👤 SECCIÓN: DATOS PERSONALES DEL CLIENTE (DESPUÉS DE CONTACTO) */}
                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                         <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
                             <User className="w-4 h-4 text-blue-600" />
@@ -1877,33 +2010,33 @@ const ReservationFormModal = ({
                                             customer_name: fullName
                                         });
                                     }}
-                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                                        errors.customer_name
-                                            ? "border-red-300"
-                                            : "border-gray-300"
-                                    }`}
+                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                                    errors.customer_name
+                                        ? "border-red-300"
+                                        : "border-gray-300"
+                                }`}
                                     placeholder="Juan"
-                                />
-                                {errors.customer_name && (
-                                    <p className="text-xs text-red-600 mt-1">
-                                        {errors.customer_name}
-                                    </p>
-                                )}
-                            </div>
-                            
+                            />
+                            {errors.customer_name && (
+                                <p className="text-xs text-red-600 mt-1">
+                                    {errors.customer_name}
+                                </p>
+                            )}
+                        </div>
+
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
+                        <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Primer apellido
-                                    </label>
-                                    <input
+                            </label>
+                            <input
                                         type="text"
                                         value={formData.last_name1}
                                         onChange={(e) => {
                                             const lastName1 = e.target.value;
                                             const fullName = updateFullName(formData.first_name, lastName1, formData.last_name2);
-                                            setFormData({
-                                                ...formData,
+                                    setFormData({
+                                        ...formData,
                                                 last_name1: lastName1,
                                                 customer_name: fullName
                                             });
@@ -1911,144 +2044,27 @@ const ReservationFormModal = ({
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         placeholder="Pérez"
                                     />
-                                </div>
-                                <div>
+                        </div>
+                    <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Segundo apellido
-                                    </label>
-                                    <input
+                        </label>
+                        <input
                                         type="text"
                                         value={formData.last_name2}
                                         onChange={(e) => {
                                             const lastName2 = e.target.value;
                                             const fullName = updateFullName(formData.first_name, formData.last_name1, lastName2);
-                                            setFormData({
-                                                ...formData,
+                                setFormData({
+                                    ...formData,
                                                 last_name2: lastName2,
                                                 customer_name: fullName
                                             });
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         placeholder="García"
-                                    />
+                        />
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 📞 SECCIÓN: INFORMACIÓN DE CONTACTO */}
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                            <MessageSquare className="w-4 h-4 text-green-600" />
-                            Información de Contacto
-                        </h4>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="relative">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Teléfono
-                                {searchingCustomer && (
-                                    <span className="ml-2 text-xs text-blue-600">
-                                        <RefreshCw className="w-3 h-3 inline animate-spin mr-1" />
-                                        Buscando...
-                                    </span>
-                                )}
-                            </label>
-                            <input
-                                type="tel"
-                                value={formData.customer_phone}
-                                onChange={(e) => {
-                                    const phone = e.target.value;
-                                    setFormData({
-                                        ...formData,
-                                        customer_phone: phone,
-                                    });
-                                    
-                                    // 🔍 Búsqueda automática al escribir teléfono
-                                    if (formData.clientType === 'new' && phone.length >= 3) {
-                                        searchCustomerByPhone(phone);
-                                    }
-                                }}
-                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                                    errors.customer_phone
-                                        ? "border-red-300"
-                                        : "border-gray-300"
-                                }`}
-                                placeholder="Ej: +34 600 000 000"
-                            />
-                            {errors.customer_phone && (
-                                <p className="text-xs text-red-600 mt-1">
-                                    {errors.customer_phone}
-                                </p>
-                            )}
-                            
-                            {/* 🎯 DROPDOWN DE CLIENTES ENCONTRADOS */}
-                            {foundCustomers.length > 0 && formData.clientType === 'new' && (
-                                <div className="absolute top-full left-0 right-0 z-10 bg-white border border-gray-200 rounded-lg shadow-lg mt-1">
-                                    <div className="p-2 border-b border-gray-100 bg-yellow-50">
-                                        <p className="text-xs text-yellow-800 font-medium">
-                                            📋 Se encontraron clientes existentes:
-                                        </p>
-                                    </div>
-                                    <div className="max-h-48 overflow-y-auto">
-                                        {foundCustomers.map((customer) => (
-                                            <button
-                                                key={customer.id}
-                                                type="button"
-                                                onClick={() => handleSelectExistingCustomer(customer)}
-                                                className="w-full p-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
-                                            >
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <p className="font-medium text-gray-900">{customer.name}</p>
-                                                        <p className="text-xs text-gray-600">{customer.phone}</p>
-                                                        {customer.email && (
-                                                            <p className="text-xs text-gray-500">{customer.email}</p>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-xs font-medium text-blue-600">
-                                                            {customer.visits_count || 0} visitas
-                                                        </p>
-                                                        {customer.last_visit_at && (
-                                                            <p className="text-xs text-gray-500">
-                                                                Última: {format(new Date(customer.last_visit_at), 'dd/MM/yyyy')}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <div className="p-2 border-t border-gray-100 bg-gray-50">
-                                        <button
-                                            type="button"
-                                            onClick={() => setFoundCustomers([])}
-                                            className="text-xs text-gray-600 hover:text-gray-800"
-                                        >
-                                            ✕ Cerrar y crear cliente nuevo
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                            
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Email (opcional)
-                                </label>
-                                <input
-                                    type="email"
-                                    value={formData.customer_email}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            customer_email: e.target.value,
-                                        })
-                                    }
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    placeholder="juan@email.com"
-                                />
                             </div>
                         </div>
                     </div>
@@ -2059,123 +2075,123 @@ const ReservationFormModal = ({
                             <CalendarIcon className="w-4 h-4 text-orange-600" />
                             Fecha y Hora de la Reserva
                         </h4>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Fecha
-                                </label>
-                                <input
-                                    type="date"
-                                    value={formData.date}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            date: e.target.value,
-                                        })
-                                    }
-                                    min={format(new Date(), "yyyy-MM-dd")}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Fecha
+                            </label>
+                            <input
+                                type="date"
+                                value={formData.date}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        date: e.target.value,
+                                    })
+                                }
+                                min={format(new Date(), "yyyy-MM-dd")}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Hora
-                                </label>
-                                <input
-                                    type="time"
-                                    value={formData.time}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            time: e.target.value,
-                                        })
-                                    }
-                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 ${
-                                        errors.time
-                                            ? "border-red-300"
-                                            : "border-gray-300"
-                                    }`}
-                                />
-                                {errors.time && (
-                                    <p className="text-xs text-red-600 mt-1">
-                                        {errors.time}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Personas
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="20"
-                                    value={formData.party_size}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            party_size:
-                                                parseInt(e.target.value) || 1,
-                                        })
-                                    }
-                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 ${
-                                        errors.party_size
-                                            ? "border-red-300"
-                                            : "border-gray-300"
-                                    }`}
-                                />
-                                {errors.party_size && (
-                                    <p className="text-xs text-red-600 mt-1">
-                                        {errors.party_size}
-                                    </p>
-                                )}
-                            </div>
+                            />
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Mesa (opcional)
-                                </label>
-                                <select
-                                    value={formData.table_id}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            table_id: e.target.value,
-                                        })
-                                    }
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                                >
-                                    <option value="">Sin asignar</option>
-                                    {tables.map((table) => (
-                                        <option key={table.id} value={table.id}>
-                                            {table.name} - {table.zone}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Estado
-                                </label>
-                                <select
-                                    value={formData.status}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            status: e.target.value,
-                                        })
-                                    }
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Hora
+                            </label>
+                            <input
+                                type="time"
+                                value={formData.time}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        time: e.target.value,
+                                    })
+                                }
+                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 ${
+                                    errors.time
+                                        ? "border-red-300"
+                                        : "border-gray-300"
+                                }`}
+                            />
+                            {errors.time && (
+                                <p className="text-xs text-red-600 mt-1">
+                                    {errors.time}
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Personas
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="20"
+                                value={formData.party_size}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        party_size:
+                                            parseInt(e.target.value) || 1,
+                                    })
+                                }
+                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 ${
+                                    errors.party_size
+                                        ? "border-red-300"
+                                        : "border-gray-300"
+                                }`}
+                            />
+                            {errors.party_size && (
+                                <p className="text-xs text-red-600 mt-1">
+                                    {errors.party_size}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Mesa (opcional)
+                            </label>
+                            <select
+                                value={formData.table_id}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        table_id: e.target.value,
+                                    })
+                                }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                                >
-                                    <option value="pendiente">Pendiente</option>
-                                    <option value="confirmada">Confirmada</option>
-                                </select>
+                            >
+                                <option value="">Sin asignar</option>
+                                {tables.map((table) => (
+                                    <option key={table.id} value={table.id}>
+                                        {table.name} - {table.zone}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Estado
+                            </label>
+                            <select
+                                value={formData.status}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        status: e.target.value,
+                                    })
+                                }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                            >
+                                <option value="pendiente">Pendiente</option>
+                                <option value="confirmada">Confirmada</option>
+                            </select>
                             </div>
                         </div>
                     </div>
@@ -2186,18 +2202,18 @@ const ReservationFormModal = ({
                             <MessageSquare className="w-4 h-4 text-purple-600" />
                             Solicitudes Especiales
                         </h4>
-                        <div>
+                    <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Solicitudes especiales (opcional)
-                            </label>
-                            <textarea
-                                value={formData.special_requests}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        special_requests: e.target.value,
-                                    })
-                                }
+                            Solicitudes especiales (opcional)
+                        </label>
+                        <textarea
+                            value={formData.special_requests}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    special_requests: e.target.value,
+                                })
+                            }
                                 rows="3"
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                                 placeholder="Celebraciones, ubicación preferida, peticiones especiales..."
@@ -2221,10 +2237,10 @@ const ReservationFormModal = ({
                                     ...formData,
                                     notes: e.target.value
                                 })}
-                                rows="3"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                placeholder="Alergias, preferencias, celebraciones..."
-                            />
+                            rows="3"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            placeholder="Alergias, preferencias, celebraciones..."
+                        />
                         </div>
                     </div>
 
