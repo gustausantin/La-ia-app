@@ -885,12 +885,21 @@ export default function Reservas() {
                         return;
                 }
 
+                console.log("🔍 PATCH Debug - Datos a enviar:", {
+                    status: newStatus,
+                    reservation_id: reservation.id
+                });
+                
+                console.log("🔍 PATCH Debug - Reserva completa:", reservation);
+
                 const { error } = await supabase
                     .from("reservations")
                     .update({
                         status: newStatus,
                     })
                     .eq("id", reservation.id);
+                    
+                console.log("🔍 PATCH Debug - Resultado:", { error });
 
                 if (error) throw error;
 

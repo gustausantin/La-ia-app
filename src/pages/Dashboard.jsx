@@ -695,7 +695,7 @@ export default function Dashboard() {
                                     <div>
                                         <div className="font-medium text-gray-900">{reservation.customer_name}</div>
                                         <div className="text-sm text-gray-500">
-                                            {reservation.reservation_time} • {reservation.party_size} personas
+                                            {reservation.reservation_time?.slice(0, 5) || 'Sin hora'} • {reservation.party_size} personas
                                             {reservation.table_number && ` • Mesa ${reservation.table_number}`}
                                         </div>
                                     </div>
