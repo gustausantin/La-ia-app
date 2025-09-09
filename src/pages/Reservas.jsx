@@ -965,7 +965,8 @@ export default function Reservas() {
                     message: `${message}: ${reservation.customer_name}`,
                     priority: "low",
                 });
-                loadReservations();
+                // Recargar reservas para mostrar el cambio inmediatamente
+                await loadReservations();
             } catch (error) {
                 toast.error("Error al actualizar la reserva");
             }
@@ -1023,7 +1024,8 @@ export default function Reservas() {
                     priority: "normal",
                 });
                 setSelectedReservations(new Set());
-                loadReservations();
+                // Recargar reservas para mostrar cambios inmediatamente
+                await loadReservations();
             } catch (error) {
                 toast.error("Error al actualizar las reservas");
             }
