@@ -491,20 +491,34 @@ export default function Reservas() {
                 console.log('💬 Agent conversations no disponibles (normal si no hay datos)');
             }
 
-            // 4. Obtener canal más usado desde channel_performance (con manejo profesional de errores)
+            // 4. Canal más usado - calculado desde reservas existentes (sin tabla externa)
             let channelPerformance = null;
             try {
-                const { data } = await supabase
-                    .from('channel_performance')
-                    .select('channel, bookings')
-                    .eq('restaurant_id', restaurantId)
-                    .eq('date', today)
-                    .order('bookings', { ascending: false })
-                    .limit(1)
-                    .single();
-                channelPerformance = data;
+                // Calcular canal más usado desde las reservas del día
+                const todayReservations = reservations.filter(r => {
+                    const reservationDate = format(parseISO(r.created_at), 'yyyy-MM-dd');
+                    return reservationDate === today;
+                });
+                
+                if (todayReservations.length > 0) {
+                    const channelCounts = todayReservations.reduce((acc, r) => {
+                        const channel = r.channel || 'web';
+                        acc[channel] = (acc[channel] || 0) + 1;
+                        return acc;
+                    }, {});
+                    
+                    const topChannel = Object.entries(channelCounts)
+                        .sort(([,a], [,b]) => b - a)[0];
+                    
+                    if (topChannel) {
+                        channelPerformance = {
+                            channel: topChannel[0],
+                            bookings: topChannel[1]
+                        };
+                    }
+                }
             } catch (error) {
-                console.log('📈 Channel performance no disponible (normal si no hay datos)');
+                console.log('📈 Error calculando canal principal:', error);
             }
 
             // Calcular estadísticas reales
