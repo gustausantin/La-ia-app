@@ -788,13 +788,15 @@ export default function Reservas() {
                             </div>,
                         );
 
-                        // Agregar notificación global
-                        addNotification({
-                            type: "agent",
-                            message: `Nueva reserva de ${payload.new.customer_name} para ${payload.new.party_size} personas`,
-                            priority: "normal",
-                            data: { reservationId: payload.new.id },
-                        });
+                        // Agregar notificación global (seguro)
+                        try {
+                            addNotification({
+                                type: "agent",
+                                message: `Nueva reserva de ${payload.new.customer_name} para ${payload.new.party_size} personas`,
+                                priority: "normal",
+                                data: { reservationId: payload.new.id },
+                            });
+                        } catch (e) { /* Ignorar errores de notificación */ }
                     }
 
                     loadReservations();
@@ -951,9 +953,36 @@ export default function Reservas() {
 
                 if (error) throw error;
 
-                // 🔄 REFRESCAR LISTA INMEDIATAMENTE - FORZADO
-                setReservations([]); // Limpiar primero
-                await loadReservations(); // Recargar desde cero
+                console.log("✅ RESERVA ACTUALIZADA EN SUPABASE CORRECTAMENTE");
+
+                // 🔄 REFRESCAR UI INMEDIATAMENTE - MÚLTIPLES ESTRATEGIAS
+                try {
+                    // 1. Actualizar estado local inmediatamente
+                    setReservations(prevReservations => 
+                        prevReservations.map(r => 
+                            r.id === reservation.id 
+                                ? { ...r, status: newStatus }
+                                : r
+                        )
+                    );
+                    
+                    console.log("✅ ESTADO LOCAL ACTUALIZADO");
+                    
+                    // 2. Recargar desde Supabase después para confirmar
+                    setTimeout(async () => {
+                        try {
+                            await loadReservations();
+                            console.log("✅ DATOS RECARGADOS DESDE SUPABASE");
+                        } catch (reloadError) {
+                            console.log("⚠️ Error recargando (no crítico):", reloadError.message);
+                        }
+                    }, 500);
+                    
+                } catch (uiError) {
+                    console.log("⚠️ Error actualizando UI (no crítico):", uiError.message);
+                    // Fallback: recargar página si falla todo
+                    window.location.reload();
+                }
 
                 // 🎯 CRM INTEGRATION: Procesar automáticamente cuando se completa reserva
                 if (newStatus === "completed") {
@@ -971,11 +1000,13 @@ export default function Reservas() {
                                     `${message} ✨ Cliente actualizado a "${crmResult.newSegment}"`,
                                     { duration: 4000 }
                                 );
-                                addNotification({
-                                    type: "crm",
-                                    message: `Cliente ${reservation.customer_name} promovido a segmento "${crmResult.newSegment}"`,
-                                    priority: "medium",
-                                });
+                                try {
+                                    addNotification({
+                                        type: "crm",
+                                        message: `Cliente ${reservation.customer_name} promovido a segmento "${crmResult.newSegment}"`,
+                                        priority: "medium",
+                                    });
+                                } catch (e) { /* Ignorar errores de notificación */ }
                             } else {
                                 toast.success(message);
                             }
@@ -991,11 +1022,13 @@ export default function Reservas() {
                     toast.success(message);
                 }
 
-                addNotification({
-                    type: "system",
-                    message: `${message}: ${reservation.customer_name}`,
-                    priority: "low",
-                });
+                try {
+                    addNotification({
+                        type: "system",
+                        message: `${message}: ${reservation.customer_name}`,
+                        priority: "low",
+                    });
+                } catch (e) { /* Ignorar errores de notificación */ }
                 // Recargar reservas para mostrar el cambio inmediatamente
                 await loadReservations();
             } catch (error) {
