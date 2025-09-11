@@ -20,10 +20,10 @@ import {
   Clock,
   DollarSign
 } from 'lucide-react';
-import { Card, Button } from '../ui/index.js';
-import { analyticsAI } from '../../services/analyticsAI.js';
-import { mlEngine } from '../../services/MLEngine.js';
-import { conversationalAI } from '../../services/ConversationalAI.js';
+import { Card, Button } from '../ui/index';
+import { analyticsAI } from '../../services/analyticsAI';
+import { mlEngine } from '../../services/MLEngine';
+import { conversationalAI } from '../../services/ConversationalAI';
 
 /**
  * 🤖 AI DASHBOARD - Centro de Control de IA

@@ -25,10 +25,10 @@ import {
   EyeOff
 } from 'lucide-react';
 import { LineChart, Line, PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
-import { Card, Button, SkeletonChart } from '../ui/index.js';
-import { analyticsAI } from '../../services/analyticsAI.js';
-import { useAnalyticsStore } from '../../stores/analyticsStore.js';
-import { log } from '../../utils/logger.js';
+import { Card, Button, SkeletonChart } from '../ui/index';
+import { analyticsAI } from '../../services/analyticsAI';
+import { useAnalyticsStore } from '../../stores/analyticsStore';
+import { log } from '../../utils/logger';
 
 // Colores para gráficos Recharts
 const CHART_COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];

@@ -1,6 +1,6 @@
-import { log } from '../utils/logger.js';
-import { mlEngine } from './MLEngine.js';
-import { supabase } from '../lib/supabase.js';
+import { log } from '../utils/logger';
+import { mlEngine } from './MLEngine';
+import { supabase } from '../lib/supabase';
 
 class AnalyticsAI {
   constructor() {
