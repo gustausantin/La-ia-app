@@ -582,11 +582,26 @@ export default function Reservas() {
             });
 
             if (error) {
-                console.error('Error cargando reservas:', error);
+                console.error('❌ ERROR CARGANDO RESERVAS:', error);
                 throw error;
             }
 
+            console.log("📊 DATOS CARGADOS DE SUPABASE:", {
+                totalReservations: data?.length || 0,
+                firstReservation: data?.[0] || null
+            });
+
             let reservations = data || [];
+            
+            // Log específico para debugging
+            const targetReservation = reservations.find(r => r.customer_name?.includes('Kiku'));
+            if (targetReservation) {
+                console.log("🎯 RESERVA KIKU ENCONTRADA:", {
+                    id: targetReservation.id,
+                    status: targetReservation.status,
+                    customer_name: targetReservation.customer_name
+                });
+            }
 
             // Aplicar filtros adicionales en memoria
             if (filters.status) {
@@ -942,18 +957,31 @@ export default function Reservas() {
                 
                 console.log("🔍 PATCH Debug - Reserva completa:", reservation);
 
-                const { error } = await supabase
+                console.log("📤 ENVIANDO UPDATE A SUPABASE...");
+                const { error, data } = await supabase
                     .from("reservations")
                     .update({
                         status: newStatus,
                     })
-                    .eq("id", reservation.id);
+                    .eq("id", reservation.id)
+                    .select(); // Añadir select para ver qué se actualizó
                     
-                console.log("🔍 PATCH Debug - Resultado:", { error });
+                console.log("📥 RESPUESTA COMPLETA DE SUPABASE:", { error, data });
 
-                if (error) throw error;
+                if (error) {
+                    console.error("❌ ERROR EN UPDATE:", error);
+                    throw error;
+                }
 
-                console.log("✅ RESERVA ACTUALIZADA EN SUPABASE CORRECTAMENTE");
+                console.log("✅ RESERVA ACTUALIZADA EN SUPABASE");
+                
+                // Verificar que realmente se actualizó
+                if (data && data.length > 0) {
+                    console.log("✅ CONFIRMACIÓN: Status actualizado a:", data[0].status);
+                    console.log("✅ DATOS ACTUALIZADOS:", data[0]);
+                } else {
+                    console.warn("⚠️ WARNING: No se retornaron datos del update");
+                }
 
                 // 🔄 SOLUCIÓN SIMPLE Y DIRECTA - RECARGAR INMEDIATAMENTE
                 console.log("🔄 Recargando reservas para mostrar cambios...");
