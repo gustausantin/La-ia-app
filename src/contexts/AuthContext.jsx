@@ -391,7 +391,7 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // Notifs
+  // Notifs - VOLVER A LA VERSIÓN ORIGINAL QUE FUNCIONABA
   const addNotification = (n) => {
     const newN = { 
       id: Date.now() + Math.random(), 
@@ -400,6 +400,28 @@ const AuthProvider = ({ children }) => {
       ...n 
     };
     setNotifications((p) => [newN, ...p].slice(0, 50));
+    
+    // Guardar en Supabase en background sin bloquear
+    if (restaurantId) {
+      supabase
+        .from('notifications')
+        .insert({
+          id: newN.id,
+          restaurant_id: restaurantId,
+          type: newN.type || 'info',
+          message: newN.message || '',
+          priority: newN.priority || 'normal',
+          read: false,
+          data: newN.data || {},
+          created_at: newN.timestamp.toISOString()
+        })
+        .then(() => {
+          // Éxito silencioso
+        })
+        .catch(() => {
+          // Error silencioso - la notificación ya está en el estado local
+        });
+    }
   };
   
   const markNotificationAsRead = (id) => 
