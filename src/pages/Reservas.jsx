@@ -924,6 +924,9 @@ export default function Reservas() {
 
                 if (error) throw error;
 
+                // 🔄 REFRESCAR LISTA INMEDIATAMENTE
+                await loadReservations();
+
                 // 🎯 CRM INTEGRATION: Procesar automáticamente cuando se completa reserva
                 if (newStatus === "completed") {
                     console.log("🎯 CRM: Procesando completación de reserva", reservation.id);
