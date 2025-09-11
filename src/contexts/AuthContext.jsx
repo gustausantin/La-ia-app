@@ -391,7 +391,7 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // Notifs - VOLVER A LA VERSIÓN ORIGINAL QUE FUNCIONABA
+  // Notifs - SOLO ESTADO LOCAL (SIN SUPABASE PARA EVITAR ERRORES)
   const addNotification = (n) => {
     const newN = { 
       id: Date.now() + Math.random(), 
@@ -401,27 +401,8 @@ const AuthProvider = ({ children }) => {
     };
     setNotifications((p) => [newN, ...p].slice(0, 50));
     
-    // Guardar en Supabase en background sin bloquear
-    if (restaurantId) {
-      supabase
-        .from('notifications')
-        .insert({
-          id: newN.id,
-          restaurant_id: restaurantId,
-          type: newN.type || 'info',
-          message: newN.message || '',
-          priority: newN.priority || 'normal',
-          read: false,
-          data: newN.data || {},
-          created_at: newN.timestamp.toISOString()
-        })
-        .then(() => {
-          // Éxito silencioso
-        })
-        .catch(() => {
-          // Error silencioso - la notificación ya está en el estado local
-        });
-    }
+    // NO intentar guardar en Supabase por ahora para evitar errores 400
+    // La funcionalidad principal (reservas) debe funcionar independientemente
   };
   
   const markNotificationAsRead = (id) => 
