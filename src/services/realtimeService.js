@@ -1,7 +1,7 @@
 import { io } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
-import { log } from '../utils/logger.js';
-import { supabase } from '../lib/supabase.js';
+import { log } from '../utils/logger';
+import { supabase } from '../lib/supabase';
 
 class RealtimeService {
   constructor() {

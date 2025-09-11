@@ -3,7 +3,7 @@
  * Sistema de IA conversacional avanzado para La-IA
  */
 
-import { log } from '../utils/logger.js';
+import { log } from '../utils/logger';
 
 class ConversationalAI {
   constructor() {
