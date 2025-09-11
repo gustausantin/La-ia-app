@@ -955,33 +955,15 @@ export default function Reservas() {
 
                 console.log("✅ RESERVA ACTUALIZADA EN SUPABASE CORRECTAMENTE");
 
-                // 🔄 REFRESCAR UI INMEDIATAMENTE - MÚLTIPLES ESTRATEGIAS
+                // 🔄 SOLUCIÓN SIMPLE Y DIRECTA - RECARGAR INMEDIATAMENTE
+                console.log("🔄 Recargando reservas para mostrar cambios...");
                 try {
-                    // 1. Actualizar estado local inmediatamente
-                    setReservations(prevReservations => 
-                        prevReservations.map(r => 
-                            r.id === reservation.id 
-                                ? { ...r, status: newStatus }
-                                : r
-                        )
-                    );
-                    
-                    console.log("✅ ESTADO LOCAL ACTUALIZADO");
-                    
-                    // 2. Recargar desde Supabase después para confirmar
-                    setTimeout(async () => {
-                        try {
-                            await loadReservations();
-                            console.log("✅ DATOS RECARGADOS DESDE SUPABASE");
-                        } catch (reloadError) {
-                            console.log("⚠️ Error recargando (no crítico):", reloadError.message);
-                        }
-                    }, 500);
-                    
-                } catch (uiError) {
-                    console.log("⚠️ Error actualizando UI (no crítico):", uiError.message);
-                    // Fallback: recargar página si falla todo
-                    window.location.reload();
+                    await loadReservations();
+                    console.log("✅ RESERVAS RECARGADAS - CAMBIOS VISIBLES");
+                } catch (reloadError) {
+                    console.error("❌ ERROR RECARGANDO RESERVAS:", reloadError);
+                    // Si falla la recarga, al menos mostrar el toast
+                    toast.success(message);
                 }
 
                 // 🎯 CRM INTEGRATION: Procesar automáticamente cuando se completa reserva
@@ -1029,8 +1011,6 @@ export default function Reservas() {
                         priority: "low",
                     });
                 } catch (e) { /* Ignorar errores de notificación */ }
-                // Recargar reservas para mostrar el cambio inmediatamente
-                await loadReservations();
             } catch (error) {
                 toast.error("Error al actualizar la reserva");
             }
