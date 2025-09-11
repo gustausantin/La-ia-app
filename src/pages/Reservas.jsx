@@ -574,39 +574,19 @@ export default function Reservas() {
 
             const dateRange = calculateDateRange(filters.period);
 
-            // Consulta directa para asegurar datos actualizados inmediatamente
-            const { data, error } = await supabase
-                .from('reservations')
-                .select(`
-                    *,
-                    customers (
-                        id,
-                        name,
-                        phone,
-                        email
-                    ),
-                    tables (
-                        id,
-                        number,
-                        capacity
-                    )
-                `)
-                .eq('restaurant_id', restaurantId)
-                .gte('reservation_date', dateRange.start)
-                .lte('reservation_date', dateRange.end)
-                .order('reservation_date', { ascending: false })
-                .order('reservation_time', { ascending: false });
+            // Usar la función RPC que funcionaba antes
+            const { data, error } = await supabase.rpc("get_reservations_safe", {
+                p_restaurant_id: restaurantId,
+                p_start_date: dateRange.start,
+                p_end_date: dateRange.end
+            });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error cargando reservas:', error);
+                throw error;
+            }
 
-            let reservations = (data || []).map(reservation => ({
-                ...reservation,
-                customer_name: reservation.customers?.name || reservation.customer_name || 'Sin nombre',
-                customer_phone: reservation.customers?.phone || reservation.customer_phone || 'Sin teléfono',
-                customer_email: reservation.customers?.email || reservation.customer_email || null,
-                table_number: reservation.tables?.number || reservation.table_number || 'Sin mesa',
-                table_capacity: reservation.tables?.capacity || reservation.table_capacity || 0
-            }));
+            let reservations = data || [];
 
             // Aplicar filtros adicionales en memoria
             if (filters.status) {
@@ -971,8 +951,9 @@ export default function Reservas() {
 
                 if (error) throw error;
 
-                // 🔄 REFRESCAR LISTA INMEDIATAMENTE
-                await loadReservations();
+                // 🔄 REFRESCAR LISTA INMEDIATAMENTE - FORZADO
+                setReservations([]); // Limpiar primero
+                await loadReservations(); // Recargar desde cero
 
                 // 🎯 CRM INTEGRATION: Procesar automáticamente cuando se completa reserva
                 if (newStatus === "completed") {
