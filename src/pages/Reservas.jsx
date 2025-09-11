@@ -574,16 +574,39 @@ export default function Reservas() {
 
             const dateRange = calculateDateRange(filters.period);
 
-            // Usar la función RPC que evita ambigüedad PGRST201
-            const { data, error } = await supabase.rpc("get_reservations_safe", {
-                p_restaurant_id: restaurantId,
-                p_start_date: dateRange.start,
-                p_end_date: dateRange.end
-            });
+            // Consulta directa para asegurar datos actualizados inmediatamente
+            const { data, error } = await supabase
+                .from('reservations')
+                .select(`
+                    *,
+                    customers (
+                        id,
+                        name,
+                        phone,
+                        email
+                    ),
+                    tables (
+                        id,
+                        number,
+                        capacity
+                    )
+                `)
+                .eq('restaurant_id', restaurantId)
+                .gte('reservation_date', dateRange.start)
+                .lte('reservation_date', dateRange.end)
+                .order('reservation_date', { ascending: false })
+                .order('reservation_time', { ascending: false });
 
             if (error) throw error;
 
-            let reservations = data || [];
+            let reservations = (data || []).map(reservation => ({
+                ...reservation,
+                customer_name: reservation.customers?.name || reservation.customer_name || 'Sin nombre',
+                customer_phone: reservation.customers?.phone || reservation.customer_phone || 'Sin teléfono',
+                customer_email: reservation.customers?.email || reservation.customer_email || null,
+                table_number: reservation.tables?.number || reservation.table_number || 'Sin mesa',
+                table_capacity: reservation.tables?.capacity || reservation.table_capacity || 0
+            }));
 
             // Aplicar filtros adicionales en memoria
             if (filters.status) {
