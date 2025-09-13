@@ -909,55 +909,57 @@ export default function Reservas() {
 
     // Manejar acciones de reservas
     const handleReservationAction = useCallback(
-        async (reservation, action, newStatus = null) => {
-            const message = `Reserva ${newStatus || action} correctamente`;
+        async (action, reservation) => {
+            let newStatus;
+            let message;
 
-            try {
-                if (
-                    action !== "edit" &&
-                    !window.confirm(
-                        `¿Confirmar acción en reserva de ${reservation.customer_name}?`,
-                    )
-                ) {
-                    return;
-                }
-
-                if (action === "edit") {
+            // Determinar el nuevo estado y el mensaje basado en la acción
+            switch (action) {
+                case "confirm":
+                    newStatus = "confirmed";
+                    message = "Reserva confirmada";
+                    break;
+                case "seat":
+                    newStatus = "seated";
+                    message = "Mesa ocupada";
+                    break;
+                case "complete":
+                    newStatus = "completed";
+                    message = "Reserva completada";
+                    break;
+                case "cancel":
+                    if (!window.confirm("¿Estás seguro de cancelar esta reserva?")) {
+                        return;
+                    }
+                    newStatus = "cancelled";
+                    message = "Reserva cancelada";
+                    break;
+                case "edit":
                     setEditingReservation(reservation);
                     setShowEditModal(true);
                     return;
-                }
+                case "view":
+                    toast.info("Vista detallada disponible próximamente");
+                    return;
+                default:
+                    return;
+            }
+            
+            try {
+                // Actualizar la reserva en Supabase
+                const { data, error } = await supabase
+                    .from("reservations")
+                    .update({ status: newStatus })
+                    .eq("id", reservation.id)
+                    .select()
+                    .single();
 
-                console.log("🔍 PATCH Debug - Datos a enviar:", {
-                    status: newStatus,
-                    reservation_id: reservation.id
-                });
+                if (error) throw error;
                 
-                console.log("🔍 PATCH Debug - Reserva completa:", reservation);
+                toast.success(`${message} exitosamente`);
+                console.log("✅ CONFIRMACIÓN: Status actualizado a:", data.status);
 
-                console.log("📤 ENVIANDO UPDATE A SUPABASE...");
-                try {
-                    // Actualizar la reserva en Supabase
-                    const { data, error } = await supabase
-                        .from("reservations")
-                        .update({ status: newStatus })
-                        .eq("id", reservation.id)
-                        .select()
-                        .single();
-
-                    if (error) throw error;
-
-                    // CORRECCIÓN: Solo un toast, el de la acción principal
-                    // toast.success(`Reserva ${newStatus === 'confirmed' ? 'confirmada' : newStatus === 'cancelled' ? 'cancelada' : 'actualizada'} exitosamente`);
-                    console.log("✅ CONFIRMACIÓN: Status actualizado a:", data.status);
-
-                    // ✅ CORRECCIÓN: Forzar recarga de datos para asegurar consistencia visual
-                    await loadReservations();
-
-                } catch (error) {
-                    console.error(`Error al cambiar el estado a ${newStatus}:`, error);
-                    toast.error(`Error al actualizar la reserva: ${error.message}`);
-                }
+                await loadReservations();
 
                 // 🎯 CRM INTEGRATION: Procesar automáticamente cuando se completa reserva
                 if (newStatus === "completed") {
@@ -966,36 +968,26 @@ export default function Reservas() {
                     try {
                         const crmResult = await processReservationCompletion(reservation.id, restaurantId);
                         
-                        if (crmResult.success) {
-                            console.log("✅ CRM: Reserva procesada correctamente", crmResult);
-                            
-                            // Mostrar mensaje enriquecido si hubo cambio de segmento
-                            if (crmResult.segmentChanged) {
-                                toast.success(
-                                    `${message} ✨ Cliente actualizado a "${crmResult.newSegment}"`,
-                                    { duration: 4000 }
-                                );
-                                try {
-                                    addNotification({
-                                        type: "crm",
-                                        message: `Cliente ${reservation.customer_name} promovido a segmento "${crmResult.newSegment}"`,
-                                        priority: "medium",
-                                    });
-                                } catch (e) { /* Ignorar errores de notificación */ }
-                            }
-                            // No se necesita otro toast aquí, ya se mostró el principal
-                        } else {
-                            console.error("❌ CRM: Error procesando reserva:", crmResult.error);
+                        if (crmResult.success && crmResult.segmentChanged) {
+                            toast.success(
+                                `✨ Cliente actualizado a "${crmResult.newSegment}"`,
+                                { duration: 4000 }
+                            );
+                            addNotification({
+                                type: "crm",
+                                message: `Cliente ${reservation.customer_name} promovido a segmento "${crmResult.newSegment}"`,
+                                priority: "medium",
+                            });
+                        } else if (!crmResult.success) {
                             toast.error(`Error en CRM: ${crmResult.error}`);
                         }
                     } catch (crmError) {
-                        console.error("❌ CRM: Error inesperado:", crmError);
                         toast.error("Error inesperado en el proceso CRM");
                     }
                 }
-                // ELIMINADO: toast.success(message) redundante que causaba el doble log
             } catch (error) {
-                toast.error("Error al actualizar la reserva");
+                console.error(`Error al cambiar el estado a ${newStatus}:`, error);
+                toast.error(`Error al actualizar la reserva: ${error.message}`);
             }
         },
         [loadReservations, addNotification, restaurantId],
