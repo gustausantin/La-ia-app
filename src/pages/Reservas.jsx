@@ -1849,6 +1849,16 @@ const ReservationFormModal = ({
                     if (customerError) {
                         console.warn("Advertencia: La reserva se actualizó, pero hubo un error al actualizar los consentimientos del cliente.", customerError);
                         toast.error("Error al guardar consentimientos del cliente");
+                    } else {
+                        // 🔧 CORRECCIÓN CRUCIAL: Actualizar formData con los valores guardados
+                        setFormData(prev => ({
+                            ...prev,
+                            consent_email: formData.consent_email,
+                            consent_sms: formData.consent_sms,
+                            consent_whatsapp: formData.consent_whatsapp,
+                            notes: formData.notes
+                        }));
+                        console.log('✅ Consentimientos actualizados en BD y UI');
                     }
                 }
             } else {
