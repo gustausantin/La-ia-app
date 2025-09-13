@@ -1454,13 +1454,9 @@ export default function Reservas() {
             {showEditModal && editingReservation && (
                 <ReservationFormModal
                     isOpen={showEditModal}
-                    onClose={() => {
-                        setShowEditModal(false);
-                        setEditingReservation(null);
-                    }}
+                    onClose={() => setShowEditModal(false)}
                     onSave={() => {
                         setShowEditModal(false);
-                        setEditingReservation(null);
                         loadReservations();
                         toast.success("Reserva actualizada correctamente");
                         addNotification({
