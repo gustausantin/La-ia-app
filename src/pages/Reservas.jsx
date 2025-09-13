@@ -939,7 +939,8 @@ export default function Reservas() {
                     setShowEditModal(true);
                     return;
                 case "view":
-                    toast.info("Vista detallada disponible próximamente");
+                    // 🎯 CORRECCIÓN CRASH: toast.info no existe, se usa toast() genérico
+                    toast("La vista detallada estará disponible próximamente.");
                     return;
                 default:
                     return;
@@ -1911,46 +1912,56 @@ const ReservationFormModal = ({
         }
     };
 
-    // 🎯 SOLUCIÓN DEFINITIVA: "Ir a buscar la puta información a la tabla"
-    // Carga siempre los datos más frescos de Supabase al abrir el modal en modo edición.
+    // 🎯 SOLUCIÓN DEFINITIVA (ROBUSTA): Carga de datos en dos pasos para evitar fallos.
     useEffect(() => {
         const loadFreshData = async () => {
             if (isOpen && reservation?.id) {
                 setLoading(true);
                 try {
-                    const { data, error } = await supabase
+                    // Paso 1: Cargar datos de la reserva
+                    const { data: reservationData, error: reservationError } = await supabase
                         .from("reservations")
-                        .select(`*, customers (*)`)
+                        .select(`*`)
                         .eq("id", reservation.id)
                         .single();
 
-                    if (error) throw error;
+                    if (reservationError) throw reservationError;
 
-                    const customer = data.customers;
+                    // Paso 2: Cargar datos del cliente asociado (si existe)
+                    let customerData = null;
+                    if (reservationData.customer_id) {
+                        const { data: custData, error: customerError } = await supabase
+                            .from("customers")
+                            .select(`*`)
+                            .eq("id", reservationData.customer_id)
+                            .single();
+                        
+                        if (customerError) {
+                            console.warn("Advertencia: no se pudo cargar el cliente asociado a la reserva.", customerError);
+                        } else {
+                            customerData = custData;
+                        }
+                    }
                     
-                    // Mapeo inverso para el frontend (de inglés a español)
-                    const statusMap = {
-                        "pending": "pendiente",
-                        "confirmed": "confirmada",
-                        "cancelled": "cancelada"
-                    };
-                    const frontEndStatus = statusMap[data.status] || "pendiente";
+                    const statusMap = { "pending": "pendiente", "confirmed": "confirmada", "cancelled": "cancelada" };
+                    const frontEndStatus = statusMap[reservationData.status] || "pendiente";
 
                     setFormData({
-                        date: data.reservation_date,
-                        time: data.reservation_time,
-                        party_size: data.party_size,
-                        table_id: data.table_id,
-                        special_requests: data.special_requests,
+                        date: reservationData.reservation_date,
+                        time: reservationData.reservation_time,
+                        party_size: reservationData.party_size,
+                        table_id: reservationData.table_id,
+                        special_requests: reservationData.special_requests,
                         status: frontEndStatus,
-                        customer_name: data.customer_name,
-                        customer_phone: data.customer_phone,
-                        customer_email: data.customer_email,
-                        notes: customer?.notes || "",
-                        consent_email: customer?.consent_email || false,
-                        consent_sms: customer?.consent_sms || false,
-                        consent_whatsapp: customer?.consent_whatsapp || false,
+                        customer_name: reservationData.customer_name,
+                        customer_phone: reservationData.customer_phone,
+                        customer_email: reservationData.customer_email,
+                        notes: customerData?.notes || "",
+                        consent_email: customerData?.consent_email || false,
+                        consent_sms: customerData?.consent_sms || false,
+                        consent_whatsapp: customerData?.consent_whatsapp || false,
                     });
+
                 } catch (err) {
                     toast.error("No se pudieron cargar los datos actualizados de la reserva.");
                     console.error("Error loading fresh data:", err);
@@ -1962,7 +1973,7 @@ const ReservationFormModal = ({
         };
 
         loadFreshData();
-    }, [isOpen, reservation]);
+    }, [isOpen, reservation, onClose]);
 
     if (!isOpen) return null;
 
