@@ -155,7 +155,8 @@ export default function CRMInteligente() {
             // Procesar y segmentar clientes automáticamente
             const processedCustomers = customersData?.map(customer => ({
                 ...customer,
-                segment: determineCustomerSegment(customer),
+                // Usar directamente el segmento calculado por la BD
+                segment: customer.segment_manual || customer.segment_auto || 'nuevo',
                 daysSinceLastVisit: customer.last_visit_at 
                     ? Math.floor((new Date() - new Date(customer.last_visit_at)) / (1000 * 60 * 60 * 24))
                     : null
@@ -211,39 +212,8 @@ export default function CRMInteligente() {
         }
     }, [restaurantId]);
 
-    // DETERMINAR SEGMENTO DE CLIENTE AUTOMÁTICAMENTE
-    const determineCustomerSegment = (customer) => {
-        if (!customer) return 'activo';
-        
-        const now = new Date();
-        const createdAt = customer.created_at ? parseISO(customer.created_at) : now;
-        const lastVisit = customer.last_visit_at ? parseISO(customer.last_visit_at) : null;
-        
-        const daysSinceCreated = differenceInDays(now, createdAt);
-        const daysSinceLastVisit = lastVisit ? differenceInDays(now, lastVisit) : 999;
-        
-        // Usar configuración de Supabase para segmentación con valores por defecto
-        const config = {
-            days_new_customer: crmConfig?.days_new_customer || 7,
-            days_active_customer: crmConfig?.days_active_customer || 30,
-            days_inactive_customer: crmConfig?.days_inactive_customer || 60,
-            visits_bib_customer: crmConfig?.visits_bib_customer || 10,
-            days_risk_customer: crmConfig?.days_risk_customer || 45
-        };
-        
-        // Lógica de segmentación inteligente basada en configuración
-        if (daysSinceCreated <= config.days_new_customer) {
-            return 'nuevo';
-        } else if ((customer.visits_count || 0) >= config.visits_bib_customer) {
-            return 'bib';
-        } else if (daysSinceLastVisit > config.days_inactive_customer) {
-            return 'inactivo';
-        } else if (daysSinceLastVisit > config.days_risk_customer) {
-            return 'riesgo';
-        } else {
-            return 'activo';
-        }
-    };
+    // DETERMINAR SEGMENTO DE CLIENTE AUTOMÁTICamente - **ELIMINADA**
+    // La lógica ahora reside 100% en la base de datos a través de `segment_auto`
 
     // CALCULAR ESTADÍSTICAS POR SEGMENTO
     const calculateSegmentStats = (customers) => {
@@ -340,7 +310,7 @@ export default function CRMInteligente() {
             
             // Analizar cada cliente y generar sugerencias
             for (const customer of customers) {
-                const segment = determineCustomerSegment(customer);
+                const segment = customer.segment_manual || customer.segment_auto || 'nuevo';
                 const template = templates.find(t => t.type === segment);
                 
                 if (template) {
@@ -673,7 +643,8 @@ export default function CRMInteligente() {
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                                     <div className="divide-y divide-gray-200">
                                         {filteredCustomers.map(customer => {
-                                            const segment = CUSTOMER_SEGMENTS[customer.segment] || CUSTOMER_SEGMENTS.activo;
+                                            const segmentKey = customer.segment_manual || customer.segment_auto || 'nuevo';
+                                            const segment = CUSTOMER_SEGMENTS[segmentKey] || CUSTOMER_SEGMENTS.activo;
                                             return (
                                                 <div 
                                                     key={customer.id} 
