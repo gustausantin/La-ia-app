@@ -127,10 +127,8 @@ export const useDashboardData = (restaurantId) => {
         }
         return {
           ...res,
-          source: res.source || (Math.random() > 0.3 ? 'agent' : 'manual'),
-          channel: res.channel || (res.source === 'agent' ?
-            ['whatsapp', 'vapi', 'web'][Math.floor(Math.random() * 3)] :
-            'manual')
+          source: res.source || 'desconocido',
+          channel: res.channel || 'desconocido'
         };
       });
 
