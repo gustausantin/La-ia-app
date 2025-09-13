@@ -199,8 +199,9 @@ const CustomerModal = ({
                 churn_risk_score: customer.churn_risk_score || 0,
                 predicted_ltv: customer.predicted_ltv || 0,
                 preferred_items: customer.preferred_items || [],
-                consent_email: customer.consent_email !== false,
-                consent_sms: customer.consent_sms !== false,
+                // 🔧 CORRECCIÓN GDPR: Usar valores exactos de BD, no lógica invertida
+                consent_email: customer.consent_email || false,
+                consent_sms: customer.consent_sms || false, 
                 consent_whatsapp: customer.consent_whatsapp || false,
                 preferences: customer.preferences || {},
                 tags: customer.tags || [],

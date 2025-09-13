@@ -188,8 +188,9 @@ const TableCard = ({
 
         if (!reservation) return "available";
 
-        if (reservation.status === "sentada") return "occupied";
-        if (reservation.status === "confirmada") return "reserved";
+        // 🔧 CORRECCIÓN: BD usa estados en inglés, no español
+        if (reservation.status === "seated") return "occupied";
+        if (reservation.status === "confirmed") return "reserved";
 
         return "available";
     };
@@ -830,10 +831,10 @@ export default function Mesas() {
                             return isActive && !reservation;
                         }
                         if (selectedStatus === "reserved") {
-                            return isActive && reservation && reservation.status === "confirmada";
+                            return isActive && reservation && reservation.status === "confirmed";
                         }
                         if (selectedStatus === "occupied") {
-                            return isActive && reservation && reservation.status === "sentada";
+                            return isActive && reservation && reservation.status === "seated";
                         }
                         if (selectedStatus === "inactive") {
                             return !isActive;
@@ -900,10 +901,10 @@ export default function Mesas() {
         ).length;
         
         const reserved = reservations.filter(
-            (r) => r.status === "confirmada",
+            (r) => r.status === "confirmed",
         ).length;
         const occupied = reservations.filter(
-            (r) => r.status === "sentada",
+            (r) => r.status === "seated",
         ).length;
         
         // Disponibles: mesas activas SIN reservas (ni por table_id ni por table_number)
@@ -1762,10 +1763,14 @@ const ReservationModal = ({ isOpen, onClose, reservation }) => {
                         <div>
                             <p className="text-sm text-gray-600">Estado</p>
                             <p className="font-medium text-gray-900">
-                                {reservation.status === "confirmada"
+                                {reservation.status === "confirmed"
                                     ? "Confirmada"
-                                    : reservation.status === "sentada"
+                                    : reservation.status === "seated"
                                       ? "Sentada"
+                                      : reservation.status === "pending"
+                                      ? "Pendiente"
+                                      : reservation.status === "cancelled"
+                                      ? "Cancelada"
                                       : reservation.status}
                             </p>
                         </div>
