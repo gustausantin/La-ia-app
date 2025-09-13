@@ -1793,6 +1793,9 @@ const ReservationFormModal = ({
         setLoading(true);
 
         try {
+            // 🔧 VARIABLE PARA TRACKEAR CLIENTE ENCONTRADO
+            let actualCustomerId = reservation?.customer_id;
+            
             // 🎯 CORRECCIÓN DEFINITIVA: Traducir status de español a inglés antes de enviar
             const statusMapping = {
                 "confirmada": "confirmed",
@@ -1833,18 +1836,46 @@ const ReservationFormModal = ({
                 if (reservationError) throw reservationError;
 
                 // Paso 2: Si hay un cliente vinculado, actualizar sus consentimientos y notas
-                if (reservation.customer_id) {
+                console.log('🔍 DEBUG GUARDADO:');
+                console.log('reservation.customer_id:', reservation.customer_id);
+                console.log('formData.consent_email:', formData.consent_email);
+                console.log('formData.consent_sms:', formData.consent_sms);
+                console.log('formData.consent_whatsapp:', formData.consent_whatsapp);
+                
+                // 🔧 BUSCAR CLIENTE PARA GUARDAR (si no hay customer_id)
+                if (!actualCustomerId && (formData.customer_phone || formData.customer_email)) {
+                    console.log('🔍 Buscando cliente para guardar...');
+                    let query = supabase.from('customers').select('id').eq('restaurant_id', restaurantId);
+                    
+                    if (formData.customer_phone) {
+                        query = query.eq('phone', formData.customer_phone);
+                    } else if (formData.customer_email) {
+                        query = query.eq('email', formData.customer_email);
+                    }
+                    
+                    const { data: foundCustomer } = await query.maybeSingle();
+                    if (foundCustomer) {
+                        actualCustomerId = foundCustomer.id;
+                        console.log('✅ Cliente encontrado para guardar:', actualCustomerId);
+                    }
+                }
+                
+                if (actualCustomerId) {
                     const customerUpdateData = {
                         notes: formData.notes,
                         consent_email: formData.consent_email,
                         consent_sms: formData.consent_sms,
                         consent_whatsapp: formData.consent_whatsapp,
                     };
+                    
+                    console.log('💾 Datos que se van a guardar:', customerUpdateData);
 
                     const { error: customerError } = await supabase
                         .from("customers")
                         .update(customerUpdateData)
-                        .eq("id", reservation.customer_id);
+                        .eq("id", actualCustomerId);
+                        
+                    console.log('💾 UPDATE ejecutado en customer_id:', actualCustomerId);
 
                     if (customerError) {
                         console.warn("Advertencia: La reserva se actualizó, pero hubo un error al actualizar los consentimientos del cliente.", customerError);
