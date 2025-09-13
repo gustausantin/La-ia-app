@@ -909,44 +909,23 @@ export default function Reservas() {
 
     // Manejar acciones de reservas
     const handleReservationAction = useCallback(
-        async (action, reservation) => {
-            try {
-                let newStatus;
-                let message;
+        async (reservation, action, newStatus = null) => {
+            const message = `Reserva ${newStatus || action} correctamente`;
 
-                switch (action) {
-                    case "confirm":
-                        newStatus = "confirmed";
-                        message = "Reserva confirmada";
-                        break;
-                    case "seat":
-                        newStatus = "seated";
-                        message = "Mesa ocupada";
-                        break;
-                    case "complete":
-                        newStatus = "completed";
-                        message = "Reserva completada";
-                        break;
-                    case "cancel":
-                        if (
-                            !window.confirm(
-                                "¿Estás seguro de cancelar esta reserva?",
-                            )
-                        ) {
-                            return;
-                        }
-                        newStatus = "cancelled";
-                        message = "Reserva cancelada";
-                        break;
-                    case "edit":
-                        setEditingReservation(reservation);
-                        setShowEditModal(true);
-                        return;
-                    case "view":
-                        toast.info("Vista detallada disponible próximamente");
-                        return;
-                    default:
-                        return;
+            try {
+                if (
+                    action !== "edit" &&
+                    !window.confirm(
+                        `¿Confirmar acción en reserva de ${reservation.customer_name}?`,
+                    )
+                ) {
+                    return;
+                }
+
+                if (action === "edit") {
+                    setEditingReservation(reservation);
+                    setShowEditModal(true);
+                    return;
                 }
 
                 console.log("🔍 PATCH Debug - Datos a enviar:", {
@@ -968,7 +947,8 @@ export default function Reservas() {
 
                     if (error) throw error;
 
-                    toast.success(`Reserva ${newStatus === 'confirmed' ? 'confirmada' : newStatus === 'cancelled' ? 'cancelada' : 'actualizada'} exitosamente`);
+                    // CORRECCIÓN: Solo un toast, el de la acción principal
+                    // toast.success(`Reserva ${newStatus === 'confirmed' ? 'confirmada' : newStatus === 'cancelled' ? 'cancelada' : 'actualizada'} exitosamente`);
                     console.log("✅ CONFIRMACIÓN: Status actualizado a:", data.status);
 
                     // ✅ CORRECCIÓN: Forzar recarga de datos para asegurar consistencia visual
@@ -1825,20 +1805,44 @@ const ReservationFormModal = ({
                 table_number: formData.table_number || null,
                 notes: formData.notes || null,
                 restaurant_id: restaurantId,
-                status: "confirmed",
+                status: formData.status, // Usar el estado del formulario
                 source: "manual",
                 channel: "manual",
                 table_id: formData.table_id || null
             };
 
+            // 🎯 LÓGICA DE GUARDADO CORREGIDA
             if (reservation) {
-                const { error } = await supabase
+                // MODO EDICIÓN
+                // Paso 1: Actualizar la reserva
+                const { error: reservationError } = await supabase
                     .from("reservations")
                     .update(reservationData)
                     .eq("id", reservation.id);
 
-                if (error) throw error;
+                if (reservationError) throw reservationError;
+
+                // Paso 2: Si hay un cliente vinculado, actualizar sus consentimientos y notas
+                if (reservation.customer_id) {
+                    const customerUpdateData = {
+                        notes: formData.notes,
+                        consent_email: formData.consent_email,
+                        consent_sms: formData.consent_sms,
+                        consent_whatsapp: formData.consent_whatsapp,
+                    };
+
+                    const { error: customerError } = await supabase
+                        .from("customers")
+                        .update(customerUpdateData)
+                        .eq("id", reservation.customer_id);
+
+                    if (customerError) {
+                        console.warn("Advertencia: La reserva se actualizó, pero hubo un error al actualizar los consentimientos del cliente.", customerError);
+                        toast.error("Error al guardar consentimientos del cliente");
+                    }
+                }
             } else {
+                // MODO CREACIÓN (la lógica existente es correcta)
                 const { error } = await supabase
                     .from("reservations")
                     .insert([reservationData]);
@@ -1859,9 +1863,11 @@ const ReservationFormModal = ({
                 await handleCustomerLinking(reservationData, customerData);
             }
 
-            onSave();
-            onClose();
+            // Un solo toast de éxito y recarga de datos
             toast.success(reservation ? "Reserva actualizada correctamente" : "Reserva creada correctamente");
+            onSave(); // Esto debería recargar los datos en la página principal
+            onClose();
+            
         } catch (error) {
             console.error("Error saving reservation:", error);
             
