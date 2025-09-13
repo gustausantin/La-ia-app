@@ -1594,10 +1594,10 @@ const ReservationFormModal = ({
             customer_email: customer.email || '',
             notes: customer.notes || '',
             
-            // 🔐 PERMISOS EXISTENTES
-            consent_email: customer.consent_email || false,
-            consent_sms: customer.consent_sms || false,
-            consent_whatsapp: customer.consent_whatsapp || false,
+            // 🔐 PERMISOS EXISTENTES - CORRECCIÓN GDPR
+            consent_email: customer.consent_email === true,
+            consent_sms: customer.consent_sms === true,
+            consent_whatsapp: customer.consent_whatsapp === true,
         });
         setFoundCustomers([]);
         toast.success(`Cliente ${customer.name} seleccionado - ${customer.visits_count || 0} visitas previas`);
@@ -1968,9 +1968,10 @@ const ReservationFormModal = ({
                         customer_phone: reservationData.customer_phone,
                         customer_email: reservationData.customer_email,
                         notes: customerData?.notes || "",
-                        consent_email: customerData?.consent_email || false,
-                        consent_sms: customerData?.consent_sms || false,
-                        consent_whatsapp: customerData?.consent_whatsapp || false,
+                        // 🔧 CORRECCIÓN GDPR: Usar validación estricta para edición
+                        consent_email: customerData?.consent_email === true,
+                        consent_sms: customerData?.consent_sms === true,
+                        consent_whatsapp: customerData?.consent_whatsapp === true,
                     });
 
                 } catch (err) {
