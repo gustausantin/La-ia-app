@@ -51,22 +51,8 @@ const CUSTOMER_SEGMENTS = {
     }
 };
 
-// FUNCIÓN PARA DETERMINAR SEGMENTO DEL CLIENTE
-const determineCustomerSegment = (customer) => {
-    if (!customer) return 'nuevo';
-    
-    const visitas = customer.visits_count || 0;
-    const ultimaVisita = customer.last_visit_at;
-    const diasSinVisita = ultimaVisita ? 
-        Math.floor((new Date() - new Date(ultimaVisita)) / (1000 * 60 * 60 * 24)) : null;
-    
-    // Lógica de segmentación
-    if (visitas === 0) return 'nuevo';
-    if (visitas >= 10) return 'bib'; // BIB = 10+ visitas
-    if (diasSinVisita && diasSinVisita > 60) return 'inactivo';
-    if (diasSinVisita && diasSinVisita > 30) return 'riesgo';
-    return 'activo';
-};
+// FUNCIÓN PARA DETERMINAR SEGMENTO DEL CLIENTE - **ELIMINADA**
+// La lógica ahora reside 100% en la base de datos a través de `segment_auto`
 
 // Componente principal
 export default function Clientes() {
@@ -107,7 +93,8 @@ export default function Clientes() {
             // Procesar clientes con segmentación automática
             const processedCustomers = customers?.map(customer => ({
                 ...customer,
-                segment: determineCustomerSegment(customer),
+                // Usar directamente el segmento calculado por la BD
+                segment: customer.segment_manual || customer.segment_auto || 'nuevo',
                 daysSinceLastVisit: customer.last_visit_at 
                     ? Math.floor((new Date() - new Date(customer.last_visit_at)) / (1000 * 60 * 60 * 24))
                     : null
@@ -339,7 +326,7 @@ export default function Clientes() {
                                                 
                                                 {/* Icono de segmento - NUEVA FUNCIONALIDAD */}
                                                 <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-lg flex-shrink-0">
-                                                    {CUSTOMER_SEGMENTS[customer.segment]?.icon || "👤"}
+                                                    {CUSTOMER_SEGMENTS[customer.segment_manual || customer.segment_auto]?.icon || "👤"}
                                                 </div>
                                                 
                                                 <div className="flex-1 min-w-0">
@@ -348,8 +335,8 @@ export default function Clientes() {
                                                             {customer.name}
                                                         </h3>
                                                         {/* Etiqueta de segmento - NUEVA FUNCIONALIDAD */}
-                                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${CUSTOMER_SEGMENTS[customer.segment]?.color || 'gray'}-100 text-${CUSTOMER_SEGMENTS[customer.segment]?.color || 'gray'}-800`}>
-                                                            {CUSTOMER_SEGMENTS[customer.segment]?.label || 'Cliente'}
+                                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${CUSTOMER_SEGMENTS[customer.segment_manual || customer.segment_auto]?.color || 'gray'}-100 text-${CUSTOMER_SEGMENTS[customer.segment_manual || customer.segment_auto]?.color || 'gray'}-800`}>
+                                                            {CUSTOMER_SEGMENTS[customer.segment_manual || customer.segment_auto]?.label || 'Cliente'}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-4 mt-1">
