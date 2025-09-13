@@ -1,4 +1,3 @@
-
 // Reservas.jsx - Sistema COMPLETO de Gestión de Reservas con Agente IA para Son-IA
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
@@ -958,40 +957,28 @@ export default function Reservas() {
                 console.log("🔍 PATCH Debug - Reserva completa:", reservation);
 
                 console.log("📤 ENVIANDO UPDATE A SUPABASE...");
-                const { error, data } = await supabase
-                    .from("reservations")
-                    .update({
-                        status: newStatus,
-                    })
-                    .eq("id", reservation.id)
-                    .select(); // Añadir select para ver qué se actualizó
-                    
-                console.log("📥 RESPUESTA COMPLETA DE SUPABASE:", { error, data });
-
-                if (error) {
-                    console.error("❌ ERROR EN UPDATE:", error);
-                    throw error;
-                }
-
-                console.log("✅ RESERVA ACTUALIZADA EN SUPABASE");
-                
-                // Verificar que realmente se actualizó
-                if (data && data.length > 0) {
-                    console.log("✅ CONFIRMACIÓN: Status actualizado a:", data[0].status);
-                    console.log("✅ DATOS ACTUALIZADOS:", data[0]);
-                } else {
-                    console.warn("⚠️ WARNING: No se retornaron datos del update");
-                }
-
-                // 🔄 SOLUCIÓN SIMPLE Y DIRECTA - RECARGAR INMEDIATAMENTE
-                console.log("🔄 Recargando reservas para mostrar cambios...");
                 try {
-                    await loadReservations();
-                    console.log("✅ RESERVAS RECARGADAS - CAMBIOS VISIBLES");
-                } catch (reloadError) {
-                    console.error("❌ ERROR RECARGANDO RESERVAS:", reloadError);
-                    // Si falla la recarga, al menos mostrar el toast
-                    toast.success(message);
+                    // Actualizar la reserva en Supabase
+                    const { data, error } = await supabase
+                        .from("reservations")
+                        .update({ status: newStatus })
+                        .eq("id", reservation.id)
+                        .select()
+                        .single();
+
+                    if (error) throw error;
+
+                    toast.success(`Reserva ${newStatus === 'confirmed' ? 'confirmada' : newStatus === 'cancelled' ? 'cancelada' : 'actualizada'} exitosamente`);
+                    console.log("✅ CONFIRMACIÓN: Status actualizado a:", data.status);
+
+                    // ✅ CORRECCIÓN: Actualizar el estado local para reflejar el cambio
+                    setReservations(prev => 
+                        prev.map(res => res.id === reservation.id ? { ...res, status: newStatus } : res)
+                    );
+
+                } catch (error) {
+                    console.error(`Error al cambiar el estado a ${newStatus}:`, error);
+                    toast.error(`Error al actualizar la reserva: ${error.message}`);
                 }
 
                 // 🎯 CRM INTEGRATION: Procesar automáticamente cuando se completa reserva
