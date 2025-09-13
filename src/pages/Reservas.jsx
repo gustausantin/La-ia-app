@@ -65,7 +65,7 @@ const RESERVATION_STATES = {
     confirmada: {
         label: "Confirmada",
         color: "bg-green-100 text-green-800 border-green-200",
-        actions: ["seat", "cancel", "edit"],
+        actions: ["cancel", "edit"],
         icon: <CheckCircle2 className="w-4 h-4" />,
     },
     sentada: {

@@ -184,6 +184,10 @@ const CustomerModal = ({
             console.log('customer.last_name2:', customer.last_name2);
             console.log('customer.segment_manual:', customer.segment_manual);
             console.log('customer.segment_auto:', customer.segment_auto);
+            console.log('=== DEBUGGING GDPR CONSENTS ===');
+            console.log('customer.consent_email:', customer.consent_email);
+            console.log('customer.consent_sms:', customer.consent_sms);
+            console.log('customer.consent_whatsapp:', customer.consent_whatsapp);
             
             setFormData({
                 name: customer.name || '',
@@ -199,10 +203,10 @@ const CustomerModal = ({
                 churn_risk_score: customer.churn_risk_score || 0,
                 predicted_ltv: customer.predicted_ltv || 0,
                 preferred_items: customer.preferred_items || [],
-                // 🔧 CORRECCIÓN GDPR: Usar valores exactos de BD, no lógica invertida
-                consent_email: customer.consent_email || false,
-                consent_sms: customer.consent_sms || false, 
-                consent_whatsapp: customer.consent_whatsapp || false,
+                // 🔧 CORRECCIÓN GDPR: Usar valores exactos de BD con validación estricta
+                consent_email: customer.consent_email === true,
+                consent_sms: customer.consent_sms === true, 
+                consent_whatsapp: customer.consent_whatsapp === true,
                 preferences: customer.preferences || {},
                 tags: customer.tags || [],
                 notes: customer.notes || '',
