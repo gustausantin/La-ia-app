@@ -195,8 +195,18 @@ const AgentStatsPanel = ({ stats, insights }) => {
 // Componente de tarjeta de reserva mejorado
 const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
     const [showActions, setShowActions] = useState(false);
-    const state =
-        RESERVATION_STATES[reservation.status] || RESERVATION_STATES.pendiente;
+    
+    // 🔧 CORRECCIÓN: Mapear estados de BD (inglés) a UI (español)
+    const statusMapping = {
+        'pending': 'pendiente',
+        'confirmed': 'confirmada', 
+        'seated': 'sentada',
+        'completed': 'completada',
+        'cancelled': 'cancelada'
+    };
+    
+    const mappedStatus = statusMapping[reservation.status] || 'pendiente';
+    const state = RESERVATION_STATES[mappedStatus] || RESERVATION_STATES.pendiente;
     const channel =
         CHANNELS[reservation.channel || "manual"] || CHANNELS.manual;
     const isAgentReservation = reservation.source === "agent";
