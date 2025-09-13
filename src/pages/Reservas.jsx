@@ -939,8 +939,9 @@ export default function Reservas() {
                     setShowEditModal(true);
                     return;
                 case "view":
-                    // 🎯 CORRECCIÓN CRASH: toast.info no existe, se usa toast() genérico
-                    toast("La vista detallada estará disponible próximamente.");
+                    // 🎯 CORRECCIÓN: "Ver detalles" ahora abre el modal de edición
+                    setEditingReservation(reservation);
+                    setShowEditModal(true);
                     return;
                 default:
                     return;
@@ -2336,8 +2337,6 @@ const ReservationFormModal = ({
                             >
                                 <option value="pendiente">Pendiente</option>
                                 <option value="confirmada">Confirmada</option>
-                                <option value="sentada">Sentada</option>
-                                <option value="completada">Completada</option>
                                 <option value="cancelada">Cancelada</option>
                             </select>
                             </div>
