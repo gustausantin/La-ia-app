@@ -1785,6 +1785,16 @@ const ReservationFormModal = ({
         setLoading(true);
 
         try {
+            // 🎯 CORRECCIÓN DEFINITIVA: Traducir status de español a inglés antes de enviar
+            const statusMapping = {
+                "confirmada": "confirmed",
+                "pendiente": "pending",
+                "sentada": "seated",
+                "completada": "completed",
+                "cancelada": "cancelled"
+            };
+            const backendStatus = statusMapping[formData.status] || formData.status;
+
             // 📋 DATOS DE LA RESERVA (SOLO campos válidos para tabla reservations)
             const reservationData = {
                 customer_name: formData.customer_name,
@@ -1797,7 +1807,7 @@ const ReservationFormModal = ({
                 table_number: formData.table_number || null,
                 notes: formData.notes || null,
                 restaurant_id: restaurantId,
-                status: formData.status, // Usar el estado del formulario
+                status: backendStatus, // Usar el estado traducido y validado
                 source: "manual",
                 channel: "manual",
                 table_id: formData.table_id || null
@@ -2266,6 +2276,9 @@ const ReservationFormModal = ({
                             >
                                 <option value="pendiente">Pendiente</option>
                                 <option value="confirmada">Confirmada</option>
+                                <option value="sentada">Sentada</option>
+                                <option value="completada">Completada</option>
+                                <option value="cancelada">Cancelada</option>
                             </select>
                             </div>
                         </div>
