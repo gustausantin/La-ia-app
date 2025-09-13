@@ -971,10 +971,8 @@ export default function Reservas() {
                     toast.success(`Reserva ${newStatus === 'confirmed' ? 'confirmada' : newStatus === 'cancelled' ? 'cancelada' : 'actualizada'} exitosamente`);
                     console.log("✅ CONFIRMACIÓN: Status actualizado a:", data.status);
 
-                    // ✅ CORRECCIÓN: Actualizar el estado local para reflejar el cambio
-                    setReservations(prev => 
-                        prev.map(res => res.id === reservation.id ? { ...res, status: newStatus } : res)
-                    );
+                    // ✅ CORRECCIÓN: Forzar recarga de datos para asegurar consistencia visual
+                    await loadReservations();
 
                 } catch (error) {
                     console.error(`Error al cambiar el estado a ${newStatus}:`, error);
@@ -1004,28 +1002,18 @@ export default function Reservas() {
                                         priority: "medium",
                                     });
                                 } catch (e) { /* Ignorar errores de notificación */ }
-                            } else {
-                                toast.success(message);
                             }
+                            // No se necesita otro toast aquí, ya se mostró el principal
                         } else {
                             console.error("❌ CRM: Error procesando reserva:", crmResult.error);
-                            toast.success(`${message} (CRM: ${crmResult.error})`);
+                            toast.error(`Error en CRM: ${crmResult.error}`);
                         }
                     } catch (crmError) {
                         console.error("❌ CRM: Error inesperado:", crmError);
-                        toast.success(`${message} (CRM sin procesar)`);
+                        toast.error("Error inesperado en el proceso CRM");
                     }
-                } else {
-                    toast.success(message);
                 }
-
-                try {
-                    addNotification({
-                        type: "system",
-                        message: `${message}: ${reservation.customer_name}`,
-                        priority: "low",
-                    });
-                } catch (e) { /* Ignorar errores de notificación */ }
+                // ELIMINADO: toast.success(message) redundante que causaba el doble log
             } catch (error) {
                 toast.error("Error al actualizar la reserva");
             }
