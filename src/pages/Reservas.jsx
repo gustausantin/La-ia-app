@@ -1950,6 +1950,8 @@ const ReservationFormModal = ({
 
                     // Paso 2: Cargar datos del cliente asociado (si existe)
                     let customerData = null;
+                    console.log('🔍 DEBUG: reservationData.customer_id:', reservationData.customer_id);
+                    
                     if (reservationData.customer_id) {
                         const { data: custData, error: customerError } = await supabase
                             .from("customers")
@@ -1961,6 +1963,31 @@ const ReservationFormModal = ({
                             console.warn("Advertencia: no se pudo cargar el cliente asociado a la reserva.", customerError);
                         } else {
                             customerData = custData;
+                            console.log('✅ Cliente encontrado por ID:', custData);
+                        }
+                    } else {
+                        // 🔧 CORRECCIÓN: Si no hay customer_id, buscar por teléfono/email
+                        console.log('🔍 No hay customer_id, buscando por tel/email...');
+                        console.log('Buscando con phone:', reservationData.customer_phone);
+                        console.log('Buscando con email:', reservationData.customer_email);
+                        
+                        if (reservationData.customer_phone || reservationData.customer_email) {
+                            let query = supabase.from('customers').select('*').eq('restaurant_id', restaurantId);
+                            
+                            if (reservationData.customer_phone) {
+                                query = query.eq('phone', reservationData.customer_phone);
+                            } else if (reservationData.customer_email) {
+                                query = query.eq('email', reservationData.customer_email);
+                            }
+                            
+                            const { data: foundCustomer, error: searchError } = await query.maybeSingle();
+                            
+                            if (!searchError && foundCustomer) {
+                                customerData = foundCustomer;
+                                console.log('✅ Cliente encontrado por búsqueda:', foundCustomer);
+                            } else {
+                                console.log('⚠️ No se encontró cliente existente');
+                            }
                         }
                     }
                     
@@ -1978,10 +2005,20 @@ const ReservationFormModal = ({
                         customer_phone: reservationData.customer_phone,
                         customer_email: reservationData.customer_email,
                         notes: customerData?.notes || "",
-                        // 🔧 CORRECCIÓN GDPR: Usar validación estricta para edición
+                            // 🔧 CORRECCIÓN GDPR: Usar validación estricta + DEBUG INTENSIVO
                         consent_email: customerData?.consent_email === true,
                         consent_sms: customerData?.consent_sms === true,
                         consent_whatsapp: customerData?.consent_whatsapp === true,
+                        
+                        // 🐛 DEBUG INTENSIVO GDPR
+                        ...(console.log('🔍 DEBUGGING GDPR LOAD:'), 
+                        console.log('customerData completo:', customerData),
+                        console.log('consent_email raw:', customerData?.consent_email),
+                        console.log('consent_sms raw:', customerData?.consent_sms), 
+                        console.log('consent_whatsapp raw:', customerData?.consent_whatsapp),
+                        console.log('consent_email processed:', customerData?.consent_email === true),
+                        console.log('consent_sms processed:', customerData?.consent_sms === true),
+                        console.log('consent_whatsapp processed:', customerData?.consent_whatsapp === true), {})
                     });
 
                 } catch (err) {
