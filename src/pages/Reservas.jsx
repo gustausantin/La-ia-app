@@ -1911,6 +1911,59 @@ const ReservationFormModal = ({
         }
     };
 
+    // 🎯 SOLUCIÓN DEFINITIVA: "Ir a buscar la puta información a la tabla"
+    // Carga siempre los datos más frescos de Supabase al abrir el modal en modo edición.
+    useEffect(() => {
+        const loadFreshData = async () => {
+            if (isOpen && reservation?.id) {
+                setLoading(true);
+                try {
+                    const { data, error } = await supabase
+                        .from("reservations")
+                        .select(`*, customers (*)`)
+                        .eq("id", reservation.id)
+                        .single();
+
+                    if (error) throw error;
+
+                    const customer = data.customers;
+                    
+                    // Mapeo inverso para el frontend (de inglés a español)
+                    const statusMap = {
+                        "pending": "pendiente",
+                        "confirmed": "confirmada",
+                        "cancelled": "cancelada"
+                    };
+                    const frontEndStatus = statusMap[data.status] || "pendiente";
+
+                    setFormData({
+                        date: data.reservation_date,
+                        time: data.reservation_time,
+                        party_size: data.party_size,
+                        table_id: data.table_id,
+                        special_requests: data.special_requests,
+                        status: frontEndStatus,
+                        customer_name: data.customer_name,
+                        customer_phone: data.customer_phone,
+                        customer_email: data.customer_email,
+                        notes: customer?.notes || "",
+                        consent_email: customer?.consent_email || false,
+                        consent_sms: customer?.consent_sms || false,
+                        consent_whatsapp: customer?.consent_whatsapp || false,
+                    });
+                } catch (err) {
+                    toast.error("No se pudieron cargar los datos actualizados de la reserva.");
+                    console.error("Error loading fresh data:", err);
+                    onClose();
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadFreshData();
+    }, [isOpen, reservation]);
+
     if (!isOpen) return null;
 
     return (
