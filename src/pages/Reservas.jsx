@@ -470,7 +470,15 @@ export default function Reservas() {
             const today = format(new Date(), 'yyyy-MM-dd');
 
             // 1. Reservas del agente desde reservations
-            const agentReservations = reservations.filter(r => r.source === "agent").length;
+            const agentReservationsData = reservations.filter(r => r.source === "agent");
+            const manualReservationsData = reservations.filter(r => r.source === "manual" || !r.source);
+            
+            console.log('🔍 DEBUG INSIGHTS:');
+            console.log(`  Total reservas: ${reservations.length}`);
+            console.log(`  Reservas agente: ${agentReservationsData.length}`);
+            console.log(`  Reservas manuales: ${manualReservationsData.length}`);
+            
+            const agentReservations = agentReservationsData.length;
 
             // 2. Calcular métricas del agente desde datos existentes (sin tabla externa)
             let agentMetrics = null;
@@ -583,7 +591,6 @@ export default function Reservas() {
 
             const dateRange = calculateDateRange(filters.period);
 
-            // Usar la función RPC que funcionaba antes
             const { data, error } = await supabase.rpc("get_reservations_safe", {
                 p_restaurant_id: restaurantId,
                 p_start_date: dateRange.start,
@@ -612,9 +619,23 @@ export default function Reservas() {
                 });
             }
 
-            // Aplicar filtros adicionales en memoria
+            // 🔧 CORRECCIÓN: Aplicar filtros adicionales en memoria con mapeo de estados
             if (filters.status) {
-                reservations = reservations.filter(r => r.status === filters.status);
+                // Mapear estado de español (UI) a inglés (BD)
+                const statusMapping = {
+                    'pendiente': 'pending',
+                    'confirmada': 'confirmed', 
+                    'sentada': 'seated',
+                    'completada': 'completed',
+                    'cancelada': 'cancelled',
+                    'no_show': 'no_show'
+                };
+                
+                const dbStatus = statusMapping[filters.status] || filters.status;
+                console.log(`🔍 Filtro estado: UI='${filters.status}' -> BD='${dbStatus}'`);
+                
+                reservations = reservations.filter(r => r.status === dbStatus);
+                console.log(`🔍 Reservas filtradas: ${reservations.length}`);
             }
 
             if (filters.channel) {
@@ -2424,9 +2445,13 @@ const ReservationFormModal = ({
                                 }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                             >
-                                <option value="pendiente">Pendiente</option>
-                                <option value="confirmada">Confirmada</option>
-                                <option value="cancelada">Cancelada</option>
+                                {Object.entries(RESERVATION_STATES).map(
+                                    ([key, state]) => (
+                                        <option key={key} value={key}>
+                                            {state.label}
+                                        </option>
+                                    ),
+                                )}
                             </select>
                             </div>
                         </div>
