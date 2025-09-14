@@ -18,6 +18,10 @@ DECLARE
     random_time TIME;
     random_customer_id UUID;
     random_total DECIMAL(8,2);
+    -- 🔧 Variables para cálculos de ticket
+    subtotal_calc DECIMAL(10,2);
+    tax_calc DECIMAL(10,2);
+    discount_calc DECIMAL(10,2);
 BEGIN
     -- Obtener usuario y restaurant
     SELECT u.id, r.id INTO target_user_id, target_restaurant_id
@@ -102,97 +106,89 @@ BEGIN
             -- Total aleatorio realista (15-80€)
             random_total := 15 + (random() * 65);
             
-            -- Crear ticket en billing_tickets (tabla existente)
-            INSERT INTO billing_tickets (
-                id,
-                restaurant_id,
-                reservation_id,
-                customer_id,
-                ticket_number,
-                external_ticket_id,
-                ticket_date,
-                service_start,
-                service_end,
-                subtotal,
-                tax_amount,
-                total_amount,
-                payment_method,
-                covers_count,
-                is_processed,
-                -- Campos nuevos para CRM v2
-                mesa_number,
-                confidence_score,
-                auto_matched
-            ) VALUES (
-                gen_random_uuid(),
-                target_restaurant_id,
-                (SELECT id FROM reservations WHERE customer_id = random_customer_id AND reservation_date = random_date LIMIT 1),
-                random_customer_id,
-                'T' || LPAD(i::TEXT, 6, '0'),
-                'EXT-' || i,
-                random_date + random_time::TIME,
-                random_date + random_time::TIME,
-                random_date + random_time::TIME + INTERVAL '90 minutes',
-                random_total * 0.9,
-                random_total * 0.1,
-                random_total,
-                CASE 
-                    WHEN random() > 0.7 THEN 'tarjeta'
-                    WHEN random() > 0.4 THEN 'efectivo'
-                    ELSE 'transferencia'
-                END,
-                1 + (random() * 5)::INTEGER,
-                true,
-                -- Campos CRM v2
-                'Mesa ' || (1 + (random() * 20)::INTEGER),
-                0.8 + (random() * 0.2), -- Confianza 80-100%
-                true
-            );
-            
-            -- Crear items del ticket (2-5 items por ticket)
-            FOR j IN 1..(2 + (random() * 3)::INTEGER) LOOP
+            -- 🔧 CÁLCULOS CORRECTOS PARA CONSTRAINT valid_totals
+            subtotal_calc := random_total / 1.1; -- Base sin IVA
+            tax_calc := subtotal_calc * 0.1; -- 10% IVA
+            discount_calc := 0; -- Sin descuento
+            -- total_amount = subtotal + tax - discount (debe cumplir constraint)
+                
+                -- Crear ticket en billing_tickets (tabla existente)
                 INSERT INTO billing_tickets (
                     id,
                     restaurant_id,
+                    reservation_id,
+                    customer_id,
                     ticket_number,
                     external_ticket_id,
                     ticket_date,
+                    service_start,
+                    service_end,
+                    subtotal,
+                    tax_amount,
+                    discount_amount,
                     total_amount,
-                    items
+                    payment_method,
+                    covers_count,
+                    is_processed
                 ) VALUES (
                     gen_random_uuid(),
                     target_restaurant_id,
-                    'ITEM-' || i || '-' || j,
-                    'ITEM-EXT-' || i || '-' || j,
+                    (SELECT id FROM reservations WHERE customer_id = random_customer_id AND reservation_date = random_date ORDER BY created_at DESC LIMIT 1),
+                    random_customer_id,
+                    'T' || LPAD(i::TEXT, 6, '0'),
+                    'EXT-' || i,
                     random_date + random_time::TIME,
-                    (5 + random() * 20), -- Items entre 5-25€
-                    jsonb_build_array(
-                        jsonb_build_object(
-                            'name', CASE (random() * 10)::INTEGER
-                                WHEN 0 THEN 'Paella Valenciana'
-                                WHEN 1 THEN 'Pulpo a la Gallega'
-                                WHEN 2 THEN 'Jamón Ibérico'
-                                WHEN 3 THEN 'Tortilla Española'
-                                WHEN 4 THEN 'Gazpacho Andaluz'
-                                WHEN 5 THEN 'Cocido Madrileño'
-                                WHEN 6 THEN 'Bacalao al Pil Pil'
-                                WHEN 7 THEN 'Fabada Asturiana'
-                                WHEN 8 THEN 'Crema Catalana'
-                                ELSE 'Sangría de la Casa'
-                            END,
-                            'category', CASE (random() * 4)::INTEGER
-                                WHEN 0 THEN 'entrante'
-                                WHEN 1 THEN 'principal'
-                                WHEN 2 THEN 'postre'
-                                ELSE 'bebida'
-                            END,
-                            'quantity', 1 + (random() * 2)::INTEGER,
-                            'unit_price', 5 + (random() * 20),
-                            'total_price', 5 + (random() * 20)
-                        )
-                    )
-                ) ON CONFLICT DO NOTHING;
-            END LOOP;
+                    random_date + random_time::TIME,
+                    random_date + random_time::TIME + INTERVAL '90 minutes',
+                    subtotal_calc,
+                    tax_calc,
+                    discount_calc,
+                    subtotal_calc + tax_calc - discount_calc, -- Cumple constraint
+                    CASE 
+                        WHEN random() > 0.7 THEN 'tarjeta'
+                        WHEN random() > 0.4 THEN 'efectivo'
+                        ELSE 'transferencia'
+                    END,
+                    1 + (random() * 5)::INTEGER,
+                    true
+                );
+            
+            -- 🔧 AGREGAR ITEMS AL TICKET EXISTENTE (en campo JSONB)
+            UPDATE billing_tickets 
+            SET items = jsonb_build_array(
+                jsonb_build_object(
+                    'name', CASE (random() * 10)::INTEGER
+                        WHEN 0 THEN 'Paella Valenciana'
+                        WHEN 1 THEN 'Pulpo a la Gallega'
+                        WHEN 2 THEN 'Jamón Ibérico'
+                        WHEN 3 THEN 'Tortilla Española'
+                        WHEN 4 THEN 'Gazpacho Andaluz'
+                        WHEN 5 THEN 'Cocido Madrileño'
+                        WHEN 6 THEN 'Bacalao al Pil Pil'
+                        WHEN 7 THEN 'Fabada Asturiana'
+                        WHEN 8 THEN 'Crema Catalana'
+                        ELSE 'Sangría de la Casa'
+                    END,
+                    'category', CASE (random() * 4)::INTEGER
+                        WHEN 0 THEN 'entrante'
+                        WHEN 1 THEN 'principal'
+                        WHEN 2 THEN 'postre'
+                        ELSE 'bebida'
+                    END,
+                    'quantity', 1 + (random() * 2)::INTEGER,
+                    'unit_price', ROUND(subtotal_calc / 2, 2),
+                    'total_price', ROUND(subtotal_calc / 2, 2)
+                ),
+                jsonb_build_object(
+                    'name', 'Bebida de la Casa',
+                    'category', 'bebida',
+                    'quantity', 1,
+                    'unit_price', ROUND(subtotal_calc / 2, 2),
+                    'total_price', ROUND(subtotal_calc / 2, 2)
+                )
+            )
+            WHERE ticket_number = 'T' || LPAD(i::TEXT, 6, '0')
+                AND restaurant_id = target_restaurant_id;
         END IF;
         
         -- Progreso
@@ -227,9 +223,9 @@ BEGIN
         -- Calcular recencia (días desde última visita)
         recency_days = (
             SELECT COALESCE(
-                EXTRACT(DAYS FROM NOW() - MAX(reservation_date)),
+                DATE_PART('day', NOW() - MAX(reservation_date)::timestamp),
                 999
-            )
+            )::INTEGER
             FROM reservations 
             WHERE customer_id = customers.id AND status = 'completed'
         ),
@@ -238,7 +234,7 @@ BEGIN
             SELECT COALESCE(
                 CASE 
                     WHEN COUNT(*) > 1 THEN
-                        EXTRACT(DAYS FROM (MAX(reservation_date) - MIN(reservation_date))) / NULLIF(COUNT(*) - 1, 0)
+                        DATE_PART('day', MAX(reservation_date)::timestamp - MIN(reservation_date)::timestamp) / NULLIF(COUNT(*) - 1, 0)
                     ELSE 30.0
                 END,
                 30.0
@@ -256,9 +252,9 @@ BEGIN
                 ) <= 1 THEN 'nuevo'
                 WHEN (
                     SELECT COALESCE(
-                        EXTRACT(DAYS FROM NOW() - MAX(reservation_date)),
+                        DATE_PART('day', NOW() - MAX(reservation_date)::timestamp),
                         999
-                    )
+                    )::INTEGER
                     FROM reservations 
                     WHERE customer_id = customers.id AND status = 'completed'
                 ) <= 30 THEN 'activo'
@@ -269,9 +265,9 @@ BEGIN
                 ) >= 500 THEN 'bib'
                 WHEN (
                     SELECT COALESCE(
-                        EXTRACT(DAYS FROM NOW() - MAX(reservation_date)),
+                        DATE_PART('day', NOW() - MAX(reservation_date)::timestamp),
                         999
-                    )
+                    )::INTEGER
                     FROM reservations 
                     WHERE customer_id = customers.id AND status = 'completed'
                 ) <= 60 THEN 'riesgo'
