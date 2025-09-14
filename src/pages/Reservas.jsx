@@ -254,21 +254,39 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                            {/* 🔧 FECHA - NUEVA INFORMACIÓN */}
+                            <div className="flex items-center gap-2">
+                                <CalendarIcon className="w-4 h-4" />
+                                <span className="font-medium">{format(parseISO(reservation.reservation_date), 'dd/MM/yyyy', { locale: es })}</span>
+                            </div>
+                            
+                            {/* HORA */}
                             <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4" />
-                                <span>{formatTime(reservation.reservation_time)}</span>
+                                <span className="font-medium">{formatTime(reservation.reservation_time)}</span>
                             </div>
 
+                            {/* PERSONAS */}
                             <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4" />
                                 <span>{reservation.party_size} personas</span>
                             </div>
+                            
+                            {/* 🔧 MESA - MEJORADA */}
+                            <div className="flex items-center gap-2">
+                                <Shield className="w-4 h-4" />
+                                <span className="font-medium">
+                                    Mesa: {reservation.tables?.name || reservation.table_number || 'Sin asignar'}
+                                </span>
+                            </div>
 
+                            {/* TELÉFONO */}
                             <div className="flex items-center gap-2">
                                 <Phone className="w-4 h-4" />
                                 <span>{reservation.customer_phone}</span>
                             </div>
 
+                            {/* CANAL */}
                             <div className="flex items-center gap-2">
                                 {channel.icon}
                                 <span>{channel.label}</span>
@@ -281,14 +299,6 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                             </div>
                         )}
 
-                        {reservation.tables?.name && (
-                            <div className="mt-2 flex items-center gap-2 text-sm">
-                                <Shield className="w-4 h-4 text-blue-600" />
-                                <span className="font-medium">
-                                    Mesa: {reservation.tables.name}
-                                </span>
-                            </div>
-                        )}
                     </div>
                 </div>
 
@@ -951,6 +961,23 @@ export default function Reservas() {
         if (filters.channel) {
             filtered = filtered.filter((r) => r.channel === filters.channel);
         }
+
+        // 🔧 ORDENAMIENTO CRONOLÓGICO: Por fecha y hora
+        filtered.sort((a, b) => {
+            // Primero por fecha
+            const dateA = new Date(a.reservation_date);
+            const dateB = new Date(b.reservation_date);
+            
+            if (dateA.getTime() !== dateB.getTime()) {
+                return dateA.getTime() - dateB.getTime();
+            }
+            
+            // Si la fecha es igual, ordenar por hora
+            const timeA = a.reservation_time || '00:00';
+            const timeB = b.reservation_time || '00:00';
+            
+            return timeA.localeCompare(timeB);
+        });
 
         return filtered;
     }, [reservations, filters]);
