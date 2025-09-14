@@ -23,6 +23,8 @@ import {
     Mail,
     Instagram,
     Facebook,
+    Zap,
+    Receipt,
     Activity,
     Zap,
     Circle, // NUEVO - para el estado del agente
@@ -77,6 +79,18 @@ export default function Layout() {
             path: "/crm",
             icon: Brain,
             badge: null, // TODO: Implementar contador de sugerencias IA
+        },
+        {
+            name: "🚀 CRM v2",
+            path: "/crm-v2",
+            icon: Zap,
+            badge: "NUEVO",
+        },
+        {
+            name: "Consumos",
+            path: "/consumos",
+            icon: Receipt,
+            badge: null,
         },
         {
             name: "Plantillas CRM",
