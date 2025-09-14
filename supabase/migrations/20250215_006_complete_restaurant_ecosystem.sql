@@ -214,7 +214,7 @@ BEGIN
             (SELECT email FROM customers WHERE id = customer_record.id),
             (RANDOM() * 4 + 2)::INTEGER, -- 2-6 personas
             CURRENT_DATE,
-            (ARRAY['19:00', '19:30', '20:00', '20:30', '21:00'])[ceil(random()*5)],
+            (ARRAY['19:00', '19:30', '20:00', '20:30', '21:00'])[ceil(random()*5)]::TIME,
             CASE 
                 WHEN RANDOM() > 0.7 THEN 'confirmed'
                 ELSE 'pending'
@@ -258,7 +258,7 @@ BEGIN
             (SELECT email FROM customers WHERE id = customer_record.id),
             (RANDOM() * 4 + 2)::INTEGER,
             CURRENT_DATE + 1,
-            (ARRAY['12:30', '13:00', '19:00', '19:30', '20:00', '20:30', '21:00'])[ceil(random()*7)],
+            (ARRAY['12:30', '13:00', '19:00', '19:30', '20:00', '20:30', '21:00'])[ceil(random()*7)]::TIME,
             CASE 
                 WHEN RANDOM() > 0.5 THEN 'confirmed'
                 ELSE 'pending'
@@ -300,7 +300,7 @@ BEGIN
             (SELECT email FROM customers WHERE id = customer_record.id),
             (RANDOM() * 6 + 2)::INTEGER,
             random_date,
-            (ARRAY['12:00', '12:30', '13:00', '13:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30'])[ceil(random()*10)],
+            (ARRAY['12:00', '12:30', '13:00', '13:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30'])[ceil(random()*10)]::TIME,
             CASE 
                 WHEN RANDOM() > 0.6 THEN 'confirmed'
                 WHEN RANDOM() > 0.9 THEN 'cancelled'
@@ -454,21 +454,21 @@ BEGIN
             ORDER BY COUNT(*) DESC
             LIMIT 1
         ),
-        -- Bloque horario favorito
+        -- Bloque horario favorito (como INTEGER: 12=almuerzo, 19=cena, 0=otro)
         fav_hour_block = (
             SELECT 
                 CASE 
-                    WHEN EXTRACT(HOUR FROM bt.ticket_date) BETWEEN 12 AND 16 THEN 'almuerzo'
-                    WHEN EXTRACT(HOUR FROM bt.ticket_date) BETWEEN 19 AND 23 THEN 'cena'
-                    ELSE 'otro'
+                    WHEN EXTRACT(HOUR FROM bt.ticket_date) BETWEEN 12 AND 16 THEN 12
+                    WHEN EXTRACT(HOUR FROM bt.ticket_date) BETWEEN 19 AND 23 THEN 19
+                    ELSE 0
                 END
             FROM billing_tickets bt
             WHERE bt.customer_id = customers.id AND bt.is_processed = TRUE
             GROUP BY 
                 CASE 
-                    WHEN EXTRACT(HOUR FROM bt.ticket_date) BETWEEN 12 AND 16 THEN 'almuerzo'
-                    WHEN EXTRACT(HOUR FROM bt.ticket_date) BETWEEN 19 AND 23 THEN 'cena'
-                    ELSE 'otro'
+                    WHEN EXTRACT(HOUR FROM bt.ticket_date) BETWEEN 12 AND 16 THEN 12
+                    WHEN EXTRACT(HOUR FROM bt.ticket_date) BETWEEN 19 AND 23 THEN 19
+                    ELSE 0
                 END
             ORDER BY COUNT(*) DESC
             LIMIT 1
@@ -500,7 +500,6 @@ BEGIN
     UPDATE reservations 
     SET 
         source = 'agent',
-        agent_conversation_id = gen_random_uuid()::TEXT,
         notes = 'Reserva gestionada por IA - ' || 
                 CASE 
                     WHEN RANDOM() > 0.5 THEN 'Cliente preguntó por mesa cerca de ventana'
