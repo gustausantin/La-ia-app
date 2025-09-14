@@ -884,28 +884,28 @@ const CRMv2Complete = () => {
                     </div>
                 </div>
             )}
-
-            {/* Modal de Cliente */}
-            <CustomerModal
-                customer={selectedCustomer}
-                isOpen={showCustomerModal}
-                onClose={() => {
-                    setShowCustomerModal(false);
-                    setSelectedCustomer(null);
-                }}
-                onSave={(updatedCustomer) => {
-                    // Actualizar cliente en la lista
-                    setCustomerFeatures(prev => prev.map(c => 
-                        c.id === updatedCustomer.id ? updatedCustomer : c
-                    ));
-                    setShowCustomerModal(false);
-                    setSelectedCustomer(null);
-                    toast.success('Cliente actualizado correctamente');
-                }}
-                restaurantId={restaurantId}
-                mode="view"
-            />
         </div>
+
+        {/* Modal de Cliente */}
+        <CustomerModal
+            customer={selectedCustomer}
+            isOpen={showCustomerModal}
+            onClose={() => {
+                setShowCustomerModal(false);
+                setSelectedCustomer(null);
+            }}
+            onSave={(updatedCustomer) => {
+                // Actualizar cliente en la lista
+                setCustomerFeatures(prev => prev.map(c => 
+                    c.id === updatedCustomer.id ? updatedCustomer : c
+                ));
+                setShowCustomerModal(false);
+                setSelectedCustomer(null);
+                toast.success('Cliente actualizado correctamente');
+            }}
+            restaurantId={restaurantId}
+            mode="view"
+        />
     );
 };
 
