@@ -55,21 +55,38 @@ BEGIN
     -- 3. RLS (Row Level Security)
     ALTER TABLE crm_settings ENABLE ROW LEVEL SECURITY;
     
-    CREATE POLICY "Users can view their restaurant's CRM settings" ON crm_settings
-        FOR SELECT USING (
-            restaurant_id IN (
-                SELECT r.id FROM restaurants r 
-                WHERE r.owner_id = auth.uid()
-            )
-        );
-    
-    CREATE POLICY "Users can manage their restaurant's CRM settings" ON crm_settings
-        FOR ALL USING (
-            restaurant_id IN (
-                SELECT r.id FROM restaurants r 
-                WHERE r.owner_id = auth.uid()
-            )
-        );
+    -- Crear políticas solo si no existen
+    DO $policy$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies 
+            WHERE tablename = 'crm_settings' 
+            AND policyname = 'Users can view their restaurant''s CRM settings'
+        ) THEN
+            CREATE POLICY "Users can view their restaurant's CRM settings" ON crm_settings
+                FOR SELECT USING (
+                    restaurant_id IN (
+                        SELECT r.id FROM restaurants r 
+                        WHERE r.owner_id = auth.uid()
+                    )
+                );
+        END IF;
+        
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies 
+            WHERE tablename = 'crm_settings' 
+            AND policyname = 'Users can manage their restaurant''s CRM settings'
+        ) THEN
+            CREATE POLICY "Users can manage their restaurant's CRM settings" ON crm_settings
+                FOR ALL USING (
+                    restaurant_id IN (
+                        SELECT r.id FROM restaurants r 
+                        WHERE r.owner_id = auth.uid()
+                    )
+                );
+        END IF;
+    END;
+    $policy$;
     
     -- 4. CONFIGURACIÓN INICIAL PARA RESTAURANTES EXISTENTES
     INSERT INTO crm_settings (restaurant_id)
@@ -80,19 +97,8 @@ BEGIN
         WHERE cs.restaurant_id = r.id
     );
     
-    -- 5. FUNCIÓN PARA ACTUALIZAR updated_at
-    CREATE OR REPLACE FUNCTION update_crm_settings_updated_at()
-    RETURNS TRIGGER AS $$
-    BEGIN
-        NEW.updated_at = NOW();
-        RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;
-    
-    CREATE TRIGGER update_crm_settings_updated_at
-        BEFORE UPDATE ON crm_settings
-        FOR EACH ROW
-        EXECUTE FUNCTION update_crm_settings_updated_at();
+    -- 5. TRIGGER PARA ACTUALIZAR updated_at (sin función separada)
+    -- Se creará después del bloque DO
     
     RAISE NOTICE '✅ Tabla crm_settings creada correctamente';
     
@@ -102,5 +108,29 @@ BEGIN
 EXCEPTION
     WHEN OTHERS THEN
         RAISE EXCEPTION 'Error creando tabla crm_settings: %', SQLERRM;
+END;
+$$;
+
+-- 5. FUNCIÓN Y TRIGGER PARA ACTUALIZAR updated_at (fuera del bloque DO)
+CREATE OR REPLACE FUNCTION update_crm_settings_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Crear trigger solo si no existe
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger 
+        WHERE tgname = 'update_crm_settings_updated_at'
+    ) THEN
+        CREATE TRIGGER update_crm_settings_updated_at
+            BEFORE UPDATE ON crm_settings
+            FOR EACH ROW
+            EXECUTE FUNCTION update_crm_settings_updated_at();
+    END IF;
 END;
 $$;
