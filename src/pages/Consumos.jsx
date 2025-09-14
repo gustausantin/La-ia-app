@@ -1,13 +1,14 @@
-// Consumos.jsx - Página para vincular reservas con tickets POS
+// Consumos.jsx - Página completa de análisis de consumos y vinculación POS
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
     Link2, Unlink, Eye, DollarSign, Clock, Users, 
     CheckCircle2, AlertTriangle, RefreshCw, Filter,
-    Receipt, Calendar, Search, TrendingUp, BarChart3
+    Receipt, Calendar, Search, TrendingUp, BarChart3,
+    ChefHat, Award, Star, Utensils, PieChart
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -26,6 +27,138 @@ const Consumos = () => {
         totalRevenue: 0,
         avgTicket: 0
     });
+    const [analytics, setAnalytics] = useState({
+        topDishes: [],
+        topCategories: [],
+        paymentMethods: [],
+        hourlyDistribution: [],
+        revenueByDay: []
+    });
+    const [activeTab, setActiveTab] = useState('vinculacion'); // 'vinculacion' | 'analytics'
+    const [dateRange, setDateRange] = useState('7days');
+
+    // Cargar analytics de consumos
+    const loadAnalytics = useCallback(async () => {
+        if (!restaurantId) return;
+
+        try {
+            const days = dateRange === '7days' ? 7 : dateRange === '30days' ? 30 : 90;
+            const startDate = format(subDays(new Date(), days), 'yyyy-MM-dd');
+            const endDate = format(new Date(), 'yyyy-MM-dd');
+
+            // Cargar tickets del período
+            const { data: ticketsData, error: ticketsError } = await supabase
+                .from('billing_tickets')
+                .select(`
+                    id, ticket_date, total_amount, payment_method, items,
+                    covers_count, tip_amount, customer_id,
+                    customers(name, segment_auto_v2)
+                `)
+                .eq('restaurant_id', restaurantId)
+                .gte('ticket_date', startDate + ' 00:00:00')
+                .lte('ticket_date', endDate + ' 23:59:59')
+                .eq('is_processed', true)
+                .order('ticket_date', { ascending: false });
+
+            if (ticketsError) throw ticketsError;
+
+            // Procesar datos para analytics
+            const tickets = ticketsData || [];
+            const allItems = [];
+            const paymentMethodsMap = {};
+            const hourlyMap = {};
+            const categoryMap = {};
+            const dailyRevenueMap = {};
+
+            tickets.forEach(ticket => {
+                // Extraer items
+                if (ticket.items && Array.isArray(ticket.items)) {
+                    ticket.items.forEach(item => {
+                        allItems.push({
+                            ...item,
+                            ticket_date: ticket.ticket_date,
+                            customer_segment: ticket.customers?.segment_auto_v2 || 'unknown'
+                        });
+
+                        // Contar categorías
+                        const category = item.category || 'Sin categoría';
+                        categoryMap[category] = (categoryMap[category] || 0) + (item.quantity || 1);
+                    });
+                }
+
+                // Métodos de pago
+                const paymentMethod = ticket.payment_method || 'No especificado';
+                paymentMethodsMap[paymentMethod] = (paymentMethodsMap[paymentMethod] || 0) + 1;
+
+                // Distribución horaria
+                const hour = new Date(ticket.ticket_date).getHours();
+                const hourBlock = `${hour}:00`;
+                hourlyMap[hourBlock] = (hourlyMap[hourBlock] || 0) + parseFloat(ticket.total_amount || 0);
+
+                // Ingresos diarios
+                const day = format(parseISO(ticket.ticket_date), 'yyyy-MM-dd');
+                dailyRevenueMap[day] = (dailyRevenueMap[day] || 0) + parseFloat(ticket.total_amount || 0);
+            });
+
+            // Calcular top dishes
+            const dishesMap = {};
+            allItems.forEach(item => {
+                const dishName = item.name || 'Sin nombre';
+                if (!dishesMap[dishName]) {
+                    dishesMap[dishName] = {
+                        name: dishName,
+                        category: item.category || 'Sin categoría',
+                        totalQuantity: 0,
+                        totalRevenue: 0,
+                        avgPrice: 0,
+                        orders: 0
+                    };
+                }
+                dishesMap[dishName].totalQuantity += item.quantity || 1;
+                dishesMap[dishName].totalRevenue += item.total_price || 0;
+                dishesMap[dishName].orders += 1;
+            });
+
+            // Calcular precio promedio para cada plato
+            Object.values(dishesMap).forEach(dish => {
+                dish.avgPrice = dish.totalRevenue / dish.totalQuantity;
+            });
+
+            const topDishes = Object.values(dishesMap)
+                .sort((a, b) => b.totalQuantity - a.totalQuantity)
+                .slice(0, 10);
+
+            const topCategories = Object.entries(categoryMap)
+                .map(([name, count]) => ({ name, count }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 8);
+
+            const paymentMethods = Object.entries(paymentMethodsMap)
+                .map(([method, count]) => ({ method, count }))
+                .sort((a, b) => b.count - a.count);
+
+            const hourlyDistribution = Object.entries(hourlyMap)
+                .map(([hour, revenue]) => ({ hour, revenue }))
+                .sort((a, b) => a.hour.localeCompare(b.hour));
+
+            const revenueByDay = Object.entries(dailyRevenueMap)
+                .map(([date, revenue]) => ({ date, revenue }))
+                .sort((a, b) => a.date.localeCompare(b.date))
+                .slice(-14); // Últimos 14 días
+
+            setAnalytics({
+                topDishes,
+                topCategories,
+                paymentMethods,
+                hourlyDistribution,
+                revenueByDay
+            });
+
+        } catch (error) {
+            console.error('Error loading analytics:', error);
+            toast.error('Error al cargar analytics de consumos');
+        }
+    }, [restaurantId, dateRange]);
 
     // Cargar datos del día seleccionado
     const loadData = useCallback(async () => {
@@ -204,9 +337,20 @@ const Consumos = () => {
     // Efectos
     useEffect(() => {
         if (isReady && restaurantId) {
-            loadData();
+            if (activeTab === 'vinculacion') {
+                loadData();
+            } else {
+                loadAnalytics();
+            }
         }
-    }, [isReady, restaurantId, loadData]);
+    }, [isReady, restaurantId, loadData, loadAnalytics, activeTab]);
+
+    // Cargar analytics cuando cambie el rango de fechas
+    useEffect(() => {
+        if (isReady && restaurantId && activeTab === 'analytics') {
+            loadAnalytics();
+        }
+    }, [dateRange, isReady, restaurantId, loadAnalytics, activeTab]);
 
     // Funciones auxiliares
     const getMatchForReservation = (reservationId) => {
@@ -253,29 +397,80 @@ const Consumos = () => {
                             Consumos
                         </h1>
                         <p className="text-gray-600 mt-1">
-                            Vincula reservas con tickets del sistema POS
+                            {activeTab === 'vinculacion' 
+                                ? 'Vincula reservas con tickets del sistema POS'
+                                : 'Análisis completo de consumos y platos más vendidos'
+                            }
                         </p>
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {/* Selector de fecha */}
-                        <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-500" />
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                            />
+                        {/* Pestañas */}
+                        <div className="flex bg-gray-100 rounded-lg p-1">
+                            <button
+                                onClick={() => setActiveTab('vinculacion')}
+                                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                                    activeTab === 'vinculacion'
+                                        ? 'bg-white text-purple-600 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                            >
+                                <Link2 className="w-4 h-4 inline mr-2" />
+                                Vinculación
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('analytics')}
+                                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                                    activeTab === 'analytics'
+                                        ? 'bg-white text-purple-600 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                            >
+                                <BarChart3 className="w-4 h-4 inline mr-2" />
+                                Analytics
+                            </button>
                         </div>
 
-                        <button
-                            onClick={loadData}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                        >
-                            <RefreshCw className="w-4 h-4" />
-                            Actualizar
-                        </button>
+                        {/* Controles específicos por pestaña */}
+                        {activeTab === 'vinculacion' ? (
+                            <>
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-gray-500" />
+                                    <input
+                                        type="date"
+                                        value={selectedDate}
+                                        onChange={(e) => setSelectedDate(e.target.value)}
+                                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
+                                <button
+                                    onClick={loadData}
+                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                                >
+                                    <RefreshCw className="w-4 h-4" />
+                                    Actualizar
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <select
+                                    value={dateRange}
+                                    onChange={(e) => setDateRange(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="7days">Últimos 7 días</option>
+                                    <option value="30days">Últimos 30 días</option>
+                                    <option value="90days">Últimos 90 días</option>
+                                </select>
+                                <button
+                                    onClick={loadAnalytics}
+                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                                >
+                                    <RefreshCw className="w-4 h-4" />
+                                    Actualizar
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -323,161 +518,297 @@ const Consumos = () => {
                 </div>
             </div>
 
-            {/* Lista de reservas con vínculos */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                        Reservas del {format(parseISO(selectedDate), 'dd MMMM yyyy', { locale: es })}
-                    </h2>
-                </div>
+            {/* Contenido específico por pestaña */}
+            {activeTab === 'vinculacion' ? (
+                /* Vista de Vinculación */
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div className="p-6 border-b border-gray-200">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                            Reservas del {format(parseISO(selectedDate), 'dd MMMM yyyy', { locale: es })}
+                        </h2>
+                    </div>
 
-                <div className="divide-y divide-gray-200">
-                    {reservations.map((reservation) => {
-                        const match = getMatchForReservation(reservation.id);
-                        const receipt = match ? getReceiptForMatch(match.receipt_id) : null;
-                        const items = receipt ? showDetails[receipt.id] : null;
+                    <div className="divide-y divide-gray-200">
+                        {reservations.map((reservation) => {
+                            const match = getMatchForReservation(reservation.id);
+                            const receipt = match ? getReceiptForMatch(match.receipt_id) : null;
+                            const items = receipt ? showDetails[receipt.id] : null;
 
-                        return (
-                            <div key={reservation.id} className="p-6">
-                                <div className="flex items-start justify-between">
-                                    {/* Info de la reserva */}
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <h3 className="font-semibold text-gray-900">
-                                                {reservation.customer_name}
-                                            </h3>
-                                            <span className="text-sm text-gray-500">
-                                                Mesa {reservation.table_number}
-                                            </span>
-                                            <span className="text-sm text-gray-500">
-                                                {formatTime(reservation.reservation_time)}
-                                            </span>
-                                            <span className="text-sm text-gray-500">
-                                                {reservation.party_size} personas
-                                            </span>
+                            return (
+                                <div key={reservation.id} className="p-6">
+                                    <div className="flex items-start justify-between">
+                                        {/* Info de la reserva */}
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h3 className="font-semibold text-gray-900">
+                                                    {reservation.customer_name}
+                                                </h3>
+                                                <span className="text-sm text-gray-500">
+                                                    Mesa {reservation.table_number}
+                                                </span>
+                                                <span className="text-sm text-gray-500">
+                                                    {formatTime(reservation.reservation_time)}
+                                                </span>
+                                                <span className="text-sm text-gray-500">
+                                                    {reservation.party_size} personas
+                                                </span>
+                                            </div>
+
+                                            {reservation.customer_phone && (
+                                                <p className="text-sm text-gray-600">
+                                                    📞 {reservation.customer_phone}
+                                                </p>
+                                            )}
                                         </div>
 
-                                        {reservation.customer_phone && (
-                                            <p className="text-sm text-gray-600">
-                                                📞 {reservation.customer_phone}
-                                            </p>
-                                        )}
+                                        {/* Estado del vínculo */}
+                                        <div className="flex items-center gap-3">
+                                            {match ? (
+                                                <>
+                                                    <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(match.status, match.confidence)}`}>
+                                                        {match.status === 'linked' ? 'Vinculada' : 'Sugerencia'} 
+                                                        {match.confidence && ` (${Math.round(match.confidence * 100)}%)`}
+                                                    </span>
+                                                    
+                                                    {receipt && (
+                                                        <div className="text-right">
+                                                            <div className="font-semibold text-gray-900">
+                                                                {receipt.total_amount}€
+                                                            </div>
+                                                            <div className="text-sm text-gray-500">
+                                                                {format(parseISO(receipt.ticket_date), 'HH:mm')}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                                    Sin vincular
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {/* Estado del vínculo */}
-                                    <div className="flex items-center gap-3">
-                                        {match ? (
-                                            <>
-                                                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(match.status, match.confidence)}`}>
-                                                    {match.status === 'linked' ? 'Vinculada' : 'Sugerencia'} 
-                                                    {match.confidence && ` (${Math.round(match.confidence * 100)}%)`}
-                                                </span>
-                                                
-                                                {receipt && (
-                                                    <div className="text-right">
-                                                        <div className="font-semibold text-gray-900">
-                                                            {receipt.total}€
+                                    {/* Ticket vinculado */}
+                                    {receipt && (
+                                        <div className="mt-4 bg-gray-50 rounded-lg p-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <div>
+                                                        <div className="font-medium text-gray-900">
+                                                            Ticket #{receipt.ticket_number || receipt.id.slice(0, 8)}
                                                         </div>
-                                                        <div className="text-sm text-gray-500">
-                                                            {format(parseISO(receipt.closed_at), 'HH:mm')}
+                                                        <div className="text-sm text-gray-600">
+                                                            Mesa {receipt.mesa_number} • {receipt.payment_method || 'N/A'}
                                                         </div>
                                                     </div>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                                                Sin vincular
-                                            </span>
-                                        )}
+                                                    
+                                                    {match.reason && (
+                                                        <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                                            {match.reason}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => toggleDetails(receipt.id)}
+                                                        className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-900"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                        {showDetails[receipt.id] ? 'Ocultar' : 'Ver items'}
+                                                    </button>
+
+                                                    {match.status === 'linked' ? (
+                                                        <button
+                                                            onClick={() => unlinkReservationReceipt(reservation.id, receipt.id)}
+                                                            className="flex items-center gap-1 px-3 py-1 text-sm text-red-600 hover:text-red-700"
+                                                        >
+                                                            <Unlink className="w-4 h-4" />
+                                                            Desvincular
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => linkReservationReceipt(reservation.id, receipt.id, match.confidence)}
+                                                            className="flex items-center gap-1 px-3 py-1 text-sm text-green-600 hover:text-green-700"
+                                                        >
+                                                            <CheckCircle2 className="w-4 h-4" />
+                                                            Confirmar
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Items del ticket */}
+                                            {showDetails[receipt.id] && receipt.items && Array.isArray(receipt.items) && (
+                                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                                        {receipt.items.map((item, index) => (
+                                                            <div key={index} className="flex justify-between">
+                                                                <span className="text-gray-700">
+                                                                    {item.quantity}x {item.name}
+                                                                    {item.category && (
+                                                                        <span className="text-gray-500 ml-1">
+                                                                            ({item.category})
+                                                                        </span>
+                                                                    )}
+                                                                </span>
+                                                                <span className="font-medium">
+                                                                    {item.total_price}€
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+
+                        {reservations.length === 0 && (
+                            <div className="p-8 text-center text-gray-500">
+                                <Receipt className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                                <p>No hay reservas para el día seleccionado</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ) : (
+                /* Vista de Analytics */
+                <div className="space-y-6">
+                    {/* Top Dishes */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <ChefHat className="w-5 h-5 text-orange-600" />
+                            Platos Más Vendidos
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {analytics.topDishes.slice(0, 8).map((dish, index) => (
+                                <div key={dish.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center justify-center w-8 h-8 bg-orange-100 text-orange-600 rounded-full text-sm font-bold">
+                                            {index + 1}
+                                        </div>
+                                        <div>
+                                            <div className="font-medium text-gray-900">{dish.name}</div>
+                                            <div className="text-sm text-gray-500">{dish.category}</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-semibold text-gray-900">{dish.totalQuantity} uds</div>
+                                        <div className="text-sm text-gray-500">{dish.totalRevenue.toFixed(0)}€</div>
                                     </div>
                                 </div>
-
-                                {/* Ticket vinculado */}
-                                {receipt && (
-                                    <div className="mt-4 bg-gray-50 rounded-lg p-4">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div>
-                                                    <div className="font-medium text-gray-900">
-                                                        Ticket #{receipt.external_id || receipt.id.slice(0, 8)}
-                                                    </div>
-                                                    <div className="text-sm text-gray-600">
-                                                        Mesa {receipt.mesa} • {receipt.payment_method || 'N/A'}
-                                                    </div>
-                                                </div>
-                                                
-                                                {match.reason && (
-                                                    <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                                        {match.reason}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => toggleDetails(receipt.id)}
-                                                    className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-900"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                    {items ? 'Ocultar' : 'Ver items'}
-                                                </button>
-
-                                                {match.status === 'linked' ? (
-                                                    <button
-                                                        onClick={() => unlinkReservationReceipt(reservation.id, receipt.id)}
-                                                        className="flex items-center gap-1 px-3 py-1 text-sm text-red-600 hover:text-red-700"
-                                                    >
-                                                        <Unlink className="w-4 h-4" />
-                                                        Desvincular
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => linkReservationReceipt(reservation.id, receipt.id, match.confidence)}
-                                                        className="flex items-center gap-1 px-3 py-1 text-sm text-green-600 hover:text-green-700"
-                                                    >
-                                                        <CheckCircle2 className="w-4 h-4" />
-                                                        Confirmar
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Items del ticket */}
-                                        {items && items.length > 0 && (
-                                            <div className="mt-3 pt-3 border-t border-gray-200">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                                                    {items.map((item, index) => (
-                                                        <div key={index} className="flex justify-between">
-                                                            <span className="text-gray-700">
-                                                                {item.qty}x {item.nombre}
-                                                                {item.categoria && (
-                                                                    <span className="text-gray-500 ml-1">
-                                                                        ({item.categoria})
-                                                                    </span>
-                                                                )}
-                                                            </span>
-                                                            <span className="font-medium">
-                                                                {item.precio_total}€
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-
-                    {reservations.length === 0 && (
-                        <div className="p-8 text-center text-gray-500">
-                            <Receipt className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                            <p>No hay reservas para el día seleccionado</p>
+                            ))}
                         </div>
-                    )}
+                        {analytics.topDishes.length === 0 && (
+                            <div className="text-center text-gray-500 py-8">
+                                <ChefHat className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                                <p>No hay datos de platos para el período seleccionado</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Categorías y Métodos de Pago */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Top Categories */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <PieChart className="w-5 h-5 text-blue-600" />
+                                Categorías Más Populares
+                            </h3>
+                            <div className="space-y-3">
+                                {analytics.topCategories.map((category, index) => (
+                                    <div key={category.name} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-3 h-3 rounded-full" style={{
+                                                backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'][index % 8]
+                                            }}></div>
+                                            <span className="text-gray-700">{category.name}</span>
+                                        </div>
+                                        <span className="font-semibold text-gray-900">{category.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Payment Methods */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <DollarSign className="w-5 h-5 text-green-600" />
+                                Métodos de Pago
+                            </h3>
+                            <div className="space-y-3">
+                                {analytics.paymentMethods.map((method, index) => (
+                                    <div key={method.method} className="flex items-center justify-between">
+                                        <span className="text-gray-700 capitalize">{method.method}</span>
+                                        <span className="font-semibold text-gray-900">{method.count} tickets</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Revenue Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Hourly Distribution */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <Clock className="w-5 h-5 text-purple-600" />
+                                Distribución Horaria
+                            </h3>
+                            <div className="space-y-2">
+                                {analytics.hourlyDistribution.map((hour) => (
+                                    <div key={hour.hour} className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-600">{hour.hour}</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-24 bg-gray-200 rounded-full h-2">
+                                                <div 
+                                                    className="bg-purple-600 h-2 rounded-full"
+                                                    style={{
+                                                        width: `${Math.min(100, (hour.revenue / Math.max(...analytics.hourlyDistribution.map(h => h.revenue))) * 100)}%`
+                                                    }}
+                                                ></div>
+                                            </div>
+                                            <span className="font-medium text-gray-900 w-12 text-right">{hour.revenue.toFixed(0)}€</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Daily Revenue */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <TrendingUp className="w-5 h-5 text-green-600" />
+                                Ingresos Diarios (Últimos 14 días)
+                            </h3>
+                            <div className="space-y-2">
+                                {analytics.revenueByDay.map((day) => (
+                                    <div key={day.date} className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-600">
+                                            {format(parseISO(day.date), 'dd/MM', { locale: es })}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-24 bg-gray-200 rounded-full h-2">
+                                                <div 
+                                                    className="bg-green-600 h-2 rounded-full"
+                                                    style={{
+                                                        width: `${Math.min(100, (day.revenue / Math.max(...analytics.revenueByDay.map(d => d.revenue))) * 100)}%`
+                                                    }}
+                                                ></div>
+                                            </div>
+                                            <span className="font-medium text-gray-900 w-12 text-right">{day.revenue.toFixed(0)}€</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
