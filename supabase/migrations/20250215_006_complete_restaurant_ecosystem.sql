@@ -4,6 +4,56 @@
 -- Para: gustausantin@gmail.com
 -- Crea: Menú completo + Consumos reales + Reservas futuras + Dashboard funcional
 
+-- =====================================================
+-- FUNCIÓN PARA GENERAR ITEMS REALISTAS (CREAR PRIMERO)
+-- =====================================================
+CREATE OR REPLACE FUNCTION generate_realistic_items(target_rest_id UUID, ticket_total DECIMAL)
+RETURNS JSONB AS $func$
+DECLARE
+    items_array JSONB := '[]'::JSONB;
+    item_record RECORD;
+    remaining_total DECIMAL := ticket_total;
+    item_count INTEGER;
+    quantity INTEGER;
+    item_total DECIMAL;
+BEGIN
+    -- Generar entre 2 y 5 items por ticket
+    item_count := (RANDOM() * 3 + 2)::INTEGER;
+    
+    -- Seleccionar items aleatorios del menú
+    FOR item_record IN (
+        SELECT name, price, category
+        FROM menu_items 
+        WHERE restaurant_id = target_rest_id 
+        ORDER BY RANDOM() 
+        LIMIT item_count
+    ) LOOP
+        quantity := (RANDOM() * 2 + 1)::INTEGER; -- 1-3 unidades
+        item_total := item_record.price * quantity;
+        
+        -- Ajustar si nos pasamos del total
+        IF item_total > remaining_total THEN
+            quantity := GREATEST(1, (remaining_total / item_record.price)::INTEGER);
+            item_total := item_record.price * quantity;
+        END IF;
+        
+        items_array := items_array || jsonb_build_object(
+            'name', item_record.name,
+            'category', item_record.category,
+            'quantity', quantity,
+            'unit_price', item_record.price,
+            'total_price', item_total
+        );
+        
+        remaining_total := remaining_total - item_total;
+        
+        EXIT WHEN remaining_total <= 0;
+    END LOOP;
+    
+    RETURN items_array;
+END;
+$func$ LANGUAGE plpgsql;
+
 DO $$
 DECLARE
     target_restaurant_id UUID;
@@ -74,13 +124,24 @@ BEGIN
     -- RLS para menu_items
     ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
     
-    CREATE POLICY "Users can manage menu items from their restaurant" ON menu_items
-    FOR ALL USING (
-        restaurant_id IN (
-            SELECT r.id FROM restaurants r 
-            WHERE r.owner_id = auth.uid()
-        )
-    );
+    -- Crear política solo si no existe
+    DO $policy$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies 
+            WHERE tablename = 'menu_items' 
+            AND policyname = 'Users can manage menu items from their restaurant'
+        ) THEN
+            CREATE POLICY "Users can manage menu items from their restaurant" ON menu_items
+            FOR ALL USING (
+                restaurant_id IN (
+                    SELECT r.id FROM restaurants r 
+                    WHERE r.owner_id = auth.uid()
+                )
+            );
+        END IF;
+    END;
+    $policy$;
     
     RAISE NOTICE '✅ Tabla menu_items creada correctamente';
     
@@ -127,54 +188,7 @@ BEGIN
     -- =====================================================
     -- 4. ACTUALIZAR BILLING_TICKETS EXISTENTES CON ITEMS REALISTAS
     -- =====================================================
-    
-    -- Función para generar items aleatorios realistas
-    CREATE OR REPLACE FUNCTION generate_realistic_items(target_rest_id UUID, ticket_total DECIMAL)
-    RETURNS JSONB AS $func$
-    DECLARE
-        items_array JSONB := '[]'::JSONB;
-        item_record RECORD;
-        remaining_total DECIMAL := ticket_total;
-        item_count INTEGER;
-        quantity INTEGER;
-        item_total DECIMAL;
-    BEGIN
-        -- Generar entre 2 y 5 items por ticket
-        item_count := (RANDOM() * 3 + 2)::INTEGER;
-        
-        -- Seleccionar items aleatorios del menú
-        FOR item_record IN (
-            SELECT name, price, category
-            FROM menu_items 
-            WHERE restaurant_id = target_rest_id 
-            ORDER BY RANDOM() 
-            LIMIT item_count
-        ) LOOP
-            quantity := (RANDOM() * 2 + 1)::INTEGER; -- 1-3 unidades
-            item_total := item_record.price * quantity;
-            
-            -- Ajustar si nos pasamos del total
-            IF item_total > remaining_total THEN
-                quantity := GREATEST(1, (remaining_total / item_record.price)::INTEGER);
-                item_total := item_record.price * quantity;
-            END IF;
-            
-            items_array := items_array || jsonb_build_object(
-                'name', item_record.name,
-                'category', item_record.category,
-                'quantity', quantity,
-                'unit_price', item_record.price,
-                'total_price', item_total
-            );
-            
-            remaining_total := remaining_total - item_total;
-            
-            EXIT WHEN remaining_total <= 0;
-        END LOOP;
-        
-        RETURN items_array;
-    END;
-    $func$ LANGUAGE plpgsql;
+    -- La función se creará fuera del bloque DO
     
     -- Actualizar todos los billing_tickets existentes
     UPDATE billing_tickets 
@@ -512,10 +526,8 @@ BEGIN
     RAISE NOTICE '✅ Datos de agente IA configurados para dashboard';
     
     -- =====================================================
-    -- 9. LIMPIAR FUNCIONES TEMPORALES
+    -- 9. NO LIMPIAR FUNCIONES - Se creará fuera del bloque
     -- =====================================================
-    
-    DROP FUNCTION IF EXISTS generate_realistic_items(UUID, DECIMAL);
     
     -- =====================================================
     -- 10. RESUMEN FINAL
@@ -541,3 +553,4 @@ EXCEPTION
         RAISE EXCEPTION 'Error generando ecosistema completo: %', SQLERRM;
 END;
 $$;
+
