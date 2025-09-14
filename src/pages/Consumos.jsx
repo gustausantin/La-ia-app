@@ -196,32 +196,47 @@ const Consumos = () => {
 
             if (receiptsError) throw receiptsError;
 
-            // Cargar matches existentes
-            const { data: matchesData, error: matchesError } = await supabase
-                .from('reservation_receipt_map')
-                .select(`
-                    id, reservation_id, receipt_id, confidence, status,
-                    linked_by, linked_at, notes
-                `)
-                .in('reservation_id', (reservationsData || []).map(r => r.id));
-
-            if (matchesError) throw matchesError;
+            // Los matches se obtienen directamente de billing_tickets que ya tienen reservation_id
+            // No necesitamos tabla separada reservation_receipt_map
+            const matchesData = (receiptsData || [])
+                .filter(receipt => receipt.reservation_id)
+                .map(receipt => ({
+                    id: `match_${receipt.reservation_id}_${receipt.id}`,
+                    reservation_id: receipt.reservation_id,
+                    receipt_id: receipt.id,
+                    confidence: 1.0, // Vinculación directa = 100% confianza
+                    status: 'linked',
+                    linked_by: 'system',
+                    linked_at: receipt.created_at
+                }));
 
             // Obtener sugerencias automáticas para reservas sin vincular
             const unlinkedReservations = (reservationsData || []).filter(r => 
                 !(matchesData || []).some(m => m.reservation_id === r.id && m.status === 'linked')
             );
 
+            // Generar sugerencias simples para reservas sin vincular
+            // basadas en fecha, hora y mesa
             let suggestionsData = [];
             if (unlinkedReservations.length > 0) {
-                const { data: suggestions, error: suggestionsError } = await supabase
-                    .rpc('crm_v2_suggest_receipt_matches', {
-                        p_restaurant_id: restaurantId
+                const unlinkedReceipts = (receiptsData || []).filter(receipt => !receipt.reservation_id);
+                
+                unlinkedReservations.forEach(reservation => {
+                    // Buscar tickets del mismo día sin vincular
+                    const candidateReceipts = unlinkedReceipts.filter(receipt => {
+                        const receiptDate = format(parseISO(receipt.ticket_date), 'yyyy-MM-dd');
+                        return receiptDate === selectedDate;
                     });
 
-                if (!suggestionsError) {
-                    suggestionsData = suggestions || [];
-                }
+                    candidateReceipts.forEach(receipt => {
+                        suggestionsData.push({
+                            reservation_id: reservation.id,
+                            receipt_id: receipt.id,
+                            confidence: 0.7, // Sugerencia automática
+                            reason: 'Mismo día'
+                        });
+                    });
+                });
             }
 
             // Combinar matches existentes con sugerencias
@@ -263,39 +278,37 @@ const Consumos = () => {
         }
     }, [restaurantId, selectedDate]);
 
-    // Vincular reserva con ticket
+    // Vincular reserva con ticket (actualizar reservation_id en billing_tickets)
     const linkReservationReceipt = async (reservationId, receiptId, confidence = 1.0) => {
         try {
-            const { data, error } = await supabase
-                .rpc('crm_v2_link_reservation_receipt', {
-                    p_reservation_id: reservationId,
-                    p_receipt_id: receiptId,
-                    p_linked_by: 'manual',
-                    p_confidence: confidence
-                });
+            const { error } = await supabase
+                .from('billing_tickets')
+                .update({ 
+                    reservation_id: reservationId,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', receiptId);
 
             if (error) throw error;
 
-            if (data.success) {
-                toast.success('Vínculo creado exitosamente');
-                loadData(); // Recargar datos
-            } else {
-                throw new Error(data.error);
-            }
+            toast.success('Vínculo creado exitosamente');
+            loadData(); // Recargar datos
         } catch (error) {
             console.error('Error linking reservation-receipt:', error);
             toast.error('Error al crear el vínculo');
         }
     };
 
-    // Desvincular
+    // Desvincular (quitar reservation_id de billing_tickets)
     const unlinkReservationReceipt = async (reservationId, receiptId) => {
         try {
             const { error } = await supabase
-                .from('reservation_receipt_map')
-                .delete()
-                .eq('reservation_id', reservationId)
-                .eq('receipt_id', receiptId);
+                .from('billing_tickets')
+                .update({ 
+                    reservation_id: null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', receiptId);
 
             if (error) throw error;
 
@@ -307,29 +320,19 @@ const Consumos = () => {
         }
     };
 
-    // Obtener detalles de items de un ticket
-    const getReceiptItems = useCallback(async (receiptId) => {
-        try {
-            const { data, error } = await supabase
-                .from('pos_items')
-                .select('*')
-                .eq('receipt_id', receiptId)
-                .order('categoria', 'nombre');
-
-            if (error) throw error;
-            return data || [];
-        } catch (error) {
-            console.error('Error loading receipt items:', error);
-            return [];
-        }
-    }, []);
+    // Los items están en el campo JSONB 'items' de billing_tickets
+    // No necesitamos función separada, ya los tenemos cargados
+    const getReceiptItems = useCallback((receiptId) => {
+        const receipt = receipts.find(r => r.id === receiptId);
+        return receipt?.items || [];
+    }, [receipts]);
 
     // Toggle detalles de ticket
-    const toggleDetails = async (receiptId) => {
+    const toggleDetails = (receiptId) => {
         if (showDetails[receiptId]) {
             setShowDetails(prev => ({ ...prev, [receiptId]: null }));
         } else {
-            const items = await getReceiptItems(receiptId);
+            const items = getReceiptItems(receiptId);
             setShowDetails(prev => ({ ...prev, [receiptId]: items }));
         }
     };
