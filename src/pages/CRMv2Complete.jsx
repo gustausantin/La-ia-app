@@ -111,15 +111,29 @@ const CRMv2Complete = () => {
             if (messagesError) throw messagesError;
             setMessageQueue(messages || []);
 
-            // ⚙️ CARGAR REGLAS DE AUTOMATIZACIÓN
+            // ⚙️ CARGAR REGLAS DE AUTOMATIZACIÓN CON TEMPLATE NAMES
             const { data: rules, error: rulesError } = await supabase
                 .from('automation_rules')
-                .select('*')
+                .select(`
+                    id, name, description, is_active, 
+                    target_segment, trigger_event,
+                    cooldown_days, max_executions_per_customer,
+                    execution_hours_start, execution_hours_end,
+                    created_at, updated_at,
+                    template:template_id(name)
+                `)
                 .eq('restaurant_id', restaurantId)
                 .order('name');
 
             if (rulesError) throw rulesError;
-            setAutomationRules(rules || []);
+            
+            // Procesar reglas con nombres de plantillas
+            const processedRules = (rules || []).map(rule => ({
+                ...rule,
+                template_name: rule.template?.name || 'Sin plantilla'
+            }));
+            
+            setAutomationRules(processedRules);
 
             // 📊 CARGAR CONFIGURACIÓN CRM
             const { data: settings, error: settingsError } = await supabase
