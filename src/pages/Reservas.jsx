@@ -415,7 +415,7 @@ export default function Reservas() {
         status: "",
         channel: "",
         source: "",
-        period: "today",
+        period: "month", // 🔧 CORRECCIÓN: Por defecto mostrar historial del mes
     });
 
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -443,15 +443,19 @@ export default function Reservas() {
                     end: format(tomorrow, "yyyy-MM-dd"),
                 };
             case "week":
+                // 🔧 CORRECCIÓN: Incluir historial de la semana
+                const startOfWeek = subDays(today, 7);
                 const endOfWeek = addDays(today, 7);
                 return {
-                    start: format(today, "yyyy-MM-dd"),
+                    start: format(startOfWeek, "yyyy-MM-dd"),
                     end: format(endOfWeek, "yyyy-MM-dd"),
                 };
             case "month":
+                // 🔧 CORRECCIÓN: Incluir historial del mes completo
+                const startOfMonth = subDays(today, 30);
                 const endOfMonth = addDays(today, 30);
                 return {
-                    start: format(today, "yyyy-MM-dd"),
+                    start: format(startOfMonth, "yyyy-MM-dd"),
                     end: format(endOfMonth, "yyyy-MM-dd"),
                 };
             default:
@@ -1264,10 +1268,10 @@ export default function Reservas() {
                             }
                             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
-                            <option value="today">Hoy</option>
-                            <option value="tomorrow">Mañana</option>
-                            <option value="week">Esta semana</option>
-                            <option value="month">Este mes</option>
+                            <option value="today">📅 Solo hoy</option>
+                            <option value="tomorrow">📆 Solo mañana</option>
+                            <option value="week">📅 Últimas 2 semanas</option>
+                            <option value="month">📅 Últimos 2 meses (por defecto)</option>
                         </select>
                     </div>
                 </div>
