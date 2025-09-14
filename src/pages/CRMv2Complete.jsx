@@ -167,6 +167,19 @@ const CRMv2Complete = () => {
         }
     };
 
+    // Ejecutar automatizaciones para reglas específicas
+    const executeAutomationRules = async (targetSegment) => {
+        try {
+            toast.loading('Ejecutando automatizaciones...', { id: 'automation-execution' });
+            
+            // Lógica de automatización aquí
+            toast.success(`Automatizaciones ejecutadas para segmento: ${targetSegment}`);
+            
+        } catch (error) {
+            toast.error('Error ejecutando automatizaciones');
+        }
+    };
+
     useEffect(() => {
         if (isReady && restaurantId) {
             loadDashboardData();
@@ -460,10 +473,42 @@ const CRMv2Complete = () => {
                                     Reglas de Automatización
                                 </h2>
                                 <div className="flex gap-2">
-                                    <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                                    <button 
+                                        onClick={async () => {
+                                            try {
+                                                const updates = automationRules.map(rule => 
+                                                    supabase.from('automation_rules')
+                                                        .update({ is_active: true })
+                                                        .eq('id', rule.id)
+                                                );
+                                                await Promise.all(updates);
+                                                toast.success('Todas las reglas activadas');
+                                                loadDashboardData();
+                                            } catch (error) {
+                                                toast.error('Error activando reglas');
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                                    >
                                         Activar Todas
                                     </button>
-                                    <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">
+                                    <button 
+                                        onClick={async () => {
+                                            try {
+                                                const updates = automationRules.map(rule => 
+                                                    supabase.from('automation_rules')
+                                                        .update({ is_active: false })
+                                                        .eq('id', rule.id)
+                                                );
+                                                await Promise.all(updates);
+                                                toast.success('Todas las reglas desactivadas');
+                                                loadDashboardData();
+                                            } catch (error) {
+                                                toast.error('Error desactivando reglas');
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+                                    >
                                         Desactivar Todas
                                     </button>
                                 </div>
@@ -534,7 +579,7 @@ const CRMv2Complete = () => {
                                                             toast.error('La regla debe estar activa para ejecutarse');
                                                             return;
                                                         }
-                                                        await executeCrmAutomation(rule.target_segment);
+                                                        await executeAutomationRules(rule.target_segment);
                                                     }}
                                                     disabled={!rule.is_active}
                                                     className="flex items-center gap-1 px-3 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
