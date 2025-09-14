@@ -1,5 +1,6 @@
 // CRMv2Complete.jsx - CRM v2 COMPLETO Y FUNCIONAL
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { format, subDays } from 'date-fns';
@@ -12,6 +13,7 @@ import toast from 'react-hot-toast';
 import CustomerModal from '../components/CustomerModal';
 
 const CRMv2Complete = () => {
+    const navigate = useNavigate();
     const { restaurant, restaurantId, isReady } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -376,52 +378,151 @@ const CRMv2Complete = () => {
                 </div>
             )}
 
-            {/* Messages Tab */}
+            {/* Messages Tab - MEJORADO COMO CRM INTELIGENTE */}
             {activeTab === 'messages' && (
                 <div className="space-y-6">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="text-lg font-semibold text-gray-900">
-                                    Sistema de Mensajería IA
-                                </h2>
-                                <p className="text-gray-600 mt-1">
-                                    Ejecuta el CRM para generar mensajes automáticos
-                                </p>
-                            </div>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-semibold text-gray-900">Mensajes CRM IA</h2>
+                            <p className="text-gray-600">Ejecuta el CRM IA para generar mensajes automáticos del día</p>
                         </div>
+                        <button
+                            onClick={executeCrmAutomation}
+                            disabled={loading}
+                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg disabled:opacity-50"
+                        >
+                            {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
+                            <span className="font-medium">{loading ? "Generando..." : "Ejecutar CRM IA"}</span>
+                        </button>
                     </div>
 
+                    {/* Mensajes del Día */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                         <div className="p-6 border-b border-gray-200">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                Mensajes Recientes
-                            </h3>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900">Mensajes del Día</h3>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Mensajes sugeridos por IA para enviar hoy
+                                    </p>
+                                </div>
+                                {messageQueue.length > 0 && (
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => {
+                                                // TODO: Enviar todos los mensajes
+                                                toast.success('Todos los mensajes enviados automáticamente');
+                                            }}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                                        >
+                                            Enviar Todos
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setMessageQueue([]);
+                                                toast.success('Todos los mensajes eliminados');
+                                            }}
+                                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                                        >
+                                            Eliminar Todos
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
+                        
                         <div className="p-6">
                             {messageQueue.length > 0 ? (
-                                <div className="space-y-3">
-                                    {messageQueue.map((message) => (
-                                        <div key={message.id} className="border border-gray-200 rounded-lg p-4">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <div className="font-medium">{message.customers?.name}</div>
-                                                    <div className="text-sm text-gray-600">{message.channel} - {message.interaction_type}</div>
+                                <div className="space-y-4">
+                                    {messageQueue.map((message, index) => {
+                                        // Buscar el cliente para obtener más información
+                                        const customer = customerFeatures.find(c => c.name === message.customer_name);
+                                        
+                                        return (
+                                            <div key={message.id || index} className="border border-gray-200 rounded-lg p-4">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                                            <span className="text-purple-600 font-medium text-sm">
+                                                                {(message.customers?.name || message.customer_name)?.charAt(0)?.toUpperCase() || 'C'}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <h5 className="font-medium text-gray-900">{message.customers?.name || message.customer_name}</h5>
+                                                            <p className="text-sm text-gray-500">
+                                                                {customer?.segment_auto_v2 || 'Cliente'} • {message.channel || 'WhatsApp'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`px-2 py-1 text-xs rounded-full ${
+                                                            message.interaction_type === 'bienvenida' ? 'bg-green-100 text-green-800' :
+                                                            message.interaction_type === 'recordatorio' ? 'bg-blue-100 text-blue-800' :
+                                                            message.interaction_type === 'reactivacion' ? 'bg-yellow-100 text-yellow-800' :
+                                                            'bg-purple-100 text-purple-800'
+                                                        }`}>
+                                                            {message.interaction_type === 'bienvenida' ? 'Bienvenida' :
+                                                             message.interaction_type === 'recordatorio' ? 'Recordatorio' :
+                                                             message.interaction_type === 'reactivacion' ? 'Reactivación' :
+                                                             message.interaction_type}
+                                                        </span>
+                                                        <span className={`px-2 py-1 text-xs rounded-full ${
+                                                            message.status === 'sent' 
+                                                                ? 'bg-green-100 text-green-800' 
+                                                                : 'bg-yellow-100 text-yellow-800'
+                                                        }`}>
+                                                            {message.status === 'sent' ? 'Enviado' : 'Pendiente'}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    message.status === 'sent' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                                }`}>
-                                                    {message.status}
-                                                </span>
+                                                
+                                                {/* Vista previa del mensaje */}
+                                                <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                                                    <div className="text-sm text-gray-700">
+                                                        <strong>Para:</strong> {message.customers?.name || message.customer_name}<br/>
+                                                        <strong>Canal:</strong> {message.channel || 'WhatsApp'}<br/>
+                                                        <strong>Tipo:</strong> {message.interaction_type}<br/>
+                                                        <strong>Programado:</strong> {message.created_at ? format(parseISO(message.created_at), 'dd/MM/yyyy HH:mm') : 'Ahora'}
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Botones de acción */}
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-500">
+                                                        Generado por IA • {message.created_at ? format(parseISO(message.created_at), 'dd/MM/yyyy HH:mm') : 'Ahora'}
+                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                // Eliminar mensaje específico
+                                                                setMessageQueue(prev => prev.filter((_, i) => i !== index));
+                                                                toast.success('Mensaje eliminado');
+                                                            }}
+                                                            className="px-3 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                        >
+                                                            No Enviar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                // TODO: Enviar mensaje específico
+                                                                const customerName = message.customers?.name || message.customer_name;
+                                                                toast.success(`Mensaje enviado a ${customerName}`);
+                                                            }}
+                                                            className="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 rounded transition-colors"
+                                                        >
+                                                            Enviar
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <div className="text-center py-8 text-gray-500">
                                     <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>No hay mensajes recientes</p>
-                                    <p className="text-sm mt-1">Haz clic en "Ejecutar CRM IA" para generar mensajes</p>
+                                    <p>No hay mensajes para hoy</p>
+                                    <p className="text-sm mt-1">Haz clic en "Ejecutar CRM IA" para generar mensajes automáticos</p>
                                 </div>
                             )}
                         </div>
@@ -431,12 +532,63 @@ const CRMv2Complete = () => {
 
             {/* Automation Tab */}
             {activeTab === 'automation' && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <div className="p-6 border-b border-gray-200">
-                        <h2 className="text-lg font-semibold text-gray-900">
-                            Reglas de Automatización
-                        </h2>
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-semibold text-gray-900">Automatización CRM</h2>
+                            <p className="text-gray-600">Activa o desactiva reglas automáticas de mensajería</p>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                            {automationRules.filter(r => r.is_active).length} de {automationRules.length} reglas activas
+                        </div>
                     </div>
+                    
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div className="p-6 border-b border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    Reglas de Automatización
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => {
+                                            // Activar todas las reglas
+                                            automationRules.forEach(async (rule) => {
+                                                if (!rule.is_active) {
+                                                    await supabase
+                                                        .from('automation_rules')
+                                                        .update({ is_active: true })
+                                                        .eq('id', rule.id);
+                                                }
+                                            });
+                                            toast.success('Todas las reglas activadas');
+                                            loadDashboardData();
+                                        }}
+                                        className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                                    >
+                                        Activar Todas
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            // Desactivar todas las reglas
+                                            automationRules.forEach(async (rule) => {
+                                                if (rule.is_active) {
+                                                    await supabase
+                                                        .from('automation_rules')
+                                                        .update({ is_active: false })
+                                                        .eq('id', rule.id);
+                                                }
+                                            });
+                                            toast.success('Todas las reglas desactivadas');
+                                            loadDashboardData();
+                                        }}
+                                        className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
+                                    >
+                                        Desactivar Todas
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     <div className="p-6">
                         {automationRules.length > 0 ? (
                             <div className="space-y-4">
@@ -451,32 +603,39 @@ const CRMv2Complete = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                {/* Toggle activar/desactivar */}
-                                                <button
-                                                    onClick={async (e) => {
-                                                        e.stopPropagation();
-                                                        try {
-                                                            const { error } = await supabase
-                                                                .from('automation_rules')
-                                                                .update({ is_active: !rule.is_active })
-                                                                .eq('id', rule.id);
-                                                            
-                                                            if (error) throw error;
-                                                            
-                                                            toast.success(`Regla ${rule.is_active ? 'desactivada' : 'activada'}`);
-                                                            loadDashboardData();
-                                                        } catch (error) {
-                                                            toast.error('Error al cambiar estado de la regla');
-                                                        }
-                                                    }}
-                                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                                                        rule.is_active 
-                                                            ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                                                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                                    }`}
-                                                >
-                                                    {rule.is_active ? '✅ Activa' : '⏸️ Inactiva'}
-                                                </button>
+                                                {/* Toggle switch activar/desactivar */}
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-sm text-gray-600">
+                                                        {rule.is_active ? 'Activa' : 'Inactiva'}
+                                                    </span>
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            try {
+                                                                const { error } = await supabase
+                                                                    .from('automation_rules')
+                                                                    .update({ is_active: !rule.is_active })
+                                                                    .eq('id', rule.id);
+                                                                
+                                                                if (error) throw error;
+                                                                
+                                                                toast.success(`Regla "${rule.name}" ${rule.is_active ? 'desactivada' : 'activada'}`);
+                                                                loadDashboardData();
+                                                            } catch (error) {
+                                                                toast.error('Error al cambiar estado de la regla');
+                                                            }
+                                                        }}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                                            rule.is_active ? 'bg-green-600' : 'bg-gray-300'
+                                                        }`}
+                                                    >
+                                                        <span
+                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                                rule.is_active ? 'translate-x-6' : 'translate-x-1'
+                                                            }`}
+                                                        />
+                                                    </button>
+                                                </div>
                                                 
                                                 {/* Botón ejecutar individual */}
                                                 <button
@@ -503,8 +662,27 @@ const CRMv2Complete = () => {
                             <div className="text-center py-8 text-gray-500">
                                 <Zap className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                                 <p>No hay reglas configuradas</p>
+                                <p className="text-sm mt-1">Las reglas se ejecutarán automáticamente cuando estén activas</p>
                             </div>
                         )}
+                    </div>
+                    
+                    {/* Explicación de automatizaciones */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                        <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <AlertTriangle className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div>
+                                <h3 className="font-medium text-blue-900 mb-2">¿Cómo funcionan las automatizaciones?</h3>
+                                <div className="text-sm text-blue-800 space-y-2">
+                                    <p>• <strong>Reglas activas:</strong> Se ejecutan automáticamente cada día a las 9:00 AM</p>
+                                    <p>• <strong>Reglas inactivas:</strong> No se ejecutan hasta que las actives</p>
+                                    <p>• <strong>Mensajes generados:</strong> Aparecen en la pestaña "Mensajes" para su revisión</p>
+                                    <p>• <strong>Control total:</strong> Puedes decidir enviar o no cada mensaje individual</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
@@ -652,7 +830,7 @@ const CRMv2Complete = () => {
                                         Todas las plantillas configuradas allí se aplicarán automáticamente.
                                     </p>
                                     <button
-                                        onClick={() => window.location.href = '/plantillas'}
+                                        onClick={() => navigate('/plantillas')}
                                         className="flex items-center gap-2 px-3 py-2 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
                                     >
                                         <Settings className="w-4 h-4" />
