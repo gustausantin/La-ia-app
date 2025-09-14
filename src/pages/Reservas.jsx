@@ -523,14 +523,13 @@ export default function Reservas() {
             if (reservationsToComplete.length > 0) {
                 toast.success(`🤖 ${reservationsToComplete.length} reservas de ayer marcadas como completadas automáticamente`);
                 
-                // Recargar reservas para mostrar cambios
-                loadReservations();
+                // Las reservas se recargarán automáticamente en el siguiente ciclo
             }
             
         } catch (error) {
             console.error('Error en auto-completado:', error);
         }
-    }, [restaurantId, loadReservations]);
+    }, [restaurantId]); // 🔧 CORRECCIÓN: Quitar loadReservations para evitar dependencia circular
 
     // Cargar estadísticas REALES del agente IA
     const loadAgentStats = useCallback(async (reservations) => {
