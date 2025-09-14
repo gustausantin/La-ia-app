@@ -35,6 +35,10 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const Configuracion = lazy(() => import('./pages/Configuracion'));
 const CRMProximosMensajes = lazy(() => import('./pages/CRMProximosMensajes'));
 
+// 🚀 CRM v2 - Nuevas páginas
+const Consumos = lazy(() => import('./pages/Consumos'));
+const CRMv2 = lazy(() => import('./pages/CRMv2'));
+
 // Componente de carga mejorado
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -130,6 +134,22 @@ function AppContent() {
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <CRMInteligente />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/crm-v2" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <CRMv2 />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/consumos" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <Consumos />
                   </Suspense>
                 } 
               />
