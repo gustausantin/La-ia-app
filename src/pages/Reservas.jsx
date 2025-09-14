@@ -415,7 +415,7 @@ export default function Reservas() {
         status: "",
         channel: "",
         source: "",
-        period: "month", // 🔧 CORRECCIÓN: Por defecto mostrar historial del mes
+        period: "last_month", // 🔧 Por defecto mostrar último mes
     });
 
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -443,20 +443,26 @@ export default function Reservas() {
                     end: format(tomorrow, "yyyy-MM-dd"),
                 };
             case "week":
-                // 🔧 CORRECCIÓN: Incluir historial de la semana
-                const startOfWeek = subDays(today, 7);
-                const endOfWeek = addDays(today, 7);
+                // Esta semana (desde lunes hasta domingo)
+                const startOfWeek = subDays(today, today.getDay() === 0 ? 6 : today.getDay() - 1);
+                const endOfWeek = addDays(startOfWeek, 6);
                 return {
                     start: format(startOfWeek, "yyyy-MM-dd"),
                     end: format(endOfWeek, "yyyy-MM-dd"),
                 };
-            case "month":
-                // 🔧 CORRECCIÓN: Incluir historial del mes completo
-                const startOfMonth = subDays(today, 30);
-                const endOfMonth = addDays(today, 30);
+            case "last_month":
+                // Último mes (30 días hacia atrás desde hoy)
+                const startLastMonth = subDays(today, 30);
                 return {
-                    start: format(startOfMonth, "yyyy-MM-dd"),
-                    end: format(endOfMonth, "yyyy-MM-dd"),
+                    start: format(startLastMonth, "yyyy-MM-dd"),
+                    end: format(today, "yyyy-MM-dd"),
+                };
+            case "last_two_months":
+                // Últimos 2 meses (60 días hacia atrás desde hoy)
+                const startLastTwoMonths = subDays(today, 60);
+                return {
+                    start: format(startLastTwoMonths, "yyyy-MM-dd"),
+                    end: format(today, "yyyy-MM-dd"),
                 };
             default:
                 return {
@@ -465,6 +471,66 @@ export default function Reservas() {
                 };
         }
     }, []);
+    
+    // 🤖 AUTOMATIZACIÓN: Completar reservas automáticamente
+    const autoCompleteReservations = useCallback(async () => {
+        if (!restaurantId) return;
+        
+        try {
+            const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+            
+            console.log('🤖 Buscando reservas para auto-completar del:', yesterday);
+            
+            // Buscar reservas de ayer que estén confirmadas o sentadas
+            const { data: reservationsToComplete, error } = await supabase
+                .from('reservations')
+                .select('id, customer_name, status, reservation_date')
+                .eq('restaurant_id', restaurantId)
+                .eq('reservation_date', yesterday)
+                .in('status', ['confirmed', 'seated']);
+                
+            if (error) {
+                console.error('Error buscando reservas para completar:', error);
+                return;
+            }
+            
+            if (!reservationsToComplete || reservationsToComplete.length === 0) {
+                console.log('✅ No hay reservas de ayer para auto-completar');
+                return;
+            }
+            
+            console.log(`🤖 Encontradas ${reservationsToComplete.length} reservas para completar:`);
+            reservationsToComplete.forEach(r => {
+                console.log(`  - ${r.customer_name} (${r.status})`);
+            });
+            
+            // Actualizar todas a "completed"
+            const reservationIds = reservationsToComplete.map(r => r.id);
+            
+            const { error: updateError } = await supabase
+                .from('reservations')
+                .update({ status: 'completed' })
+                .in('id', reservationIds);
+                
+            if (updateError) {
+                console.error('Error auto-completando reservas:', updateError);
+                return;
+            }
+            
+            console.log(`✅ ${reservationsToComplete.length} reservas auto-completadas exitosamente`);
+            
+            // Mostrar notificación al usuario
+            if (reservationsToComplete.length > 0) {
+                toast.success(`🤖 ${reservationsToComplete.length} reservas de ayer marcadas como completadas automáticamente`);
+                
+                // Recargar reservas para mostrar cambios
+                loadReservations();
+            }
+            
+        } catch (error) {
+            console.error('Error en auto-completado:', error);
+        }
+    }, [restaurantId, loadReservations]);
 
     // Cargar estadísticas REALES del agente IA
     const loadAgentStats = useCallback(async (reservations) => {
@@ -898,6 +964,7 @@ export default function Reservas() {
                 loadReservations(),
                 loadTables(),
                 loadAgentInsights(),
+                autoCompleteReservations(), // 🤖 Auto-completar reservas de ayer
             ]).finally(() => setLoading(false));
         }
     }, [isReady, restaurantId]); // SOLO dependencies estables
@@ -1268,10 +1335,11 @@ export default function Reservas() {
                             }
                             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
-                            <option value="today">📅 Solo hoy</option>
-                            <option value="tomorrow">📆 Solo mañana</option>
-                            <option value="week">📅 Últimas 2 semanas</option>
-                            <option value="month">📅 Últimos 2 meses (por defecto)</option>
+                            <option value="today">📅 Hoy</option>
+                            <option value="tomorrow">📆 Mañana</option>
+                            <option value="week">📅 Esta semana</option>
+                            <option value="last_month">📅 Último mes</option>
+                            <option value="last_two_months">📅 Últimos 2 meses</option>
                         </select>
                     </div>
                 </div>
