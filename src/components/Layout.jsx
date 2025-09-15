@@ -75,15 +75,9 @@ export default function Layout() {
         { name: "Clientes", path: "/clientes", icon: Users, badge: null },
         {
             name: "CRM Inteligente",
-            path: "/crm",
-            icon: Brain,
-            badge: null, // TODO: Implementar contador de sugerencias IA
-        },
-        {
-            name: "🚀 CRM v2",
             path: "/crm-v2",
-            icon: Zap,
-            badge: "NUEVO",
+            icon: Brain,
+            badge: null,
         },
         {
             name: "Consumos",
