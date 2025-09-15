@@ -38,6 +38,7 @@ const CRMProximosMensajes = lazy(() => import('./pages/CRMProximosMensajes'));
 // 🚀 CRM v2 - Nuevas páginas
 const Consumos = lazy(() => import('./pages/Consumos'));
 const CRMv2 = lazy(() => import('./pages/CRMv2Complete'));
+const AvailabilityTester = lazy(() => import('./components/AvailabilityTester'));
 
 // Componente de carga mejorado
 const LoadingScreen = () => (
@@ -150,6 +151,14 @@ function AppContent() {
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <Consumos />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/availability-test" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <AvailabilityTester />
                   </Suspense>
                 } 
               />
