@@ -289,17 +289,17 @@ const CRMv2Complete = () => {
         let content = template.content_markdown || template.content || '';
         let subject = template.subject || '';
         
-        // Reemplazar variables comunes
+        // Reemplazar variables comunes (formato {{variable}})
         const replacements = {
-            '{restaurant_name}': restaurantName,
-            '{customer_name}': customerName,
-            '{first_name}': customer.first_name || customer.name || 'Cliente',
-            '{last_name}': customer.last_name1 || '',
-            '{last_visit_date}': customer.last_visit_at ? format(parseISO(customer.last_visit_at), 'dd/MM/yyyy') : 'hace tiempo',
-            '{visits_count}': customer.visits_count || 0,
-            '{total_spent}': `€${(customer.total_spent || 0).toFixed(0)}`,
-            '{avg_ticket}': `€${(customer.avg_ticket || 0).toFixed(0)}`,
-            '{segment}': customer.segment_auto || customer.segment_manual || 'nuevo'
+            '{{restaurant_name}}': restaurantName,
+            '{{customer_name}}': customerName,
+            '{{first_name}}': customer.first_name || customer.name || 'Cliente',
+            '{{last_name}}': customer.last_name1 || '',
+            '{{last_visit_date}}': customer.last_visit_at ? format(parseISO(customer.last_visit_at), 'dd/MM/yyyy') : 'hace tiempo',
+            '{{visits_count}}': customer.visits_count || 0,
+            '{{total_spent}}': `€${(customer.total_spent || 0).toFixed(0)}`,
+            '{{avg_ticket}}': `€${(customer.avg_ticket || 0).toFixed(0)}`,
+            '{{segment}}': customer.segment_auto || customer.segment_manual || 'nuevo'
         };
         
         // Reemplazar en contenido
@@ -487,7 +487,7 @@ El equipo del restaurante`,
                     </div>
 
                     <div className="text-sm text-purple-600">
-                        Usa la pestaña "Mensajes" para ejecutar CRM IA
+                        Usa la pestaña "Mensajes" para generar mensajes automáticos
                     </div>
                 </div>
 
@@ -668,7 +668,7 @@ El equipo del restaurante`,
                             className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg disabled:opacity-50"
                         >
                             {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-                            <span className="font-medium">{loading ? "Generando..." : "Ejecutar CRM IA"}</span>
+                            <span className="font-medium">{loading ? "Generando..." : "Generar Mensajes"}</span>
                         </button>
                     </div>
 
@@ -764,7 +764,7 @@ El equipo del restaurante`,
                                                         {/* CONTENIDO COMPLETO DEL MENSAJE */}
                                                         <div className="border-t border-gray-200 pt-2">
                                                             <strong>Mensaje:</strong>
-                                                            <div className="mt-1 p-2 bg-white rounded border text-sm whitespace-pre-wrap">
+                                                            <div className="mt-1 p-3 bg-white rounded border whitespace-pre-wrap">
                                                                 {message.content || message.message || `Hola ${message.customers?.name || message.customer_name},
 
 ¡Te echamos de menos en nuestro restaurante! 
@@ -817,7 +817,7 @@ El equipo del restaurante`}
                                 <div className="text-center py-8 text-gray-500">
                                     <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                                     <p>No hay mensajes para hoy</p>
-                                    <p className="text-sm mt-1">Haz clic en "Ejecutar CRM IA" para generar mensajes automáticos</p>
+                                    <p className="text-sm mt-1">Haz clic en "Generar Mensajes" para crear mensajes automáticos personalizados</p>
                                 </div>
                             )}
                         </div>
