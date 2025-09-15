@@ -28,11 +28,11 @@ const CUSTOMER_SEGMENTS = {
         description: "Cliente con visitas regulares",
         priority: 2
     },
-    bib: { 
-        label: "BIB", 
+    vip: { 
+        label: "VIP", 
         icon: "👑", 
         color: "purple",
-        description: "Best In Business - Cliente prioritario",
+        description: "Very Important Person - Cliente prioritario",
         priority: 5
     },
     inactivo: { 
@@ -63,7 +63,13 @@ export default function Clientes() {
     const [showCustomerModal, setShowCustomerModal] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [modalMode, setModalMode] = useState('view'); // 'view', 'edit', 'create'
-    const [filters, setFilters] = useState({ search: "" });
+    const [filters, setFilters] = useState({ 
+        search: "", 
+        segment: "", 
+        vip: "", 
+        visitCount: "",
+        spentRange: ""
+    });
 
     // Cargar clientes
     const loadCustomers = useCallback(async () => {
@@ -133,15 +139,49 @@ export default function Clientes() {
         setShowCustomerModal(true);
     };
 
-    // Filtrar clientes
+    // Filtrar clientes con filtros avanzados
     const filteredCustomers = customers.filter(customer => {
-        if (!filters.search) return true;
-        const searchTerm = filters.search.toLowerCase();
-        return (
-            customer.name.toLowerCase().includes(searchTerm) ||
-            customer.email?.toLowerCase().includes(searchTerm) ||
-            customer.phone?.includes(searchTerm)
-        );
+        // Filtro por búsqueda de texto
+        if (filters.search) {
+            const searchTerm = filters.search.toLowerCase();
+            const matchesSearch = (
+                customer.name.toLowerCase().includes(searchTerm) ||
+                customer.email?.toLowerCase().includes(searchTerm) ||
+                customer.phone?.includes(searchTerm)
+            );
+            if (!matchesSearch) return false;
+        }
+
+        // Filtro por segmento
+        if (filters.segment) {
+            const customerSegment = customer.segment_manual || customer.segment_auto || 'nuevo';
+            if (customerSegment !== filters.segment) return false;
+        }
+
+        // Filtro por VIP
+        if (filters.vip) {
+            const isVip = customer.total_spent >= 500; // Consideramos VIP si ha gastado más de €500
+            if (filters.vip === 'vip' && !isVip) return false;
+            if (filters.vip === 'regular' && isVip) return false;
+        }
+
+        // Filtro por número de visitas
+        if (filters.visitCount) {
+            const visits = customer.visits_count || 0;
+            if (filters.visitCount === 'new' && visits > 1) return false;
+            if (filters.visitCount === 'frequent' && visits < 5) return false;
+            if (filters.visitCount === 'loyal' && visits < 10) return false;
+        }
+
+        // Filtro por rango de gasto
+        if (filters.spentRange) {
+            const spent = customer.total_spent || 0;
+            if (filters.spentRange === 'low' && spent >= 100) return false;
+            if (filters.spentRange === 'medium' && (spent < 100 || spent >= 500)) return false;
+            if (filters.spentRange === 'high' && spent < 500) return false;
+        }
+
+        return true;
     });
 
     // Effects
@@ -219,63 +259,180 @@ export default function Clientes() {
                     </div>
                 </div>
 
-                {/* Stats rápidas */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Total Clientes</p>
-                                <p className="text-2xl font-bold text-gray-900">{customers.length}</p>
+                {/* Dashboard de Clientes - Métricas por Segmento */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Estado de la Base de Clientes</h2>
+                    
+                    {/* Resumen general */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                            <div className="text-2xl font-bold text-gray-900">{customers.length}</div>
+                            <div className="text-sm text-gray-600">Total Clientes</div>
+                        </div>
+                        <div className="text-center p-3 bg-green-50 rounded-lg">
+                            <div className="text-2xl font-bold text-green-600">
+                                {customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length}
                             </div>
-                            <Users className="w-8 h-8 text-blue-500" />
+                            <div className="text-sm text-green-700">⭐ Activos</div>
+                        </div>
+                        <div className="text-center p-3 bg-purple-50 rounded-lg">
+                            <div className="text-2xl font-bold text-purple-600">
+                                {customers.filter(c => (c.total_spent || 0) >= 500).length}
+                            </div>
+                            <div className="text-sm text-purple-700">👑 VIPs</div>
+                        </div>
+                        <div className="text-center p-3 bg-orange-50 rounded-lg">
+                            <div className="text-2xl font-bold text-orange-600">
+                                {customers.filter(c => (c.segment_manual || c.segment_auto) === 'riesgo').length}
+                            </div>
+                            <div className="text-sm text-orange-700">⚠️ En Riesgo</div>
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Nuevos (30d)</p>
-                                <p className="text-2xl font-bold text-green-600">
-                                    {customers.filter(c => differenceInDays(new Date(), new Date(c.created_at)) <= 30).length}
-                                </p>
-                            </div>
-                            <TrendingUp className="w-8 h-8 text-green-500" />
-                        </div>
+
+                    {/* Desglose por segmentos con porcentajes */}
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        {Object.entries(CUSTOMER_SEGMENTS).map(([key, segment]) => {
+                            const count = customers.filter(c => (c.segment_manual || c.segment_auto) === key).length;
+                            const percentage = customers.length > 0 ? Math.round((count / customers.length) * 100) : 0;
+                            
+                            return (
+                                <div 
+                                    key={key} 
+                                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                                        filters.segment === key 
+                                            ? `border-${segment.color}-500 bg-${segment.color}-50` 
+                                            : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                    onClick={() => setFilters({...filters, segment: filters.segment === key ? '' : key})}
+                                >
+                                    <div className="text-center">
+                                        <div className="text-2xl mb-2">{segment.icon}</div>
+                                        <div className="text-xl font-bold text-gray-900">{count}</div>
+                                        <div className={`text-sm font-medium text-${segment.color}-700`}>
+                                            {segment.label}
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            {percentage}% del total
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+
+                    {/* Indicador de salud general */}
+                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600">Total Gastado</p>
-                                <p className="text-2xl font-bold text-purple-600">
-                                    €{customers.reduce((sum, c) => sum + (c.total_spent || 0), 0).toFixed(2)}
-                                </p>
+                                <div className="text-sm text-gray-600">Salud de la Base de Clientes</div>
+                                <div className="text-lg font-semibold text-gray-900">
+                                    {(() => {
+                                        const activePercentage = customers.length > 0 
+                                            ? (customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length / customers.length) * 100 
+                                            : 0;
+                                        if (activePercentage >= 60) return "🟢 Excelente";
+                                        if (activePercentage >= 40) return "🟡 Buena";
+                                        if (activePercentage >= 20) return "🟠 Regular";
+                                        return "🔴 Necesita atención";
+                                    })()}
+                                </div>
                             </div>
-                            <DollarSign className="w-8 h-8 text-purple-500" />
-                        </div>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Activos</p>
-                                <p className="text-2xl font-bold text-emerald-600">
-                                    {customers.filter(c => c.last_visit_at && differenceInDays(new Date(), new Date(c.last_visit_at)) <= 60).length}
-                                </p>
+                            <div className="text-right">
+                                <div className="text-sm text-gray-600">Ingresos Totales</div>
+                                <div className="text-lg font-bold text-green-600">
+                                    €{customers.reduce((sum, c) => sum + (c.total_spent || 0), 0).toFixed(0)}
+                                </div>
                             </div>
-                            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                         </div>
                     </div>
                 </div>
 
-                {/* Filtros */}
+                {/* Filtros Avanzados */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Buscar por nombre, email o teléfono..."
-                            value={filters.search}
-                            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                    <div className="space-y-4">
+                        {/* Búsqueda por texto */}
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input
+                                type="text"
+                                placeholder="Buscar por nombre, email o teléfono..."
+                                value={filters.search}
+                                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+
+                        {/* Filtros adicionales */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            {/* Filtro por VIP */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cliente</label>
+                                <select
+                                    value={filters.vip}
+                                    onChange={(e) => setFilters({ ...filters, vip: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">Todos</option>
+                                    <option value="vip">👑 VIP (€500+)</option>
+                                    <option value="regular">Regular</option>
+                                </select>
+                            </div>
+
+                            {/* Filtro por frecuencia de visitas */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Frecuencia</label>
+                                <select
+                                    value={filters.visitCount}
+                                    onChange={(e) => setFilters({ ...filters, visitCount: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">Todas</option>
+                                    <option value="new">👋 Nuevos (1 visita)</option>
+                                    <option value="frequent">🔄 Frecuentes (5+)</option>
+                                    <option value="loyal">⭐ Fieles (10+)</option>
+                                </select>
+                            </div>
+
+                            {/* Filtro por rango de gasto */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Gasto Total</label>
+                                <select
+                                    value={filters.spentRange}
+                                    onChange={(e) => setFilters({ ...filters, spentRange: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">Todos</option>
+                                    <option value="low">💚 Bajo (&lt;€100)</option>
+                                    <option value="medium">💛 Medio (€100-€500)</option>
+                                    <option value="high">💜 Alto (€500+)</option>
+                                </select>
+                            </div>
+
+                            {/* Botón limpiar filtros */}
+                            <div className="flex items-end">
+                                <button
+                                    onClick={() => setFilters({ search: "", segment: "", vip: "", visitCount: "", spentRange: "" })}
+                                    className="w-full px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                >
+                                    <X className="w-4 h-4 mx-auto" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Contador de resultados */}
+                        <div className="flex items-center justify-between text-sm text-gray-600">
+                            <span>
+                                Mostrando {filteredCustomers.length} de {customers.length} clientes
+                                {(filters.search || filters.segment || filters.vip || filters.visitCount || filters.spentRange) && 
+                                    " (filtrados)"
+                                }
+                            </span>
+                            {filters.segment && (
+                                <span className="text-blue-600 font-medium">
+                                    Filtro activo: {CUSTOMER_SEGMENTS[filters.segment]?.label}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
