@@ -479,10 +479,10 @@ El equipo del restaurante`,
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                             <Brain className="w-6 h-6 text-purple-600" />
-                            CRM v2 - Inteligencia Artificial
+                            CRM Inteligente
                         </h1>
                         <p className="text-gray-600 mt-1">
-                            Sistema CRM con segmentación AIVI y automatización inteligente
+                            El corazón de tu restaurante - Gestión automática de clientes con IA
                         </p>
                     </div>
 
@@ -518,25 +518,17 @@ El equipo del restaurante`,
             {/* Dashboard Tab - MÉTRICAS REALES CON DATOS DE SUPABASE */}
             {activeTab === 'dashboard' && (
                 <div className="space-y-6">
-                    {/* 1. ESTA SEMANA - Números grandes y visuales */}
-                    <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white">
-                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <BarChart3 className="w-6 h-6" />
-                            Esta Semana
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="text-center">
-                                <div className="text-3xl font-bold">{dashboardMetrics.thisWeek.messagesSent}</div>
-                                <div className="text-purple-100">Mensajes enviados ✉️</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-3xl font-bold">{dashboardMetrics.thisWeek.customersReturned}</div>
-                                <div className="text-purple-100">Clientes que regresaron ↩️</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-3xl font-bold">€{dashboardMetrics.thisWeek.roi}</div>
-                                <div className="text-purple-100">ROI estimado 💰</div>
-                            </div>
+                    {/* 1. ROI COMO GRAN TITULAR */}
+                    <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-6 text-white text-center">
+                        <div className="text-sm text-green-100 mb-2">💰 Impacto Total del CRM esta semana</div>
+                        <div className="text-4xl font-bold mb-2">
+                            €{(dashboardMetrics.roiBreakdown.welcomes.revenue + 
+                               dashboardMetrics.roiBreakdown.reactivations.revenue + 
+                               dashboardMetrics.roiBreakdown.vips.revenue + 
+                               dashboardMetrics.roiBreakdown.risk.revenue)}
+                        </div>
+                        <div className="text-green-100">
+                            {dashboardMetrics.thisWeek.messagesSent} mensajes enviados → {dashboardMetrics.thisWeek.customersReturned} clientes regresaron
                         </div>
                     </div>
 
@@ -608,151 +600,29 @@ El equipo del restaurante`,
                         </div>
                     </div>
 
-                    {/* 4. DESGLOSE ROI POR AUTOMATIZACIÓN - VENDER EL VALOR */}
+                    {/* 2. RESUMEN COMPACTO DE ACCIONES */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <DollarSign className="w-5 h-5 text-green-600" />
-                            ROI por Tipo de Automatización
-                        </h3>
-                        <div className="text-sm text-gray-600 mb-4">
-                            Analiza qué automatizaciones están generando más valor
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {/* Bienvenidas */}
-                            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="text-lg">👋</div>
-                                    <div className="font-semibold text-blue-800">Bienvenidas</div>
-                                </div>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-blue-700">Contactados:</span>
-                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.welcomes.contacted}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-blue-700">Regresaron:</span>
-                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.welcomes.returned}</span>
-                                    </div>
-                                    <div className="border-t border-blue-200 pt-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-blue-700 font-medium">Ingresos:</span>
-                                            <span className="text-lg font-bold text-blue-800">€{dashboardMetrics.roiBreakdown.welcomes.revenue}</span>
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-blue-600">
-                                        {dashboardMetrics.roiBreakdown.welcomes.contacted > 0 
-                                            ? `${Math.round((dashboardMetrics.roiBreakdown.welcomes.returned / dashboardMetrics.roiBreakdown.welcomes.contacted) * 100)}% conversión`
-                                            : 'Sin datos'
-                                        }
-                                    </div>
-                                </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen de Acciones CRM</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                <div className="text-2xl font-bold text-blue-600">{dashboardMetrics.roiBreakdown.welcomes.returned}</div>
+                                <div className="text-sm text-blue-700">👋 Bienvenidas exitosas</div>
+                                <div className="text-xs text-blue-600">€{dashboardMetrics.roiBreakdown.welcomes.revenue}</div>
                             </div>
-
-                            {/* Reactivaciones */}
-                            <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="text-lg">🔄</div>
-                                    <div className="font-semibold text-orange-800">Reactivaciones</div>
-                                </div>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-orange-700">Contactados:</span>
-                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.reactivations.contacted}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-orange-700">Recuperados:</span>
-                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.reactivations.returned}</span>
-                                    </div>
-                                    <div className="border-t border-orange-200 pt-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-orange-700 font-medium">Recuperado:</span>
-                                            <span className="text-lg font-bold text-orange-800">€{dashboardMetrics.roiBreakdown.reactivations.revenue}</span>
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-orange-600">
-                                        {dashboardMetrics.roiBreakdown.reactivations.contacted > 0 
-                                            ? `${Math.round((dashboardMetrics.roiBreakdown.reactivations.returned / dashboardMetrics.roiBreakdown.reactivations.contacted) * 100)}% éxito`
-                                            : 'Sin datos'
-                                        }
-                                    </div>
-                                </div>
+                            <div className="text-center p-3 bg-orange-50 rounded-lg">
+                                <div className="text-2xl font-bold text-orange-600">{dashboardMetrics.roiBreakdown.reactivations.returned}</div>
+                                <div className="text-sm text-orange-700">🔄 Clientes recuperados</div>
+                                <div className="text-xs text-orange-600">€{dashboardMetrics.roiBreakdown.reactivations.revenue}</div>
                             </div>
-
-                            {/* VIPs */}
-                            <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="text-lg">👑</div>
-                                    <div className="font-semibold text-purple-800">VIPs</div>
-                                </div>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-purple-700">Contactados:</span>
-                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.vips.contacted}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-purple-700">Reservaron:</span>
-                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.vips.returned}</span>
-                                    </div>
-                                    <div className="border-t border-purple-200 pt-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-purple-700 font-medium">Premium:</span>
-                                            <span className="text-lg font-bold text-purple-800">€{dashboardMetrics.roiBreakdown.vips.revenue}</span>
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-purple-600">
-                                        {dashboardMetrics.roiBreakdown.vips.contacted > 0 
-                                            ? `${Math.round((dashboardMetrics.roiBreakdown.vips.returned / dashboardMetrics.roiBreakdown.vips.contacted) * 100)}% respuesta`
-                                            : 'Sin datos'
-                                        }
-                                    </div>
-                                </div>
+                            <div className="text-center p-3 bg-purple-50 rounded-lg">
+                                <div className="text-2xl font-bold text-purple-600">{dashboardMetrics.roiBreakdown.vips.returned}</div>
+                                <div className="text-sm text-purple-700">👑 VIPs activos</div>
+                                <div className="text-xs text-purple-600">€{dashboardMetrics.roiBreakdown.vips.revenue}</div>
                             </div>
-
-                            {/* En Riesgo */}
-                            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="text-lg">⚠️</div>
-                                    <div className="font-semibold text-yellow-800">En Riesgo</div>
-                                </div>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-yellow-700">Contactados:</span>
-                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.risk.contacted}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-yellow-700">Salvados:</span>
-                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.risk.saved}</span>
-                                    </div>
-                                    <div className="border-t border-yellow-200 pt-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-yellow-700 font-medium">No perdido:</span>
-                                            <span className="text-lg font-bold text-yellow-800">€{dashboardMetrics.roiBreakdown.risk.revenue}</span>
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-yellow-600">
-                                        {dashboardMetrics.roiBreakdown.risk.contacted > 0 
-                                            ? `${Math.round((dashboardMetrics.roiBreakdown.risk.saved / dashboardMetrics.roiBreakdown.risk.contacted) * 100)}% salvados`
-                                            : 'Sin datos'
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Resumen Total */}
-                        <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
-                            <div className="text-center">
-                                <div className="text-sm text-green-700 mb-1">💡 <strong>Impacto Total del CRM esta semana:</strong></div>
-                                <div className="text-2xl font-bold text-green-800">
-                                    €{(dashboardMetrics.roiBreakdown.welcomes.revenue + 
-                                       dashboardMetrics.roiBreakdown.reactivations.revenue + 
-                                       dashboardMetrics.roiBreakdown.vips.revenue + 
-                                       dashboardMetrics.roiBreakdown.risk.revenue)}
-                                </div>
-                                <div className="text-sm text-green-600">
-                                    Sin el CRM, estos ingresos se habrían perdido o no generado
-                                </div>
+                            <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                                <div className="text-2xl font-bold text-yellow-600">{dashboardMetrics.roiBreakdown.risk.saved}</div>
+                                <div className="text-sm text-yellow-700">⚠️ Clientes salvados</div>
+                                <div className="text-xs text-yellow-600">€{dashboardMetrics.roiBreakdown.risk.revenue}</div>
                             </div>
                         </div>
                     </div>
@@ -787,9 +657,19 @@ El equipo del restaurante`,
             {/* Messages Tab - MEJORADO COMO CRM INTELIGENTE */}
             {activeTab === 'messages' && (
                 <div className="space-y-6">
-                    <div>
-                        <h2 className="text-xl font-semibold text-gray-900">Mensajes CRM IA</h2>
-                        <p className="text-gray-600">Usa el botón "Ejecutar CRM IA" del header para generar mensajes automáticos del día</p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-semibold text-gray-900">Mensajes CRM IA</h2>
+                            <p className="text-gray-600">Ejecuta el CRM IA para generar mensajes automáticos del día</p>
+                        </div>
+                        <button
+                            onClick={executeAutomationRules}
+                            disabled={loading}
+                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg disabled:opacity-50"
+                        >
+                            {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
+                            <span className="font-medium">{loading ? "Generando..." : "Ejecutar CRM IA"}</span>
+                        </button>
                     </div>
 
                     {/* Mensajes del Día */}
