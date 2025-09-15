@@ -8,7 +8,7 @@ import { Mail, Phone } from 'lucide-react';
 import {
     Brain, Users, MessageSquare, Settings, BarChart3, 
     Zap, RefreshCw, Crown, Star, CheckCircle2, 
-    AlertTriangle, Clock, Save, Send
+    AlertTriangle, Clock, Save, Send, DollarSign
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CustomerModal from '../components/CustomerModal';
@@ -28,7 +28,13 @@ const CRMv2Complete = () => {
         thisWeek: { messagesSent: 0, customersReturned: 0, roi: 0 },
         reactivations: { contacted: 0, returned: 0, percentage: 0, upcoming: 0 },
         quickActions: { newWelcomes: 0, vipReminders: 0, inactiveReactivations: 0 },
-        segments: { active: 0, risk: 0, inactive: 0 }
+        segments: { active: 0, risk: 0, inactive: 0 },
+        roiBreakdown: {
+            welcomes: { contacted: 0, returned: 0, revenue: 0 },
+            reactivations: { contacted: 0, returned: 0, revenue: 0 },
+            vips: { contacted: 0, returned: 0, revenue: 0 },
+            risk: { contacted: 0, saved: 0, revenue: 0 }
+        }
     });
     
     // Estados para modal de cliente
@@ -188,6 +194,38 @@ const CRMv2Complete = () => {
             const riskCount = customers.filter(c => (c.segment_auto || c.segment_manual) === 'riesgo').length;
             const inactiveCount = customers.filter(c => (c.segment_auto || c.segment_manual) === 'inactivo').length;
 
+            // 7. DESGLOSE ROI POR TIPO DE AUTOMATIZACIÓN
+            // Bienvenidas - Clientes nuevos contactados
+            const welcomeMessages = weeklyMessages?.filter(m => 
+                customers.find(c => c.id === m.customer_id && (c.segment_auto || c.segment_manual) === 'nuevo')
+            ) || [];
+            const welcomeCustomerIds = welcomeMessages.map(m => m.customer_id);
+            const welcomeReservations = weeklyReservations?.filter(r => welcomeCustomerIds.includes(r.customer_id)) || [];
+            const welcomeRevenue = (weeklyTickets?.filter(t => welcomeCustomerIds.includes(t.customer_id)) || [])
+                .reduce((sum, t) => sum + (t.total_amount || 0), 0);
+
+            // VIPs contactados
+            const vipMessages = weeklyMessages?.filter(m => 
+                customers.find(c => c.id === m.customer_id && c.total_spent > 500)
+            ) || [];
+            const vipCustomerIds = vipMessages.map(m => m.customer_id);
+            const vipReservations = weeklyReservations?.filter(r => vipCustomerIds.includes(r.customer_id)) || [];
+            const vipRevenue = (weeklyTickets?.filter(t => vipCustomerIds.includes(t.customer_id)) || [])
+                .reduce((sum, t) => sum + (t.total_amount || 0), 0);
+
+            // En Riesgo contactados
+            const riskMessages = weeklyMessages?.filter(m => 
+                customers.find(c => c.id === m.customer_id && (c.segment_auto || c.segment_manual) === 'riesgo')
+            ) || [];
+            const riskCustomerIds = riskMessages.map(m => m.customer_id);
+            const riskReservations = weeklyReservations?.filter(r => riskCustomerIds.includes(r.customer_id)) || [];
+            const riskRevenue = (weeklyTickets?.filter(t => riskCustomerIds.includes(t.customer_id)) || [])
+                .reduce((sum, t) => sum + (t.total_amount || 0), 0);
+
+            // Reactivaciones (ya calculado arriba)
+            const reactivationRevenue = (weeklyTickets?.filter(t => returnedInactiveIds.includes(t.customer_id)) || [])
+                .reduce((sum, t) => sum + (t.total_amount || 0), 0);
+
             // Actualizar métricas del dashboard
             setDashboardMetrics({
                 thisWeek: {
@@ -213,6 +251,28 @@ const CRMv2Complete = () => {
                     active: activeCount,
                     risk: riskCount,
                     inactive: inactiveCount
+                },
+                roiBreakdown: {
+                    welcomes: {
+                        contacted: welcomeMessages.length,
+                        returned: [...new Set(welcomeReservations.map(r => r.customer_id))].length,
+                        revenue: Math.round(welcomeRevenue)
+                    },
+                    reactivations: {
+                        contacted: contactedInactiveIds.length,
+                        returned: [...new Set(returnedInactiveIds)].length,
+                        revenue: Math.round(reactivationRevenue)
+                    },
+                    vips: {
+                        contacted: vipMessages.length,
+                        returned: [...new Set(vipReservations.map(r => r.customer_id))].length,
+                        revenue: Math.round(vipRevenue)
+                    },
+                    risk: {
+                        contacted: riskMessages.length,
+                        saved: [...new Set(riskReservations.map(r => r.customer_id))].length,
+                        revenue: Math.round(riskRevenue)
+                    }
                 }
             });
 
@@ -519,7 +579,156 @@ El equipo del restaurante`,
                         </div>
                     </div>
 
-                    {/* 4. ESTADO GENERAL */}
+                    {/* 4. DESGLOSE ROI POR AUTOMATIZACIÓN - VENDER EL VALOR */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <DollarSign className="w-5 h-5 text-green-600" />
+                            ROI por Tipo de Automatización
+                        </h3>
+                        <div className="text-sm text-gray-600 mb-4">
+                            Analiza qué automatizaciones están generando más valor
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {/* Bienvenidas */}
+                            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="text-lg">👋</div>
+                                    <div className="font-semibold text-blue-800">Bienvenidas</div>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-blue-700">Contactados:</span>
+                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.welcomes.contacted}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-blue-700">Regresaron:</span>
+                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.welcomes.returned}</span>
+                                    </div>
+                                    <div className="border-t border-blue-200 pt-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-blue-700 font-medium">Ingresos:</span>
+                                            <span className="text-lg font-bold text-blue-800">€{dashboardMetrics.roiBreakdown.welcomes.revenue}</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-xs text-blue-600">
+                                        {dashboardMetrics.roiBreakdown.welcomes.contacted > 0 
+                                            ? `${Math.round((dashboardMetrics.roiBreakdown.welcomes.returned / dashboardMetrics.roiBreakdown.welcomes.contacted) * 100)}% conversión`
+                                            : 'Sin datos'
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Reactivaciones */}
+                            <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="text-lg">🔄</div>
+                                    <div className="font-semibold text-orange-800">Reactivaciones</div>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-orange-700">Contactados:</span>
+                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.reactivations.contacted}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-orange-700">Recuperados:</span>
+                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.reactivations.returned}</span>
+                                    </div>
+                                    <div className="border-t border-orange-200 pt-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-orange-700 font-medium">Recuperado:</span>
+                                            <span className="text-lg font-bold text-orange-800">€{dashboardMetrics.roiBreakdown.reactivations.revenue}</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-xs text-orange-600">
+                                        {dashboardMetrics.roiBreakdown.reactivations.contacted > 0 
+                                            ? `${Math.round((dashboardMetrics.roiBreakdown.reactivations.returned / dashboardMetrics.roiBreakdown.reactivations.contacted) * 100)}% éxito`
+                                            : 'Sin datos'
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* VIPs */}
+                            <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="text-lg">👑</div>
+                                    <div className="font-semibold text-purple-800">VIPs</div>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-purple-700">Contactados:</span>
+                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.vips.contacted}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-purple-700">Reservaron:</span>
+                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.vips.returned}</span>
+                                    </div>
+                                    <div className="border-t border-purple-200 pt-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-purple-700 font-medium">Premium:</span>
+                                            <span className="text-lg font-bold text-purple-800">€{dashboardMetrics.roiBreakdown.vips.revenue}</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-xs text-purple-600">
+                                        {dashboardMetrics.roiBreakdown.vips.contacted > 0 
+                                            ? `${Math.round((dashboardMetrics.roiBreakdown.vips.returned / dashboardMetrics.roiBreakdown.vips.contacted) * 100)}% respuesta`
+                                            : 'Sin datos'
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* En Riesgo */}
+                            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="text-lg">⚠️</div>
+                                    <div className="font-semibold text-yellow-800">En Riesgo</div>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-yellow-700">Contactados:</span>
+                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.risk.contacted}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-yellow-700">Salvados:</span>
+                                        <span className="font-medium">{dashboardMetrics.roiBreakdown.risk.saved}</span>
+                                    </div>
+                                    <div className="border-t border-yellow-200 pt-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-yellow-700 font-medium">No perdido:</span>
+                                            <span className="text-lg font-bold text-yellow-800">€{dashboardMetrics.roiBreakdown.risk.revenue}</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-xs text-yellow-600">
+                                        {dashboardMetrics.roiBreakdown.risk.contacted > 0 
+                                            ? `${Math.round((dashboardMetrics.roiBreakdown.risk.saved / dashboardMetrics.roiBreakdown.risk.contacted) * 100)}% salvados`
+                                            : 'Sin datos'
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Resumen Total */}
+                        <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                            <div className="text-center">
+                                <div className="text-sm text-green-700 mb-1">💡 <strong>Impacto Total del CRM esta semana:</strong></div>
+                                <div className="text-2xl font-bold text-green-800">
+                                    €{(dashboardMetrics.roiBreakdown.welcomes.revenue + 
+                                       dashboardMetrics.roiBreakdown.reactivations.revenue + 
+                                       dashboardMetrics.roiBreakdown.vips.revenue + 
+                                       dashboardMetrics.roiBreakdown.risk.revenue)}
+                                </div>
+                                <div className="text-sm text-green-600">
+                                    Sin el CRM, estos ingresos se habrían perdido o no generado
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 5. ESTADO GENERAL */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                             <Users className="w-5 h-5 text-gray-600" />
