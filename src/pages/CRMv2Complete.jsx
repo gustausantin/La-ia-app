@@ -17,7 +17,7 @@ const CRMv2Complete = () => {
     const navigate = useNavigate();
     const { restaurant, restaurantId, isReady } = useAuthContext();
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('dashboard');
+    const [activeTab, setActiveTab] = useState('customers');
     const [customerFeatures, setCustomerFeatures] = useState([]);
     const [messageQueue, setMessageQueue] = useState([]);
     const [automationRules, setAutomationRules] = useState([]);
@@ -104,19 +104,141 @@ const CRMv2Complete = () => {
         }
     }, [restaurantId]);
 
-    // Ejecutar CRM IA
+    // Ejecutar CRM IA - VINCULADO CON PLANTILLAS
     const executeAutomationRules = async () => {
         try {
+            setLoading(true);
             toast.loading('Ejecutando CRM IA...');
             
+            // 1. Cargar plantillas de mensaje según tipo
+            const { data: templates, error: templatesError } = await supabase
+                .from('message_templates')
+                .select('*')
+                .eq('restaurant_id', restaurantId)
+                .eq('is_active', true);
+            
+            if (templatesError) {
+                console.error('Error cargando plantillas:', templatesError);
+                // Usar plantillas por defecto si no hay en BD
+            }
+
+            // 2. Generar mensajes según segmentación de cada cliente
+            const newMessages = [];
             const eligibleCustomers = customerFeatures.filter(c => 
                 c.consent_whatsapp || c.consent_email
             );
 
-            toast.success(`${eligibleCustomers.length} clientes elegibles para mensajes automáticos`);
+            for (const customer of eligibleCustomers) {
+                const customerSegment = customer.segment_manual || customer.segment_auto || 'nuevo';
+                
+                // Buscar plantilla para este segmento
+                let template = templates?.find(t => t.segment === customerSegment);
+                
+                // Si no hay plantilla específica, usar plantilla por defecto
+                if (!template) {
+                    const defaultTemplates = {
+                        nuevo: {
+                            subject: "¡Bienvenido a nuestro restaurante!",
+                            content_markdown: `Hola ${customer.first_name || customer.name},
+
+¡Gracias por visitarnos por primera vez! Esperamos que hayas disfrutado de tu experiencia con nosotros.
+
+Como nuevo cliente, queremos asegurarnos de que tengas la mejor experiencia posible.
+
+¡Esperamos verte pronto de nuevo!
+
+El equipo del restaurante`,
+                            channel: 'whatsapp'
+                        },
+                        activo: {
+                            subject: "Gracias por ser parte de nuestro restaurante",
+                            content_markdown: `Hola ${customer.first_name || customer.name},
+
+Queremos agradecerte por ser un cliente activo. Tus visitas regulares significan mucho para nosotros.
+
+Seguimos trabajando cada día para ofrecerte la mejor experiencia gastronómica.
+
+Con aprecio,
+El equipo del restaurante`,
+                            channel: 'whatsapp'
+                        },
+                        bib: {
+                            subject: "¡Felicidades! Ahora eres cliente VIP",
+                            content_markdown: `Hola ${customer.first_name || customer.name},
+
+Nos complace informarte que ahora formas parte de nuestro programa VIP (Very Important Person).
+
+Como cliente VIP, disfrutarás de:
+• Reservas prioritarias
+• Atención personalizada
+• Invitaciones a eventos exclusivos
+
+¡Gracias por tu fidelidad!
+
+El equipo del restaurante`,
+                            channel: 'whatsapp'
+                        },
+                        inactivo: {
+                            subject: "Te echamos de menos",
+                            content_markdown: `Hola ${customer.first_name || customer.name},
+
+¡Te echamos de menos en nuestro restaurante! 
+
+Tenemos nuevos platos que creemos te van a encantar, y hemos mejorado nuestra experiencia especialmente para clientes como tú.
+
+¿Qué te parece si reservas una mesa para esta semana? Te garantizamos una experiencia excepcional.
+
+¡Esperamos verte pronto!
+
+El equipo del restaurante`,
+                            channel: 'whatsapp'
+                        },
+                        riesgo: {
+                            subject: "Una oferta especial para ti",
+                            content_markdown: `Hola ${customer.first_name || customer.name},
+
+Hemos notado que hace tiempo que no te vemos y queremos reconectarnos contigo.
+
+Como gesto de aprecio, tenemos una oferta especial: 15% de descuento en tu próxima visita.
+
+Nos encantaría volver a verte y que disfrutes de nuestros nuevos platos.
+
+¡Te esperamos!
+
+El equipo del restaurante`,
+                            channel: 'whatsapp'
+                        }
+                    };
+                    template = defaultTemplates[customerSegment] || defaultTemplates.nuevo;
+                }
+
+                // Crear mensaje personalizado
+                const personalizedMessage = {
+                    id: `temp_${Date.now()}_${customer.id}`,
+                    customer_id: customer.id,
+                    customer_name: customer.first_name || customer.name,
+                    customers: { name: customer.first_name || customer.name },
+                    interaction_type: customerSegment,
+                    channel: customer.consent_whatsapp ? 'whatsapp' : 'email',
+                    status: 'pending',
+                    content: template.content_markdown || template.content,
+                    subject: template.subject,
+                    created_at: new Date().toISOString()
+                };
+
+                newMessages.push(personalizedMessage);
+            }
+
+            // 3. Actualizar cola de mensajes
+            setMessageQueue(newMessages);
+            
+            toast.success(`✅ ${newMessages.length} mensajes generados según plantillas y segmentación`);
             
         } catch (error) {
+            console.error('Error ejecutando CRM IA:', error);
             toast.error('Error al ejecutar CRM IA');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -166,7 +288,6 @@ const CRMv2Complete = () => {
                 {/* Tabs */}
                 <div className="flex space-x-1 mt-6 bg-gray-100 p-1 rounded-lg">
                     {[
-                        { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
                         { id: 'customers', label: 'Clientes', icon: Users },
                         { id: 'messages', label: 'Mensajes', icon: MessageSquare },
                         { id: 'automation', label: 'Automatización', icon: Zap },
@@ -188,15 +309,15 @@ const CRMv2Complete = () => {
                 </div>
             </div>
 
-            {/* Dashboard Tab - PRESENTACIÓN COMO CRM INTELIGENTE */}
-            {activeTab === 'dashboard' && (
+            {/* Customers Tab - FORMATO FICHAS COMO PÁGINA CLIENTES */}
+            {activeTab === 'customers' && (
                 <div className="space-y-6">
-                    {/* Métricas Principales con iconos como CRM Inteligente */}
+                    {/* Métricas Principales con iconos - INTEGRADAS EN CLIENTES */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                         {Object.entries({
                             nuevo: { label: "Nuevo", icon: "👋", color: "blue", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'nuevo').length },
                             activo: { label: "Activo", icon: "⭐", color: "green", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'activo').length },
-                            bib: { label: "BIB", icon: "👑", color: "purple", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'bib').length },
+                            bib: { label: "VIP", icon: "👑", color: "purple", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'bib').length },
                             inactivo: { label: "Inactivo", icon: "😴", color: "gray", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'inactivo').length },
                             riesgo: { label: "En Riesgo", icon: "⚠️", color: "orange", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'riesgo').length }
                         }).map(([key, segment]) => {
@@ -217,12 +338,6 @@ const CRMv2Complete = () => {
                             );
                         })}
                     </div>
-                </div>
-            )}
-
-            {/* Customers Tab - FORMATO FICHAS COMO PÁGINA CLIENTES */}
-            {activeTab === 'customers' && (
-                <div className="space-y-6">
                     {/* Filtros de segmentación */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                         <div className="flex items-center justify-between">
@@ -239,7 +354,7 @@ const CRMv2Complete = () => {
                                     <option value="">Todos los segmentos</option>
                                     <option value="nuevo">👋 Nuevos</option>
                                     <option value="activo">⭐ Activos</option>
-                                    <option value="bib">👑 BIB</option>
+                                    <option value="bib">👑 VIP</option>
                                     <option value="riesgo">⚠️ En Riesgo</option>
                                     <option value="inactivo">😴 Inactivos</option>
                                 </select>
@@ -292,7 +407,7 @@ const CRMv2Complete = () => {
                                     const CUSTOMER_SEGMENTS = {
                                         nuevo: { label: "Nuevo", icon: "👋", color: "blue" },
                                         activo: { label: "Activo", icon: "⭐", color: "green" },
-                                        bib: { label: "BIB", icon: "👑", color: "purple" },
+                                            bib: { label: "VIP", icon: "👑", color: "purple" },
                                         inactivo: { label: "Inactivo", icon: "😴", color: "gray" },
                                         riesgo: { label: "En Riesgo", icon: "⚠️", color: "orange" }
                                     };
