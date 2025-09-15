@@ -17,11 +17,19 @@ const CRMv2Complete = () => {
     const navigate = useNavigate();
     const { restaurant, restaurantId, isReady } = useAuthContext();
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('customers');
+    const [activeTab, setActiveTab] = useState('dashboard');
     const [customerFeatures, setCustomerFeatures] = useState([]);
     const [messageQueue, setMessageQueue] = useState([]);
     const [automationRules, setAutomationRules] = useState([]);
     const [segmentOverview, setSegmentOverview] = useState([]);
+    
+    // Estados para métricas reales del dashboard
+    const [dashboardMetrics, setDashboardMetrics] = useState({
+        thisWeek: { messagesSent: 0, customersReturned: 0, roi: 0 },
+        reactivations: { contacted: 0, returned: 0, percentage: 0, upcoming: 0 },
+        quickActions: { newWelcomes: 0, vipReminders: 0, inactiveReactivations: 0 },
+        segments: { active: 0, risk: 0, inactive: 0 }
+    });
     
     // Estados para modal de cliente
     const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -45,7 +53,7 @@ const CRMv2Complete = () => {
     });
     const [savingConfig, setSavingConfig] = useState(false);
 
-    // Cargar datos
+    // Cargar datos y métricas reales
     const loadDashboardData = useCallback(async () => {
         if (!restaurantId) return;
 
@@ -80,6 +88,9 @@ const CRMv2Complete = () => {
 
             if (rulesError) throw rulesError;
 
+            // CALCULAR MÉTRICAS REALES DEL DASHBOARD
+            await calculateRealDashboardMetrics(customers || []);
+
             // Calcular resumen de segmentación
             const segments = (customers || []).reduce((acc, customer) => {
                 const segment = customer.segment_auto || 'nuevo';
@@ -103,6 +114,112 @@ const CRMv2Complete = () => {
             setLoading(false);
         }
     }, [restaurantId]);
+
+    // Calcular métricas reales del dashboard desde Supabase
+    const calculateRealDashboardMetrics = async (customers) => {
+        try {
+            const oneWeekAgo = subDays(new Date(), 7);
+            const twoWeeksAgo = subDays(new Date(), 14);
+
+            // 1. ESTA SEMANA - Mensajes enviados (últimos 7 días)
+            const { data: weeklyMessages, error: messagesError } = await supabase
+                .from('customer_interactions')
+                .select('id, customer_id, created_at')
+                .eq('restaurant_id', restaurantId)
+                .gte('created_at', format(oneWeekAgo, 'yyyy-MM-dd'));
+
+            if (messagesError) console.error('Error cargando mensajes:', messagesError);
+
+            // 2. CLIENTES QUE REGRESARON - Reservas esta semana de clientes contactados
+            const contactedCustomerIds = weeklyMessages?.map(m => m.customer_id) || [];
+            const { data: weeklyReservations, error: reservationsError } = await supabase
+                .from('reservations')
+                .select('customer_id, reservation_date')
+                .eq('restaurant_id', restaurantId)
+                .gte('reservation_date', format(oneWeekAgo, 'yyyy-MM-dd'))
+                .in('customer_id', contactedCustomerIds.length > 0 ? contactedCustomerIds : ['none']);
+
+            if (reservationsError) console.error('Error cargando reservas:', reservationsError);
+
+            // 3. ROI ESTIMADO - Basado en reservas de clientes contactados
+            const { data: weeklyTickets, error: ticketsError } = await supabase
+                .from('billing_tickets')
+                .select('total_amount, customer_id')
+                .eq('restaurant_id', restaurantId)
+                .gte('ticket_date', format(oneWeekAgo, 'yyyy-MM-dd'))
+                .in('customer_id', contactedCustomerIds.length > 0 ? contactedCustomerIds : ['none']);
+
+            if (ticketsError) console.error('Error cargando tickets:', ticketsError);
+
+            const weeklyROI = (weeklyTickets || []).reduce((sum, ticket) => sum + (ticket.total_amount || 0), 0);
+
+            // 4. REACTIVACIONES - Clientes inactivos contactados vs que regresaron
+            const inactiveCustomers = customers.filter(c => (c.segment_auto || c.segment_manual) === 'inactivo');
+            const contactedInactiveIds = weeklyMessages?.filter(m => 
+                inactiveCustomers.some(ic => ic.id === m.customer_id)
+            ).map(m => m.customer_id) || [];
+            
+            const returnedInactiveIds = weeklyReservations?.filter(r => 
+                contactedInactiveIds.includes(r.customer_id)
+            ).map(r => r.customer_id) || [];
+
+            const reactivationPercentage = contactedInactiveIds.length > 0 
+                ? Math.round((returnedInactiveIds.length / contactedInactiveIds.length) * 100) 
+                : 0;
+
+            // 5. ACCIONES RÁPIDAS - Contar clientes elegibles por segmento
+            const newCustomers = customers.filter(c => 
+                (c.segment_auto || c.segment_manual) === 'nuevo' && 
+                (c.consent_whatsapp || c.consent_email)
+            );
+            
+            const vipCustomers = customers.filter(c => 
+                c.total_spent > 500 && 
+                (c.consent_whatsapp || c.consent_email)
+            );
+            
+            const upcomingInactiveCustomers = customers.filter(c => 
+                (c.segment_auto || c.segment_manual) === 'riesgo' && 
+                (c.consent_whatsapp || c.consent_email)
+            );
+
+            // 6. SEGMENTOS ACTUALES
+            const activeCount = customers.filter(c => (c.segment_auto || c.segment_manual) === 'activo').length;
+            const riskCount = customers.filter(c => (c.segment_auto || c.segment_manual) === 'riesgo').length;
+            const inactiveCount = customers.filter(c => (c.segment_auto || c.segment_manual) === 'inactivo').length;
+
+            // Actualizar métricas del dashboard
+            setDashboardMetrics({
+                thisWeek: {
+                    messagesSent: weeklyMessages?.length || 0,
+                    customersReturned: [...new Set(weeklyReservations?.map(r => r.customer_id) || [])].length,
+                    roi: Math.round(weeklyROI)
+                },
+                reactivations: {
+                    contacted: contactedInactiveIds.length,
+                    returned: [...new Set(returnedInactiveIds)].length,
+                    percentage: reactivationPercentage,
+                    upcoming: upcomingInactiveCustomers.length
+                },
+                quickActions: {
+                    newWelcomes: newCustomers.length,
+                    vipReminders: vipCustomers.length,
+                    inactiveReactivations: customers.filter(c => 
+                        (c.segment_auto || c.segment_manual) === 'inactivo' && 
+                        (c.consent_whatsapp || c.consent_email)
+                    ).length
+                },
+                segments: {
+                    active: activeCount,
+                    risk: riskCount,
+                    inactive: inactiveCount
+                }
+            });
+
+        } catch (error) {
+            console.error('Error calculando métricas del dashboard:', error);
+        }
+    };
 
     // Ejecutar CRM IA - VINCULADO CON PLANTILLAS
     const executeAutomationRules = async () => {
@@ -288,7 +405,7 @@ El equipo del restaurante`,
                 {/* Tabs */}
                 <div className="flex space-x-1 mt-6 bg-gray-100 p-1 rounded-lg">
                     {[
-                        { id: 'customers', label: 'Clientes', icon: Users },
+                        { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
                         { id: 'messages', label: 'Mensajes', icon: MessageSquare },
                         { id: 'automation', label: 'Automatización', icon: Zap },
                         { id: 'settings', label: 'Configuración', icon: Settings }
@@ -309,197 +426,121 @@ El equipo del restaurante`,
                 </div>
             </div>
 
-            {/* Customers Tab - FORMATO FICHAS COMO PÁGINA CLIENTES */}
-            {activeTab === 'customers' && (
+            {/* Dashboard Tab - MÉTRICAS REALES CON DATOS DE SUPABASE */}
+            {activeTab === 'dashboard' && (
                 <div className="space-y-6">
-                    {/* Métricas Principales con iconos - INTEGRADAS EN CLIENTES */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                        {Object.entries({
-                            nuevo: { label: "Nuevo", icon: "👋", color: "blue", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'nuevo').length },
-                            activo: { label: "Activo", icon: "⭐", color: "green", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'activo').length },
-                            bib: { label: "VIP", icon: "👑", color: "purple", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'bib').length },
-                            inactivo: { label: "Inactivo", icon: "😴", color: "gray", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'inactivo').length },
-                            riesgo: { label: "En Riesgo", icon: "⚠️", color: "orange", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'riesgo').length }
-                        }).map(([key, segment]) => {
-                            const totalVisits = customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === key).reduce((sum, c) => sum + (c.visits_count || 0), 0);
-                            return (
-                                <div key={key} className={`bg-white rounded-lg p-4 border-l-4 border-${segment.color}-500 shadow-sm`}>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-xs font-medium text-gray-600">{segment.label}</p>
-                                            <p className="text-2xl font-bold text-gray-900">{segment.count}</p>
-                                        </div>
-                                        <div className="text-2xl">{segment.icon}</div>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        {totalVisits} visitas totales
-                                    </p>
-                                </div>
-                            );
-                        })}
-                    </div>
-                    {/* Filtros de segmentación */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-900">
-                                Clientes con Segmentación AIVI
-                            </h2>
-                            
-                            <div className="flex items-center gap-3">
-                                <select
-                                    value={filters.segment}
-                                    onChange={(e) => setFilters(prev => ({...prev, segment: e.target.value}))}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                >
-                                    <option value="">Todos los segmentos</option>
-                                    <option value="nuevo">👋 Nuevos</option>
-                                    <option value="activo">⭐ Activos</option>
-                                    <option value="bib">👑 VIP</option>
-                                    <option value="riesgo">⚠️ En Riesgo</option>
-                                    <option value="inactivo">😴 Inactivos</option>
-                                </select>
-                                
-                                <select
-                                    value={filters.vip}
-                                    onChange={(e) => setFilters(prev => ({...prev, vip: e.target.value}))}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                >
-                                    <option value="">Todos</option>
-                                    <option value="vip">👑 Solo VIPs</option>
-                                    <option value="regular">👤 Regulares</option>
-                                </select>
-                                
-                                <select
-                                    value={filters.consent}
-                                    onChange={(e) => setFilters(prev => ({...prev, consent: e.target.value}))}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                >
-                                    <option value="">Todos</option>
-                                    <option value="whatsapp">📱 WhatsApp</option>
-                                    <option value="email">📧 Email</option>
-                                    <option value="none">🚫 Sin consentimientos</option>
-                                </select>
+                    {/* 1. ESTA SEMANA - Números grandes y visuales */}
+                    <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white">
+                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                            <BarChart3 className="w-6 h-6" />
+                            Esta Semana
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="text-center">
+                                <div className="text-3xl font-bold">{dashboardMetrics.thisWeek.messagesSent}</div>
+                                <div className="text-purple-100">Mensajes enviados ✉️</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-3xl font-bold">{dashboardMetrics.thisWeek.customersReturned}</div>
+                                <div className="text-purple-100">Clientes que regresaron ↩️</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-3xl font-bold">€{dashboardMetrics.thisWeek.roi}</div>
+                                <div className="text-purple-100">ROI estimado 💰</div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Lista de Clientes - FORMATO FICHAS COMO PÁGINA CLIENTES */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                        <div className="divide-y divide-gray-200">
-                            {customerFeatures
-                                .filter(customer => {
-                                    // Filtro por segmento
-                                    if (filters.segment && (customer.segment_auto || customer.segment_manual) !== filters.segment) return false;
-                                    
-                                    // Filtro por VIP
-                                    if (filters.vip === 'vip' && customer.total_spent <= 500) return false;
-                                    if (filters.vip === 'regular' && customer.total_spent > 500) return false;
-                                    
-                                    // Filtro por consentimientos
-                                    if (filters.consent === 'whatsapp' && !customer.consent_whatsapp) return false;
-                                    if (filters.consent === 'email' && !customer.consent_email) return false;
-                                    if (filters.consent === 'none' && (customer.consent_whatsapp || customer.consent_email)) return false;
-                                    
-                                    return true;
-                                })
-                                .map((customer) => {
-                                    const segmentKey = customer.segment_manual || customer.segment_auto || 'nuevo';
-                                    const CUSTOMER_SEGMENTS = {
-                                        nuevo: { label: "Nuevo", icon: "👋", color: "blue" },
-                                        activo: { label: "Activo", icon: "⭐", color: "green" },
-                                            bib: { label: "VIP", icon: "👑", color: "purple" },
-                                        inactivo: { label: "Inactivo", icon: "😴", color: "gray" },
-                                        riesgo: { label: "En Riesgo", icon: "⚠️", color: "orange" }
-                                    };
-                                    const segment = CUSTOMER_SEGMENTS[segmentKey] || CUSTOMER_SEGMENTS.nuevo;
-                                    const daysSinceLastVisit = customer.last_visit_at 
-                                        ? Math.floor((new Date() - new Date(customer.last_visit_at)) / (1000 * 60 * 60 * 24))
-                                        : null;
-                                    
-                                    return (
-                                        <div
-                                            key={customer.id}
-                                            className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                                            onClick={() => {
-                                                setSelectedCustomer(customer);
-                                                setShowCustomerModal(true);
-                                            }}
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-3">
-                                                        {/* Avatar con inicial */}
-                                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                                            {(customer.name || customer.first_name || 'C').charAt(0).toUpperCase()}
-                                                        </div>
-                                                        
-                                                        {/* Icono de segmento */}
-                                                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-lg flex-shrink-0">
-                                                            {segment.icon}
-                                                        </div>
-                                                        
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2">
-                                                                <h3 className="text-sm font-medium text-gray-900 truncate">
-                                                                    {customer.first_name || customer.name}
-                                                                </h3>
-                                                                {/* Etiqueta de segmento */}
-                                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${segment.color}-100 text-${segment.color}-800`}>
-                                                                    {segment.label}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex items-center gap-4 mt-1">
-                                                                {customer.email && (
-                                                                    <p className="text-sm text-gray-600 flex items-center gap-1">
-                                                                        <Mail className="w-3 h-3" />
-                                                                        {customer.email}
-                                                                    </p>
-                                                                )}
-                                                                {customer.phone && (
-                                                                    <p className="text-sm text-gray-600 flex items-center gap-1">
-                                                                        <Phone className="w-3 h-3" />
-                                                                        {customer.phone}
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-4 text-sm text-gray-600">
-                                                    {/* Visitas */}
-                                                    <div className="text-center">
-                                                        <p className="font-medium text-gray-900">{customer.visits_count || 0}</p>
-                                                        <p className="text-xs">Visitas</p>
-                                                    </div>
-                                                    
-                                                    {/* Total gastado */}
-                                                    <div className="text-center">
-                                                        <p className="font-medium text-gray-900">€{(customer.total_spent || 0).toFixed(2)}</p>
-                                                        <p className="text-xs">Gastado</p>
-                                                    </div>
-                                                    
-                                                    {/* Días desde última visita */}
-                                                    <div className="text-center">
-                                                        <p className="font-medium text-gray-900">
-                                                            {daysSinceLastVisit !== null ? `${daysSinceLastVisit}d` : 'Nueva'}
-                                                        </p>
-                                                        <p className="text-xs">Última</p>
-                                                    </div>
-                                                    
-                                                    {/* Fecha última visita */}
-                                                    {customer.last_visit_at && (
-                                                        <div className="text-center">
-                                                            <p className="font-medium text-gray-900">
-                                                                {format(parseISO(customer.last_visit_at), 'dd/MM')}
-                                                            </p>
-                                                            <p className="text-xs">Fecha</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* 2. REACTIVACIONES */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <RefreshCw className="w-5 h-5 text-green-600" />
+                                Reactivaciones
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-600">Inactivos contactados</span>
+                                    <span className="text-2xl font-bold text-gray-900">{dashboardMetrics.reactivations.contacted}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-600">Volvieron</span>
+                                    <span className="text-2xl font-bold text-green-600">{dashboardMetrics.reactivations.returned}</span>
+                                </div>
+                                <div className="bg-green-50 rounded-lg p-3">
+                                    <div className="text-center">
+                                        <div className="text-2xl font-bold text-green-700">{dashboardMetrics.reactivations.percentage}%</div>
+                                        <div className="text-sm text-green-600">Tasa de éxito 🔥</div>
+                                    </div>
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                    Próximos a contactar: <strong>{dashboardMetrics.reactivations.upcoming}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3. ACCIONES RÁPIDAS */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <Zap className="w-5 h-5 text-yellow-600" />
+                                Acciones Rápidas
+                            </h3>
+                            <div className="space-y-3">
+                                <button 
+                                    onClick={() => setActiveTab('messages')}
+                                    className="w-full flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                                >
+                                    <span className="text-blue-800">Enviar bienvenidas</span>
+                                    <span className="bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
+                                        {dashboardMetrics.quickActions.newWelcomes} nuevos
+                                    </span>
+                                </button>
+                                
+                                <button 
+                                    onClick={() => setActiveTab('messages')}
+                                    className="w-full flex items-center justify-between p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                                >
+                                    <span className="text-purple-800">Recordar a VIPs</span>
+                                    <span className="bg-purple-200 text-purple-800 px-2 py-1 rounded-full text-sm font-medium">
+                                        {dashboardMetrics.quickActions.vipReminders} listos
+                                    </span>
+                                </button>
+                                
+                                <button 
+                                    onClick={() => setActiveTab('messages')}
+                                    className="w-full flex items-center justify-between p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
+                                >
+                                    <span className="text-orange-800">Reactivar inactivos</span>
+                                    <span className="bg-orange-200 text-orange-800 px-2 py-1 rounded-full text-sm font-medium">
+                                        {dashboardMetrics.quickActions.inactiveReactivations} elegibles
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 4. ESTADO GENERAL */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <Users className="w-5 h-5 text-gray-600" />
+                            Estado General de Clientes
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="text-center p-4 bg-green-50 rounded-lg">
+                                <div className="text-3xl font-bold text-green-600">{dashboardMetrics.segments.active}</div>
+                                <div className="text-green-700 font-medium">Clientes Activos ⭐</div>
+                                <div className="text-sm text-green-600">Visitando regularmente</div>
+                            </div>
+                            <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                                <div className="text-3xl font-bold text-yellow-600">{dashboardMetrics.segments.risk}</div>
+                                <div className="text-yellow-700 font-medium">En Riesgo ⚠️</div>
+                                <div className="text-sm text-yellow-600">Necesitan atención</div>
+                            </div>
+                            <div className="text-center p-4 bg-gray-50 rounded-lg">
+                                <div className="text-3xl font-bold text-gray-600">{dashboardMetrics.segments.inactive}</div>
+                                <div className="text-gray-700 font-medium">Inactivos 😴</div>
+                                <div className="text-sm text-gray-600">Para reactivar</div>
+                            </div>
                         </div>
                     </div>
                 </div>
