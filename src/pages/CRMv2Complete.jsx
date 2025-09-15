@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { format, subDays, parseISO } from 'date-fns';
+import { Mail, Phone } from 'lucide-react';
 import {
     Brain, Users, MessageSquare, Settings, BarChart3, 
     Zap, RefreshCw, Crown, Star, CheckCircle2, 
@@ -187,76 +188,48 @@ const CRMv2Complete = () => {
                 </div>
             </div>
 
-            {/* Dashboard Tab */}
+            {/* Dashboard Tab - PRESENTACIÓN COMO CRM INTELIGENTE */}
             {activeTab === 'dashboard' && (
                 <div className="space-y-6">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                            Resumen de Segmentación
-                        </h2>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {segmentOverview.map((segment) => (
-                                <div key={segment.segment_auto_v2} className="p-4 rounded-lg border-2 bg-blue-50 border-blue-200">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h3 className="font-semibold capitalize">{segment.segment_auto_v2}</h3>
-                                        <span className="text-2xl font-bold">{segment.customer_count}</span>
-                                    </div>
-                                    {segment.vip_count > 0 && (
-                                        <div className="text-sm text-purple-600">
-                                            <Crown className="w-4 h-4 inline mr-1" />
-                                            {segment.vip_count} VIPs
+                    {/* Métricas Principales con iconos como CRM Inteligente */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                        {Object.entries({
+                            nuevo: { label: "Nuevo", icon: "👋", color: "blue", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'nuevo').length },
+                            activo: { label: "Activo", icon: "⭐", color: "green", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'activo').length },
+                            bib: { label: "BIB", icon: "👑", color: "purple", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'bib').length },
+                            inactivo: { label: "Inactivo", icon: "😴", color: "gray", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'inactivo').length },
+                            riesgo: { label: "En Riesgo", icon: "⚠️", color: "orange", count: customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === 'riesgo').length }
+                        }).map(([key, segment]) => {
+                            const totalVisits = customerFeatures.filter(c => (c.segment_auto || c.segment_manual) === key).reduce((sum, c) => sum + (c.visits_count || 0), 0);
+                            return (
+                                <div key={key} className={`bg-white rounded-lg p-4 border-l-4 border-${segment.color}-500 shadow-sm`}>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-600">{segment.label}</p>
+                                            <p className="text-2xl font-bold text-gray-900">{segment.count}</p>
                                         </div>
-                                    )}
+                                        <div className="text-2xl">{segment.icon}</div>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                        {totalVisits} visitas totales
+                                    </p>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <div className="flex items-center gap-3">
-                                <Users className="w-8 h-8 text-blue-600" />
-                                <div>
-                                    <div className="text-2xl font-bold text-gray-900">{customerFeatures.length}</div>
-                                    <div className="text-sm text-gray-600">Clientes Total</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <div className="flex items-center gap-3">
-                                <MessageSquare className="w-8 h-8 text-green-600" />
-                                <div>
-                                    <div className="text-2xl font-bold text-gray-900">{messageQueue.length}</div>
-                                    <div className="text-sm text-gray-600">Mensajes (7d)</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <div className="flex items-center gap-3">
-                                <Zap className="w-8 h-8 text-purple-600" />
-                                <div>
-                                    <div className="text-2xl font-bold text-gray-900">{automationRules.length}</div>
-                                    <div className="text-sm text-gray-600">Reglas Activas</div>
-                                </div>
-                            </div>
-                        </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}
 
-            {/* Customers Tab */}
+            {/* Customers Tab - FORMATO FICHAS COMO PÁGINA CLIENTES */}
             {activeTab === 'customers' && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <div className="p-6 border-b border-gray-200">
+                <div className="space-y-6">
+                    {/* Filtros de segmentación */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold text-gray-900">
                                 Clientes con Segmentación AIVI
                             </h2>
                             
-                            {/* Filtros de segmentación */}
                             <div className="flex items-center gap-3">
                                 <select
                                     value={filters.segment}
@@ -295,90 +268,124 @@ const CRMv2Complete = () => {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Cliente</th>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Segmento</th>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Visitas</th>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Gasto Total</th>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {customerFeatures
-                                    .filter(customer => {
-                                        // Filtro por segmento
-                                        if (filters.segment && customer.segment_auto !== filters.segment) return false;
-                                        
-                                        // Filtro por VIP
-                                        if (filters.vip === 'vip' && customer.total_spent <= 500) return false;
-                                        if (filters.vip === 'regular' && customer.total_spent > 500) return false;
-                                        
-                                        // Filtro por consentimientos
-                                        if (filters.consent === 'whatsapp' && !customer.consent_whatsapp) return false;
-                                        if (filters.consent === 'email' && !customer.consent_email) return false;
-                                        if (filters.consent === 'none' && (customer.consent_whatsapp || customer.consent_email)) return false;
-                                        
-                                        return true;
-                                    })
-                                    .map((customer) => (
-                                    <tr 
-                                        key={customer.id} 
-                                        className="hover:bg-gray-50 cursor-pointer"
-                                        onClick={() => {
-                                            setSelectedCustomer(customer);
-                                            setShowCustomerModal(true);
-                                        }}
-                                    >
-                                        <td className="px-4 py-3">
-                                            <div>
-                                                <div className="font-medium text-gray-900">
-                                                    {customer.first_name || customer.name}
+                    {/* Lista de Clientes - FORMATO FICHAS COMO PÁGINA CLIENTES */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div className="divide-y divide-gray-200">
+                            {customerFeatures
+                                .filter(customer => {
+                                    // Filtro por segmento
+                                    if (filters.segment && (customer.segment_auto || customer.segment_manual) !== filters.segment) return false;
+                                    
+                                    // Filtro por VIP
+                                    if (filters.vip === 'vip' && customer.total_spent <= 500) return false;
+                                    if (filters.vip === 'regular' && customer.total_spent > 500) return false;
+                                    
+                                    // Filtro por consentimientos
+                                    if (filters.consent === 'whatsapp' && !customer.consent_whatsapp) return false;
+                                    if (filters.consent === 'email' && !customer.consent_email) return false;
+                                    if (filters.consent === 'none' && (customer.consent_whatsapp || customer.consent_email)) return false;
+                                    
+                                    return true;
+                                })
+                                .map((customer) => {
+                                    const segmentKey = customer.segment_manual || customer.segment_auto || 'nuevo';
+                                    const CUSTOMER_SEGMENTS = {
+                                        nuevo: { label: "Nuevo", icon: "👋", color: "blue" },
+                                        activo: { label: "Activo", icon: "⭐", color: "green" },
+                                        bib: { label: "BIB", icon: "👑", color: "purple" },
+                                        inactivo: { label: "Inactivo", icon: "😴", color: "gray" },
+                                        riesgo: { label: "En Riesgo", icon: "⚠️", color: "orange" }
+                                    };
+                                    const segment = CUSTOMER_SEGMENTS[segmentKey] || CUSTOMER_SEGMENTS.nuevo;
+                                    const daysSinceLastVisit = customer.last_visit_at 
+                                        ? Math.floor((new Date() - new Date(customer.last_visit_at)) / (1000 * 60 * 60 * 24))
+                                        : null;
+                                    
+                                    return (
+                                        <div
+                                            key={customer.id}
+                                            className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                                            onClick={() => {
+                                                setSelectedCustomer(customer);
+                                                setShowCustomerModal(true);
+                                            }}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-3">
+                                                        {/* Avatar con inicial */}
+                                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                                            {(customer.name || customer.first_name || 'C').charAt(0).toUpperCase()}
+                                                        </div>
+                                                        
+                                                        {/* Icono de segmento */}
+                                                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-lg flex-shrink-0">
+                                                            {segment.icon}
+                                                        </div>
+                                                        
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2">
+                                                                <h3 className="text-sm font-medium text-gray-900 truncate">
+                                                                    {customer.first_name || customer.name}
+                                                                </h3>
+                                                                {/* Etiqueta de segmento */}
+                                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${segment.color}-100 text-${segment.color}-800`}>
+                                                                    {segment.label}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-4 mt-1">
+                                                                {customer.email && (
+                                                                    <p className="text-sm text-gray-600 flex items-center gap-1">
+                                                                        <Mail className="w-3 h-3" />
+                                                                        {customer.email}
+                                                                    </p>
+                                                                )}
+                                                                {customer.phone && (
+                                                                    <p className="text-sm text-gray-600 flex items-center gap-1">
+                                                                        <Phone className="w-3 h-3" />
+                                                                        {customer.phone}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="text-sm text-gray-500">
-                                                    {customer.email || customer.phone}
+                                                <div className="flex items-center gap-4 text-sm text-gray-600">
+                                                    {/* Visitas */}
+                                                    <div className="text-center">
+                                                        <p className="font-medium text-gray-900">{customer.visits_count || 0}</p>
+                                                        <p className="text-xs">Visitas</p>
+                                                    </div>
+                                                    
+                                                    {/* Total gastado */}
+                                                    <div className="text-center">
+                                                        <p className="font-medium text-gray-900">€{(customer.total_spent || 0).toFixed(2)}</p>
+                                                        <p className="text-xs">Gastado</p>
+                                                    </div>
+                                                    
+                                                    {/* Días desde última visita */}
+                                                    <div className="text-center">
+                                                        <p className="font-medium text-gray-900">
+                                                            {daysSinceLastVisit !== null ? `${daysSinceLastVisit}d` : 'Nueva'}
+                                                        </p>
+                                                        <p className="text-xs">Última</p>
+                                                    </div>
+                                                    
+                                                    {/* Fecha última visita */}
+                                                    {customer.last_visit_at && (
+                                                        <div className="text-center">
+                                                            <p className="font-medium text-gray-900">
+                                                                {format(parseISO(customer.last_visit_at), 'dd/MM')}
+                                                            </p>
+                                                            <p className="text-xs">Fecha</p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                customer.segment_auto === 'nuevo' ? 'bg-blue-100 text-blue-800' :
-                                                customer.segment_auto === 'activo' ? 'bg-green-100 text-green-800' :
-                                                customer.segment_auto === 'bib' ? 'bg-purple-100 text-purple-800' :
-                                                customer.segment_auto === 'riesgo' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-gray-100 text-gray-800'
-                                            }`}>
-                                                {customer.segment_auto || 'nuevo'}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
-                                            {customer.visits_count || 0}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
-                                            {(customer.total_spent || 0).toFixed(0)}€
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                {customer.consent_whatsapp && (
-                                                    <span className="text-green-600" title="Acepta WhatsApp">📱</span>
-                                                )}
-                                                {customer.consent_email && (
-                                                    <span className="text-blue-600" title="Acepta Email">📧</span>
-                                                )}
-                                                {customer.total_spent > 500 && (
-                                                    <Crown className="w-4 h-4 text-purple-600" title="Cliente VIP" />
-                                                )}
-                                                {!customer.consent_whatsapp && !customer.consent_email && (
-                                                    <span className="text-red-500" title="Sin consentimientos">🚫</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        </div>
+                                    );
+                                })}
+                        </div>
                     </div>
                 </div>
             )}
@@ -386,19 +393,9 @@ const CRMv2Complete = () => {
             {/* Messages Tab - MEJORADO COMO CRM INTELIGENTE */}
             {activeTab === 'messages' && (
                 <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-xl font-semibold text-gray-900">Mensajes CRM IA</h2>
-                            <p className="text-gray-600">Ejecuta el CRM IA para generar mensajes automáticos del día</p>
-                        </div>
-                        <button
-                            onClick={executeCrmAutomation}
-                            disabled={loading}
-                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg disabled:opacity-50"
-                        >
-                            {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-                            <span className="font-medium">{loading ? "Generando..." : "Ejecutar CRM IA"}</span>
-                        </button>
+                    <div>
+                        <h2 className="text-xl font-semibold text-gray-900">Mensajes CRM IA</h2>
+                        <p className="text-gray-600">Usa el botón "Ejecutar CRM IA" del header para generar mensajes automáticos del día</p>
                     </div>
 
                     {/* Mensajes del Día */}
@@ -483,11 +480,30 @@ const CRMv2Complete = () => {
                                                 
                                                 {/* Vista previa del mensaje */}
                                                 <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                                                    <div className="text-sm text-gray-700">
-                                                        <strong>Para:</strong> {message.customers?.name || message.customer_name}<br/>
-                                                        <strong>Canal:</strong> {message.channel || 'WhatsApp'}<br/>
-                                                        <strong>Tipo:</strong> {message.interaction_type}<br/>
-                                                        <strong>Programado:</strong> {message.created_at ? format(parseISO(message.created_at), 'dd/MM/yyyy HH:mm') : 'Ahora'}
+                                                    <div className="text-sm text-gray-700 space-y-2">
+                                                        <div>
+                                                            <strong>Para:</strong> {message.customers?.name || message.customer_name}<br/>
+                                                            <strong>Canal:</strong> {message.channel || 'WhatsApp'}<br/>
+                                                            <strong>Tipo:</strong> {message.interaction_type}<br/>
+                                                            <strong>Programado:</strong> {message.created_at ? format(parseISO(message.created_at), 'dd/MM/yyyy HH:mm') : 'Ahora'}
+                                                        </div>
+                                                        {/* CONTENIDO COMPLETO DEL MENSAJE */}
+                                                        <div className="border-t border-gray-200 pt-2">
+                                                            <strong>Mensaje:</strong>
+                                                            <div className="mt-1 p-2 bg-white rounded border text-sm whitespace-pre-wrap">
+                                                                {message.content || message.message || `Hola ${message.customers?.name || message.customer_name},
+
+¡Te echamos de menos en nuestro restaurante! 
+
+Tenemos nuevos platos que creemos te van a encantar, y hemos mejorado nuestra experiencia especialmente para clientes como tú.
+
+¿Qué te parece si reservas una mesa para esta semana? Te garantizamos una experiencia excepcional.
+
+¡Esperamos verte pronto!
+
+El equipo del restaurante`}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 
@@ -641,23 +657,6 @@ const CRMv2Complete = () => {
                                                             />
                                                         </button>
                                                     </div>
-                                                    
-                                                    {/* Botón ejecutar individual */}
-                                                    <button
-                                                        onClick={async (e) => {
-                                                            e.stopPropagation();
-                                                            if (!rule.is_active) {
-                                                                toast.error('La regla debe estar activa para ejecutarse');
-                                                                return;
-                                                            }
-                                                            await executeAutomationRules(rule.target_segment);
-                                                        }}
-                                                        disabled={!rule.is_active}
-                                                        className="flex items-center gap-1 px-3 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    >
-                                                        <Zap className="w-3 h-3" />
-                                                        Ejecutar
-                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
