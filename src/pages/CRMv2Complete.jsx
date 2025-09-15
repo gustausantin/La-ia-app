@@ -281,6 +281,36 @@ const CRMv2Complete = () => {
         }
     };
 
+    // Función para reemplazar variables en plantillas con datos reales
+    const replaceTemplateVariables = (template, customer) => {
+        const restaurantName = restaurant?.name || 'nuestro restaurante';
+        const customerName = customer.first_name || customer.name || 'Cliente';
+        
+        let content = template.content_markdown || template.content || '';
+        let subject = template.subject || '';
+        
+        // Reemplazar variables comunes
+        const replacements = {
+            '{restaurant_name}': restaurantName,
+            '{customer_name}': customerName,
+            '{first_name}': customer.first_name || customer.name || 'Cliente',
+            '{last_name}': customer.last_name1 || '',
+            '{last_visit_date}': customer.last_visit_at ? format(parseISO(customer.last_visit_at), 'dd/MM/yyyy') : 'hace tiempo',
+            '{visits_count}': customer.visits_count || 0,
+            '{total_spent}': `€${(customer.total_spent || 0).toFixed(0)}`,
+            '{avg_ticket}': `€${(customer.avg_ticket || 0).toFixed(0)}`,
+            '{segment}': customer.segment_auto || customer.segment_manual || 'nuevo'
+        };
+        
+        // Reemplazar en contenido
+        Object.entries(replacements).forEach(([variable, value]) => {
+            content = content.replace(new RegExp(variable.replace(/[{}]/g, '\\$&'), 'g'), value);
+            subject = subject.replace(new RegExp(variable.replace(/[{}]/g, '\\$&'), 'g'), value);
+        });
+        
+        return { content, subject };
+    };
+
     // Ejecutar CRM IA - VINCULADO CON PLANTILLAS
     const executeAutomationRules = async () => {
         try {
@@ -389,6 +419,9 @@ El equipo del restaurante`,
                     template = defaultTemplates[customerSegment] || defaultTemplates.nuevo;
                 }
 
+                // Reemplazar variables en la plantilla con datos reales
+                const { content: personalizedContent, subject: personalizedSubject } = replaceTemplateVariables(template, customer);
+
                 // Crear mensaje personalizado
                 const personalizedMessage = {
                     id: `temp_${Date.now()}_${customer.id}`,
@@ -398,8 +431,8 @@ El equipo del restaurante`,
                     interaction_type: customerSegment,
                     channel: customer.consent_whatsapp ? 'whatsapp' : 'email',
                     status: 'pending',
-                    content: template.content_markdown || template.content,
-                    subject: template.subject,
+                    content: personalizedContent,
+                    subject: personalizedSubject,
                     created_at: new Date().toISOString()
                 };
 
@@ -453,13 +486,9 @@ El equipo del restaurante`,
                         </p>
                     </div>
 
-                    <button
-                        onClick={executeAutomationRules}
-                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 font-medium"
-                    >
-                        <Zap className="w-5 h-5" />
-                        Ejecutar CRM IA
-                    </button>
+                    <div className="text-sm text-purple-600">
+                        Usa la pestaña "Mensajes" para ejecutar CRM IA
+                    </div>
                 </div>
 
                 {/* Tabs */}
