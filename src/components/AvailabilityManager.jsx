@@ -37,6 +37,7 @@ const AvailabilityManager = () => {
     // Cargar configuración del restaurante
     const loadRestaurantSettings = async () => {
         try {
+            console.log('🔧 Loading restaurant settings for ID:', restaurantId);
             const { data, error } = await supabase
                 .from('restaurants')
                 .select('settings')
@@ -46,15 +47,19 @@ const AvailabilityManager = () => {
             if (error) throw error;
 
             // Extraer configuración del JSONB settings
+            console.log('🔧 Restaurant data from DB:', data);
             const settings = data?.settings || {};
+            console.log('🔧 Settings extracted:', settings);
+            
             const processedSettings = {
                 advance_booking_days: settings.horizon_days || 30,
                 min_party_size: settings.min_party_size || 1,
                 max_party_size: settings.max_party_size || 20,
                 reservation_duration: settings.turn_duration_minutes || 90,
-                buffer_time: settings.buffer_minutes || 15
+                buffer_time: settings.buffer_minutes !== undefined ? settings.buffer_minutes : 15
             };
             
+            console.log('🔧 Processed settings:', processedSettings);
             setRestaurantSettings(processedSettings);
             
             // Actualizar fechas según configuración
@@ -168,13 +173,42 @@ const AvailabilityManager = () => {
             const advanceDays = restaurantSettings?.advance_booking_days || 30;
             const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
             
+            // Verificar si hay mesas activas
+            const { data: tablesData, error: tablesError } = await supabase
+                .from('tables')
+                .select('id, name, capacity, is_active')
+                .eq('restaurant_id', restaurantId)
+                .eq('is_active', true);
+            
+            console.log('🔧 Mesas activas encontradas:', tablesData);
+            
+            if (!tablesData || tablesData.length === 0) {
+                toast.error('❌ No hay mesas activas. Añade mesas antes de generar disponibilidades.');
+                toast.dismiss('generating');
+                return;
+            }
+
+            console.log('🔧 Parámetros para generate_availability_slots:', {
+                p_restaurant_id: restaurantId,
+                p_start_date: today,
+                p_end_date: endDate,
+                restaurantSettings,
+                tablesCount: tablesData.length
+            });
+
             const { data, error } = await supabase.rpc('generate_availability_slots', {
                 p_restaurant_id: restaurantId,
                 p_start_date: today,
                 p_end_date: endDate
             });
 
-            if (error) throw error;
+            if (error) {
+                console.error('❌ Error en generate_availability_slots:', error);
+                console.error('❌ Error details:', JSON.stringify(error, null, 2));
+                throw error;
+            }
+            
+            console.log('✅ Slots generados exitosamente:', data);
 
             toast.dismiss('generating');
             
