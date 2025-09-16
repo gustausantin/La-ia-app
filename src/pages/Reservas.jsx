@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { processReservationCompletion } from "../services/CRMService";
+import AvailabilityManager from "../components/AvailabilityManager";
 
 // DATOS NECESARIOS DE SUPABASE:
 // - tabla: reservations (con campos 'source' y 'channel')
@@ -1272,6 +1273,9 @@ export default function Reservas() {
 
             {/* Panel de insights del agente */}
             <AgentStatsPanel stats={agentStats} insights={agentInsights} />
+
+            {/* Gestión de Disponibilidades */}
+            <AvailabilityManager />
 
             {/* Filtros */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
