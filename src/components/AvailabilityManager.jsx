@@ -50,6 +50,7 @@ const AvailabilityManager = () => {
             console.log('🔧 Restaurant data from DB:', data);
             const settings = data?.settings || {};
             console.log('🔧 Settings extracted:', settings);
+            console.log('🔧 Operating hours specifically:', settings.operating_hours);
             
             const processedSettings = {
                 advance_booking_days: settings.horizon_days || 30,
