@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CustomerModal from '../components/CustomerModal';
+import { calculateSegment } from '../services/CRMv2Service';
 
 const CRMv2Complete = () => {
     const navigate = useNavigate();
@@ -971,7 +972,7 @@ El equipo del restaurante`}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                     <div className="p-6 border-b border-gray-200">
                         <h2 className="text-lg font-semibold text-gray-900">
-                            Configuración CRM v2
+                            Configuración CRM
                         </h2>
                     </div>
 
@@ -1004,60 +1005,120 @@ El equipo del restaurante`}
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Segmento "Activo"
-                                        </label>
-                                        <p className="text-xs text-gray-600 mb-2">
-                                            Cliente que viene antes de su ritmo normal = ACTIVO<br/>
-                                            <strong>Ejemplo:</strong> Si Juan viene cada 15 días, a los 12 días = Activo
-                                        </p>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            min="0.1"
-                                            max="1.0"
-                                            value={crmSettings.factor_activo}
-                                            onChange={(e) => setCrmSettings(prev => ({...prev, factor_activo: parseFloat(e.target.value)}))}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                            placeholder="0.8 = 80% de su ritmo normal"
-                                        />
+                                        <div className="flex justify-between items-center mb-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Segmento "Activo"
+                                            </label>
+                                            <span className="text-sm font-semibold text-green-600">
+                                                {crmSettings.factor_activo}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="mb-3">
+                                            <input
+                                                type="range"
+                                                min="0.5"
+                                                max="1.0"
+                                                step="0.1"
+                                                value={crmSettings.factor_activo}
+                                                onChange={(e) => setCrmSettings(prev => ({...prev, factor_activo: parseFloat(e.target.value)}))}
+                                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-green"
+                                            />
+                                            <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                                <span>0.5</span>
+                                                <span>0.8 (Recomendado)</span>
+                                                <span>1.0</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                            <p className="text-sm text-green-800 mb-2">
+                                                <strong>¿Qué significa este valor?</strong>
+                                            </p>
+                                            <div className="text-xs text-green-700 space-y-1">
+                                                <div>• <strong>Si BAJAS a 0.5:</strong> Más clientes serán "Activos" (más mensajes de bienvenida)</div>
+                                                <div>• <strong>Si SUBES a 1.0:</strong> Solo los muy frecuentes serán "Activos" (menos mensajes)</div>
+                                                <div>• <strong>Recomendado 0.8:</strong> Equilibrio perfecto para la mayoría de restaurantes</div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Segmento "En Riesgo"
-                                        </label>
-                                        <p className="text-xs text-gray-600 mb-2">
-                                            Recencia ≤ Factor × AIVI individual
-                                        </p>
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            min="1.0"
-                                            max="2.0"
-                                            value={crmSettings.factor_riesgo}
-                                            onChange={(e) => setCrmSettings(prev => ({...prev, factor_riesgo: parseFloat(e.target.value)}))}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                            placeholder="1.5 = 150% de su ritmo normal"
-                                        />
+                                        <div className="flex justify-between items-center mb-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Segmento "En Riesgo"
+                                            </label>
+                                            <span className="text-sm font-semibold text-orange-600">
+                                                {crmSettings.factor_riesgo}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="mb-3">
+                                            <input
+                                                type="range"
+                                                min="1.0"
+                                                max="2.5"
+                                                step="0.1"
+                                                value={crmSettings.factor_riesgo}
+                                                onChange={(e) => setCrmSettings(prev => ({...prev, factor_riesgo: parseFloat(e.target.value)}))}
+                                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-orange"
+                                            />
+                                            <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                                <span>1.0</span>
+                                                <span>1.5 (Recomendado)</span>
+                                                <span>2.5</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                                            <p className="text-sm text-orange-800 mb-2">
+                                                <strong>¿Qué significa este valor?</strong>
+                                            </p>
+                                            <div className="text-xs text-orange-700 space-y-1">
+                                                <div>• <strong>Si BAJAS a 1.0:</strong> Detectarás riesgo más temprano (más mensajes de reactivación)</div>
+                                                <div>• <strong>Si SUBES a 2.5:</strong> Solo los muy inactivos serán "En Riesgo" (menos mensajes)</div>
+                                                <div>• <strong>Recomendado 1.5:</strong> Detecta clientes en riesgo en el momento ideal</div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Segmento "Inactivo"
-                                        </label>
-                                        <p className="text-xs text-gray-600 mb-2">
-                                            Recencia ≥ días mínimos O mayor que Factor Riesgo × AIVI
-                                        </p>
-                                        <input
-                                            type="number"
-                                            min="60"
-                                            max="365"
-                                            value={crmSettings.dias_inactivo_min}
-                                            onChange={(e) => setCrmSettings(prev => ({...prev, dias_inactivo_min: parseInt(e.target.value)}))}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                            placeholder="90 días = 3 meses sin venir"
-                                        />
+                                        <div className="flex justify-between items-center mb-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Segmento "Inactivo"
+                                            </label>
+                                            <span className="text-sm font-semibold text-red-600">
+                                                {crmSettings.dias_inactivo_min} días
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="mb-3">
+                                            <input
+                                                type="range"
+                                                min="30"
+                                                max="180"
+                                                step="15"
+                                                value={crmSettings.dias_inactivo_min}
+                                                onChange={(e) => setCrmSettings(prev => ({...prev, dias_inactivo_min: parseInt(e.target.value)}))}
+                                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-red"
+                                            />
+                                            <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                                <span>30 días</span>
+                                                <span>90 días (Recomendado)</span>
+                                                <span>180 días</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="bg-red-50 p-3 rounded-lg border border-red-200">
+                                            <p className="text-sm text-red-800 mb-2">
+                                                <strong>¿Qué significa este valor?</strong>
+                                            </p>
+                                            <div className="text-xs text-red-700 space-y-1">
+                                                <div>• <strong>Si BAJAS a 30 días:</strong> Clientes serán "Inactivos" más rápido (más mensajes urgentes)</div>
+                                                <div>• <strong>Si SUBES a 180 días:</strong> Solo los muy perdidos serán "Inactivos" (menos mensajes)</div>
+                                                <div>• <strong>Recomendado 90 días:</strong> 3 meses es el límite perfecto para la mayoría</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1067,39 +1128,81 @@ El equipo del restaurante`}
                                 <h3 className="font-medium text-gray-900">Políticas VIP y Contacto</h3>
                                 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Criterio VIP (Gasto mínimo)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="100"
-                                        max="5000"
-                                        value={crmSettings.vip_threshold || 500}
-                                        onChange={(e) => setCrmSettings(prev => ({...prev, vip_threshold: parseInt(e.target.value)}))}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                        placeholder="500 euros = Cliente VIP"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Gasto total para ser considerado VIP
-                                    </p>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Criterio VIP (Gasto mínimo)
+                                        </label>
+                                        <span className="text-sm font-semibold text-purple-600">
+                                            €{crmSettings.vip_threshold || 500}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="mb-3">
+                                        <input
+                                            type="range"
+                                            min="100"
+                                            max="2000"
+                                            step="50"
+                                            value={crmSettings.vip_threshold || 500}
+                                            onChange={(e) => setCrmSettings(prev => ({...prev, vip_threshold: parseInt(e.target.value)}))}
+                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-purple"
+                                        />
+                                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                            <span>€100</span>
+                                            <span>€500 (Recomendado)</span>
+                                            <span>€2000</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                        <p className="text-sm text-purple-800 mb-2">
+                                            <strong>¿Qué significa este valor?</strong>
+                                        </p>
+                                        <div className="text-xs text-purple-700 space-y-1">
+                                            <div>• <strong>Si BAJAS a €100:</strong> Más clientes serán VIP (más mensajes premium)</div>
+                                            <div>• <strong>Si SUBES a €2000:</strong> Solo los grandes gastadores serán VIP (mensajes exclusivos)</div>
+                                            <div>• <strong>Recomendado €500:</strong> Equilibrio ideal para restaurantes promedio</div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Máximo Contactos por Semana
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="7"
-                                        value={crmSettings.weekly_contact_cap}
-                                        onChange={(e) => setCrmSettings(prev => ({...prev, weekly_contact_cap: parseInt(e.target.value)}))}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                        placeholder="2 mensajes máximo por semana"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Para evitar saturar a los clientes
-                                    </p>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Máximo Contactos por Semana
+                                        </label>
+                                        <span className="text-sm font-semibold text-blue-600">
+                                            {crmSettings.weekly_contact_cap} mensajes
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="mb-3">
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max="7"
+                                            step="1"
+                                            value={crmSettings.weekly_contact_cap}
+                                            onChange={(e) => setCrmSettings(prev => ({...prev, weekly_contact_cap: parseInt(e.target.value)}))}
+                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-blue"
+                                        />
+                                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                            <span>1 msg</span>
+                                            <span>2 msgs (Recomendado)</span>
+                                            <span>7 msgs</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                        <p className="text-sm text-blue-800 mb-2">
+                                            <strong>¿Qué significa este valor?</strong>
+                                        </p>
+                                        <div className="text-xs text-blue-700 space-y-1">
+                                            <div>• <strong>Si BAJAS a 1:</strong> Muy conservador, menos impacto pero no molesta</div>
+                                            <div>• <strong>Si SUBES a 7:</strong> Máximo impacto pero riesgo de saturar clientes</div>
+                                            <div>• <strong>Recomendado 2:</strong> Equilibrio perfecto entre efectividad y respeto</div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
@@ -1138,8 +1241,57 @@ El equipo del restaurante`}
                                             
                                             if (error) throw error;
                                             
-                                            toast.success('✅ Configuración guardada exitosamente');
+                                            // 🚀 RECALCULAR SEGMENTOS DE TODOS LOS CLIENTES
+                                            toast.loading('Recalculando segmentos de clientes...', { id: 'recalculating' });
+                                            
+                                            // Obtener todos los clientes con datos necesarios para segmentación
+                                            const { data: allCustomers, error: customersError } = await supabase
+                                                .from('customers')
+                                                .select(`
+                                                    id, recency_days, aivi_days, visits_count, 
+                                                    total_spent, created_at, segment_manual
+                                                `)
+                                                .eq('restaurant_id', restaurantId);
+                                            
+                                            if (customersError) {
+                                                console.error('Error obteniendo clientes:', customersError);
+                                            } else {
+                                                // Recalcular segmento para cada cliente
+                                                const updates = [];
+                                                for (const customer of allCustomers) {
+                                                    const newSegment = calculateSegment(customer, crmSettings);
+                                                    
+                                                    // Solo actualizar si no tiene segmento manual
+                                                    if (!customer.segment_manual) {
+                                                        updates.push({
+                                                            id: customer.id,
+                                                            segment_auto: newSegment,
+                                                            updated_at: new Date().toISOString()
+                                                        });
+                                                    }
+                                                }
+                                                
+                                                // Actualizar en lotes
+                                                if (updates.length > 0) {
+                                                    const { error: updateError } = await supabase
+                                                        .from('customers')
+                                                        .upsert(updates);
+                                                    
+                                                    if (updateError) {
+                                                        console.error('Error actualizando segmentos:', updateError);
+                                                        toast.error('⚠️ Configuración guardada pero error actualizando segmentos');
+                                                    } else {
+                                                        console.log(`✅ Segmentos recalculados para ${updates.length} clientes`);
+                                                    }
+                                                }
+                                            }
+                                            
+                                            toast.dismiss('recalculating');
+                                            toast.success('✅ Configuración guardada y segmentos actualizados');
                                             console.log('Configuración CRM v2 guardada:', crmSettings);
+                                            
+                                            // Recargar datos del dashboard para mostrar cambios
+                                            await loadDashboardData();
                                             
                                         } catch (error) {
                                             console.error('Error guardando configuración:', error);
