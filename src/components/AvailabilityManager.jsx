@@ -25,11 +25,46 @@ const AvailabilityManager = () => {
     const [availabilityStats, setAvailabilityStats] = useState(null);
     const [conflictingReservations, setConflictingReservations] = useState([]);
     const [showDetails, setShowDetails] = useState(false);
+    const [showAvailabilityGrid, setShowAvailabilityGrid] = useState(false);
+    const [availabilityGrid, setAvailabilityGrid] = useState([]);
+    const [restaurantSettings, setRestaurantSettings] = useState(null);
     const [generationSettings, setGenerationSettings] = useState({
         startDate: format(new Date(), 'yyyy-MM-dd'),
         endDate: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
         overwriteExisting: false
     });
+
+    // Cargar configuración del restaurante
+    const loadRestaurantSettings = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('restaurants')
+                .select(`
+                    advance_booking_days,
+                    min_party_size,
+                    max_party_size,
+                    reservation_duration,
+                    buffer_time,
+                    settings
+                `)
+                .eq('id', restaurantId)
+                .single();
+
+            if (error) throw error;
+
+            setRestaurantSettings(data);
+            
+            // Actualizar fechas según configuración
+            if (data.advance_booking_days) {
+                setGenerationSettings(prev => ({
+                    ...prev,
+                    endDate: format(addDays(new Date(), data.advance_booking_days), 'yyyy-MM-dd')
+                }));
+            }
+        } catch (error) {
+            console.error('Error cargando configuración:', error);
+        }
+    };
 
     // Cargar estadísticas de disponibilidad
     const loadAvailabilityStats = async () => {
@@ -125,8 +160,7 @@ const AvailabilityManager = () => {
             const { data, error } = await supabase.rpc('generate_availability_slots', {
                 p_restaurant_id: restaurantId,
                 p_start_date: generationSettings.startDate,
-                p_end_date: generationSettings.endDate,
-                p_overwrite_existing: generationSettings.overwriteExisting
+                p_end_date: generationSettings.endDate
             });
 
             if (error) throw error;
@@ -177,8 +211,56 @@ const AvailabilityManager = () => {
         }
     };
 
+    // Cargar vista detallada de disponibilidades
+    const loadAvailabilityGrid = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('availability_slots')
+                .select(`
+                    id,
+                    slot_date,
+                    start_time,
+                    end_time,
+                    status,
+                    table_id,
+                    tables(name, capacity, zone)
+                `)
+                .eq('restaurant_id', restaurantId)
+                .gte('slot_date', generationSettings.startDate)
+                .lte('slot_date', generationSettings.endDate)
+                .order('slot_date', { ascending: true })
+                .order('start_time', { ascending: true });
+
+            if (error) throw error;
+
+            // Agrupar por fecha y mesa
+            const grouped = {};
+            data?.forEach(slot => {
+                const dateKey = slot.slot_date;
+                if (!grouped[dateKey]) {
+                    grouped[dateKey] = {};
+                }
+                
+                const tableKey = slot.tables.name;
+                if (!grouped[dateKey][tableKey]) {
+                    grouped[dateKey][tableKey] = {
+                        table: slot.tables,
+                        slots: []
+                    };
+                }
+                
+                grouped[dateKey][tableKey].slots.push(slot);
+            });
+
+            setAvailabilityGrid(grouped);
+        } catch (error) {
+            console.error('Error cargando vista detallada:', error);
+        }
+    };
+
     useEffect(() => {
         if (restaurantId) {
+            loadRestaurantSettings();
             loadAvailabilityStats();
         }
     }, [restaurantId]);
@@ -196,13 +278,28 @@ const AvailabilityManager = () => {
                     </p>
                 </div>
                 
-                <button
-                    onClick={() => setShowDetails(!showDetails)}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                    {showDetails ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    {showDetails ? 'Ocultar detalles' : 'Ver detalles'}
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowDetails(!showDetails)}
+                        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                        {showDetails ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showDetails ? 'Ocultar detalles' : 'Ver detalles'}
+                    </button>
+                    
+                    <button
+                        onClick={async () => {
+                            setShowAvailabilityGrid(!showAvailabilityGrid);
+                            if (!showAvailabilityGrid) {
+                                await loadAvailabilityGrid();
+                            }
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
+                    >
+                        <Calendar className="w-4 h-4" />
+                        {showAvailabilityGrid ? 'Ocultar calendario' : 'Ver calendario'}
+                    </button>
+                </div>
             </div>
 
             {/* Estadísticas actuales */}
@@ -234,6 +331,37 @@ const AvailabilityManager = () => {
                             {availabilityStats.tablesCount}
                         </div>
                         <div className="text-sm text-gray-700">Mesas</div>
+                    </div>
+                </div>
+            )}
+
+            {/* Información de Política de Reservas */}
+            {restaurantSettings && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <h3 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
+                        <Settings className="w-5 h-5" />
+                        Política de Reservas Actual
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <div className="text-blue-700 font-medium">Días de Antelación</div>
+                            <div className="text-blue-900">{restaurantSettings.advance_booking_days || 30} días</div>
+                        </div>
+                        <div>
+                            <div className="text-blue-700 font-medium">Duración Reserva</div>
+                            <div className="text-blue-900">{restaurantSettings.reservation_duration || 90} min</div>
+                        </div>
+                        <div>
+                            <div className="text-blue-700 font-medium">Tamaño Grupo</div>
+                            <div className="text-blue-900">{restaurantSettings.min_party_size || 1}-{restaurantSettings.max_party_size || 12} personas</div>
+                        </div>
+                        <div>
+                            <div className="text-blue-700 font-medium">Buffer</div>
+                            <div className="text-blue-900">{restaurantSettings.buffer_time || 15} min</div>
+                        </div>
+                    </div>
+                    <div className="mt-3 text-xs text-blue-600">
+                        💡 Estas configuraciones se aplican automáticamente al generar disponibilidades
                     </div>
                 </div>
             )}
@@ -383,6 +511,74 @@ const AvailabilityManager = () => {
                         {format(new Date(availabilityStats.dateRange.start), 'dd/MM/yyyy', { locale: es })} - {' '}
                         {format(new Date(availabilityStats.dateRange.end), 'dd/MM/yyyy', { locale: es })}
                     </div>
+                </div>
+            )}
+
+            {/* Vista detallada de disponibilidades */}
+            {showAvailabilityGrid && (
+                <div className="mt-6 border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                        <Calendar className="w-5 h-5" />
+                        Calendario de Disponibilidades
+                    </h3>
+                    
+                    {Object.keys(availabilityGrid).length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                            <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                            <p>No hay disponibilidades generadas para este período</p>
+                            <p className="text-sm">Usa el botón "Generar Disponibilidades" para crear slots</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-6 max-h-96 overflow-y-auto">
+                            {Object.entries(availabilityGrid).map(([date, tables]) => (
+                                <div key={date} className="border border-gray-100 rounded-lg p-4">
+                                    <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                                        <Clock className="w-4 h-4" />
+                                        {format(new Date(date), 'EEEE, dd/MM/yyyy', { locale: es })}
+                                    </h4>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {Object.entries(tables).map(([tableName, tableData]) => (
+                                            <div key={tableName} className="bg-gray-50 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Users className="w-4 h-4 text-gray-600" />
+                                                    <span className="font-medium text-gray-900">
+                                                        {tableName}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500">
+                                                        ({tableData.table.capacity} personas)
+                                                    </span>
+                                                </div>
+                                                
+                                                <div className="flex flex-wrap gap-1">
+                                                    {tableData.slots.map((slot) => (
+                                                        <div
+                                                            key={slot.id}
+                                                            className={`px-2 py-1 rounded text-xs font-medium ${
+                                                                slot.status === 'free'
+                                                                    ? 'bg-green-100 text-green-700'
+                                                                    : slot.status === 'occupied'
+                                                                    ? 'bg-red-100 text-red-700'
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                            title={`${slot.start_time} - ${slot.end_time} (${slot.status})`}
+                                                        >
+                                                            {slot.start_time.slice(0, 5)}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                
+                                                <div className="mt-2 text-xs text-gray-500">
+                                                    {tableData.slots.filter(s => s.status === 'free').length} libres • {' '}
+                                                    {tableData.slots.filter(s => s.status === 'occupied').length} ocupados
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

@@ -411,6 +411,7 @@ export default function Reservas() {
     const [loading, setLoading] = useState(true);
     const [reservations, setReservations] = useState([]);
     const [selectedReservations, setSelectedReservations] = useState(new Set());
+    const [activeTab, setActiveTab] = useState('reservas'); // 'reservas' o 'disponibilidades'
     const [tables, setTables] = useState([]);
     const [agentStats, setAgentStats] = useState({
         agentReservations: 0,
@@ -1232,6 +1233,30 @@ export default function Reservas() {
                                 locale: es,
                             })}
                         </p>
+                        
+                        {/* Sistema de Pestañas */}
+                        <div className="flex gap-2 mt-4">
+                            <button
+                                onClick={() => setActiveTab('reservas')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    activeTab === 'reservas'
+                                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                            >
+                                📅 Reservas
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('disponibilidades')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    activeTab === 'disponibilidades'
+                                        ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                            >
+                                🗓️ Disponibilidades
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
@@ -1271,13 +1296,13 @@ export default function Reservas() {
                 </div>
             </div>
 
-            {/* Panel de insights del agente */}
-            <AgentStatsPanel stats={agentStats} insights={agentInsights} />
+            {/* Contenido según pestaña activa */}
+            {activeTab === 'reservas' && (
+                <>
+                    {/* Panel de insights del agente */}
+                    <AgentStatsPanel stats={agentStats} insights={agentInsights} />
 
-            {/* Gestión de Disponibilidades */}
-            <AvailabilityManager />
-
-            {/* Filtros */}
+                    {/* Filtros */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 <div className="flex flex-col lg:flex-row gap-4">
                     {/* Búsqueda */}
@@ -1613,6 +1638,13 @@ export default function Reservas() {
                     insights={agentInsights}
                     stats={agentStats}
                 />
+            )}
+                </>
+            )}
+
+            {/* Pestaña de Disponibilidades */}
+            {activeTab === 'disponibilidades' && (
+                <AvailabilityManager />
             )}
         </div>
     );
