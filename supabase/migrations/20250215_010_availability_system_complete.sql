@@ -5,6 +5,9 @@
 -- Descripción: Sistema completo de disponibilidades para reservas
 -- =====================================================
 
+-- ELIMINAR FUNCIÓN EXISTENTE CON TIPO DE RETORNO DIFERENTE
+DROP FUNCTION IF EXISTS generate_availability_slots(uuid,date,date);
+
 -- 1. TABLA DE SLOTS DE DISPONIBILIDAD
 -- =====================================================
 CREATE TABLE IF NOT EXISTS availability_slots (
@@ -94,10 +97,7 @@ CREATE OR REPLACE FUNCTION generate_availability_slots(
     p_restaurant_id UUID,
     p_start_date DATE DEFAULT CURRENT_DATE,
     p_end_date DATE DEFAULT NULL
-) RETURNS TABLE (
-    slots_generated INTEGER,
-    date_range TEXT
-) AS $$
+) RETURNS INTEGER AS $$
 DECLARE
     restaurant_settings JSONB;
     operating_hours JSONB;
@@ -230,9 +230,7 @@ BEGIN
     END LOOP;
     
     -- Retornar resultados
-    RETURN QUERY SELECT 
-        slot_count,
-        p_start_date::TEXT || ' to ' || final_end_date::TEXT;
+    RETURN slot_count;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -571,6 +569,10 @@ CREATE TRIGGER table_changes_trigger
 ALTER TABLE availability_slots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_events ENABLE ROW LEVEL SECURITY;
 
+-- Eliminar políticas existentes si existen
+DROP POLICY IF EXISTS "availability_slots_tenant_isolation" ON availability_slots;
+DROP POLICY IF EXISTS "special_events_tenant_isolation" ON special_events;
+
 -- Política para availability_slots
 CREATE POLICY "availability_slots_tenant_isolation" ON availability_slots
     FOR ALL USING (
@@ -597,14 +599,13 @@ CREATE OR REPLACE FUNCTION initialize_availability_system(p_restaurant_id UUID)
 RETURNS TEXT AS $$
 DECLARE
     result_text TEXT;
-    slots_info RECORD;
+    slots_count INTEGER;
 BEGIN
     -- Generar slots iniciales para los próximos 90 días
-    SELECT * INTO slots_info 
-    FROM generate_availability_slots(p_restaurant_id, CURRENT_DATE, CURRENT_DATE + 90);
+    SELECT generate_availability_slots(p_restaurant_id, CURRENT_DATE, CURRENT_DATE + 90) INTO slots_count;
     
-    result_text := format('✅ Sistema de disponibilidades inicializado para restaurante %s. Generados %s slots para el rango %s',
-                         p_restaurant_id, slots_info.slots_generated, slots_info.date_range);
+    result_text := format('✅ Sistema de disponibilidades inicializado para restaurante %s. Generados %s slots',
+                         p_restaurant_id, slots_count);
     
     RETURN result_text;
 END;
