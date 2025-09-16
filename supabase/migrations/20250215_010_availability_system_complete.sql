@@ -177,9 +177,16 @@ BEGIN
             -- Si el día no está afectado por cierres, generar slots
             IF NOT is_day_affected THEN
                 
-                -- Usar horario simple open/close (sin shifts por ahora)
-                shift_start := (day_schedule->>'open')::TIME;
-                shift_end := (day_schedule->>'close')::TIME;
+                -- Usar horario simple open/close con validación robusta
+                BEGIN
+                    shift_start := (day_schedule->>'open')::TIME;
+                    shift_end := (day_schedule->>'close')::TIME;
+                EXCEPTION WHEN invalid_text_representation THEN
+                    -- Si los datos no son válidos, usar horarios por defecto
+                    shift_start := '09:00'::TIME;
+                    shift_end := '22:00'::TIME;
+                    RAISE NOTICE 'Horarios inválidos para %, usando defaults: % - %', current_loop_date, shift_start, shift_end;
+                END;
                 
                 IF shift_start IS NOT NULL AND shift_end IS NOT NULL THEN
                     
