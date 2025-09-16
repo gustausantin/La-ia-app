@@ -177,10 +177,37 @@ const AvailabilityManager = () => {
             if (error) throw error;
 
             toast.dismiss('generating');
-            toast.success(`✅ Tabla generada: ${data} slots creados`);
             
             // Recargar estadísticas
-            await loadAvailabilityStats();
+            await Promise.all([
+                loadAvailabilityStats(),
+                loadAvailabilityGrid()
+            ]);
+            
+            // Crear mensaje de resumen inteligente
+            const advanceDays = restaurantSettings?.advance_booking_days || 30;
+            const duration = restaurantSettings?.reservation_duration || 90;
+            const buffer = restaurantSettings?.buffer_time !== undefined ? restaurantSettings.buffer_time : 15;
+            const endDate = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
+            
+            const summaryMessage = `✅ Disponibilidades generadas exitosamente:
+            
+📊 RESUMEN:
+• ${data} slots creados
+• Desde HOY hasta ${endDate} (${advanceDays} días)
+• Duración por reserva: ${duration} min
+• Buffer entre reservas: ${buffer} min
+• Para todas las mesas activas
+            
+🎯 Las disponibilidades están listas para recibir reservas.`;
+            
+            toast.success(summaryMessage, { 
+                duration: 6000,
+                style: { 
+                    minWidth: '400px',
+                    whiteSpace: 'pre-line'
+                }
+            });
 
         } catch (error) {
             console.error('Error generando disponibilidades:', error);

@@ -38,6 +38,8 @@ import {
     Zap,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import ConflictDetectionService from '../services/ConflictDetectionService';
+import ConflictWarning from '../components/ConflictWarning';
 
 // DATOS NECESARIOS DE SUPABASE:
 // - tabla: tables (id, restaurant_id, table_number, name, zone, min_capacity, max_capacity, status, notes)
@@ -487,6 +489,10 @@ export default function Mesas() {
     const [showStatsModal, setShowStatsModal] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
     const [selectedReservation, setSelectedReservation] = useState(null);
+    
+    // Estados de conflictos
+    const [conflictData, setConflictData] = useState(null);
+    const [pendingAction, setPendingAction] = useState(null);
 
     // Subscription de real-time
     const [realtimeSubscription, setRealtimeSubscription] = useState(null);
@@ -937,13 +943,7 @@ export default function Mesas() {
                 setShowEditModal(true);
                 break;
             case "delete":
-                if (
-                    window.confirm(
-                        "¿Estás seguro de que quieres eliminar esta mesa?",
-                    )
-                ) {
-                    deleteTable(data.id);
-                }
+                handleDeleteTableWithValidation(data);
                 break;
             case "viewReservation":
                 setSelectedReservation(data);
@@ -958,7 +958,36 @@ export default function Mesas() {
         }
     }, []);
 
-    // Función para eliminar mesa
+    // Función para validar eliminación de mesa
+    const handleDeleteTableWithValidation = useCallback(async (table) => {
+        try {
+            // Detectar conflictos antes de eliminar
+            const conflicts = await ConflictDetectionService.detectTableConflicts(
+                restaurantId,
+                table.id,
+                'DELETE'
+            );
+            
+            if (conflicts.hasConflicts) {
+                // Mostrar modal de conflictos
+                setConflictData(conflicts);
+                setPendingAction({
+                    type: 'DELETE_TABLE',
+                    data: table
+                });
+            } else {
+                // No hay conflictos, eliminar directamente
+                if (window.confirm(`¿Estás seguro de que quieres eliminar la mesa "${table.name}"?`)) {
+                    await deleteTable(table.id);
+                }
+            }
+        } catch (error) {
+            console.error('Error validando eliminación de mesa:', error);
+            toast.error('Error al validar la eliminación');
+        }
+    }, [restaurantId]);
+
+    // Función para eliminar mesa (sin validación)
     const deleteTable = useCallback(
         async (tableId) => {
             try {
@@ -984,6 +1013,31 @@ export default function Mesas() {
         },
         [loadTables, addNotification],
     );
+
+    // Función para confirmar acción con conflictos
+    const handleConfirmWithConflicts = useCallback(async () => {
+        if (!pendingAction) return;
+        
+        try {
+            switch (pendingAction.type) {
+                case 'DELETE_TABLE':
+                    await deleteTable(pendingAction.data.id);
+                    toast.warning('⚠️ Mesa eliminada a pesar de tener reservas. Contacta a los clientes afectados.');
+                    break;
+            }
+        } catch (error) {
+            toast.error('Error ejecutando la acción');
+        } finally {
+            setConflictData(null);
+            setPendingAction(null);
+        }
+    }, [pendingAction, deleteTable]);
+
+    // Función para cancelar acción con conflictos
+    const handleCancelConflictAction = useCallback(() => {
+        setConflictData(null);
+        setPendingAction(null);
+    }, []);
 
     if (!isReady) {
         return (
@@ -1366,6 +1420,18 @@ export default function Mesas() {
                         setSelectedReservation(null);
                     }}
                     reservation={selectedReservation}
+                />
+            )}
+
+            {/* Modal de conflictos */}
+            {conflictData && (
+                <ConflictWarning
+                    conflicts={conflictData}
+                    onConfirm={handleConfirmWithConflicts}
+                    onCancel={handleCancelConflictAction}
+                    title="⚠️ No se puede eliminar la mesa"
+                    confirmText="Eliminar de todas formas"
+                    cancelText="Cancelar eliminación"
                 />
             )}
 
