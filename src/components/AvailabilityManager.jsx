@@ -163,12 +163,15 @@ const AvailabilityManager = () => {
                 }
             }
 
-            // 2. Llamar a la función de generación (siempre desde hoy)
+            // 2. Llamar a la función de generación usando política de reservas
             const today = format(new Date(), 'yyyy-MM-dd');
+            const advanceDays = restaurantSettings?.advance_booking_days || 30;
+            const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
+            
             const { data, error } = await supabase.rpc('generate_availability_slots', {
                 p_restaurant_id: restaurantId,
                 p_start_date: today,
-                p_end_date: generationSettings.endDate
+                p_end_date: endDate
             });
 
             if (error) throw error;
@@ -381,75 +384,6 @@ const AvailabilityManager = () => {
                 </div>
             )}
 
-            {/* Configuración de generación */}
-            <div className="border border-gray-200 rounded-lg p-4 mb-6">
-                <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                    <Settings className="w-5 h-5" />
-                    Configuración de Generación
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Fecha Inicio
-                        </label>
-                        <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 font-medium">
-                            {format(new Date(), 'dd/MM/yyyy', { locale: es })} (HOY)
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                            Las disponibilidades siempre se generan desde hoy hacia adelante
-                        </p>
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Fecha Fin
-                        </label>
-                        <input
-                            type="date"
-                            value={generationSettings.endDate}
-                            onChange={(e) => setGenerationSettings(prev => ({
-                                ...prev,
-                                endDate: e.target.value
-                            }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                    </div>
-                    
-                    <div className="flex items-end">
-                        <label className="flex items-center">
-                            <input
-                                type="checkbox"
-                                checked={generationSettings.overwriteExisting}
-                                onChange={(e) => setGenerationSettings(prev => ({
-                                    ...prev,
-                                    overwriteExisting: e.target.checked
-                                }))}
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="ml-2 text-sm text-gray-700">
-                                Sobrescribir existentes
-                            </span>
-                        </label>
-                    </div>
-                </div>
-
-                {generationSettings.overwriteExisting && (
-                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div className="flex items-start gap-2">
-                            <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
-                            <div>
-                                <div className="text-sm font-medium text-yellow-800">
-                                    ⚠️ Modo sobrescritura activado
-                                </div>
-                                <div className="text-xs text-yellow-700 mt-1">
-                                    Se eliminarán las disponibilidades existentes y se verificarán conflictos con reservas
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
 
             {/* Conflictos detectados */}
             {showDetails && conflictingReservations.length > 0 && (

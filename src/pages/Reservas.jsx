@@ -427,6 +427,15 @@ export default function Reservas() {
     const [selectedReservations, setSelectedReservations] = useState(new Set());
     const [activeTab, setActiveTab] = useState('reservas'); // 'reservas' o 'disponibilidades'
     const [tables, setTables] = useState([]);
+    const [policySettings, setPolicySettings] = useState({
+        min_party_size: 1,
+        max_party_size: 20,
+        advance_booking_days: 30,
+        reservation_duration: 90,
+        buffer_time: 15,
+        min_advance_hours: 2
+    });
+    const [savingPolicy, setSavingPolicy] = useState(false);
     const [agentStats, setAgentStats] = useState({
         agentReservations: 0,
         conversionRate: 0,
@@ -1014,6 +1023,31 @@ export default function Reservas() {
         return filtered;
     }, [reservations, filters]);
 
+    // Cargar configuración de política de reservas
+    const loadPolicySettings = useCallback(async () => {
+        try {
+            const { data, error } = await supabase
+                .from('restaurants')
+                .select('settings')
+                .eq('id', restaurantId)
+                .single();
+
+            if (error) throw error;
+
+            const settings = data?.settings || {};
+            setPolicySettings({
+                min_party_size: settings.min_party_size || 1,
+                max_party_size: settings.max_party_size || 20,
+                advance_booking_days: settings.horizon_days || 30,
+                reservation_duration: settings.turn_duration_minutes || 90,
+                buffer_time: settings.buffer_minutes || 15,
+                min_advance_hours: settings.min_advance_hours || 2
+            });
+        } catch (error) {
+            console.error('Error cargando política:', error);
+        }
+    }, [restaurantId]);
+
     // Cargar datos inicial - SIN DEPENDENCY LOOPS
     useEffect(() => {
         if (isReady && restaurantId) {
@@ -1023,6 +1057,7 @@ export default function Reservas() {
                 loadTables(),
                 loadAgentInsights(),
                 autoCompleteReservations(), // 🤖 Auto-completar reservas de ayer
+                loadPolicySettings()
             ]).finally(() => setLoading(false));
         }
     }, [isReady, restaurantId]); // SOLO dependencies estables
@@ -1792,7 +1827,11 @@ export default function Reservas() {
                                 </label>
                                 <input
                                     type="number"
-                                    defaultValue={1}
+                                    value={policySettings.min_party_size}
+                                    onChange={(e) => setPolicySettings(prev => ({
+                                        ...prev,
+                                        min_party_size: parseInt(e.target.value) || 1
+                                    }))}
                                     min="1"
                                     max="20"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -1805,7 +1844,11 @@ export default function Reservas() {
                                 </label>
                                 <input
                                     type="number"
-                                    defaultValue={20}
+                                    value={policySettings.max_party_size}
+                                    onChange={(e) => setPolicySettings(prev => ({
+                                        ...prev,
+                                        max_party_size: parseInt(e.target.value) || 20
+                                    }))}
                                     min="1"
                                     max="50"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -1821,7 +1864,11 @@ export default function Reservas() {
                                 </label>
                                 <input
                                     type="number"
-                                    defaultValue={30}
+                                    value={policySettings.advance_booking_days}
+                                    onChange={(e) => setPolicySettings(prev => ({
+                                        ...prev,
+                                        advance_booking_days: parseInt(e.target.value) || 30
+                                    }))}
                                     min="1"
                                     max="365"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -1839,9 +1886,16 @@ export default function Reservas() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Duración estándar de reserva (minutos)
                                 </label>
-                                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <select 
+                                    value={policySettings.reservation_duration}
+                                    onChange={(e) => setPolicySettings(prev => ({
+                                        ...prev,
+                                        reservation_duration: parseInt(e.target.value) || 90
+                                    }))}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                >
                                     <option value="60">60 minutos</option>
-                                    <option value="90" selected>90 minutos</option>
+                                    <option value="90">90 minutos</option>
                                     <option value="120">120 minutos</option>
                                 </select>
                                 <p className="text-xs text-gray-500 mt-1">
@@ -1853,9 +1907,16 @@ export default function Reservas() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Buffer entre reservas (minutos)
                                 </label>
-                                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <select 
+                                    value={policySettings.buffer_time}
+                                    onChange={(e) => setPolicySettings(prev => ({
+                                        ...prev,
+                                        buffer_time: parseInt(e.target.value) || 15
+                                    }))}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                >
                                     <option value="0">Sin buffer</option>
-                                    <option value="15" selected>15 minutos</option>
+                                    <option value="15">15 minutos</option>
                                     <option value="30">30 minutos</option>
                                 </select>
                                 <p className="text-xs text-gray-500 mt-1">
@@ -1869,7 +1930,11 @@ export default function Reservas() {
                                 </label>
                                 <input
                                     type="number"
-                                    defaultValue={2}
+                                    value={policySettings.min_advance_hours}
+                                    onChange={(e) => setPolicySettings(prev => ({
+                                        ...prev,
+                                        min_advance_hours: parseInt(e.target.value) || 2
+                                    }))}
                                     min="0"
                                     max="48"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -1897,9 +1962,55 @@ export default function Reservas() {
                     </div>
 
                     <div className="mt-6">
-                        <button className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                            <Save className="w-5 h-5" />
-                            Guardar Política de Reservas
+                        <button 
+                            onClick={async () => {
+                                try {
+                                    setSavingPolicy(true);
+                                    
+                                    // Obtener configuración actual
+                                    const { data: currentData, error: fetchError } = await supabase
+                                        .from('restaurants')
+                                        .select('settings')
+                                        .eq('id', restaurantId)
+                                        .single();
+                                    
+                                    if (fetchError) throw fetchError;
+                                    
+                                    // Actualizar settings con nueva configuración
+                                    const updatedSettings = {
+                                        ...(currentData?.settings || {}),
+                                        min_party_size: policySettings.min_party_size,
+                                        max_party_size: policySettings.max_party_size,
+                                        horizon_days: policySettings.advance_booking_days,
+                                        turn_duration_minutes: policySettings.reservation_duration,
+                                        buffer_minutes: policySettings.buffer_time,
+                                        min_advance_hours: policySettings.min_advance_hours
+                                    };
+                                    
+                                    const { error } = await supabase
+                                        .from('restaurants')
+                                        .update({ 
+                                            settings: updatedSettings,
+                                            updated_at: new Date().toISOString()
+                                        })
+                                        .eq('id', restaurantId);
+                                    
+                                    if (error) throw error;
+                                    
+                                    toast.success('✅ Política de Reservas guardada correctamente');
+                                    
+                                } catch (error) {
+                                    console.error('Error guardando política:', error);
+                                    toast.error('❌ Error al guardar: ' + error.message);
+                                } finally {
+                                    setSavingPolicy(false);
+                                }
+                            }}
+                            disabled={savingPolicy}
+                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                        >
+                            {savingPolicy ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                            {savingPolicy ? 'Guardando...' : 'Guardar Política de Reservas'}
                         </button>
                     </div>
                 </div>

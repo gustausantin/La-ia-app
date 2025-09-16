@@ -146,11 +146,19 @@ BEGIN
     current_loop_date := p_start_date;
     
     WHILE current_loop_date <= final_end_date LOOP
-        -- Obtener horario del día (lunes=1, domingo=7)
-        day_schedule := operating_hours->EXTRACT(DOW FROM current_loop_date)::TEXT;
+        -- Obtener horario del día usando nombres de días
+        day_schedule := CASE EXTRACT(DOW FROM current_loop_date)
+            WHEN 0 THEN operating_hours->'sunday'    -- Domingo
+            WHEN 1 THEN operating_hours->'monday'    -- Lunes
+            WHEN 2 THEN operating_hours->'tuesday'   -- Martes
+            WHEN 3 THEN operating_hours->'wednesday' -- Miércoles
+            WHEN 4 THEN operating_hours->'thursday'  -- Jueves
+            WHEN 5 THEN operating_hours->'friday'    -- Viernes
+            WHEN 6 THEN operating_hours->'saturday'  -- Sábado
+        END;
         
-        -- Verificar si el día está abierto
-        IF day_schedule IS NOT NULL AND (day_schedule->>'open')::BOOLEAN = true THEN
+        -- Verificar si el día está abierto y no está marcado como cerrado
+        IF day_schedule IS NOT NULL AND COALESCE((day_schedule->>'closed')::BOOLEAN, false) = false THEN
             
             -- Verificar eventos especiales que afecten este día
             is_day_affected := false;
@@ -169,11 +177,11 @@ BEGIN
             -- Si el día no está afectado por cierres, generar slots
             IF NOT is_day_affected THEN
                 
-                -- Iterar sobre turnos (shifts)
-                FOR shift_key IN SELECT jsonb_object_keys(day_schedule->'shifts') LOOP
-                    shift_data := day_schedule->'shifts'->shift_key;
-                    shift_start := (shift_data->>'start')::TIME;
-                    shift_end := (shift_data->>'end')::TIME;
+                -- Usar horario simple open/close (sin shifts por ahora)
+                shift_start := (day_schedule->>'open')::TIME;
+                shift_end := (day_schedule->>'close')::TIME;
+                
+                IF shift_start IS NOT NULL AND shift_end IS NOT NULL THEN
                     
                     -- Generar slots para cada mesa activa
                     FOR table_record IN 
@@ -222,7 +230,7 @@ BEGIN
                             current_slot_time := current_slot_time + ((turn_duration + buffer_minutes) || ' minutes')::INTERVAL;
                         END LOOP;
                     END LOOP;
-                END LOOP;
+                END IF;
             END IF;
         END IF;
         
