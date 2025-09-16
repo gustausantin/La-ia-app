@@ -29,7 +29,7 @@ const AvailabilityManager = () => {
     const [availabilityGrid, setAvailabilityGrid] = useState([]);
     const [restaurantSettings, setRestaurantSettings] = useState(null);
     const [generationSettings, setGenerationSettings] = useState({
-        startDate: format(new Date(), 'yyyy-MM-dd'),
+        startDate: format(new Date(), 'yyyy-MM-dd'), // Siempre desde hoy
         endDate: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
         overwriteExisting: false
     });
@@ -39,26 +39,29 @@ const AvailabilityManager = () => {
         try {
             const { data, error } = await supabase
                 .from('restaurants')
-                .select(`
-                    advance_booking_days,
-                    min_party_size,
-                    max_party_size,
-                    reservation_duration,
-                    buffer_time,
-                    settings
-                `)
+                .select('settings')
                 .eq('id', restaurantId)
                 .single();
 
             if (error) throw error;
 
-            setRestaurantSettings(data);
+            // Extraer configuración del JSONB settings
+            const settings = data?.settings || {};
+            const processedSettings = {
+                advance_booking_days: settings.horizon_days || 30,
+                min_party_size: settings.min_party_size || 1,
+                max_party_size: settings.max_party_size || 20,
+                reservation_duration: settings.turn_duration_minutes || 90,
+                buffer_time: settings.buffer_minutes || 15
+            };
+            
+            setRestaurantSettings(processedSettings);
             
             // Actualizar fechas según configuración
-            if (data.advance_booking_days) {
+            if (processedSettings.advance_booking_days) {
                 setGenerationSettings(prev => ({
                     ...prev,
-                    endDate: format(addDays(new Date(), data.advance_booking_days), 'yyyy-MM-dd')
+                    endDate: format(addDays(new Date(), processedSettings.advance_booking_days), 'yyyy-MM-dd')
                 }));
             }
         } catch (error) {
@@ -74,9 +77,12 @@ const AvailabilityManager = () => {
                 .select(`
                     id,
                     slot_date,
+                    start_time,
+                    end_time,
                     status,
                     table_id,
-                    tables(name, capacity)
+                    metadata,
+                    tables(name, capacity, zone)
                 `)
                 .eq('restaurant_id', restaurantId)
                 .gte('slot_date', format(new Date(), 'yyyy-MM-dd'))
@@ -84,17 +90,18 @@ const AvailabilityManager = () => {
 
             if (error) throw error;
 
-            // Calcular estadísticas
+            // Calcular estadísticas incluyendo slots reservados
             const stats = {
                 total: data?.length || 0,
                 free: data?.filter(slot => slot.status === 'free').length || 0,
-                occupied: data?.filter(slot => slot.status === 'occupied').length || 0,
+                occupied: data?.filter(slot => slot.status === 'reserved' || slot.status === 'occupied').length || 0,
                 blocked: data?.filter(slot => slot.status === 'blocked').length || 0,
                 dateRange: {
                     start: data?.[0]?.slot_date || null,
                     end: data?.[data?.length - 1]?.slot_date || null
                 },
-                tablesCount: [...new Set(data?.map(slot => slot.table_id))].length || 0
+                tablesCount: [...new Set(data?.map(slot => slot.table_id))].length || 0,
+                reservationsFound: data?.filter(slot => slot.metadata?.reservation_id).length || 0
             };
 
             setAvailabilityStats(stats);
@@ -156,10 +163,11 @@ const AvailabilityManager = () => {
                 }
             }
 
-            // 2. Llamar a la función de generación
+            // 2. Llamar a la función de generación (siempre desde hoy)
+            const today = format(new Date(), 'yyyy-MM-dd');
             const { data, error } = await supabase.rpc('generate_availability_slots', {
                 p_restaurant_id: restaurantId,
-                p_start_date: generationSettings.startDate,
+                p_start_date: today,
                 p_end_date: generationSettings.endDate
             });
 
@@ -304,7 +312,7 @@ const AvailabilityManager = () => {
 
             {/* Estadísticas actuales */}
             {availabilityStats && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                         <div className="text-2xl font-bold text-blue-900">
                             {availabilityStats.total}
@@ -331,6 +339,13 @@ const AvailabilityManager = () => {
                             {availabilityStats.tablesCount}
                         </div>
                         <div className="text-sm text-gray-700">Mesas</div>
+                    </div>
+                    
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                        <div className="text-2xl font-bold text-purple-900">
+                            {availabilityStats.reservationsFound}
+                        </div>
+                        <div className="text-sm text-purple-700">Con Reservas</div>
                     </div>
                 </div>
             )}
@@ -378,15 +393,12 @@ const AvailabilityManager = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Fecha Inicio
                         </label>
-                        <input
-                            type="date"
-                            value={generationSettings.startDate}
-                            onChange={(e) => setGenerationSettings(prev => ({
-                                ...prev,
-                                startDate: e.target.value
-                            }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+                        <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 font-medium">
+                            {format(new Date(), 'dd/MM/yyyy', { locale: es })} (HOY)
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Las disponibilidades siempre se generan desde hoy hacia adelante
+                        </p>
                     </div>
                     
                     <div>
@@ -554,22 +566,30 @@ const AvailabilityManager = () => {
                                                     {tableData.slots.map((slot) => (
                                                         <div
                                                             key={slot.id}
-                                                            className={`px-2 py-1 rounded text-xs font-medium ${
+                                                            className={`px-2 py-1 rounded text-xs font-medium cursor-pointer ${
                                                                 slot.status === 'free'
-                                                                    ? 'bg-green-100 text-green-700'
+                                                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                                    : slot.status === 'reserved'
+                                                                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                                                                     : slot.status === 'occupied'
                                                                     ? 'bg-red-100 text-red-700'
                                                                     : 'bg-gray-100 text-gray-700'
                                                             }`}
-                                                            title={`${slot.start_time} - ${slot.end_time} (${slot.status})`}
+                                                            title={`${slot.start_time} - ${slot.end_time} (${slot.status})${
+                                                                slot.metadata?.reservation_id ? ' - Con reserva' : ''
+                                                            }`}
                                                         >
                                                             {slot.start_time.slice(0, 5)}
+                                                            {slot.metadata?.reservation_id && (
+                                                                <span className="ml-1">📋</span>
+                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>
                                                 
                                                 <div className="mt-2 text-xs text-gray-500">
                                                     {tableData.slots.filter(s => s.status === 'free').length} libres • {' '}
+                                                    {tableData.slots.filter(s => s.status === 'reserved').length} reservados • {' '}
                                                     {tableData.slots.filter(s => s.status === 'occupied').length} ocupados
                                                 </div>
                                             </div>
