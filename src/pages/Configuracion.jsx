@@ -221,14 +221,6 @@ const Configuracion = () => {
         delivery_available: false,
         takeout_available: true,
 
-        // Configuración de reservas - desde BD
-        min_party_size: 0,
-        max_party_size: 0,
-        reservation_duration: 0,
-        buffer_time: 0,
-        advance_booking_days: 0,
-        same_day_cutoff: "",
-        cancellation_hours: 0,
 
         // CRM IA - desde BD Ãºnicamente
         crm: {},
@@ -257,11 +249,6 @@ const Configuracion = () => {
             id: "hours", 
             label: "Horarios", 
             icon: <Clock className="w-4 h-4" />,
-        },
-        {
-            id: "reservations",
-            label: "Política de Reservas",
-            icon: <Calendar className="w-4 h-4" />,
         },
         {
             id: "agent",
@@ -1463,227 +1450,76 @@ const Configuracion = () => {
                     )}
 
                     {activeTab === "agent" && (
-                        <div className="space-y-6">
-                            <SettingSection
-                                title="Agente IA Conversacional Enterprise"
-                                description="Asistente virtual inteligente que atiende 24/7 con capacidad de reservas y escalamiento automático"
-                                icon={<Bot />}
-                                premium
-                            >
-                                <div className="space-y-6">
-                                    {/* Estado del Agente */}
-                                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-xl border border-purple-200">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-3 h-3 rounded-full ${settings.agent?.enabled ? 'bg-green-500' : 'bg-gray-400'} animate-pulse`} />
-                                                <span className="font-medium text-gray-900">
-                                                    Estado: {settings.agent?.enabled ? 'Activo' : 'Inactivo'}
-                                                </span>
-                                            </div>
-                                            <ToggleSwitch
-                                                enabled={settings.agent?.enabled || true}
-                                                onChange={(enabled) => setSettings(prev => ({
-                                                    ...prev,
-                                                    agent: { ...prev.agent, enabled }
-                                                }))}
-                                                label=""
-                                            />
+                        <SettingSection
+                            title="Agente IA"
+                            description="Activar o desactivar el asistente virtual inteligente"
+                            icon={<Bot />}
+                        >
+                            <div className="space-y-6">
+                                {/* Control Principal del Agente - EL MÁS IMPORTANTE */}
+                                <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-8 rounded-xl border border-purple-200">
+                                    <div className="text-center mb-6">
+                                        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${
+                                            settings.agent?.enabled ? 'bg-green-500' : 'bg-gray-400'
+                                        }`}>
+                                            <Bot className={`w-8 h-8 ${
+                                                settings.agent?.enabled ? 'text-white' : 'text-gray-600'
+                                            }`} />
                                         </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                                            <div className="bg-white/60 rounded-lg p-3">
-                                                <p className="text-2xl font-bold text-purple-600">24/7</p>
-                                                <p className="text-sm text-gray-600">Disponible</p>
-                                            </div>
-                                            <div className="bg-white/60 rounded-lg p-3">
-                                                <p className="text-2xl font-bold text-green-600">IA</p>
-                                                <p className="text-sm text-gray-600">Inteligente</p>
-                                            </div>
-                                            <div className="bg-white/60 rounded-lg p-3">
-                                                <p className="text-2xl font-bold text-blue-600">{settings.capacity_total || "N/A"}</p>
-                                                <p className="text-sm text-gray-600">Cap. Máx</p>
-                                            </div>
-                                            <div className="bg-white/60 rounded-lg p-3">
-                                                <p className="text-2xl font-bold text-orange-600">Auto</p>
-                                                <p className="text-sm text-gray-600">Reservas</p>
-                                            </div>
-                                                </div>
-                                            </div>
-
-                                        {/* Configuración básica */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Nombre del Agente
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={settings.agent?.name || 'Asistente Virtual'}
-                                                onChange={(e) => setSettings(prev => ({
-                                                    ...prev,
-                                                    agent: { ...prev.agent, name: e.target.value }
-                                                }))}
-                                                placeholder="Ej: Julia, tu asistente"
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                            />
-                                                </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Personalidad
-                                            </label>
-                                            <select
-                                                value="amigable_profesional"
-                                                disabled
-                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
-                                            >
-                                                <option value="amigable_profesional">Amigable y Profesional</option>
-                                            </select>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Personalidad fija para MVP - Amigable y profesional
-                                            </p>
-                                                </div>
-                                            </div>
-
-                                    {/* Capacidades del Agente - Solo informativas */}
-                                    <div className="bg-green-50 p-6 rounded-xl border border-green-200">
-                                        <h4 className="font-medium text-gray-900 mb-4">Capacidades del Agente IA (Incluidas en MVP)</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
-                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
-                                                    <Check className="w-3 h-3 text-white" />
-                                                </div>
-                                                <div>
-                                                    <h5 className="font-medium text-gray-900">Gestión de Reservas</h5>
-                                                    <p className="text-sm text-gray-600">Crear, modificar y cancelar reservas automÃ¡ticamente</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
-                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
-                                                    <Check className="w-3 h-3 text-white" />
-                                                </div>
-                                                <div>
-                                                    <h5 className="font-medium text-gray-900">Escalamiento Inteligente</h5>
-                                                    <p className="text-sm text-gray-600">Derivar a humano cuando sea necesario</p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
-                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
-                                                    <Check className="w-3 h-3 text-white" />
-                                                </div>
-                                                <div>
-                                                    <h5 className="font-medium text-gray-900">Información de Menú</h5>
-                                                    <p className="text-sm text-gray-600">Responder sobre platos y precios</p>
-                                        </div>
+                                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                                            Agente IA {settings.agent?.enabled ? 'Activo' : 'Inactivo'}
+                                        </h3>
+                                        <p className="text-gray-600">
+                                            {settings.agent?.enabled 
+                                                ? 'El agente está atendiendo automáticamente las consultas de tus clientes' 
+                                                : 'El agente está desactivado. Las consultas se manejarán manualmente'}
+                                        </p>
                                     </div>
 
-                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
-                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
-                                                    <Check className="w-3 h-3 text-white" />
-                                                </div>
-                                    <div>
-                                                    <h5 className="font-medium text-gray-900">Optimización de Mesas</h5>
-                                                    <p className="text-sm text-gray-600">Asignar las mejores mesas automÃ¡ticamente</p>
-                                                </div>
-                                        </div>
-                                        
-                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
-                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
-                                                    <Check className="w-3 h-3 text-white" />
-                                                </div>
-                                                <div>
-                                                    <h5 className="font-medium text-gray-900">Horarios y Ubicación</h5>
-                                                    <p className="text-sm text-gray-600">Informar sobre horarios y cómo llegar</p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
-                                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
-                                                    <Check className="w-3 h-3 text-white" />
-                                                        </div>
-                                                <div>
-                                                    <h5 className="font-medium text-gray-900">Respuesta Inmediata</h5>
-                                                    <p className="text-sm text-gray-600">Tiempo de respuesta menor a 30 segundos</p>
-                                                        </div>
-                                                        </div>
-                                                        </div>
-                                        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                            <p className="text-sm text-blue-800">
-                                                <Info className="w-4 h-4 inline mr-1" />
-                                                Todas estas capacidades están incluidas en el MVP y no se pueden desactivar.
-                                            </p>
-                                                        </div>
-                                                    </div>
-
-                                        {/* Configuración de escalamiento */}
-                                    <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
-                                        <h4 className="font-medium text-gray-900 mb-4">Escalamiento Automático</h4>
-                                        <div className="space-y-4">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <ToggleSwitch
-                                                    enabled={settings.agent?.escalation_enabled !== false}
-                                                    onChange={() => {}}
-                                                    label="Escalamiento activado"
-                                                    description="Derivar a humano automáticamente"
-                                                />
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Tiempo máximo respuesta (seg)
-                                                    </label>
-                                                    <input
-                                                        type="number"
-                                                        value={30}
-                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                                        min="10"
-                                                        max="300"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="bg-orange-100 p-3 rounded-lg">
-                                                <p className="text-sm text-orange-800">
-                                                    <strong>Triggers de escalamiento:</strong> Quejas, consultas complejas, múltiples intentos, sentimiento negativo
-                                                </p>
-                                            </div>
-                                        </div>
+                                    {/* BOTÓN PRINCIPAL - EL MÁS IMPORTANTE DE TODOS */}
+                                    <div className="flex justify-center">
+                                        <button
+                                            onClick={() => {
+                                                const newEnabled = !settings.agent?.enabled;
+                                                setSettings(prev => ({
+                                                    ...prev,
+                                                    agent: { ...prev.agent, enabled: newEnabled }
+                                                }));
+                                                handleSave("Agente IA");
+                                            }}
+                                            className={`px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg ${
+                                                settings.agent?.enabled
+                                                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                                                    : 'bg-green-600 hover:bg-green-700 text-white'
+                                            }`}
+                                        >
+                                            {settings.agent?.enabled ? (
+                                                <>
+                                                    <Bot className="w-5 h-5 inline mr-2" />
+                                                    Desactivar Agente IA
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Bot className="w-5 h-5 inline mr-2" />
+                                                    Activar Agente IA
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
 
-                                    {/* Información de integración */}
-                                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
-                                        <div className="flex items-start gap-3">
-                                            <Info className="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <h4 className="font-medium text-blue-900 mb-2">
-                                                    Integración Completa del Sistema
-                                                </h4>
-                                                <div className="text-sm text-blue-800 space-y-1">
-                                                    <p>• <strong>Reservas:</strong> Utiliza la capacidad máxima configurada y turnos establecidos</p>
-                                                    <p>• <strong>Mesas:</strong> Optimización automática basada en disponibilidad</p>
-                                                    <p>• <strong>Horarios:</strong> Respeta los horarios de operación configurados</p>
-                                                    <p>• <strong>CRM:</strong> Identifica clientes VIP y aplica tratamiento especial</p>
-                                                    <p>• <strong>Canales:</strong> Funciona en WhatsApp, teléfono, web y redes sociales</p>
-                                                </div>
-                                            </div>
+                                    {/* Información importante */}
+                                    <div className="mt-6 pt-6 border-t border-purple-200">
+                                        <div className="text-center text-sm text-gray-600">
+                                            <p>
+                                                <strong>Importante:</strong> Cuando el agente esté desactivado, 
+                                                todas las consultas automáticas se pausarán y deberás atender manualmente.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
-                                    <button
-                                            onClick={() => handleSave("Configuración del Agente")}
-                                        disabled={saving}
-                                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg disabled:opacity-50"
-                                    >
-                                        {saving ? (
-                                            <RefreshCw className="w-5 h-5 animate-spin" />
-                                        ) : (
-                                            <Save className="w-5 h-5" />
-                                        )}
-                                        <span className="font-medium">Guardar Agente IA</span>
-                                    </button>
-                                </div>
-                            </SettingSection>
-                        </div>
+                            </div>
+                        </SettingSection>
                     )}
 
                     {activeTab === "hours" && (
@@ -1801,104 +1637,6 @@ const Configuracion = () => {
                         </SettingSection>
                     )}
 
-                    {activeTab === "reservations" && (
-                        <SettingSection
-                            title="Política de Reservas Enterprise"
-                            description="Configuración completa para gestión profesional de reservas con capacidad personalizable"
-                            icon={<Calendar />}
-                        >
-                            <div className="space-y-6">
-                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                    <h4 className="font-medium text-gray-900 mb-3">Configuración Principal</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Tamaño mínimo de grupo
-                                            </label>
-                                            <input
-                                                type="number"
-                                                value={settings.min_party_size}
-                                                onChange={(e) => setSettings(prev => ({ ...prev, min_party_size: parseInt(e.target.value) || 1 }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                min="1"
-                                                max="20"
-                                            />
-                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Tamaño máximo de grupo
-                                            </label>
-                                            <input
-                                                type="number"
-                                                value={settings.max_party_size}
-                                                onChange={(e) => setSettings(prev => ({ ...prev, max_party_size: parseInt(e.target.value) || 20 }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                min="1"
-                                                max="100"
-                                            />
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Máximo de personas por reserva individual
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Días de antelación máxima
-                                            </label>
-                                            <input
-                                                type="number"
-                                                value={settings.advance_booking_days}
-                                                onChange={(e) => setSettings(prev => ({ ...prev, advance_booking_days: parseInt(e.target.value) || 30 }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                min="1"
-                                                max="365"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                                    <h4 className="font-medium text-gray-900 mb-3">Duración Estándar de Reserva</h4>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Duración estándar de reserva (minutos)
-                                            </label>
-                                            <select
-                                                value={settings.reservation_duration}
-                                                onChange={(e) => setSettings(prev => ({ ...prev, reservation_duration: parseInt(e.target.value) || 120 }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                            >
-                                                <option value="60">60 minutos</option>
-                                                <option value="90">90 minutos</option>
-                                                <option value="120">120 minutos</option>
-                                                <option value="150">150 minutos</option>
-                                                <option value="180">180 minutos</option>
-                                            </select>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Tiempo estimado que cada mesa estará ocupada
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
-                                    <button
-                                        onClick={() => handleSave("Configuración de reservas")}
-                                        disabled={saving}
-                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                                    >
-                                        {saving ? (
-                                            <RefreshCw className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <Save className="w-4 h-4" />
-                                        )}
-                                        Guardar Política de Reservas
-                                    </button>
-                                </div>
-                            </div>
-                        </SettingSection>
-                    )}
                 </div>
             </div>
         </div>
