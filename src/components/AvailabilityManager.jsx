@@ -185,16 +185,15 @@ const AvailabilityManager = () => {
             ]);
             
             // Crear mensaje de resumen inteligente
-            const advanceDays = restaurantSettings?.advance_booking_days || 30;
             const duration = restaurantSettings?.reservation_duration || 90;
             const buffer = restaurantSettings?.buffer_time !== undefined ? restaurantSettings.buffer_time : 15;
-            const endDate = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
+            const endDateFormatted = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
             
             const summaryMessage = `✅ Disponibilidades generadas exitosamente:
             
 📊 RESUMEN:
 • ${data} slots creados
-• Desde HOY hasta ${endDate} (${advanceDays} días)
+• Desde HOY hasta ${endDateFormatted} (${advanceDays} días)
 • Duración por reserva: ${duration} min
 • Buffer entre reservas: ${buffer} min
 • Para todas las mesas activas
