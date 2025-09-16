@@ -1040,7 +1040,7 @@ export default function Reservas() {
                 max_party_size: settings.max_party_size || 20,
                 advance_booking_days: settings.horizon_days || 30,
                 reservation_duration: settings.turn_duration_minutes || 90,
-                buffer_time: settings.buffer_minutes || 15,
+                buffer_time: settings.buffer_minutes !== undefined ? settings.buffer_minutes : 15,
                 min_advance_hours: settings.min_advance_hours || 2
             });
         } catch (error) {
@@ -1911,7 +1911,7 @@ export default function Reservas() {
                                     value={policySettings.buffer_time}
                                     onChange={(e) => setPolicySettings(prev => ({
                                         ...prev,
-                                        buffer_time: parseInt(e.target.value) || 15
+                                        buffer_time: parseInt(e.target.value) >= 0 ? parseInt(e.target.value) : 15
                                     }))}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                 >
