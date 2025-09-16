@@ -41,6 +41,8 @@ import {
     ChevronRight,
     User,
     FileText,
+    Save,
+    Settings
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { processReservationCompletion } from "../services/CRMService";
@@ -236,8 +238,33 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                     />
 
                     <div className="flex-1">
+                        {/* 🎯 MESA Y ZONA PRIMERO - MÁS VISIBLE */}
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-900 rounded-lg font-bold text-lg">
+                                <Shield className="w-5 h-5" />
+                                <span>
+                                    {reservation.tables?.name || `Mesa ${reservation.table_number}` || 'Sin asignar'}
+                                </span>
+                            </div>
+                            
+                            {reservation.tables?.zone && (
+                                <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium">
+                                    <MapPin className="w-4 h-4" />
+                                    {reservation.tables.zone}
+                                </div>
+                            )}
+                            
+                            <span
+                                className={`text-xs px-2 py-0.5 rounded-full border ${state.color} flex items-center gap-1`}
+                            >
+                                {state.icon}
+                                <span>{state.label}</span>
+                            </span>
+                        </div>
+
+                        {/* INFORMACIÓN SECUNDARIA */}
                         <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-semibold text-gray-900">
+                            <h4 className="font-medium text-gray-700">
                                 {reservation.customer_name}
                             </h4>
                             {isAgentReservation && (
@@ -246,12 +273,6 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                                     <span>IA</span>
                                 </div>
                             )}
-                            <span
-                                className={`text-xs px-2 py-0.5 rounded-full border ${state.color} flex items-center gap-1`}
-                            >
-                                {state.icon}
-                                <span>{state.label}</span>
-                            </span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
@@ -272,14 +293,7 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                                 <Users className="w-4 h-4" />
                                 <span>{reservation.party_size} personas</span>
                             </div>
-                            
-                            {/* 🔧 MESA - MEJORADA */}
-                            <div className="flex items-center gap-2">
-                                <Shield className="w-4 h-4" />
-                                <span className="font-medium">
-                                    Mesa: {reservation.tables?.name || reservation.table_number || 'Sin asignar'}
-                                </span>
-                            </div>
+
 
                             {/* TELÉFONO */}
                             <div className="flex items-center gap-2">
@@ -428,6 +442,9 @@ export default function Reservas() {
         channel: "",
         source: "",
         period: "last_month", // 🔧 Por defecto mostrar último mes
+        dateRange: '',
+        startDate: '',
+        endDate: ''
     });
 
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -964,6 +981,19 @@ export default function Reservas() {
             filtered = filtered.filter((r) => r.channel === filters.channel);
         }
 
+        // Aplicar filtro por status
+        if (filters.status) {
+            filtered = filtered.filter((r) => r.status === filters.status);
+        }
+
+        // Aplicar filtros por fecha
+        if (filters.startDate && filters.endDate) {
+            filtered = filtered.filter((r) => {
+                const reservationDate = r.reservation_date;
+                return reservationDate >= filters.startDate && reservationDate <= filters.endDate;
+            });
+        }
+
         // 🔧 ORDENAMIENTO CRONOLÓGICO: Por fecha y hora
         filtered.sort((a, b) => {
             // Primero por fecha
@@ -1238,9 +1268,9 @@ export default function Reservas() {
                         <div className="flex gap-2 mt-4">
                             <button
                                 onClick={() => setActiveTab('reservas')}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-lg ${
                                     activeTab === 'reservas'
-                                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                                        ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                             >
@@ -1248,13 +1278,23 @@ export default function Reservas() {
                             </button>
                             <button
                                 onClick={() => setActiveTab('disponibilidades')}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-lg ${
                                     activeTab === 'disponibilidades'
-                                        ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                                        ? 'bg-purple-100 text-purple-700 border-2 border-purple-200'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                             >
                                 🗓️ Disponibilidades
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('politica')}
+                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-lg ${
+                                    activeTab === 'politica'
+                                        ? 'bg-green-100 text-green-700 border-2 border-green-200'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                            >
+                                ⚙️ Política de Reservas
                             </button>
                         </div>
                     </div>
@@ -1299,10 +1339,88 @@ export default function Reservas() {
             {/* Contenido según pestaña activa */}
             {activeTab === 'reservas' && (
                 <>
-                    {/* Panel de insights del agente */}
-                    <AgentStatsPanel stats={agentStats} insights={agentInsights} />
+            {/* Panel de insights del agente */}
+            <AgentStatsPanel stats={agentStats} insights={agentInsights} />
 
-                    {/* Filtros */}
+                    {/* Filtros rápidos por fecha */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">🚀 Filtros Rápidos</h3>
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={() => setFilters(prev => ({
+                                    ...prev,
+                                    dateRange: 'today',
+                                    startDate: format(new Date(), 'yyyy-MM-dd'),
+                                    endDate: format(new Date(), 'yyyy-MM-dd')
+                                }))}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    filters.dateRange === 'today'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                📅 HOY
+                            </button>
+                            <button
+                                onClick={() => setFilters(prev => ({
+                                    ...prev,
+                                    dateRange: 'tomorrow',
+                                    startDate: format(addDays(new Date(), 1), 'yyyy-MM-dd'),
+                                    endDate: format(addDays(new Date(), 1), 'yyyy-MM-dd')
+                                }))}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    filters.dateRange === 'tomorrow'
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                🌅 MAÑANA
+                            </button>
+                            <button
+                                onClick={() => setFilters(prev => ({
+                                    ...prev,
+                                    dateRange: 'week',
+                                    startDate: format(new Date(), 'yyyy-MM-dd'),
+                                    endDate: format(addDays(new Date(), 7), 'yyyy-MM-dd')
+                                }))}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    filters.dateRange === 'week'
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                📊 ESTA SEMANA
+                            </button>
+                            <button
+                                onClick={() => setFilters(prev => ({
+                                    ...prev,
+                                    dateRange: 'month',
+                                    startDate: format(new Date(), 'yyyy-MM-dd'),
+                                    endDate: format(addDays(new Date(), 30), 'yyyy-MM-dd')
+                                }))}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    filters.dateRange === 'month'
+                                        ? 'bg-orange-600 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                📆 ESTE MES
+                            </button>
+                            <button
+                                onClick={() => setFilters(prev => ({
+                                    ...prev,
+                                    dateRange: '',
+                                    startDate: '',
+                                    endDate: ''
+                                }))}
+                                className="px-4 py-2 rounded-lg font-medium bg-gray-200 text-gray-700 hover:bg-gray-300"
+                            >
+                                🔄 TODAS
+                            </button>
+                        </div>
+                    </div>
+
+            {/* Filtros */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 <div className="flex flex-col lg:flex-row gap-4">
                     {/* Búsqueda */}
@@ -1645,6 +1763,146 @@ export default function Reservas() {
             {/* Pestaña de Disponibilidades */}
             {activeTab === 'disponibilidades' && (
                 <AvailabilityManager />
+            )}
+
+            {/* Pestaña de Política de Reservas */}
+            {activeTab === 'politica' && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-3 bg-green-100 rounded-lg">
+                            <Settings className="w-6 h-6 text-green-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                Política de Reservas
+                            </h2>
+                            <p className="text-gray-600">
+                                Configuración que rige las disponibilidades y reservas
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                            <h3 className="font-medium text-gray-900">Configuración Principal</h3>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Tamaño mínimo de grupo
+                                </label>
+                                <input
+                                    type="number"
+                                    defaultValue={1}
+                                    min="1"
+                                    max="20"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Tamaño máximo de grupo
+                                </label>
+                                <input
+                                    type="number"
+                                    defaultValue={20}
+                                    min="1"
+                                    max="50"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Máximo de personas por reserva individual
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Días de antelación máxima
+                                </label>
+                                <input
+                                    type="number"
+                                    defaultValue={30}
+                                    min="1"
+                                    max="365"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Cuántos días hacia adelante se pueden hacer reservas
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h3 className="font-medium text-gray-900">Duración y Tiempos</h3>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Duración estándar de reserva (minutos)
+                                </label>
+                                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                    <option value="60">60 minutos</option>
+                                    <option value="90" selected>90 minutos</option>
+                                    <option value="120">120 minutos</option>
+                                </select>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Tiempo estimado que cada mesa estará ocupada
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Buffer entre reservas (minutos)
+                                </label>
+                                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                    <option value="0">Sin buffer</option>
+                                    <option value="15" selected>15 minutos</option>
+                                    <option value="30">30 minutos</option>
+                                </select>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Tiempo de limpieza/preparación entre reservas
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Horas mínimas de antelación
+                                </label>
+                                <input
+                                    type="number"
+                                    defaultValue={2}
+                                    min="0"
+                                    max="48"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Tiempo mínimo para hacer una reserva
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-start gap-3">
+                            <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                            <div>
+                                <div className="font-medium text-green-900">
+                                    💡 Configuración Integrada
+                                </div>
+                                <div className="text-sm text-green-800 mt-1">
+                                    Esta configuración se aplica automáticamente cuando generas disponibilidades. 
+                                    Los cambios aquí afectan directamente a cómo se crean los slots de reserva.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-6">
+                        <button className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <Save className="w-5 h-5" />
+                            Guardar Política de Reservas
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );
