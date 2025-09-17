@@ -52,7 +52,6 @@ const AvailabilityManager = () => {
     // Cargar configuración del restaurante
     const loadRestaurantSettings = async () => {
         try {
-            console.log('🔧 Loading restaurant settings for ID:', restaurantId);
             const { data, error } = await supabase
                 .from('restaurants')
                 .select('settings')
@@ -62,10 +61,7 @@ const AvailabilityManager = () => {
             if (error) throw error;
 
             // Extraer configuración del JSONB settings
-            console.log('🔧 Restaurant data from DB:', data);
             const settings = data?.settings || {};
-            console.log('🔧 Settings extracted:', settings);
-            console.log('🔧 Operating hours specifically:', settings.operating_hours);
             
             const processedSettings = {
                 advance_booking_days: settings.horizon_days || 30,
@@ -75,7 +71,6 @@ const AvailabilityManager = () => {
                 buffer_time: settings.buffer_minutes !== undefined ? settings.buffer_minutes : 15
             };
             
-            console.log('🔧 Processed settings:', processedSettings);
             setRestaurantSettings(processedSettings);
             
             // Actualizar fechas según configuración
@@ -112,29 +107,43 @@ const AvailabilityManager = () => {
             if (error) throw error;
 
             // Calcular estadísticas incluyendo slots reservados
-            console.log('🔍 Raw availability data:', {
-                totalSlots: data?.length || 0,
-                sampleSlots: data?.slice(0, 5),
-                statusCounts: data?.reduce((acc, slot) => {
+            const freeSlots = data?.filter(slot => slot.status === 'free') || [];
+            const occupiedSlots = data?.filter(slot => slot.status === 'reserved' || slot.status === 'occupied') || [];
+            const blockedSlots = data?.filter(slot => slot.status === 'blocked') || [];
+            const reservedSlots = data?.filter(slot => slot.metadata?.reservation_id) || [];
+
+            // DEBUG TEMPORAL: Entender por qué exactamente 1000
+            if (data && data.length > 0) {
+                const statusCounts = data.reduce((acc, slot) => {
                     acc[slot.status] = (acc[slot.status] || 0) + 1;
                     return acc;
-                }, {})
-            });
+                }, {});
+                
+                // Solo log si hay exactamente 1000 free slots
+                if (freeSlots.length === 1000) {
+                    console.log('🔍 PROBLEMA: Exactamente 1000 disponibles de', data.length, 'total');
+                    console.log('📊 Distribución de status:', statusCounts);
+                    console.log('🔢 Primeros 5 slots:', data.slice(0, 5).map(s => ({ 
+                        status: s.status, 
+                        date: s.slot_date, 
+                        time: s.start_time 
+                    })));
+                }
+            }
 
             const stats = {
                 total: data?.length || 0,
-                free: data?.filter(slot => slot.status === 'free').length || 0,
-                occupied: data?.filter(slot => slot.status === 'reserved' || slot.status === 'occupied').length || 0,
-                blocked: data?.filter(slot => slot.status === 'blocked').length || 0,
+                free: freeSlots.length,
+                occupied: occupiedSlots.length,
+                blocked: blockedSlots.length,
                 dateRange: {
                     start: data?.[0]?.slot_date || null,
                     end: data?.[data?.length - 1]?.slot_date || null
                 },
                 tablesCount: [...new Set(data?.map(slot => slot.table_id))].length || 0,
-                reservationsFound: data?.filter(slot => slot.metadata?.reservation_id).length || 0
+                reservationsFound: reservedSlots.length
             };
             
-            console.log('📊 Calculated stats:', stats);
 
             setAvailabilityStats(stats);
         } catch (error) {
@@ -187,11 +196,6 @@ const AvailabilityManager = () => {
             const advanceDays = restaurantSettings?.advance_booking_days || 90;
             const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
 
-            console.log('🧠 Iniciando regeneración inteligente:', {
-                changeType,
-                changeData,
-                period: `${today} - ${endDate}`
-            });
 
             const { data, error } = await supabase.rpc('regenerate_availability_smart', {
                 p_restaurant_id: restaurantId,
@@ -206,7 +210,6 @@ const AvailabilityManager = () => {
                 throw error;
             }
 
-            console.log('✅ Regeneración inteligente completada:', data);
 
             toast.dismiss('smart-generating');
             
@@ -312,7 +315,6 @@ const AvailabilityManager = () => {
                 .eq('restaurant_id', restaurantId)
                 .eq('is_active', true);
             
-            console.log('🔧 Mesas activas encontradas:', tablesData);
             
             if (!tablesData || tablesData.length === 0) {
                 toast.error('❌ No hay mesas activas. Añade mesas antes de generar disponibilidades.');
@@ -320,13 +322,6 @@ const AvailabilityManager = () => {
                 return;
             }
 
-            console.log('🔧 Parámetros para generate_availability_slots:', {
-                p_restaurant_id: restaurantId,
-                p_start_date: today,
-                p_end_date: endDate,
-                restaurantSettings,
-                tablesCount: tablesData.length
-            });
 
             // Generar disponibilidades
             const { data, error } = await supabase.rpc('generate_availability_slots', {
@@ -337,11 +332,9 @@ const AvailabilityManager = () => {
 
             if (error) {
                 console.error('❌ Error en generate_availability_slots:', error);
-                console.error('❌ Error details:', JSON.stringify(error, null, 2));
                 throw error;
             }
             
-            console.log('✅ Slots generados exitosamente:', data);
 
             toast.dismiss('generating');
             
@@ -386,7 +379,7 @@ const AvailabilityManager = () => {
             try {
                 localStorage.setItem(`generationSuccess_${restaurantId}`, JSON.stringify(successData));
             } catch (error) {
-                console.warn('No se pudo guardar en localStorage:', error);
+                // Silencioso - no es crítico
             }
             
             // Recargar estadísticas con un pequeño delay para asegurar consistencia
@@ -395,7 +388,6 @@ const AvailabilityManager = () => {
                     loadAvailabilityStats(),
                     loadAvailabilityGrid()
                 ]);
-                console.log('✅ Estadísticas recargadas después de generación');
             }, 500);
 
         } catch (error) {
@@ -539,7 +531,7 @@ const AvailabilityManager = () => {
                     setGenerationSuccess(JSON.parse(saved));
                 }
             } catch (error) {
-                console.warn('Error cargando estado persistente:', error);
+                // Silencioso - no es crítico
             }
             
             loadRestaurantSettings();
@@ -678,19 +670,30 @@ const AvailabilityManager = () => {
                         <span>
                             🕒 <strong>Última generación:</strong> {generationSuccess?.timestamp || 'Disponibilidades cargadas del sistema'}
                         </span>
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={async () => {
+                                await loadAvailabilityStats();
+                                toast.success('Estadísticas actualizadas');
+                            }}
+                            className="text-xs text-green-600 hover:text-green-800 underline"
+                        >
+                            Actualizar stats
+                        </button>
                         <button 
                             onClick={() => {
                                 setGenerationSuccess(null);
                                 try {
                                     localStorage.removeItem(`generationSuccess_${restaurantId}`);
                                 } catch (error) {
-                                    console.warn('Error limpiando localStorage:', error);
+                                    // Silencioso - no es crítico
                                 }
                             }}
-                            className="text-xs text-green-600 hover:text-green-800 underline ml-4"
+                            className="text-xs text-green-600 hover:text-green-800 underline"
                         >
                             Limpiar estado
                         </button>
+                    </div>
                     </div>
                 </div>
             )}
