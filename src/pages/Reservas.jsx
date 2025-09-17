@@ -42,7 +42,8 @@ import {
     User,
     FileText,
     Save,
-    Settings
+    Settings,
+    Trash2
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { processReservationCompletion } from "../services/CRMService";
@@ -88,7 +89,7 @@ const RESERVATION_STATES = {
     cancelada: {
         label: "Cancelada",
         color: "bg-red-100 text-red-800 border-red-200",
-        actions: ["view"],
+        actions: ["view", "delete"],
         icon: <XCircle className="w-4 h-4" />,
     },
     no_show: {
@@ -407,6 +408,22 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                                     >
                                         <XCircle className="w-4 h-4" />
                                         Cancelar
+                                    </button>
+                                </>
+                            )}
+
+                            {state.actions.includes("delete") && (
+                                <>
+                                    <hr className="my-1" />
+                                    <button
+                                        onClick={() => {
+                                            onAction("delete", reservation);
+                                            setShowActions(false);
+                                        }}
+                                        className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-red-700"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Eliminar
                                     </button>
                                 </>
                             )}
@@ -1132,6 +1149,27 @@ export default function Reservas() {
                     newStatus = "cancelled";
                     message = "Reserva cancelada";
                     break;
+                case "delete":
+                    if (!window.confirm("⚠️ ¿Estás seguro de ELIMINAR permanentemente esta reserva?\n\nEsta acción no se puede deshacer.")) {
+                        return;
+                    }
+                    // Eliminar permanentemente de la base de datos
+                    try {
+                        const { error } = await supabase
+                            .from('reservations')
+                            .delete()
+                            .eq('id', reservation.id);
+
+                        if (error) throw error;
+
+                        toast.success("Reserva eliminada permanentemente");
+                        loadReservations();
+                        return;
+                    } catch (error) {
+                        console.error('Error eliminando reserva:', error);
+                        toast.error('Error al eliminar la reserva');
+                        return;
+                    }
                 case "edit":
                     setEditingReservation(reservation);
                     setShowEditModal(true);
@@ -1570,7 +1608,10 @@ export default function Reservas() {
                     </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg border border-purple-200">
+                <button 
+                    onClick={() => setFilters(prev => ({ ...prev, source: 'agent' }))}
+                    className="bg-white p-4 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors w-full text-left"
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Por IA</p>
@@ -1580,9 +1621,12 @@ export default function Reservas() {
                         </div>
                         <Bot className="w-8 h-8 text-purple-500" />
                     </div>
-                </div>
+                </button>
 
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <button 
+                    onClick={() => setFilters(prev => ({ ...prev, source: 'manual' }))}
+                    className="bg-white p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors w-full text-left"
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Manual</p>
@@ -1592,9 +1636,12 @@ export default function Reservas() {
                         </div>
                         <Edit className="w-8 h-8 text-gray-500" />
                     </div>
-                </div>
+                </button>
 
-                <div className="bg-white p-4 rounded-lg border border-green-200">
+                <button 
+                    onClick={() => setFilters(prev => ({ ...prev, status: 'confirmada' }))}
+                    className="bg-white p-4 rounded-lg border border-green-200 hover:bg-green-50 transition-colors w-full text-left"
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Confirmadas</p>
@@ -1604,9 +1651,12 @@ export default function Reservas() {
                         </div>
                         <CheckCircle2 className="w-8 h-8 text-green-500" />
                     </div>
-                </div>
+                </button>
 
-                <div className="bg-white p-4 rounded-lg border border-yellow-200">
+                <button 
+                    onClick={() => setFilters(prev => ({ ...prev, status: 'pendiente' }))}
+                    className="bg-white p-4 rounded-lg border border-yellow-200 hover:bg-yellow-50 transition-colors w-full text-left"
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Pendientes</p>
@@ -1616,7 +1666,7 @@ export default function Reservas() {
                         </div>
                         <AlertCircle className="w-8 h-8 text-yellow-500" />
                     </div>
-                </div>
+                </button>
 
                 <div className="bg-white p-4 rounded-lg border border-purple-200">
                     <div className="flex items-center justify-between">
@@ -1629,6 +1679,25 @@ export default function Reservas() {
                         <Users className="w-8 h-8 text-purple-500" />
                     </div>
                 </div>
+            </div>
+
+            {/* Botón para limpiar filtros */}
+            <div className="flex justify-center mt-4">
+                <button 
+                    onClick={() => setFilters({
+                        search: "",
+                        status: "",
+                        channel: "",
+                        source: "",
+                        period: "last_month",
+                        dateRange: '',
+                        startDate: '',
+                        endDate: ''
+                    })}
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                >
+                    🔄 Ver Todas las Reservas
+                </button>
             </div>
 
             {/* Controles de selección */}
