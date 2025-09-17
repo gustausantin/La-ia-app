@@ -88,7 +88,8 @@ const AvailabilityManager = () => {
     // Cargar estadísticas de disponibilidad
     const loadAvailabilityStats = async () => {
         try {
-            const { data, error } = await supabase
+            // AÑADIR LÍMITE EXPLÍCITO PARA EVITAR EL PROBLEMA DE 1000
+            const { data, error, count } = await supabase
                 .from('availability_slots')
                 .select(`
                     id,
@@ -99,10 +100,11 @@ const AvailabilityManager = () => {
                     table_id,
                     metadata,
                     tables(name, capacity, zone)
-                `)
+                `, { count: 'exact' })
                 .eq('restaurant_id', restaurantId)
                 .gte('slot_date', format(new Date(), 'yyyy-MM-dd'))
-                .order('slot_date', { ascending: true });
+                .order('slot_date', { ascending: true })
+                .range(0, 9999); // Usar range en lugar de limit para cargar más registros
 
             if (error) throw error;
 
@@ -112,23 +114,14 @@ const AvailabilityManager = () => {
             const blockedSlots = data?.filter(slot => slot.status === 'blocked') || [];
             const reservedSlots = data?.filter(slot => slot.metadata?.reservation_id) || [];
 
-            // DEBUG TEMPORAL: Entender por qué exactamente 1000
-            if (data && data.length > 0) {
-                const statusCounts = data.reduce((acc, slot) => {
-                    acc[slot.status] = (acc[slot.status] || 0) + 1;
-                    return acc;
-                }, {});
-                
-                // Solo log si hay exactamente 1000 free slots
-                if (freeSlots.length === 1000) {
-                    console.log('🔍 PROBLEMA: Exactamente 1000 disponibles de', data.length, 'total');
-                    console.log('📊 Distribución de status:', statusCounts);
-                    console.log('🔢 Primeros 5 slots:', data.slice(0, 5).map(s => ({ 
-                        status: s.status, 
-                        date: s.slot_date, 
-                        time: s.start_time 
-                    })));
-                }
+            // DEBUG: Verificar si Supabase está limitando a 1000
+            if (data?.length === 1000 || count === 1000 || freeSlots.length === 1000) {
+                console.log('🚨 LÍMITE DE SUPABASE DETECTADO:', {
+                    registrosCargados: data?.length,
+                    totalEnBD: count,
+                    disponibles: freeSlots.length,
+                    problema: 'Supabase limita a 1000 registros por defecto'
+                });
             }
 
             const stats = {
@@ -670,30 +663,19 @@ const AvailabilityManager = () => {
                         <span>
                             🕒 <strong>Última generación:</strong> {generationSuccess?.timestamp || 'Disponibilidades cargadas del sistema'}
                         </span>
-                    <div className="flex gap-2">
-                        <button 
-                            onClick={async () => {
-                                await loadAvailabilityStats();
-                                toast.success('Estadísticas actualizadas');
-                            }}
-                            className="text-xs text-green-600 hover:text-green-800 underline"
-                        >
-                            Actualizar stats
-                        </button>
-                        <button 
-                            onClick={() => {
-                                setGenerationSuccess(null);
-                                try {
-                                    localStorage.removeItem(`generationSuccess_${restaurantId}`);
-                                } catch (error) {
-                                    // Silencioso - no es crítico
-                                }
-                            }}
-                            className="text-xs text-green-600 hover:text-green-800 underline"
-                        >
-                            Limpiar estado
-                        </button>
-                    </div>
+                    <button 
+                        onClick={() => {
+                            setGenerationSuccess(null);
+                            try {
+                                localStorage.removeItem(`generationSuccess_${restaurantId}`);
+                            } catch (error) {
+                                // Silencioso - no es crítico
+                            }
+                        }}
+                        className="text-xs text-green-600 hover:text-green-800 underline ml-4"
+                    >
+                        Limpiar estado
+                    </button>
                     </div>
                 </div>
             )}
@@ -782,25 +764,6 @@ const AvailabilityManager = () => {
                 </button>
 
 
-                <button
-                    onClick={() => loadAvailabilityStats()}
-                    disabled={loading}
-                    className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
-                >
-                    <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                    Actualizar
-                </button>
-
-                {availabilityStats?.total > 0 && (
-                    <button
-                        onClick={clearAvailability}
-                        disabled={loading}
-                        className="flex items-center gap-2 px-4 py-3 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50 transition-colors"
-                    >
-                        <Trash2 className="w-5 h-5" />
-                        Limpiar Todo
-                    </button>
-                )}
             </div>
 
             {/* Selector de día específico */}
