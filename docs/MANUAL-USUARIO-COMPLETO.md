@@ -78,27 +78,44 @@ Panel central con métricas en tiempo real del restaurante y rendimiento del age
 ## 3️⃣ **RESERVAS** ⭐ **COMPLETAMENTE RENOVADO SEPTIEMBRE 2025**
 
 ### **¿Qué hace?**
-Sistema completo de gestión de reservas con **3 pestañas principales** y **sistema de disponibilidades ultra-robusto**.
+Sistema completo de gestión de reservas con **3 pestañas principales**, **filtros clickeables inteligentes** y **sistema de disponibilidades ultra-robusto**.
 
 ### **🎯 NUEVA ESTRUCTURA CON PESTAÑAS:**
 
-#### **📅 Pestaña "Reservas"**
+#### **📅 Pestaña "Reservas"** ⭐ **FILTROS INTELIGENTES AÑADIDOS**
 - 📋 **Lista completa de reservas** con filtros avanzados
 - ✅ **Filtros rápidos:** HOY, MAÑANA, ESTA SEMANA, ESTE MES, TODAS
+- **🆕 FILTROS CLICKEABLES:**
+  - **🤖 "Por IA" (18)** → Clic para filtrar reservas del agente IA
+  - **✏️ "Manual" (12)** → Clic para filtrar reservas manuales
+  - **✅ "Confirmadas" (5)** → Clic para filtrar reservas confirmadas
+  - **⏳ "Pendientes" (10)** → Clic para filtrar reservas pendientes
+- **🎨 Feedback visual:** Botones se ponen color profundo cuando están activos
+- **🔄 Toggle inteligente:** Segundo clic deselecciona el filtro
+- **🔄 Botón azul "Ver Todas"** → Resetea todos los filtros
 - ✅ **Crear reservas manuales** con validación mejorada
 - ✅ **Estados de reserva:** Pendiente → Confirmada → Sentada → Completada
+- **🗑️ NUEVO:** Eliminar reservas canceladas permanentemente
 - 🏠 **Información de mesa y zona** destacada prominentemente
 - 👤 **Datos del cliente** integrados con CRM
 - 📊 **Estadísticas en tiempo real**
 
-#### **🗓️ Pestaña "Disponibilidades"** ⭐ **NUEVO SISTEMA ULTRA-ROBUSTO**
+#### **🗓️ Pestaña "Disponibilidades"** ⭐ **SISTEMA ULTRA-ROBUSTO + TURNOS INTELIGENTES**
 - 🚀 **Generar 4,550+ slots** en menos de 3 segundos
+- **⏰ NUEVO: Sistema de turnos inteligente** - Solo genera en horarios de servicio
 - 📊 **Estadísticas completas:** Total, Disponibles, Ocupados, Con Reservas, Mesas
-- ✅ **Panel verde de confirmación** cuando se generan disponibilidades
+- ✅ **Panel verde persistente** que se mantiene entre navegaciones
 - 🔄 **Actualización automática** de números sin recargar página
-- 👁️ **Ver calendario detallado** con todos los slots generados
-- 🧹 **Limpiar disponibilidades** con confirmación de seguridad
+- **📅 NUEVO: Consultar día específico** - Selector para ver disponibilidades de un día
+- **⚠️ NUEVO: Detección automática de cambios** - Avisa cuando hay que regenerar
+- **🧠 NUEVO: Regeneración inteligente** - Preserva reservas existentes
 - ⚡ **Performance optimizada:** Genera 90 días de antelación instantáneamente
+
+**🎯 Cómo funciona el sistema de turnos:**
+- **🏪 Horario restaurante:** 09:00 - 23:00 (abierto para café, etc.)
+- **🍽️ Turnos de servicio:** 13:00-15:00 (comidas) + 20:00-22:00 (cenas)
+- **📅 Disponibilidades:** Solo se generan en los turnos de servicio
+- **🔄 Fallback inteligente:** Si no hay turnos, usa horario completo
 
 #### **⚙️ Pestaña "Política de Reservas"** ⭐ **NUEVA CONFIGURACIÓN CENTRALIZADA**
 - 👥 **Tamaño de grupo:** Mínimo y máximo de personas

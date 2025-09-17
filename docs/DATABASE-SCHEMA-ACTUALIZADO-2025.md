@@ -3,10 +3,10 @@
 > **Documentación exhaustiva de todas las tablas, columnas, relaciones y funciones RPC**
 
 **📅 Fecha:** 17 Septiembre 2025  
-**🎯 Estado:** ESQUEMA COMPLETO + SISTEMA DISPONIBILIDADES ROBUSTO  
-**✅ Versión:** Master Database Schema v2.1  
+**🎯 Estado:** ESQUEMA COMPLETO + SISTEMA TURNOS + FILTROS INTELIGENTES  
+**✅ Versión:** Master Database Schema v2.2  
 **👨‍💻 Documentado por:** Claude Sonnet 4  
-**🚀 Última actualización:** Sistema de Disponibilidades Ultra-Robusto implementado
+**🚀 Última actualización:** Sistema de Turnos Inteligente + Migración Completa desde Cero
 
 ---
 
@@ -1319,7 +1319,7 @@ INSERT INTO message_templates (restaurant_id, name, template_type, target_segmen
 
 ## 📊 **NUEVAS FUNCIONES CRÍTICAS**
 
-### **🎯 `generate_availability_slots` (ULTRA-ROBUSTA)**
+### **🎯 `generate_availability_slots` (ULTRA-ROBUSTA + TURNOS)**
 ```sql
 FUNCTION generate_availability_slots(
     p_restaurant_id UUID,
@@ -1329,13 +1329,16 @@ FUNCTION generate_availability_slots(
 ```
 
 **📋 Descripción:**
-- **Propósito:** Genera slots de disponibilidad de forma ultra-robusta
+- **Propósito:** Genera slots de disponibilidad con sistema de turnos inteligente
 - **Robustez:** Maneja TODOS los casos edge de datos malformados
+- **Sistema de Turnos:** Usa turnos configurados si existen, sino horario completo
 - **Validación:** Parsing seguro de operating_hours con fallbacks
 - **Retorno:** Número entero de slots creados
-- **Estado:** PRODUCCIÓN - Función principal del sistema
+- **Estado:** PRODUCCIÓN - Función principal del sistema (migración completa v2.2)
 
 **🔧 Características Técnicas:**
+- ✅ **Sistema de turnos inteligente** - Genera solo en horarios de servicio configurados
+- ✅ **Fallback automático** - Si no hay turnos, usa horario completo
 - ✅ **Validación extrema** de horarios malformados
 - ✅ **Manejo de excepciones** para valores inválidos ("true", "false", null)
 - ✅ **Defaults seguros** (09:00-22:00) si datos corruptos
@@ -1343,6 +1346,7 @@ FUNCTION generate_availability_slots(
 - ✅ **Detección de eventos especiales** automática
 - ✅ **Limpieza de slots existentes** en el rango
 - ✅ **Validación de conflictos** con reservas existentes
+- ✅ **Metadata de turnos** - Cada slot incluye información del turno origen
 
 **📈 Performance:**
 - Genera **4,000+ slots** en menos de 3 segundos
