@@ -28,6 +28,7 @@ const AvailabilityManager = () => {
     const [showAvailabilityGrid, setShowAvailabilityGrid] = useState(false);
     const [availabilityGrid, setAvailabilityGrid] = useState([]);
     const [restaurantSettings, setRestaurantSettings] = useState(null);
+    const [generationSuccess, setGenerationSuccess] = useState(null);
     const [generationSettings, setGenerationSettings] = useState({
         startDate: format(new Date(), 'yyyy-MM-dd'), // Siempre desde hoy
         endDate: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
@@ -197,23 +198,8 @@ const AvailabilityManager = () => {
                 tablesCount: tablesData.length
             });
 
-            // DIAGNÓSTICO TEMPORAL - EJECUTAR PRIMERO
-            console.log('🔍 Ejecutando diagnóstico completo...');
-            const { data: diagnosticData, error: diagnosticError } = await supabase.rpc('diagnostic_availability_data', {
-                p_restaurant_id: restaurantId
-            });
-
-            if (diagnosticError) {
-                console.error('❌ Error en diagnóstico:', diagnosticError);
-            } else {
-                console.log('📊 DATOS DE DIAGNÓSTICO:');
-                diagnosticData.forEach(item => {
-                    console.log(`  ${item.diagnostic_type}:`, item.diagnostic_data);
-                });
-            }
-
-            // USAR FUNCIÓN ROBUSTA TEMPORALMENTE
-            const { data, error } = await supabase.rpc('generate_availability_slots_robust', {
+            // Generar disponibilidades
+            const { data, error } = await supabase.rpc('generate_availability_slots', {
                 p_restaurant_id: restaurantId,
                 p_start_date: today,
                 p_end_date: endDate
@@ -229,17 +215,12 @@ const AvailabilityManager = () => {
 
             toast.dismiss('generating');
             
-            // Recargar estadísticas
-            await Promise.all([
-                loadAvailabilityStats(),
-                loadAvailabilityGrid()
-            ]);
-            
-            // Crear mensaje de resumen inteligente
+            // Crear mensaje de resumen inteligente ANTES de recargar
             const duration = restaurantSettings?.reservation_duration || 90;
             const buffer = restaurantSettings?.buffer_time !== undefined ? restaurantSettings.buffer_time : 15;
             const endDateFormatted = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
             
+            // Mostrar mensaje de éxito inmediato
             const summaryMessage = `✅ Disponibilidades generadas exitosamente:
             
 📊 RESUMEN:
@@ -252,12 +233,31 @@ const AvailabilityManager = () => {
 🎯 Las disponibilidades están listas para recibir reservas.`;
             
             toast.success(summaryMessage, { 
-                duration: 6000,
+                duration: 8000,
                 style: { 
-                    minWidth: '400px',
-                    whiteSpace: 'pre-line'
+                    minWidth: '450px',
+                    whiteSpace: 'pre-line',
+                    fontSize: '14px'
                 }
             });
+
+            // Actualizar estado local inmediatamente para reflejar cambios
+            setGenerationSuccess({
+                slotsCreated: data,
+                dateRange: `HOY hasta ${endDateFormatted}`,
+                duration: duration,
+                buffer: buffer,
+                timestamp: new Date().toLocaleString()
+            });
+            
+            // Recargar estadísticas con un pequeño delay para asegurar consistencia
+            setTimeout(async () => {
+                await Promise.all([
+                    loadAvailabilityStats(),
+                    loadAvailabilityGrid()
+                ]);
+                console.log('✅ Estadísticas recargadas después de generación');
+            }, 500);
 
         } catch (error) {
             console.error('Error generando disponibilidades:', error);
@@ -461,6 +461,48 @@ const AvailabilityManager = () => {
                 </div>
             )}
 
+            {/* Mensaje de éxito de generación */}
+            {generationSuccess && (
+                <div className="border border-green-200 rounded-lg p-4 mb-6 bg-green-50">
+                    <h3 className="font-medium text-green-900 mb-3 flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5" />
+                        ✅ Generación Completada Exitosamente
+                    </h3>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-green-700">{generationSuccess.slotsCreated}</div>
+                            <div className="text-sm text-green-600">Slots Creados</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-lg font-medium text-green-700">{generationSuccess.duration} min</div>
+                            <div className="text-sm text-green-600">Duración</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-lg font-medium text-green-700">{generationSuccess.buffer} min</div>
+                            <div className="text-sm text-green-600">Buffer</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-lg font-medium text-green-700">{availabilityStats?.tablesCount || 0}</div>
+                            <div className="text-sm text-green-600">Mesas</div>
+                        </div>
+                    </div>
+                    
+                    <div className="text-sm text-green-700 mb-2">
+                        📅 <strong>Período:</strong> {generationSuccess.dateRange}
+                    </div>
+                    <div className="text-xs text-green-600">
+                        🕒 Generado: {generationSuccess.timestamp}
+                    </div>
+                    
+                    <button 
+                        onClick={() => setGenerationSuccess(null)}
+                        className="mt-3 text-xs text-green-600 hover:text-green-800 underline"
+                    >
+                        Ocultar mensaje
+                    </button>
+                </div>
+            )}
 
             {/* Conflictos detectados */}
             {showDetails && conflictingReservations.length > 0 && (
