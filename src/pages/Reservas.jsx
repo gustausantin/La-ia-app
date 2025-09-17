@@ -1989,11 +1989,13 @@ export default function Reservas() {
                                         ...(currentData?.settings || {}),
                                         min_party_size: policySettings.min_party_size,
                                         max_party_size: policySettings.max_party_size,
-                                        horizon_days: policySettings.advance_booking_days,
-                                        turn_duration_minutes: policySettings.reservation_duration,
-                                        buffer_minutes: policySettings.buffer_time,
+                                        advance_booking_days: policySettings.advance_booking_days, // Corregido nombre
+                                        reservation_duration: policySettings.reservation_duration, // Corregido nombre
+                                        buffer_time: policySettings.buffer_time, // Corregido nombre
                                         min_advance_hours: policySettings.min_advance_hours
                                     };
+                                    
+                                    console.log('🔧 Guardando configuración:', updatedSettings);
                                     
                                     const { error } = await supabase
                                         .from('restaurants')
@@ -2009,7 +2011,8 @@ export default function Reservas() {
                                     
                                     // 🚨 NOTIFICAR CAMBIO PARA REGENERAR DISPONIBILIDADES
                                     changeDetection.onPolicyChange(updatedSettings);
-                                    toast.info('⚠️ Política actualizada - Se recomienda regenerar disponibilidades', {
+                                    toast('⚠️ Política actualizada - Se recomienda regenerar disponibilidades', {
+                                        icon: '⚠️',
                                         duration: 4000
                                     });
                                     

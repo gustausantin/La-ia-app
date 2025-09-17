@@ -1013,7 +1013,8 @@ export default function Mesas() {
                 const deletedTable = tables.find(t => t.id === tableId);
                 if (deletedTable) {
                     changeDetection.onTableChange('removed', deletedTable);
-                    toast.info('⚠️ Se requiere regenerar disponibilidades tras eliminar la mesa', {
+                    toast('⚠️ Se requiere regenerar disponibilidades tras eliminar la mesa', {
+                        icon: '⚠️',
                         duration: 4000
                     });
                 }
@@ -1403,12 +1404,14 @@ export default function Mesas() {
                         const isNew = !selectedTable;
                         if (isNew) {
                             changeDetection.onTableChange('added', { name: 'Nueva mesa' });
-                            toast.info('⚠️ Nueva mesa añadida - Se recomienda regenerar disponibilidades', {
+                            toast('⚠️ Nueva mesa añadida - Se recomienda regenerar disponibilidades', {
+                                icon: '⚠️',
                                 duration: 4000
                             });
                         } else {
                             changeDetection.onTableChange('modified', selectedTable);
-                            toast.info('⚠️ Mesa modificada - Verifica si necesitas regenerar disponibilidades', {
+                            toast('⚠️ Mesa modificada - Verifica si necesitas regenerar disponibilidades', {
+                                icon: '⚠️',
                                 duration: 4000
                             });
                         }

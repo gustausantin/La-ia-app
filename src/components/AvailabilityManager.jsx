@@ -112,6 +112,15 @@ const AvailabilityManager = () => {
             if (error) throw error;
 
             // Calcular estadísticas incluyendo slots reservados
+            console.log('🔍 Raw availability data:', {
+                totalSlots: data?.length || 0,
+                sampleSlots: data?.slice(0, 5),
+                statusCounts: data?.reduce((acc, slot) => {
+                    acc[slot.status] = (acc[slot.status] || 0) + 1;
+                    return acc;
+                }, {})
+            });
+
             const stats = {
                 total: data?.length || 0,
                 free: data?.filter(slot => slot.status === 'free').length || 0,
@@ -124,6 +133,8 @@ const AvailabilityManager = () => {
                 tablesCount: [...new Set(data?.map(slot => slot.table_id))].length || 0,
                 reservationsFound: data?.filter(slot => slot.metadata?.reservation_id).length || 0
             };
+            
+            console.log('📊 Calculated stats:', stats);
 
             setAvailabilityStats(stats);
         } catch (error) {
@@ -711,7 +722,7 @@ const AvailabilityManager = () => {
                             className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
                         >
                             {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                            🧠 Regenerar Inteligente
+                            Regenerar Disponibilidades
                         </button>
                         
                         <button
@@ -767,14 +778,6 @@ const AvailabilityManager = () => {
                     {loading ? 'Generando...' : 'Generar Disponibilidades'}
                 </button>
 
-                <button
-                    onClick={() => smartRegeneration()}
-                    disabled={loading}
-                    className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                >
-                    {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
-                    🧠 Regenerar Inteligente
-                </button>
 
                 <button
                     onClick={() => loadAvailabilityStats()}
