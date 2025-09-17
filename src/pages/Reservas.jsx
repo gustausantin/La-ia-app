@@ -1010,9 +1010,31 @@ export default function Reservas() {
             filtered = filtered.filter((r) => r.channel === filters.channel);
         }
 
-        // Aplicar filtro por status
+        // Aplicar filtro por status con mapeo correcto
         if (filters.status) {
-            filtered = filtered.filter((r) => r.status === filters.status);
+            // Mapear estados del frontend (español) a BD (inglés)
+            const statusMapping = {
+                'pendiente': 'pending',
+                'confirmada': 'confirmed',
+                'sentada': 'seated',
+                'completada': 'completed',
+                'cancelada': 'cancelled'
+            };
+            
+            const dbStatus = statusMapping[filters.status] || filters.status;
+            
+            // DEBUG: Solo cuando hay filtro activo
+            if (filters.status) {
+                console.log('🔍 FILTRO DE ESTADO:', {
+                    filtroFrontend: filters.status,
+                    estadoBD: dbStatus,
+                    totalReservas: reservations.length,
+                    estadosEnBD: reservations.map(r => r.status).filter((v, i, a) => a.indexOf(v) === i),
+                    reservasConEsteEstado: reservations.filter(r => r.status === dbStatus).length
+                });
+            }
+            
+            filtered = filtered.filter((r) => r.status === dbStatus);
         }
 
         // Aplicar filtros por fecha
@@ -1609,8 +1631,15 @@ export default function Reservas() {
                 </div>
 
                 <button 
-                    onClick={() => setFilters(prev => ({ ...prev, source: 'agent' }))}
-                    className="bg-white p-4 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors w-full text-left"
+                    onClick={() => setFilters(prev => ({ 
+                        ...prev, 
+                        source: prev.source === 'agent' ? '' : 'agent' 
+                    }))}
+                    className={`p-4 rounded-lg border transition-colors w-full text-left ${
+                        filters.source === 'agent' 
+                            ? 'bg-purple-100 border-purple-400 shadow-md' 
+                            : 'bg-white border-purple-200 hover:bg-purple-50'
+                    }`}
                 >
                     <div className="flex items-center justify-between">
                         <div>
@@ -1624,8 +1653,15 @@ export default function Reservas() {
                 </button>
 
                 <button 
-                    onClick={() => setFilters(prev => ({ ...prev, source: 'manual' }))}
-                    className="bg-white p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors w-full text-left"
+                    onClick={() => setFilters(prev => ({ 
+                        ...prev, 
+                        source: prev.source === 'manual' ? '' : 'manual' 
+                    }))}
+                    className={`p-4 rounded-lg border transition-colors w-full text-left ${
+                        filters.source === 'manual' 
+                            ? 'bg-gray-100 border-gray-400 shadow-md' 
+                            : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
                 >
                     <div className="flex items-center justify-between">
                         <div>
@@ -1639,8 +1675,15 @@ export default function Reservas() {
                 </button>
 
                 <button 
-                    onClick={() => setFilters(prev => ({ ...prev, status: 'confirmada' }))}
-                    className="bg-white p-4 rounded-lg border border-green-200 hover:bg-green-50 transition-colors w-full text-left"
+                    onClick={() => setFilters(prev => ({ 
+                        ...prev, 
+                        status: prev.status === 'confirmada' ? '' : 'confirmada' 
+                    }))}
+                    className={`p-4 rounded-lg border transition-colors w-full text-left ${
+                        filters.status === 'confirmada' 
+                            ? 'bg-green-100 border-green-400 shadow-md' 
+                            : 'bg-white border-green-200 hover:bg-green-50'
+                    }`}
                 >
                     <div className="flex items-center justify-between">
                         <div>
@@ -1654,8 +1697,15 @@ export default function Reservas() {
                 </button>
 
                 <button 
-                    onClick={() => setFilters(prev => ({ ...prev, status: 'pendiente' }))}
-                    className="bg-white p-4 rounded-lg border border-yellow-200 hover:bg-yellow-50 transition-colors w-full text-left"
+                    onClick={() => setFilters(prev => ({ 
+                        ...prev, 
+                        status: prev.status === 'pendiente' ? '' : 'pendiente' 
+                    }))}
+                    className={`p-4 rounded-lg border transition-colors w-full text-left ${
+                        filters.status === 'pendiente' 
+                            ? 'bg-yellow-100 border-yellow-400 shadow-md' 
+                            : 'bg-white border-yellow-200 hover:bg-yellow-50'
+                    }`}
                 >
                     <div className="flex items-center justify-between">
                         <div>
@@ -1681,8 +1731,8 @@ export default function Reservas() {
                 </div>
             </div>
 
-            {/* Botón para limpiar filtros */}
-            <div className="flex justify-center mt-4">
+            {/* Botón para limpiar filtros - MÁS GRANDE Y PROMINENTE */}
+            <div className="flex justify-center mt-6">
                 <button 
                     onClick={() => setFilters({
                         search: "",
@@ -1694,7 +1744,7 @@ export default function Reservas() {
                         startDate: '',
                         endDate: ''
                     })}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                    className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
                 >
                     🔄 Ver Todas las Reservas
                 </button>
