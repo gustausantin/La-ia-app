@@ -197,7 +197,23 @@ const AvailabilityManager = () => {
                 tablesCount: tablesData.length
             });
 
-            const { data, error } = await supabase.rpc('generate_availability_slots', {
+            // DIAGNÓSTICO TEMPORAL - EJECUTAR PRIMERO
+            console.log('🔍 Ejecutando diagnóstico completo...');
+            const { data: diagnosticData, error: diagnosticError } = await supabase.rpc('diagnostic_availability_data', {
+                p_restaurant_id: restaurantId
+            });
+
+            if (diagnosticError) {
+                console.error('❌ Error en diagnóstico:', diagnosticError);
+            } else {
+                console.log('📊 DATOS DE DIAGNÓSTICO:');
+                diagnosticData.forEach(item => {
+                    console.log(`  ${item.diagnostic_type}:`, item.diagnostic_data);
+                });
+            }
+
+            // USAR FUNCIÓN ROBUSTA TEMPORALMENTE
+            const { data, error } = await supabase.rpc('generate_availability_slots_robust', {
                 p_restaurant_id: restaurantId,
                 p_start_date: today,
                 p_end_date: endDate
