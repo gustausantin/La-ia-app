@@ -40,6 +40,7 @@ import {
 import toast from "react-hot-toast";
 import ConflictDetectionService from '../services/ConflictDetectionService';
 import ConflictWarning from '../components/ConflictWarning';
+import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
 
 // DATOS NECESARIOS DE SUPABASE:
 // - tabla: tables (id, restaurant_id, table_number, name, zone, min_capacity, max_capacity, status, notes)
@@ -460,6 +461,7 @@ const TableCard = ({
 export default function Mesas() {
     const { restaurant, restaurantId, isReady, addNotification } =
         useAuthContext();
+    const changeDetection = useAvailabilityChangeDetection(restaurantId);
 
     // Estados principales
     const [loading, setLoading] = useState(true);
@@ -1006,12 +1008,22 @@ export default function Mesas() {
                         priority: "low",
                     });
                 }
+
+                // 🚨 NOTIFICAR CAMBIO PARA REGENERAR DISPONIBILIDADES
+                const deletedTable = tables.find(t => t.id === tableId);
+                if (deletedTable) {
+                    changeDetection.onTableChange('removed', deletedTable);
+                    toast.info('⚠️ Se requiere regenerar disponibilidades tras eliminar la mesa', {
+                        duration: 4000
+                    });
+                }
+
                 loadTables();
             } catch (error) {
                 toast.error("Error al eliminar la mesa");
             }
         },
-        [loadTables, addNotification],
+        [loadTables, addNotification, tables, changeDetection],
     );
 
     // Función para confirmar acción con conflictos
@@ -1387,6 +1399,20 @@ export default function Mesas() {
                         setSelectedTable(null);
                     }}
                     onSave={() => {
+                        // 🚨 NOTIFICAR CAMBIO PARA REGENERAR DISPONIBILIDADES
+                        const isNew = !selectedTable;
+                        if (isNew) {
+                            changeDetection.onTableChange('added', { name: 'Nueva mesa' });
+                            toast.info('⚠️ Nueva mesa añadida - Se recomienda regenerar disponibilidades', {
+                                duration: 4000
+                            });
+                        } else {
+                            changeDetection.onTableChange('modified', selectedTable);
+                            toast.info('⚠️ Mesa modificada - Verifica si necesitas regenerar disponibilidades', {
+                                duration: 4000
+                            });
+                        }
+
                         setShowCreateModal(false);
                         setShowEditModal(false);
                         setSelectedTable(null);

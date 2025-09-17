@@ -47,6 +47,8 @@ import {
 import toast from "react-hot-toast";
 import { processReservationCompletion } from "../services/CRMService";
 import AvailabilityManager from "../components/AvailabilityManager";
+import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
+import AvailabilityChangeDemo from "../components/AvailabilityChangeDemo";
 
 // DATOS NECESARIOS DE SUPABASE:
 // - tabla: reservations (con campos 'source' y 'channel')
@@ -421,6 +423,7 @@ export default function Reservas() {
     const { restaurant, restaurantId, isReady, addNotification } =
         useAuthContext();
     const navigate = useNavigate();
+    const changeDetection = useAvailabilityChangeDetection(restaurantId);
 
     const [loading, setLoading] = useState(true);
     const [reservations, setReservations] = useState([]);
@@ -1797,7 +1800,12 @@ export default function Reservas() {
 
             {/* Pestaña de Disponibilidades */}
             {activeTab === 'disponibilidades' && (
-                <AvailabilityManager />
+                <div className="space-y-6">
+                    <AvailabilityManager />
+                    
+                    {/* Componente de demostración */}
+                    <AvailabilityChangeDemo />
+                </div>
             )}
 
             {/* Pestaña de Política de Reservas */}
@@ -1998,6 +2006,12 @@ export default function Reservas() {
                                     if (error) throw error;
                                     
                                     toast.success('✅ Política de Reservas guardada correctamente');
+                                    
+                                    // 🚨 NOTIFICAR CAMBIO PARA REGENERAR DISPONIBILIDADES
+                                    changeDetection.onPolicyChange(updatedSettings);
+                                    toast.info('⚠️ Política actualizada - Se recomienda regenerar disponibilidades', {
+                                        duration: 4000
+                                    });
                                     
                                 } catch (error) {
                                     console.error('Error guardando política:', error);

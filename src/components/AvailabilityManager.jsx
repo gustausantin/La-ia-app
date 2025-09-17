@@ -15,12 +15,15 @@ import {
     Trash2,
     Plus,
     Eye,
-    EyeOff
+    EyeOff,
+    AlertCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
 
 const AvailabilityManager = () => {
     const { restaurantId } = useAuthContext();
+    const changeDetection = useAvailabilityChangeDetection(restaurantId);
     const [loading, setLoading] = useState(false);
     const [availabilityStats, setAvailabilityStats] = useState(null);
     const [conflictingReservations, setConflictingReservations] = useState([]);
@@ -28,7 +31,18 @@ const AvailabilityManager = () => {
     const [showAvailabilityGrid, setShowAvailabilityGrid] = useState(false);
     const [availabilityGrid, setAvailabilityGrid] = useState([]);
     const [restaurantSettings, setRestaurantSettings] = useState(null);
-    const [generationSuccess, setGenerationSuccess] = useState(null);
+    const [generationSuccess, setGenerationSuccess] = useState(() => {
+        // Cargar estado persistente del localStorage
+        try {
+            const saved = localStorage.getItem(`generationSuccess_${restaurantId}`);
+            return saved ? JSON.parse(saved) : null;
+        } catch {
+            return null;
+        }
+    });
+    const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+    const [dayAvailability, setDayAvailability] = useState([]);
+    const [loadingDayView, setLoadingDayView] = useState(false);
     const [generationSettings, setGenerationSettings] = useState({
         startDate: format(new Date(), 'yyyy-MM-dd'), // Siempre desde hoy
         endDate: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
@@ -147,7 +161,112 @@ const AvailabilityManager = () => {
         }
     };
 
-    // Generar tabla de disponibilidades
+    // Regeneración inteligente de disponibilidades
+    const smartRegeneration = async (changeType = 'general', changeData = {}) => {
+        if (!restaurantId) {
+            toast.error('❌ No se encontró el ID del restaurante');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            toast.loading('Regeneración inteligente en proceso...', { id: 'smart-generating' });
+            
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const advanceDays = restaurantSettings?.advance_booking_days || 90;
+            const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
+
+            console.log('🧠 Iniciando regeneración inteligente:', {
+                changeType,
+                changeData,
+                period: `${today} - ${endDate}`
+            });
+
+            const { data, error } = await supabase.rpc('regenerate_availability_smart', {
+                p_restaurant_id: restaurantId,
+                p_change_type: changeType,
+                p_change_data: changeData,
+                p_start_date: today,
+                p_end_date: endDate
+            });
+
+            if (error) {
+                console.error('❌ Error en regeneración inteligente:', error);
+                throw error;
+            }
+
+            console.log('✅ Regeneración inteligente completada:', data);
+
+            toast.dismiss('smart-generating');
+            
+            // Mostrar resultados detallados
+            const results = data[0];
+            const duration = restaurantSettings?.reservation_duration || 90;
+            const buffer = restaurantSettings?.buffer_time !== undefined ? restaurantSettings.buffer_time : 15;
+            const endDateFormatted = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
+            
+            const smartMessage = `🧠 Regeneración Inteligente Completada:
+            
+📊 RESULTADO:
+• Acción: ${results.action}
+• Slots afectados: ${results.affected_count}
+• Detalle: ${results.message}
+
+⚙️ CONFIGURACIÓN:
+• Período: HOY hasta ${endDateFormatted} (${advanceDays} días)
+• Duración: ${duration} min + ${buffer} min buffer
+• Reservas existentes: PRESERVADAS automáticamente
+
+🎯 Sistema inteligente aplicado exitosamente.`;
+            
+            toast.success(smartMessage, { 
+                duration: 8000,
+                style: { 
+                    minWidth: '450px',
+                    whiteSpace: 'pre-line',
+                    fontSize: '14px'
+                }
+            });
+
+            // Actualizar estado local
+            const successData = {
+                slotsCreated: results.affected_count,
+                dateRange: `HOY hasta ${endDateFormatted}`,
+                duration: duration,
+                buffer: buffer,
+                timestamp: new Date().toLocaleString(),
+                smartRegeneration: true,
+                action: results.action,
+                message: results.message
+            };
+            
+            setGenerationSuccess(successData);
+            
+            // Guardar en localStorage
+            try {
+                localStorage.setItem(`generationSuccess_${restaurantId}`, JSON.stringify(successData));
+            } catch (error) {
+                console.warn('No se pudo guardar en localStorage:', error);
+            }
+            
+            // Recargar estadísticas
+            setTimeout(async () => {
+                await Promise.all([
+                    loadAvailabilityStats(),
+                    loadAvailabilityGrid()
+                ]);
+            }, 500);
+
+        } catch (error) {
+            console.error('Error en regeneración inteligente:', error);
+            toast.dismiss('smart-generating');
+            toast.error('❌ Error en regeneración inteligente: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Generar tabla de disponibilidades (función original)
     const generateAvailability = async () => {
         try {
             setLoading(true);
@@ -242,13 +361,22 @@ const AvailabilityManager = () => {
             });
 
             // Actualizar estado local inmediatamente para reflejar cambios
-            setGenerationSuccess({
+            const successData = {
                 slotsCreated: data,
                 dateRange: `HOY hasta ${endDateFormatted}`,
                 duration: duration,
                 buffer: buffer,
                 timestamp: new Date().toLocaleString()
-            });
+            };
+            
+            setGenerationSuccess(successData);
+            
+            // Guardar en localStorage para persistencia
+            try {
+                localStorage.setItem(`generationSuccess_${restaurantId}`, JSON.stringify(successData));
+            } catch (error) {
+                console.warn('No se pudo guardar en localStorage:', error);
+            }
             
             // Recargar estadísticas con un pequeño delay para asegurar consistencia
             setTimeout(async () => {
@@ -346,8 +474,63 @@ const AvailabilityManager = () => {
         }
     };
 
+    // Cargar disponibilidades de un día específico
+    const loadDayAvailability = async (date) => {
+        try {
+            setLoadingDayView(true);
+            const { data, error } = await supabase
+                .from('availability_slots')
+                .select(`
+                    id,
+                    slot_date,
+                    start_time,
+                    end_time,
+                    status,
+                    table_id,
+                    metadata,
+                    tables(name, capacity, zone)
+                `)
+                .eq('restaurant_id', restaurantId)
+                .eq('slot_date', date)
+                .order('start_time', { ascending: true })
+                .order('table_id', { ascending: true });
+
+            if (error) throw error;
+
+            // Agrupar por mesa
+            const groupedByTable = {};
+            data?.forEach(slot => {
+                const tableKey = `${slot.tables.name} (Zona: ${slot.tables.zone || 'Sin zona'}) - Cap: ${slot.tables.capacity}`;
+                if (!groupedByTable[tableKey]) groupedByTable[tableKey] = [];
+                
+                groupedByTable[tableKey].push({
+                    ...slot,
+                    hasReservation: slot.metadata?.reservation_id ? true : false
+                });
+            });
+
+            setDayAvailability(groupedByTable);
+        } catch (error) {
+            console.error('Error cargando disponibilidades del día:', error);
+            toast.error('Error cargando disponibilidades del día');
+        } finally {
+            setLoadingDayView(false);
+        }
+    };
+
+    // Cargar estado persistente cuando cambie el restaurantId
     useEffect(() => {
         if (restaurantId) {
+            // Cargar estado persistente específico del restaurante
+            try {
+                const saved = localStorage.getItem(`generationSuccess_${restaurantId}`);
+                if (saved) {
+                    setGenerationSuccess(JSON.parse(saved));
+                }
+            } catch (error) {
+                console.warn('Error cargando estado persistente:', error);
+            }
+            
             loadRestaurantSettings();
             loadAvailabilityStats();
         }
@@ -390,45 +573,6 @@ const AvailabilityManager = () => {
                 </div>
             </div>
 
-            {/* Estadísticas actuales */}
-            {availabilityStats && (
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <div className="text-2xl font-bold text-blue-900">
-                            {availabilityStats.total}
-                        </div>
-                        <div className="text-sm text-blue-700">Total Slots</div>
-                    </div>
-                    
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <div className="text-2xl font-bold text-green-900">
-                            {availabilityStats.free}
-                        </div>
-                        <div className="text-sm text-green-700">Disponibles</div>
-                    </div>
-                    
-                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                        <div className="text-2xl font-bold text-red-900">
-                            {availabilityStats.occupied}
-                        </div>
-                        <div className="text-sm text-red-700">Ocupados</div>
-                    </div>
-                    
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <div className="text-2xl font-bold text-gray-900">
-                            {availabilityStats.tablesCount}
-                        </div>
-                        <div className="text-sm text-gray-700">Mesas</div>
-                    </div>
-                    
-                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                        <div className="text-2xl font-bold text-purple-900">
-                            {availabilityStats.reservationsFound}
-                        </div>
-                        <div className="text-sm text-purple-700">Con Reservas</div>
-                    </div>
-                </div>
-            )}
 
             {/* Información de Política de Reservas */}
             {restaurantSettings && (
@@ -461,46 +605,122 @@ const AvailabilityManager = () => {
                 </div>
             )}
 
-            {/* Mensaje de éxito de generación */}
-            {generationSuccess && (
+            {/* Panel de Estado de Disponibilidades - PERSISTENTE */}
+            {(generationSuccess || availabilityStats?.total > 0) && (
                 <div className="border border-green-200 rounded-lg p-4 mb-6 bg-green-50">
                     <h3 className="font-medium text-green-900 mb-3 flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5" />
-                        ✅ Generación Completada Exitosamente
+                        ✅ Disponibilidades Activas
                     </h3>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-green-700">{generationSuccess.slotsCreated}</div>
-                            <div className="text-sm text-green-600">Slots Creados</div>
+                    {/* Estadísticas completas */}
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                        <div className="text-center bg-white rounded-lg p-3 border border-green-200">
+                            <div className="text-2xl font-bold text-green-700">
+                                {generationSuccess?.slotsCreated || availabilityStats?.total || 0}
+                            </div>
+                            <div className="text-xs text-green-600">Slots Creados</div>
                         </div>
-                        <div className="text-center">
-                            <div className="text-lg font-medium text-green-700">{generationSuccess.duration} min</div>
-                            <div className="text-sm text-green-600">Duración</div>
+                        <div className="text-center bg-white rounded-lg p-3 border border-green-200">
+                            <div className="text-lg font-bold text-blue-700">
+                                {availabilityStats?.free || 0}
+                            </div>
+                            <div className="text-xs text-blue-600">Disponibles</div>
                         </div>
-                        <div className="text-center">
-                            <div className="text-lg font-medium text-green-700">{generationSuccess.buffer} min</div>
-                            <div className="text-sm text-green-600">Buffer</div>
+                        <div className="text-center bg-white rounded-lg p-3 border border-green-200">
+                            <div className="text-lg font-bold text-red-700">
+                                {availabilityStats?.occupied || 0}
+                            </div>
+                            <div className="text-xs text-red-600">Ocupados</div>
                         </div>
-                        <div className="text-center">
-                            <div className="text-lg font-medium text-green-700">{availabilityStats?.tablesCount || 0}</div>
-                            <div className="text-sm text-green-600">Mesas</div>
+                        <div className="text-center bg-white rounded-lg p-3 border border-green-200">
+                            <div className="text-lg font-bold text-purple-700">
+                                {availabilityStats?.reservationsFound || 0}
+                            </div>
+                            <div className="text-xs text-purple-600">Con Reservas</div>
+                        </div>
+                        <div className="text-center bg-white rounded-lg p-3 border border-green-200">
+                            <div className="text-lg font-bold text-gray-700">
+                                {availabilityStats?.tablesCount || 0}
+                            </div>
+                            <div className="text-xs text-gray-600">Mesas</div>
                         </div>
                     </div>
                     
-                    <div className="text-sm text-green-700 mb-2">
-                        📅 <strong>Período:</strong> {generationSuccess.dateRange}
-                    </div>
-                    <div className="text-xs text-green-600">
-                        🕒 Generado: {generationSuccess.timestamp}
+                    {/* Información de configuración */}
+                    <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                        <div>
+                            <span className="text-green-700 font-medium">📅 Período:</span>
+                            <span className="text-green-600 ml-1">
+                                {generationSuccess?.dateRange || `${availabilityStats?.dateRange?.start || 'HOY'} hasta ${availabilityStats?.dateRange?.end || 'Configurado'}`}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-green-700 font-medium">⏰ Configuración:</span>
+                            <span className="text-green-600 ml-1">
+                                {generationSuccess?.duration || restaurantSettings?.reservation_duration || 90} min + {generationSuccess?.buffer !== undefined ? generationSuccess.buffer : (restaurantSettings?.buffer_time !== undefined ? restaurantSettings.buffer_time : 15)} min buffer
+                            </span>
+                        </div>
                     </div>
                     
-                    <button 
-                        onClick={() => setGenerationSuccess(null)}
-                        className="mt-3 text-xs text-green-600 hover:text-green-800 underline"
-                    >
-                        Ocultar mensaje
-                    </button>
+                    <div className="text-xs text-green-600 border-t border-green-200 pt-2 flex justify-between items-center">
+                        <span>
+                            🕒 <strong>Última generación:</strong> {generationSuccess?.timestamp || 'Disponibilidades cargadas del sistema'}
+                        </span>
+                        <button 
+                            onClick={() => {
+                                setGenerationSuccess(null);
+                                try {
+                                    localStorage.removeItem(`generationSuccess_${restaurantId}`);
+                                } catch (error) {
+                                    console.warn('Error limpiando localStorage:', error);
+                                }
+                            }}
+                            className="text-xs text-green-600 hover:text-green-800 underline ml-4"
+                        >
+                            Limpiar estado
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Aviso de regeneración necesaria */}
+            {changeDetection.needsRegeneration && (
+                <div className="border border-orange-200 rounded-lg p-4 mb-6 bg-orange-50">
+                    <h3 className="font-medium text-orange-900 mb-3 flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5" />
+                        ⚠️ Regeneración de Disponibilidades Requerida
+                    </h3>
+                    
+                    <div className="text-sm text-orange-800 mb-3">
+                        <p className="mb-2">
+                            <strong>Motivo:</strong> {changeDetection.getChangeMessage()}
+                        </p>
+                        <p className="text-xs text-orange-600">
+                            🕒 Cambio detectado: {changeDetection.lastChangeTimestamp ? new Date(changeDetection.lastChangeTimestamp).toLocaleString() : 'Recientemente'}
+                        </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={async () => {
+                                await smartRegeneration(changeDetection.changeType, changeDetection.changeDetails);
+                                changeDetection.clearRegenerationFlag();
+                            }}
+                            disabled={loading}
+                            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                        >
+                            {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                            🧠 Regenerar Inteligente
+                        </button>
+                        
+                        <button
+                            onClick={() => changeDetection.clearRegenerationFlag()}
+                            className="text-sm text-orange-600 hover:text-orange-800 underline"
+                        >
+                            Ignorar por ahora
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -548,6 +768,15 @@ const AvailabilityManager = () => {
                 </button>
 
                 <button
+                    onClick={() => smartRegeneration()}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                >
+                    {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+                    🧠 Regenerar Inteligente
+                </button>
+
+                <button
                     onClick={() => loadAvailabilityStats()}
                     disabled={loading}
                     className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
@@ -568,13 +797,88 @@ const AvailabilityManager = () => {
                 )}
             </div>
 
-            {/* Info adicional */}
-            {availabilityStats?.dateRange.start && (
+            {/* Selector de día específico */}
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Consultar Día Específico
+                </h3>
+                
+                <div className="flex items-center gap-4 mb-3">
+                    <div>
+                        <label className="block text-sm font-medium text-blue-700 mb-1">
+                            Seleccionar fecha:
+                        </label>
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="border border-blue-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+                    
+                    <div className="flex items-end">
+                        <button
+                            onClick={() => loadDayAvailability(selectedDate)}
+                            disabled={loadingDayView}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        >
+                            {loadingDayView ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
+                            Ver Disponibilidades
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mostrar disponibilidades del día seleccionado */}
+                {Object.keys(dayAvailability).length > 0 && (
+                    <div className="mt-4 border-t border-blue-200 pt-4">
+                        <h4 className="font-medium text-blue-900 mb-3">
+                            📅 Disponibilidades para {format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}
+                        </h4>
+                        
+                        <div className="space-y-3 max-h-60 overflow-y-auto">
+                            {Object.entries(dayAvailability).map(([tableName, slots]) => (
+                                <div key={tableName} className="bg-white p-3 rounded border border-blue-200">
+                                    <div className="font-medium text-gray-900 mb-2">{tableName}</div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {slots.map((slot) => (
+                                            <span
+                                                key={slot.id}
+                                                className={`px-2 py-1 text-xs rounded ${
+                                                    slot.hasReservation 
+                                                        ? 'bg-purple-100 text-purple-700 border border-purple-300' 
+                                                        : slot.status === 'free'
+                                                        ? 'bg-green-100 text-green-700 border border-green-300'
+                                                        : 'bg-gray-100 text-gray-700 border border-gray-300'
+                                                }`}
+                                            >
+                                                {slot.start_time} {slot.hasReservation ? '📋' : '✅'}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Info del período actual - ACTUALIZADO DINÁMICAMENTE */}
+            {availabilityStats?.total > 0 && (
                 <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                     <div className="text-sm text-gray-600">
                         <strong>Período actual:</strong> {' '}
-                        {format(new Date(availabilityStats.dateRange.start), 'dd/MM/yyyy', { locale: es })} - {' '}
-                        {format(new Date(availabilityStats.dateRange.end), 'dd/MM/yyyy', { locale: es })}
+                        {availabilityStats?.dateRange?.start ? (
+                            <>
+                                {format(new Date(availabilityStats.dateRange.start), 'dd/MM/yyyy', { locale: es })} - {' '}
+                                {format(new Date(availabilityStats.dateRange.end), 'dd/MM/yyyy', { locale: es })}
+                            </>
+                        ) : (
+                            <>
+                                {format(new Date(), 'dd/MM/yyyy', { locale: es })} - {' '}
+                                {format(addDays(new Date(), restaurantSettings?.advance_booking_days || 90), 'dd/MM/yyyy', { locale: es })}
+                            </>
+                        )}
                     </div>
                 </div>
             )}
