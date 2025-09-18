@@ -67,11 +67,10 @@ BEGIN
     -- Calcular fecha final
     final_end_date := COALESCE(p_end_date, p_start_date + horizon_days);
     
-    -- Limpiar slots existentes del sistema en el rango
+    -- LIMPIEZA AGRESIVA - Eliminar TODOS los slots existentes en el rango (no solo system)
     DELETE FROM availability_slots 
     WHERE restaurant_id = p_restaurant_id 
-      AND slot_date BETWEEN p_start_date AND final_end_date
-      AND source = 'system';
+      AND slot_date BETWEEN p_start_date AND final_end_date;
     
     -- Generar slots día por día
     current_loop_date := p_start_date;
@@ -213,7 +212,13 @@ BEGIN
                                                     jsonb_build_object('shift_name', shift_data->>'name'),
                                                     NOW(),
                                                     NOW()
-                                                );
+                                                )
+                                                ON CONFLICT (restaurant_id, table_id, slot_date, start_time) 
+                                                DO UPDATE SET
+                                                    status = 'free',
+                                                    source = 'system',
+                                                    metadata = jsonb_build_object('shift_name', shift_data->>'name'),
+                                                    updated_at = NOW();
                                                 
                                                 slot_count := slot_count + 1;
                                             END IF;
@@ -315,7 +320,13 @@ BEGIN
                                                 jsonb_build_object('mode', 'full_schedule'),
                                                 NOW(),
                                                 NOW()
-                                            );
+                                            )
+                                            ON CONFLICT (restaurant_id, table_id, slot_date, start_time) 
+                                            DO UPDATE SET
+                                                status = 'free',
+                                                source = 'system',
+                                                metadata = jsonb_build_object('mode', 'full_schedule'),
+                                                updated_at = NOW();
                                             
                                             slot_count := slot_count + 1;
                                         END IF;
