@@ -262,32 +262,6 @@ export default function Clientes() {
                 {/* Dashboard de Clientes - Métricas por Segmento */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Estado de la Base de Clientes</h2>
-                    
-                    {/* Resumen general */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <div className="text-2xl font-bold text-gray-900">{customers.length}</div>
-                            <div className="text-sm text-gray-600">Total Clientes</div>
-                        </div>
-                        <div className="text-center p-3 bg-green-50 rounded-lg">
-                            <div className="text-2xl font-bold text-green-600">
-                                {customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length}
-                            </div>
-                            <div className="text-sm text-green-700">⭐ Activos</div>
-                        </div>
-                        <div className="text-center p-3 bg-purple-50 rounded-lg">
-                            <div className="text-2xl font-bold text-purple-600">
-                                {customers.filter(c => (c.total_spent || 0) >= 500).length}
-                            </div>
-                            <div className="text-sm text-purple-700">👑 VIPs</div>
-                        </div>
-                        <div className="text-center p-3 bg-orange-50 rounded-lg">
-                            <div className="text-2xl font-bold text-orange-600">
-                                {customers.filter(c => (c.segment_manual || c.segment_auto) === 'riesgo').length}
-                            </div>
-                            <div className="text-sm text-orange-700">⚠️ En Riesgo</div>
-                        </div>
-                    </div>
 
                     {/* Desglose por segmentos con porcentajes */}
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -320,29 +294,91 @@ export default function Clientes() {
                         })}
                     </div>
 
-                    {/* Indicador de salud general */}
+                    {/* Indicador de salud general con explicaciones */}
                     <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <div className="text-sm text-gray-600">Salud de la Base de Clientes</div>
-                                <div className="text-lg font-semibold text-gray-900">
-                                    {(() => {
-                                        const activePercentage = customers.length > 0 
-                                            ? (customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length / customers.length) * 100 
-                                            : 0;
-                                        if (activePercentage >= 60) return "🟢 Excelente";
-                                        if (activePercentage >= 40) return "🟡 Buena";
-                                        if (activePercentage >= 20) return "🟠 Regular";
-                                        return "🔴 Necesita atención";
-                                    })()}
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-sm text-gray-600">Ingresos Totales</div>
-                                <div className="text-lg font-bold text-green-600">
-                                    €{customers.reduce((sum, c) => sum + (c.total_spent || 0), 0).toFixed(0)}
-                                </div>
-                            </div>
+                        <div className="text-sm text-gray-600 mb-2">Salud de la Base de Clientes</div>
+                        <div className="text-lg font-semibold text-gray-900 mb-3">
+                            {(() => {
+                                const activeCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length;
+                                const riskCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'riesgo').length;
+                                const inactiveCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'inactivo').length;
+                                const activePercentage = customers.length > 0 ? (activeCount / customers.length) * 100 : 0;
+                                const riskPercentage = customers.length > 0 ? (riskCount / customers.length) * 100 : 0;
+                                
+                                if (activePercentage >= 60) return "🟢 Excelente";
+                                if (activePercentage >= 40) return "🟡 Buena";
+                                if (activePercentage >= 20) return "🟠 Regular";
+                                return "🔴 Necesita atención";
+                            })()}
+                        </div>
+                        
+                        {/* Explicación detallada de por qué necesita atención */}
+                        <div className="text-sm text-gray-700">
+                            {(() => {
+                                const activeCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length;
+                                const riskCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'riesgo').length;
+                                const inactiveCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'inactivo').length;
+                                const newCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'nuevo').length;
+                                const activePercentage = customers.length > 0 ? (activeCount / customers.length) * 100 : 0;
+                                const riskPercentage = customers.length > 0 ? (riskCount / customers.length) * 100 : 0;
+                                const inactivePercentage = customers.length > 0 ? (inactiveCount / customers.length) * 100 : 0;
+                                
+                                const issues = [];
+                                const recommendations = [];
+                                
+                                // Reglas de análisis
+                                if (activePercentage < 20) {
+                                    issues.push(`Muy pocos clientes activos (${activePercentage.toFixed(0)}%)`);
+                                    recommendations.push("Implementar estrategias de reactivación");
+                                }
+                                
+                                if (riskPercentage > 30) {
+                                    issues.push(`Muchos clientes en riesgo (${riskPercentage.toFixed(0)}%)`);
+                                    recommendations.push("Contactar clientes en riesgo urgentemente");
+                                }
+                                
+                                if (inactivePercentage > 40) {
+                                    issues.push(`Demasiados clientes inactivos (${inactivePercentage.toFixed(0)}%)`);
+                                    recommendations.push("Crear campañas de recuperación");
+                                }
+                                
+                                if (newCount > activeCount && customers.length > 5) {
+                                    issues.push("Los clientes nuevos no se están fidelizando");
+                                    recommendations.push("Mejorar experiencia de primeras visitas");
+                                }
+                                
+                                if (customers.length < 10) {
+                                    issues.push("Base de clientes muy pequeña");
+                                    recommendations.push("Enfocar en captación de nuevos clientes");
+                                }
+                                
+                                // Mostrar resultado
+                                if (issues.length === 0) {
+                                    return (
+                                        <div>
+                                            <div className="text-green-700 font-medium mb-1">✅ Tu base de clientes está en excelente estado</div>
+                                            <div>Tienes un {activePercentage.toFixed(0)}% de clientes activos, sigue así.</div>
+                                        </div>
+                                    );
+                                }
+                                
+                                return (
+                                    <div>
+                                        <div className="font-medium text-orange-700 mb-2">⚠️ Problemas detectados:</div>
+                                        <ul className="list-disc list-inside space-y-1 mb-3">
+                                            {issues.map((issue, index) => (
+                                                <li key={index}>{issue}</li>
+                                            ))}
+                                        </ul>
+                                        <div className="font-medium text-blue-700 mb-1">💡 Recomendaciones:</div>
+                                        <ul className="list-disc list-inside space-y-1">
+                                            {recommendations.map((rec, index) => (
+                                                <li key={index}>{rec}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>
