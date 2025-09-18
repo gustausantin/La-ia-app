@@ -1,0 +1,10 @@
+-- SCRIPT SIMPLE PARA VER CONFIGURACIÓN DEL RESTAURANTE
+-- Ejecutar en SQL Editor de Supabase
+
+-- VER CONFIGURACIÓN COMPLETA DEL RESTAURANTE
+SELECT 
+    id,
+    name,
+    settings
+FROM restaurants 
+LIMIT 1;
