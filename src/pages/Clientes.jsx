@@ -143,12 +143,12 @@ export default function Clientes() {
     const filteredCustomers = customers.filter(customer => {
         // Filtro por búsqueda de texto
         if (filters.search) {
-            const searchTerm = filters.search.toLowerCase();
+        const searchTerm = filters.search.toLowerCase();
             const matchesSearch = (
-                customer.name.toLowerCase().includes(searchTerm) ||
-                customer.email?.toLowerCase().includes(searchTerm) ||
-                customer.phone?.includes(searchTerm)
-            );
+            customer.name.toLowerCase().includes(searchTerm) ||
+            customer.email?.toLowerCase().includes(searchTerm) ||
+            customer.phone?.includes(searchTerm)
+        );
             if (!matchesSearch) return false;
         }
 
@@ -288,97 +288,103 @@ export default function Clientes() {
                                         <div className="text-xs text-gray-500 mt-1">
                                             {percentage}% del total
                                         </div>
-                                    </div>
-                                </div>
+                            </div>
+                        </div>
                             );
                         })}
                     </div>
 
-                    {/* Indicador de salud general con explicaciones */}
+                    {/* Indicador de salud general - COMPACTO */}
                     <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                        <div className="text-sm text-gray-600 mb-2">Salud de la Base de Clientes</div>
-                        <div className="text-lg font-semibold text-gray-900 mb-3">
-                            {(() => {
-                                const activeCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length;
-                                const riskCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'riesgo').length;
-                                const inactiveCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'inactivo').length;
-                                const activePercentage = customers.length > 0 ? (activeCount / customers.length) * 100 : 0;
-                                const riskPercentage = customers.length > 0 ? (riskCount / customers.length) * 100 : 0;
-                                
-                                if (activePercentage >= 60) return "🟢 Excelente";
-                                if (activePercentage >= 40) return "🟡 Buena";
-                                if (activePercentage >= 20) return "🟠 Regular";
-                                return "🔴 Necesita atención";
-                            })()}
-                        </div>
-                        
-                        {/* Explicación detallada de por qué necesita atención */}
-                        <div className="text-sm text-gray-700">
-                            {(() => {
-                                const activeCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length;
-                                const riskCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'riesgo').length;
-                                const inactiveCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'inactivo').length;
-                                const newCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'nuevo').length;
-                                const activePercentage = customers.length > 0 ? (activeCount / customers.length) * 100 : 0;
-                                const riskPercentage = customers.length > 0 ? (riskCount / customers.length) * 100 : 0;
-                                const inactivePercentage = customers.length > 0 ? (inactiveCount / customers.length) * 100 : 0;
-                                
-                                const issues = [];
-                                const recommendations = [];
-                                
-                                // Reglas de análisis
-                                if (activePercentage < 20) {
-                                    issues.push(`Muy pocos clientes activos (${activePercentage.toFixed(0)}%)`);
-                                    recommendations.push("Implementar estrategias de reactivación");
-                                }
-                                
-                                if (riskPercentage > 30) {
-                                    issues.push(`Muchos clientes en riesgo (${riskPercentage.toFixed(0)}%)`);
-                                    recommendations.push("Contactar clientes en riesgo urgentemente");
-                                }
-                                
-                                if (inactivePercentage > 40) {
-                                    issues.push(`Demasiados clientes inactivos (${inactivePercentage.toFixed(0)}%)`);
-                                    recommendations.push("Crear campañas de recuperación");
-                                }
-                                
-                                if (newCount > activeCount && customers.length > 5) {
-                                    issues.push("Los clientes nuevos no se están fidelizando");
-                                    recommendations.push("Mejorar experiencia de primeras visitas");
-                                }
-                                
-                                if (customers.length < 10) {
-                                    issues.push("Base de clientes muy pequeña");
-                                    recommendations.push("Enfocar en captación de nuevos clientes");
-                                }
-                                
-                                // Mostrar resultado
-                                if (issues.length === 0) {
+                        <div className="flex items-start justify-between gap-4">
+                            {/* Estado de salud */}
+                            <div className="flex-shrink-0">
+                                <div className="text-sm text-gray-600">Salud de la Base de Clientes</div>
+                                <div className="text-lg font-semibold text-gray-900">
+                                    {(() => {
+                                        const activeCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length;
+                                        const activePercentage = customers.length > 0 ? (activeCount / customers.length) * 100 : 0;
+                                        
+                                        if (activePercentage >= 60) return "🟢 Excelente";
+                                        if (activePercentage >= 40) return "🟡 Buena";
+                                        if (activePercentage >= 20) return "🟠 Regular";
+                                        return "🔴 Necesita atención";
+                                    })()}
+                                </div>
+                            </div>
+                            
+                            {/* Análisis compacto */}
+                            <div className="flex-1 text-sm text-gray-700">
+                                {(() => {
+                                    const activeCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length;
+                                    const riskCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'riesgo').length;
+                                    const inactiveCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'inactivo').length;
+                                    const newCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'nuevo').length;
+                                    const activePercentage = customers.length > 0 ? (activeCount / customers.length) * 100 : 0;
+                                    const riskPercentage = customers.length > 0 ? (riskCount / customers.length) * 100 : 0;
+                                    const inactivePercentage = customers.length > 0 ? (inactiveCount / customers.length) * 100 : 0;
+                                    
+                                    const issues = [];
+                                    const recommendations = [];
+                                    
+                                    // Reglas de análisis
+                                    if (activePercentage < 20) {
+                                        issues.push(`Muy pocos clientes activos (${activePercentage.toFixed(0)}%)`);
+                                        recommendations.push("Implementar estrategias de reactivación");
+                                    }
+                                    
+                                    if (riskPercentage > 30) {
+                                        issues.push(`Muchos clientes en riesgo (${riskPercentage.toFixed(0)}%)`);
+                                        recommendations.push("Contactar clientes en riesgo urgentemente");
+                                    }
+                                    
+                                    if (inactivePercentage > 40) {
+                                        issues.push(`Demasiados clientes inactivos (${inactivePercentage.toFixed(0)}%)`);
+                                        recommendations.push("Crear campañas de recuperación");
+                                    }
+                                    
+                                    if (newCount > activeCount && customers.length > 5) {
+                                        issues.push("Los clientes nuevos no se están fidelizando");
+                                        recommendations.push("Mejorar experiencia de primeras visitas");
+                                    }
+                                    
+                                    if (customers.length < 10) {
+                                        issues.push("Base de clientes muy pequeña");
+                                        recommendations.push("Enfocar en captación de nuevos clientes");
+                                    }
+                                    
+                                    // Mostrar resultado COMPACTO
+                                    if (issues.length === 0) {
+                                        return (
+                                            <div className="text-green-700">
+                                                <span className="font-medium">✅ Excelente estado</span> - {activePercentage.toFixed(0)}% clientes activos
+                                            </div>
+                                        );
+                                    }
+                                    
                                     return (
-                                        <div>
-                                            <div className="text-green-700 font-medium mb-1">✅ Tu base de clientes está en excelente estado</div>
-                                            <div>Tienes un {activePercentage.toFixed(0)}% de clientes activos, sigue así.</div>
-                                        </div>
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                            <div>
+                                                <div className="font-medium text-orange-700 mb-1">⚠️ Problemas:</div>
+                                                <div className="space-y-0.5">
+                                                    {issues.slice(0, 2).map((issue, index) => (
+                                                        <div key={index} className="text-xs">• {issue}</div>
+                                                    ))}
+                                                    {issues.length > 2 && <div className="text-xs text-gray-500">+{issues.length - 2} más</div>}
+                        </div>
+                    </div>
+                            <div>
+                                                <div className="font-medium text-blue-700 mb-1">💡 Acciones:</div>
+                                                <div className="space-y-0.5">
+                                                    {recommendations.slice(0, 2).map((rec, index) => (
+                                                        <div key={index} className="text-xs">• {rec}</div>
+                                                    ))}
+                            </div>
+                        </div>
+                    </div>
                                     );
-                                }
-                                
-                                return (
-                                    <div>
-                                        <div className="font-medium text-orange-700 mb-2">⚠️ Problemas detectados:</div>
-                                        <ul className="list-disc list-inside space-y-1 mb-3">
-                                            {issues.map((issue, index) => (
-                                                <li key={index}>{issue}</li>
-                                            ))}
-                                        </ul>
-                                        <div className="font-medium text-blue-700 mb-1">💡 Recomendaciones:</div>
-                                        <ul className="list-disc list-inside space-y-1">
-                                            {recommendations.map((rec, index) => (
-                                                <li key={index}>{rec}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                );
-                            })()}
+                                })()}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -387,15 +393,15 @@ export default function Clientes() {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                     <div className="space-y-4">
                         {/* Búsqueda por texto */}
-                        <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                            <input
-                                type="text"
-                                placeholder="Buscar por nombre, email o teléfono..."
-                                value={filters.search}
-                                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre, email o teléfono..."
+                            value={filters.search}
+                            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
                         </div>
 
                         {/* Filtros adicionales */}
