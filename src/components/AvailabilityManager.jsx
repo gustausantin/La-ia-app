@@ -526,9 +526,41 @@ const AvailabilityManager = () => {
 
             if (error) throw error;
 
-            // Agrupar por mesa
+            // Verificar si es un día cerrado
+            const closedDaySlot = data?.find(slot => 
+                slot.metadata?.type === 'closed_day' && 
+                slot.start_time === '00:00:00'
+            );
+
+            if (closedDaySlot) {
+                // Mostrar mensaje de día cerrado
+                setDayAvailability({
+                    'RESTAURANTE CERRADO': [{
+                        id: 'closed',
+                        start_time: '🚫',
+                        message: closedDaySlot.metadata?.message || 'Restaurante cerrado este día',
+                        isClosed: true
+                    }]
+                });
+                return;
+            }
+
+            // Si no hay slots normales, mostrar mensaje de sin disponibilidades
+            if (!data || data.length === 0) {
+                setDayAvailability({
+                    'SIN DISPONIBILIDADES': [{
+                        id: 'no-slots',
+                        start_time: '❌',
+                        message: 'No hay disponibilidades generadas para este día',
+                        isEmpty: true
+                    }]
+                });
+                return;
+            }
+
+            // Agrupar por mesa (slots normales)
             const groupedByTable = {};
-            data?.forEach(slot => {
+            data.forEach(slot => {
                 const tableKey = `${slot.tables.name} (Zona: ${slot.tables.zone || 'Sin zona'}) - Cap: ${slot.tables.capacity}`;
                 if (!groupedByTable[tableKey]) groupedByTable[tableKey] = [];
                 
@@ -840,24 +872,48 @@ const AvailabilityManager = () => {
                         
                         <div className="space-y-3 max-h-60 overflow-y-auto">
                             {Object.entries(dayAvailability).map(([tableName, slots]) => (
-                                <div key={tableName} className="bg-white p-3 rounded border border-blue-200">
+                                <div key={tableName} className={`p-3 rounded border ${
+                                    slots[0]?.isClosed 
+                                        ? 'bg-red-50 border-red-200' 
+                                        : slots[0]?.isEmpty
+                                        ? 'bg-yellow-50 border-yellow-200'
+                                        : 'bg-white border-blue-200'
+                                }`}>
                                     <div className="font-medium text-gray-900 mb-2">{tableName}</div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {slots.map((slot) => (
-                                            <span
-                                                key={slot.id}
-                                                className={`px-2 py-1 text-xs rounded ${
-                                                    slot.hasReservation 
-                                                        ? 'bg-purple-100 text-purple-700 border border-purple-300' 
-                                                        : slot.status === 'free'
-                                                        ? 'bg-green-100 text-green-700 border border-green-300'
-                                                        : 'bg-gray-100 text-gray-700 border border-gray-300'
-                                                }`}
-                                            >
-                                                {slot.start_time} {slot.hasReservation ? '📋' : '✅'}
-                                            </span>
-                                        ))}
-                                    </div>
+                                    
+                                    {/* Mensaje especial para días cerrados o sin disponibilidades */}
+                                    {(slots[0]?.isClosed || slots[0]?.isEmpty) ? (
+                                        <div className={`text-center py-4 ${
+                                            slots[0]?.isClosed 
+                                                ? 'text-red-600' 
+                                                : 'text-yellow-600'
+                                        }`}>
+                                            <div className="text-2xl mb-2">
+                                                {slots[0]?.isClosed ? '🚫' : '❌'}
+                                            </div>
+                                            <div className="font-medium">
+                                                {slots[0]?.message}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        /* Slots normales */
+                                        <div className="flex flex-wrap gap-2">
+                                            {slots.map((slot) => (
+                                                <span
+                                                    key={slot.id}
+                                                    className={`px-2 py-1 text-xs rounded ${
+                                                        slot.hasReservation 
+                                                            ? 'bg-purple-100 text-purple-700 border border-purple-300' 
+                                                            : slot.status === 'free'
+                                                            ? 'bg-green-100 text-green-700 border border-green-300'
+                                                            : 'bg-gray-100 text-gray-700 border border-gray-300'
+                                                    }`}
+                                                >
+                                                    {slot.start_time} {slot.hasReservation ? '📋' : '✅'}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
