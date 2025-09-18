@@ -67,8 +67,7 @@ const AvailabilityManager = () => {
                 advance_booking_days: settings.horizon_days || 30,
                 min_party_size: settings.min_party_size || 1,
                 max_party_size: settings.max_party_size || 20,
-                reservation_duration: settings.turn_duration_minutes || 90,
-                buffer_time: settings.buffer_minutes !== undefined ? settings.buffer_minutes : 15
+                reservation_duration: settings.turn_duration_minutes || 90
             };
             
             setRestaurantSettings(processedSettings);
@@ -242,7 +241,6 @@ const AvailabilityManager = () => {
             // Mostrar resultados detallados
             const results = data[0];
             const duration = restaurantSettings?.reservation_duration || 90;
-            const buffer = restaurantSettings?.buffer_time !== undefined ? restaurantSettings.buffer_time : 15;
             const endDateFormatted = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
             
             const smartMessage = `🧠 Regeneración Inteligente Completada:
@@ -366,7 +364,6 @@ const AvailabilityManager = () => {
             
             // Crear mensaje de resumen inteligente ANTES de recargar
             const duration = restaurantSettings?.reservation_duration || 90;
-            const buffer = restaurantSettings?.buffer_time !== undefined ? restaurantSettings.buffer_time : 15;
             const endDateFormatted = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
             
             // Mostrar mensaje de éxito inmediato
@@ -376,7 +373,7 @@ const AvailabilityManager = () => {
 • ${data} slots creados
 • Desde HOY hasta ${endDateFormatted} (${advanceDays} días)
 • Duración por reserva: ${duration} min
-• Buffer entre reservas: ${buffer} min
+• Sin buffer entre reservas
 • Para todas las mesas activas
             
 🎯 Las disponibilidades están listas para recibir reservas.`;
@@ -657,7 +654,7 @@ const AvailabilityManager = () => {
                         </div>
                         <div>
                             <div className="text-blue-700 font-medium">Buffer</div>
-                            <div className="text-blue-900">{restaurantSettings.buffer_time || 15} min</div>
+                            <div className="text-blue-900">Sin buffer</div>
                         </div>
                     </div>
                     <div className="mt-3 text-xs text-blue-600">
@@ -719,7 +716,7 @@ const AvailabilityManager = () => {
                         <div>
                             <span className="text-green-700 font-medium">⏰ Configuración:</span>
                             <span className="text-green-600 ml-1">
-                                {generationSuccess?.duration || restaurantSettings?.reservation_duration || 90} min + {generationSuccess?.buffer !== undefined ? generationSuccess.buffer : (restaurantSettings?.buffer_time !== undefined ? restaurantSettings.buffer_time : 15)} min buffer
+                                {generationSuccess?.duration || restaurantSettings?.reservation_duration || 90} min (sin buffer)
                             </span>
                         </div>
                     </div>

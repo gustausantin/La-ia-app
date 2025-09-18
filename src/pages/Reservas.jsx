@@ -452,7 +452,6 @@ export default function Reservas() {
         max_party_size: 20,
         advance_booking_days: 30,
         reservation_duration: 90,
-        buffer_time: 15,
         min_advance_hours: 2
     });
     const [savingPolicy, setSavingPolicy] = useState(false);
@@ -1082,7 +1081,6 @@ export default function Reservas() {
                 max_party_size: settings.max_party_size || 20,
                 advance_booking_days: settings.horizon_days || 30,
                 reservation_duration: settings.turn_duration_minutes || 90,
-                buffer_time: settings.buffer_minutes !== undefined ? settings.buffer_minutes : 15,
                 min_advance_hours: settings.min_advance_hours || 2
             });
         } catch (error) {
@@ -2030,26 +2028,7 @@ export default function Reservas() {
                                 </p>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Buffer entre reservas (minutos)
-                                </label>
-                                <select 
-                                    value={policySettings.buffer_time}
-                                    onChange={(e) => setPolicySettings(prev => ({
-                                        ...prev,
-                                        buffer_time: parseInt(e.target.value) >= 0 ? parseInt(e.target.value) : 15
-                                    }))}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                >
-                                    <option value="0">Sin buffer</option>
-                                    <option value="15">15 minutos</option>
-                                    <option value="30">30 minutos</option>
-                                </select>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Tiempo de limpieza/preparación entre reservas
-                                </p>
-                            </div>
+                            {/* Buffer eliminado - versión 2 */}
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2110,7 +2089,6 @@ export default function Reservas() {
                                         max_party_size: policySettings.max_party_size,
                                         advance_booking_days: policySettings.advance_booking_days, // Corregido nombre
                                         reservation_duration: policySettings.reservation_duration, // Corregido nombre
-                                        buffer_time: policySettings.buffer_time, // Corregido nombre
                                         min_advance_hours: policySettings.min_advance_hours
                                     };
                                     
