@@ -1,0 +1,183 @@
+-- MIGRACIÓN: Limpiar funciones duplicadas
+-- Fecha: 18 Septiembre 2025
+-- Objetivo: Eliminar todas las versiones de generate_availability_slots y crear solo una
+
+-- Eliminar TODAS las posibles versiones de la función
+DROP FUNCTION IF EXISTS generate_availability_slots(uuid) CASCADE;
+DROP FUNCTION IF EXISTS generate_availability_slots(uuid, date) CASCADE;
+DROP FUNCTION IF EXISTS generate_availability_slots(uuid, date, date) CASCADE;
+DROP FUNCTION IF EXISTS generate_availability_slots(uuid, date, date, integer) CASCADE;
+DROP FUNCTION IF EXISTS generate_availability_slots(uuid, date, date, integer, integer) CASCADE;
+DROP FUNCTION IF EXISTS generate_availability_slots(uuid, date, date, integer, integer, text) CASCADE;
+
+-- Crear la función definitiva con parámetros por defecto
+CREATE OR REPLACE FUNCTION generate_availability_slots(
+    p_restaurant_id uuid,
+    p_start_date date,
+    p_end_date date,
+    p_slot_duration_minutes integer DEFAULT 90,
+    p_buffer_minutes integer DEFAULT 15
+)
+RETURNS integer
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    loop_date date;
+    final_end_date date;
+    day_of_week_text text;
+    operating_hours jsonb;
+    day_schedule jsonb;
+    day_shifts jsonb;
+    shift_record jsonb;
+    shift_start_time time;
+    shift_end_time time;
+    slot_time time;
+    end_time time;
+    table_record RECORD;
+    slots_created integer := 0;
+    restaurant_settings jsonb;
+BEGIN
+    -- Obtener configuración del restaurante
+    SELECT settings INTO restaurant_settings
+    FROM restaurants 
+    WHERE id = p_restaurant_id;
+    
+    IF restaurant_settings IS NULL THEN
+        RAISE EXCEPTION 'Restaurant not found: %', p_restaurant_id;
+    END IF;
+    
+    -- Obtener operating_hours
+    operating_hours := restaurant_settings->'operating_hours';
+    
+    IF operating_hours IS NULL THEN
+        RAISE EXCEPTION 'No operating_hours found in restaurant settings';
+    END IF;
+    
+    -- Calcular fecha final
+    final_end_date := LEAST(p_end_date, CURRENT_DATE + INTERVAL '120 days');
+    
+    -- LIMPIEZA: Eliminar slots existentes
+    DELETE FROM availability_slots 
+    WHERE restaurant_id = p_restaurant_id 
+    AND slot_date BETWEEN p_start_date AND final_end_date;
+    
+    RAISE NOTICE 'Generating slots from % to %', p_start_date, final_end_date;
+    
+    -- Iterar por cada día
+    loop_date := p_start_date;
+    WHILE loop_date <= final_end_date LOOP
+        day_of_week_text := LOWER(TO_CHAR(loop_date, 'Day'));
+        day_of_week_text := TRIM(day_of_week_text);
+        
+        -- Obtener configuración del día
+        day_schedule := operating_hours->day_of_week_text;
+        
+        RAISE NOTICE 'Day: % - Schedule: %', day_of_week_text, day_schedule;
+        
+        -- Verificar si el día está cerrado
+        IF day_schedule IS NULL OR (day_schedule->>'open')::boolean = false THEN
+            RAISE NOTICE 'Day % is CLOSED, skipping', day_of_week_text;
+            loop_date := loop_date + 1;
+            CONTINUE;
+        END IF;
+        
+        -- Obtener turnos (shifts) del día
+        day_shifts := day_schedule->'shifts';
+        
+        -- Si hay turnos definidos, usar solo los turnos (ignorar "Horario Principal")
+        IF day_shifts IS NOT NULL AND jsonb_array_length(day_shifts) > 0 THEN
+            RAISE NOTICE 'Found % shifts for %', jsonb_array_length(day_shifts), day_of_week_text;
+            
+            -- Procesar cada turno
+            FOR shift_record IN SELECT * FROM jsonb_array_elements(day_shifts)
+            LOOP
+                -- Saltar "Horario Principal"
+                IF shift_record->>'name' = 'Horario Principal' THEN
+                    RAISE NOTICE 'Skipping Horario Principal for %', day_of_week_text;
+                    CONTINUE;
+                END IF;
+                
+                -- Obtener horarios del turno
+                shift_start_time := (shift_record->>'start_time')::time;
+                shift_end_time := (shift_record->>'end_time')::time;
+                
+                RAISE NOTICE 'Processing shift: % (%-%)', shift_record->>'name', shift_start_time, shift_end_time;
+                
+                IF shift_start_time IS NULL OR shift_end_time IS NULL THEN
+                    RAISE NOTICE 'Invalid shift times, skipping';
+                    CONTINUE;
+                END IF;
+                
+                -- Generar slots para este turno
+                FOR table_record IN 
+                    SELECT id, name FROM tables 
+                    WHERE restaurant_id = p_restaurant_id AND is_active = true
+                LOOP
+                    slot_time := shift_start_time;
+                    
+                    WHILE slot_time + (p_slot_duration_minutes || ' minutes')::interval <= shift_end_time LOOP
+                        end_time := slot_time + (p_slot_duration_minutes || ' minutes')::interval;
+                        
+                        INSERT INTO availability_slots (
+                            restaurant_id, table_id, slot_date, start_time, end_time,
+                            is_available, source, created_at
+                        ) VALUES (
+                            p_restaurant_id, table_record.id, loop_date, slot_time, end_time,
+                            true, 'system', NOW()
+                        );
+                        
+                        slots_created := slots_created + 1;
+                        
+                        slot_time := slot_time + (p_slot_duration_minutes + p_buffer_minutes || ' minutes')::interval;
+                    END LOOP;
+                END LOOP;
+            END LOOP;
+            
+        ELSE
+            -- Si no hay turnos, usar horario general del día
+            shift_start_time := (day_schedule->>'start')::time;
+            shift_end_time := (day_schedule->>'end')::time;
+            
+            RAISE NOTICE 'No shifts found, using general hours: %-%', shift_start_time, shift_end_time;
+            
+            IF shift_start_time IS NULL OR shift_end_time IS NULL THEN
+                shift_start_time := '09:00'::time;
+                shift_end_time := '22:00'::time;
+            END IF;
+            
+            -- Generar slots para horario general
+            FOR table_record IN 
+                SELECT id, name FROM tables 
+                WHERE restaurant_id = p_restaurant_id AND is_active = true
+            LOOP
+                slot_time := shift_start_time;
+                
+                WHILE slot_time + (p_slot_duration_minutes || ' minutes')::interval <= shift_end_time LOOP
+                    end_time := slot_time + (p_slot_duration_minutes || ' minutes')::interval;
+                    
+                    INSERT INTO availability_slots (
+                        restaurant_id, table_id, slot_date, start_time, end_time,
+                        is_available, source, created_at
+                    ) VALUES (
+                        p_restaurant_id, table_record.id, loop_date, slot_time, end_time,
+                        true, 'system', NOW()
+                    );
+                    
+                    slots_created := slots_created + 1;
+                    
+                    slot_time := slot_time + (p_slot_duration_minutes + p_buffer_minutes || ' minutes')::interval;
+                END LOOP;
+            END LOOP;
+        END IF;
+        
+        loop_date := loop_date + 1;
+    END LOOP;
+    
+    RAISE NOTICE 'Successfully created % slots', slots_created;
+    RETURN slots_created;
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'Error generating availability slots: %', SQLERRM;
+END;
+$$;
