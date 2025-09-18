@@ -652,10 +652,7 @@ const AvailabilityManager = () => {
                             <div className="text-blue-700 font-medium">Tamaño Grupo</div>
                             <div className="text-blue-900">{restaurantSettings.min_party_size || 1}-{restaurantSettings.max_party_size || 12} personas</div>
                         </div>
-                        <div>
-                            <div className="text-blue-700 font-medium">Buffer</div>
-                            <div className="text-blue-900">Sin buffer</div>
-                        </div>
+                        {/* Buffer eliminado */}
                     </div>
                     <div className="mt-3 text-xs text-blue-600">
                         💡 Estas configuraciones se aplican automáticamente al generar disponibilidades
