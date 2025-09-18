@@ -88,59 +88,92 @@ const AvailabilityManager = () => {
     // Cargar estadísticas de disponibilidad
     const loadAvailabilityStats = async () => {
         try {
-            // AÑADIR LÍMITE EXPLÍCITO PARA EVITAR EL PROBLEMA DE 1000
-            const { data, error, count } = await supabase
+            // MÉTODO MATEMÁTICO - Evitar límite de 1000 de Supabase
+            console.log('📊 Calculando estadísticas matemáticamente...');
+
+            // 1. Obtener TOTAL usando count (no tiene límite)
+            const { count: totalSlots, error: totalError } = await supabase
                 .from('availability_slots')
-                .select(`
-                    id,
-                    slot_date,
-                    start_time,
-                    end_time,
-                    status,
-                    table_id,
-                    metadata,
-                    tables(name, capacity, zone)
-                `, { count: 'exact' })
+                .select('id', { count: 'exact', head: true })
+                .eq('restaurant_id', restaurantId)
+                .gte('slot_date', format(new Date(), 'yyyy-MM-dd'));
+
+            if (totalError) throw totalError;
+
+            // 2. Obtener OCUPADOS/RESERVADOS usando count
+            const { count: occupiedSlots, error: occupiedError } = await supabase
+                .from('availability_slots')
+                .select('id', { count: 'exact', head: true })
+                .eq('restaurant_id', restaurantId)
+                .gte('slot_date', format(new Date(), 'yyyy-MM-dd'))
+                .in('status', ['occupied', 'reserved']);
+
+            if (occupiedError) throw occupiedError;
+
+            // 3. Obtener BLOQUEADOS usando count
+            const { count: blockedSlots, error: blockedError } = await supabase
+                .from('availability_slots')
+                .select('id', { count: 'exact', head: true })
+                .eq('restaurant_id', restaurantId)
+                .gte('slot_date', format(new Date(), 'yyyy-MM-dd'))
+                .eq('status', 'blocked');
+
+            if (blockedError) throw blockedError;
+
+            // 4. CALCULAR DISPONIBLES MATEMÁTICAMENTE (¡SIN LÍMITE!)
+            const freeSlots = (totalSlots || 0) - (occupiedSlots || 0) - (blockedSlots || 0);
+
+            // 5. Obtener rango de fechas (solo una muestra pequeña)
+            const { data: dateRangeData, error: dateError } = await supabase
+                .from('availability_slots')
+                .select('slot_date')
                 .eq('restaurant_id', restaurantId)
                 .gte('slot_date', format(new Date(), 'yyyy-MM-dd'))
                 .order('slot_date', { ascending: true })
-                .range(0, 9999); // Usar range en lugar de limit para cargar más registros
+                .limit(100); // Solo necesitamos fechas min/max
 
-            if (error) throw error;
+            if (dateError) throw dateError;
 
-            // Calcular estadísticas incluyendo slots reservados
-            const freeSlots = data?.filter(slot => slot.status === 'free') || [];
-            const occupiedSlots = data?.filter(slot => slot.status === 'reserved' || slot.status === 'occupied') || [];
-            const blockedSlots = data?.filter(slot => slot.status === 'blocked') || [];
-            const reservedSlots = data?.filter(slot => slot.metadata?.reservation_id) || [];
+            // 6. Obtener número de mesas activas
+            const { count: tablesCount, error: tablesError } = await supabase
+                .from('tables')
+                .select('id', { count: 'exact', head: true })
+                .eq('restaurant_id', restaurantId)
+                .eq('is_active', true);
 
-            // DEBUG: Verificar si Supabase está limitando a 1000
-            if (data?.length === 1000 || count === 1000 || freeSlots.length === 1000) {
-                console.log('🚨 LÍMITE DE SUPABASE DETECTADO:', {
-                    registrosCargados: data?.length,
-                    totalEnBD: count,
-                    disponibles: freeSlots.length,
-                    problema: 'Supabase limita a 1000 registros por defecto'
-                });
-            }
+            if (tablesError) throw tablesError;
+
+            // 7. Calcular rango de fechas
+            const dates = dateRangeData?.map(slot => slot.slot_date).filter(Boolean) || [];
+            const uniqueDates = [...new Set(dates)].sort();
+            const startDate = uniqueDates[0] || format(new Date(), 'yyyy-MM-dd');
+            const endDate = uniqueDates[uniqueDates.length - 1] || format(new Date(), 'yyyy-MM-dd');
 
             const stats = {
-                total: data?.length || 0,
-                free: freeSlots.length,
-                occupied: occupiedSlots.length,
-                blocked: blockedSlots.length,
+                total: totalSlots || 0,
+                free: Math.max(0, freeSlots), // Asegurar no negativo
+                occupied: occupiedSlots || 0,
+                blocked: blockedSlots || 0,
                 dateRange: {
-                    start: data?.[0]?.slot_date || null,
-                    end: data?.[data?.length - 1]?.slot_date || null
+                    start: startDate,
+                    end: endDate
                 },
-                tablesCount: [...new Set(data?.map(slot => slot.table_id))].length || 0,
-                reservationsFound: reservedSlots.length
+                tablesCount: tablesCount || 0,
+                calculationMethod: 'mathematical' // Indicador de método usado
             };
-            
+
+            console.log('✅ Estadísticas calculadas matemáticamente:', {
+                total: stats.total,
+                disponibles: stats.free,
+                ocupados: stats.occupied,
+                bloqueados: stats.blocked,
+                metodo: 'Sin límite de 1000'
+            });
 
             setAvailabilityStats(stats);
         } catch (error) {
             console.error('Error cargando estadísticas:', error);
+            setAvailabilityStats(null);
         }
     };
 
@@ -773,8 +806,8 @@ const AvailabilityManager = () => {
                     Consultar Día Específico
                 </h3>
                 
-                <div className="flex items-center gap-4 mb-3">
-                    <div>
+                <div className="flex items-end gap-4 mb-3">
+                    <div className="flex-1">
                         <label className="block text-sm font-medium text-blue-700 mb-1">
                             Seleccionar fecha:
                         </label>
@@ -782,15 +815,15 @@ const AvailabilityManager = () => {
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="border border-blue-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full border border-blue-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                     </div>
                     
-                    <div className="flex items-end">
+                    <div className="flex-shrink-0">
                         <button
                             onClick={() => loadDayAvailability(selectedDate)}
                             disabled={loadingDayView}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors h-10"
                         >
                             {loadingDayView ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
                             Ver Disponibilidades
