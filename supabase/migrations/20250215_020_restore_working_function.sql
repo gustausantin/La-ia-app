@@ -212,13 +212,7 @@ BEGIN
                                                     jsonb_build_object('shift_name', shift_data->>'name'),
                                                     NOW(),
                                                     NOW()
-                                                )
-                                                ON CONFLICT (restaurant_id, table_id, slot_date, start_time) 
-                                                DO UPDATE SET
-                                                    status = 'free',
-                                                    source = 'system',
-                                                    metadata = jsonb_build_object('shift_name', shift_data->>'name'),
-                                                    updated_at = NOW();
+                                                );
                                                 
                                                 slot_count := slot_count + 1;
                                             END IF;
@@ -320,13 +314,7 @@ BEGIN
                                                 jsonb_build_object('mode', 'full_schedule'),
                                                 NOW(),
                                                 NOW()
-                                            )
-                                            ON CONFLICT (restaurant_id, table_id, slot_date, start_time) 
-                                            DO UPDATE SET
-                                                status = 'free',
-                                                source = 'system',
-                                                metadata = jsonb_build_object('mode', 'full_schedule'),
-                                                updated_at = NOW();
+                                            );
                                             
                                             slot_count := slot_count + 1;
                                         END IF;
