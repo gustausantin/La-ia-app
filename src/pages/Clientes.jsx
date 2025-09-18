@@ -363,25 +363,34 @@ export default function Clientes() {
                                     }
                                     
                                     return (
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                             <div>
-                                                <div className="font-medium text-orange-700 mb-1">⚠️ Problemas:</div>
-                                                <div className="space-y-0.5">
-                                                    {issues.slice(0, 2).map((issue, index) => (
-                                                        <div key={index} className="text-xs">• {issue}</div>
+                                                <div className="font-medium text-orange-700 mb-2">⚠️ Problemas detectados:</div>
+                                                <div className="space-y-1">
+                                                    {issues.slice(0, 3).map((issue, index) => (
+                                                        <div key={index} className="text-xs text-gray-700">• {issue}</div>
                                                     ))}
-                                                    {issues.length > 2 && <div className="text-xs text-gray-500">+{issues.length - 2} más</div>}
-                        </div>
-                    </div>
-                            <div>
-                                                <div className="font-medium text-blue-700 mb-1">💡 Acciones:</div>
-                                                <div className="space-y-0.5">
-                                                    {recommendations.slice(0, 2).map((rec, index) => (
-                                                        <div key={index} className="text-xs">• {rec}</div>
+                                                    {issues.length > 3 && (
+                                                        <div className="text-xs text-gray-500 italic">
+                                                            y {issues.length - 3} problema{issues.length - 3 > 1 ? 's' : ''} adicional{issues.length - 3 > 1 ? 'es' : ''}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="font-medium text-blue-700 mb-2">💡 Recomendaciones:</div>
+                                                <div className="space-y-1">
+                                                    {recommendations.slice(0, 3).map((rec, index) => (
+                                                        <div key={index} className="text-xs text-gray-700">• {rec}</div>
                                                     ))}
-                            </div>
-                        </div>
-                    </div>
+                                                    {recommendations.length > 3 && (
+                                                        <div className="text-xs text-gray-500 italic">
+                                                            y {recommendations.length - 3} acción{recommendations.length - 3 > 1 ? 'es' : ''} adicional{recommendations.length - 3 > 1 ? 'es' : ''}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
                                     );
                                 })()}
                             </div>

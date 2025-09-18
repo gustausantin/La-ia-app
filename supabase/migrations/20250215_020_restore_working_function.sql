@@ -67,10 +67,22 @@ BEGIN
     -- Calcular fecha final
     final_end_date := COALESCE(p_end_date, p_start_date + horizon_days);
     
-    -- LIMPIEZA AGRESIVA - Eliminar TODOS los slots existentes en el rango (no solo system)
+    -- LIMPIEZA ULTRA-AGRESIVA - Eliminar TODO sin restricciones
+    -- Primero: Eliminar slots específicos del restaurante en el rango
     DELETE FROM availability_slots 
     WHERE restaurant_id = p_restaurant_id 
       AND slot_date BETWEEN p_start_date AND final_end_date;
+    
+    -- Segundo: Eliminar cualquier slot huérfano que pueda causar conflictos
+    DELETE FROM availability_slots 
+    WHERE restaurant_id = p_restaurant_id 
+      AND (slot_date < p_start_date OR slot_date > final_end_date)
+      AND source = 'system'
+      AND created_at < NOW() - INTERVAL '1 hour';
+    
+    -- Tercero: Commit explícito para asegurar que la limpieza se aplique
+    -- (PostgreSQL maneja esto automáticamente, pero lo hacemos explícito)
+    RAISE NOTICE 'Slots eliminados para restaurant_id: % en rango: % - %', p_restaurant_id, p_start_date, final_end_date;
     
     -- Generar slots día por día
     current_loop_date := p_start_date;
@@ -190,31 +202,40 @@ BEGIN
                                             
                                             -- Si no hay conflictos, crear slot
                                             IF existing_reservations = 0 THEN
-                                                INSERT INTO availability_slots (
-                                                    restaurant_id,
-                                                    table_id,
-                                                    slot_date,
-                                                    start_time,
-                                                    end_time,
-                                                    status,
-                                                    source,
-                                                    metadata,
-                                                    created_at,
-                                                    updated_at
-                                                ) VALUES (
-                                                    p_restaurant_id,
-                                                    table_record.id,
-                                                    current_loop_date,
-                                                    current_slot_time,
-                                                    slot_end_time::TIME,
-                                                    'free',
-                                                    'system',
-                                                    jsonb_build_object('shift_name', shift_data->>'name'),
-                                                    NOW(),
-                                                    NOW()
-                                                );
-                                                
-                                                slot_count := slot_count + 1;
+                                                -- Verificación extra: ¿Ya existe este slot específico?
+                                                IF NOT EXISTS (
+                                                    SELECT 1 FROM availability_slots 
+                                                    WHERE restaurant_id = p_restaurant_id 
+                                                      AND table_id = table_record.id
+                                                      AND slot_date = current_loop_date
+                                                      AND start_time = current_slot_time
+                                                ) THEN
+                                                    INSERT INTO availability_slots (
+                                                        restaurant_id,
+                                                        table_id,
+                                                        slot_date,
+                                                        start_time,
+                                                        end_time,
+                                                        status,
+                                                        source,
+                                                        metadata,
+                                                        created_at,
+                                                        updated_at
+                                                    ) VALUES (
+                                                        p_restaurant_id,
+                                                        table_record.id,
+                                                        current_loop_date,
+                                                        current_slot_time,
+                                                        slot_end_time::TIME,
+                                                        'free',
+                                                        'system',
+                                                        jsonb_build_object('shift_name', shift_data->>'name'),
+                                                        NOW(),
+                                                        NOW()
+                                                    );
+                                                    
+                                                    slot_count := slot_count + 1;
+                                                END IF;
                                             END IF;
                                             
                                             -- Avanzar al siguiente slot
@@ -292,31 +313,40 @@ BEGIN
                                         
                                         -- Si no hay conflictos, crear slot
                                         IF existing_reservations = 0 THEN
-                                            INSERT INTO availability_slots (
-                                                restaurant_id,
-                                                table_id,
-                                                slot_date,
-                                                start_time,
-                                                end_time,
-                                                status,
-                                                source,
-                                                metadata,
-                                                created_at,
-                                                updated_at
-                                            ) VALUES (
-                                                p_restaurant_id,
-                                                table_record.id,
-                                                current_loop_date,
-                                                current_slot_time,
-                                                slot_end_time::TIME,
-                                                'free',
-                                                'system',
-                                                jsonb_build_object('mode', 'full_schedule'),
-                                                NOW(),
-                                                NOW()
-                                            );
-                                            
-                                            slot_count := slot_count + 1;
+                                            -- Verificación extra: ¿Ya existe este slot específico?
+                                            IF NOT EXISTS (
+                                                SELECT 1 FROM availability_slots 
+                                                WHERE restaurant_id = p_restaurant_id 
+                                                  AND table_id = table_record.id
+                                                  AND slot_date = current_loop_date
+                                                  AND start_time = current_slot_time
+                                            ) THEN
+                                                INSERT INTO availability_slots (
+                                                    restaurant_id,
+                                                    table_id,
+                                                    slot_date,
+                                                    start_time,
+                                                    end_time,
+                                                    status,
+                                                    source,
+                                                    metadata,
+                                                    created_at,
+                                                    updated_at
+                                                ) VALUES (
+                                                    p_restaurant_id,
+                                                    table_record.id,
+                                                    current_loop_date,
+                                                    current_slot_time,
+                                                    slot_end_time::TIME,
+                                                    'free',
+                                                    'system',
+                                                    jsonb_build_object('mode', 'full_schedule'),
+                                                    NOW(),
+                                                    NOW()
+                                                );
+                                                
+                                                slot_count := slot_count + 1;
+                                            END IF;
                                         END IF;
                                         
                                         -- Avanzar al siguiente slot
