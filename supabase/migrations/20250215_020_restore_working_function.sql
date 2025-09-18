@@ -102,6 +102,9 @@ BEGIN
         -- Obtener horario del día
         day_schedule := operating_hours->day_name;
         
+        -- DEBUG: Log de horarios para debugging
+        RAISE NOTICE 'DEBUG día %: day_schedule = %', day_name, day_schedule::text;
+        
         -- Verificar si el día está configurado
         IF day_schedule IS NOT NULL THEN
             
@@ -109,6 +112,9 @@ BEGIN
             open_value := day_schedule->>'open';
             close_value := day_schedule->>'close';
             closed_value := COALESCE((day_schedule->>'closed')::BOOLEAN, false);
+            
+            -- DEBUG: Log de estado cerrado y horarios
+            RAISE NOTICE 'DEBUG día %: closed = %, open = %, close = %', day_name, closed_value, open_value, close_value;
             
             -- Solo procesar si no está cerrado
             IF NOT closed_value THEN
@@ -139,7 +145,10 @@ BEGIN
                         has_valid_shifts BOOLEAN := false;
                     BEGIN
                         -- OPCIÓN 1: Si hay turnos configurados, usarlos
+                        RAISE NOTICE 'DEBUG día %: day_shifts = %', day_name, day_shifts::text;
+                        
                         IF day_shifts IS NOT NULL AND jsonb_array_length(day_shifts) > 0 THEN
+                            RAISE NOTICE 'DEBUG día %: Procesando % turnos', day_name, jsonb_array_length(day_shifts);
                             
                             -- Iterar sobre cada turno
                             FOR i IN 0..jsonb_array_length(day_shifts) - 1 LOOP
@@ -248,6 +257,7 @@ BEGIN
                         
                         -- OPCIÓN 2: FALLBACK - Si no hay turnos válidos, usar horario completo
                         IF NOT has_valid_shifts THEN
+                            RAISE NOTICE 'DEBUG día %: Sin turnos válidos, usando horario completo', day_name;
                             
                             -- Parsing robusto de horarios completos (LA LÓGICA QUE FUNCIONABA)
                             shift_start := NULL;

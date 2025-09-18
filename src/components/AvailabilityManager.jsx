@@ -807,7 +807,7 @@ const AvailabilityManager = () => {
                 </h3>
                 
                 <div className="flex items-end gap-4 mb-3">
-                    <div className="flex-1">
+                    <div className="w-48">
                         <label className="block text-sm font-medium text-blue-700 mb-1">
                             Seleccionar fecha:
                         </label>
