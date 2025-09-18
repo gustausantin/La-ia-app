@@ -252,7 +252,7 @@ const AvailabilityManager = () => {
 
 ⚙️ CONFIGURACIÓN:
 • Período: HOY hasta ${endDateFormatted} (${advanceDays} días)
-• Duración: ${duration} min + ${buffer} min buffer
+• Duración: ${duration} min por reserva
 • Reservas existentes: PRESERVADAS automáticamente
 
 🎯 Sistema inteligente aplicado exitosamente.`;
@@ -373,7 +373,7 @@ const AvailabilityManager = () => {
 • ${data} slots creados
 • Desde HOY hasta ${endDateFormatted} (${advanceDays} días)
 • Duración por reserva: ${duration} min
-• Sin buffer entre reservas
+• Slots consecutivos cada hora
 • Para todas las mesas activas
             
 🎯 Las disponibilidades están listas para recibir reservas.`;
@@ -713,7 +713,7 @@ const AvailabilityManager = () => {
                         <div>
                             <span className="text-green-700 font-medium">⏰ Configuración:</span>
                             <span className="text-green-600 ml-1">
-                                {generationSuccess?.duration || restaurantSettings?.reservation_duration || 90} min (sin buffer)
+                                {generationSuccess?.duration || restaurantSettings?.reservation_duration || 90} min por reserva
                             </span>
                         </div>
                     </div>
