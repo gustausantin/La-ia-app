@@ -403,7 +403,7 @@ const DashboardRevolutionary = () => {
 
             // 5. Calcular valor monetario generado
             const averageTicket = 35; // Ticket medio estimado
-            const noShowsPreventedCount = Math.floor(riskReservations.length * 0.4); // 40% de prevención
+            const noShowsPreventedCount = Math.floor((todayReservations?.length || 0) * 0.2); // 20% de prevención estimada
             const crmRecoveredCount = customersData.returningThisWeek;
             
             const totalValue = {
