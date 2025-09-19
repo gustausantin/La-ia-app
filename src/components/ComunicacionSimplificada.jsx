@@ -88,19 +88,39 @@ const ComunicacionSimplificada = () => {
         try {
             setIsLoading(true);
 
-            const { data, error } = await supabase
-                .from('conversations')
-                .select(`
-                    *,
-                    customers (
-                        id,
-                        name,
-                        email,
-                        phone
-                    )
-                `)
-                .eq('restaurant_id', restaurant.id)
-                .order('updated_at', { ascending: false });
+            // Primero intentar con la relación customers, si falla usar campos directos
+            let data, error;
+            
+            try {
+                const response = await supabase
+                    .from('conversations')
+                    .select(`
+                        *,
+                        customers (
+                            id,
+                            name,
+                            email,
+                            phone
+                        )
+                    `)
+                    .eq('restaurant_id', restaurant.id)
+                    .order('updated_at', { ascending: false });
+                
+                data = response.data;
+                error = response.error;
+            } catch (relationError) {
+                console.log('Relación customers no disponible, usando campos directos');
+                
+                // Fallback: usar campos directos de la tabla conversations
+                const response = await supabase
+                    .from('conversations')
+                    .select('*')
+                    .eq('restaurant_id', restaurant.id)
+                    .order('updated_at', { ascending: false });
+                
+                data = response.data;
+                error = response.error;
+            }
 
             if (error) throw error;
 

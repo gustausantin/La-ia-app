@@ -493,37 +493,37 @@ const TotalValueWidget = ({ data }) => {
 
             {/* Total destacado arriba */}
             <div className="mb-4 text-center bg-blue-50 rounded-lg p-4">
-                <div className="text-3xl font-bold text-blue-600">{totalValue}€</div>
-                <div className="text-sm text-gray-600">generados esta semana</div>
+                <div className="text-4xl font-bold text-blue-600">{totalValue}€</div>
+                <div className="text-base text-gray-600 font-medium">generados esta semana</div>
             </div>
 
             {/* Desglose de valor */}
             <div className="space-y-2">
                 {data.noShowsRecovered > 0 && (
-                    <div className="flex items-center justify-between text-sm py-2 border-b border-gray-100">
-                        <span className="text-gray-600 flex items-center gap-2">
-                            <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600 flex items-center gap-2 text-base">
+                            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                             No-shows evitados
                         </span>
-                        <span className="font-medium text-blue-600">+{data.noShowsRecovered}€</span>
+                        <span className="font-semibold text-blue-600 text-lg">+{data.noShowsRecovered}€</span>
                     </div>
                 )}
                 {data.crmGenerated > 0 && (
-                    <div className="flex items-center justify-between text-sm py-2 border-b border-gray-100">
-                        <span className="text-gray-600 flex items-center gap-2">
-                            <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600 flex items-center gap-2 text-base">
+                            <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                             Clientes recuperados CRM
                         </span>
-                        <span className="font-medium text-purple-600">+{data.crmGenerated}€</span>
+                        <span className="font-semibold text-purple-600 text-lg">+{data.crmGenerated}€</span>
                     </div>
                 )}
                 {data.automationSavings > 0 && (
-                    <div className="flex items-center justify-between text-sm py-2">
-                        <span className="text-gray-600 flex items-center gap-2">
-                            <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                    <div className="flex items-center justify-between py-2">
+                        <span className="text-gray-600 flex items-center gap-2 text-base">
+                            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                             Tiempo ahorrado
                         </span>
-                        <span className="font-medium text-orange-600">+{data.automationSavings}€</span>
+                        <span className="font-semibold text-orange-600 text-lg">+{data.automationSavings}€</span>
                     </div>
                 )}
             </div>
@@ -531,7 +531,7 @@ const TotalValueWidget = ({ data }) => {
             {/* Mensaje motivacional */}
             {totalValue > 0 && (
                 <div className="mt-4 pt-3 border-t border-gray-200 text-center">
-                    <div className="text-xs text-gray-500">
+                    <div className="text-sm text-green-600 font-medium bg-green-50 rounded-lg px-3 py-2">
                         💡 ROI positivo - El sistema se autofinancia
                     </div>
                 </div>
@@ -539,7 +539,7 @@ const TotalValueWidget = ({ data }) => {
 
             {/* Análisis expandible */}
             {isExpanded && (
-                <div className="mt-4 pt-4 border-t border-gray-200 space-y-4 style={fadeInStyle}">
+                <div className="mt-4 pt-4 border-t border-gray-200 space-y-4" style={fadeInStyle}>
                     <div className="text-sm font-medium text-gray-700 mb-3">📊 Análisis de ROI Detallado:</div>
                     
                     {/* Comparación con costos */}
