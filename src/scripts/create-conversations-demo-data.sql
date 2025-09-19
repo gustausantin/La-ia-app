@@ -46,7 +46,7 @@ BEGIN
             '+34666123456',
             'maria.gonzalez@email.com',
             'Consulta sobre reserva',
-            'active',
+            'open',
             'normal', -- Prioridad media
             'whatsapp',
             ARRAY['reserva', 'consulta'],
@@ -78,7 +78,7 @@ BEGIN
             '+34666345678',
             'ana.martin@email.com',
             'Consulta sobre menú vegetariano',
-            'resolved',
+            'closed',
             'low', -- Prioridad baja
             'email',
             ARRAY['menu', 'vegetariano'],
@@ -94,7 +94,7 @@ BEGIN
             '+34666456789',
             'david.lopez@email.com',
             'Reserva para evento especial',
-            'active',
+            'open',
             'urgent', -- Prioridad máxima (evento especial)
             'web',
             ARRAY['reserva', 'evento'],
@@ -110,7 +110,7 @@ BEGIN
             '+34666567890',
             'laura.sanchez@email.com',
             'Felicitaciones por la cena',
-            'resolved',
+            'closed',
             'low', -- Prioridad baja (feedback positivo)
             'whatsapp',
             ARRAY['feedback', 'positivo'],
