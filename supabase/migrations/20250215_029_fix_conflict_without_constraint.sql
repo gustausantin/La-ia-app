@@ -302,3 +302,4 @@ EXCEPTION
         RAISE EXCEPTION 'Error generating availability slots: %', SQLERRM;
 END;
 $$;
+
