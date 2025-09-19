@@ -117,28 +117,43 @@ BEGIN
         IF day_schedule IS NOT NULL THEN
             BEGIN
                 -- DETECTAR FORMATO DE HORARIOS
-                IF day_schedule ? 'open' AND day_schedule ? 'closed' THEN
+                IF day_schedule ? 'open' AND day_schedule ? 'close' THEN
                     -- FORMATO ANTIGUO: {"open": "09:00", "close": "22:00", "closed": false}
-                    IF (day_schedule->>'closed')::boolean IS TRUE THEN
+                    IF day_schedule ? 'closed' AND (day_schedule->>'closed')::boolean IS TRUE THEN
                         RAISE NOTICE '🚫 Día % cerrado (formato antiguo), saltando', day_of_week_text;
                         loop_date := loop_date + INTERVAL '1 day';
                         CONTINUE;
                     END IF;
                     
-                    slot_time := (day_schedule->>'open')::time;
-                    end_time := (day_schedule->>'close')::time;
-                    
-                ELSIF day_schedule ? 'open' AND day_schedule ? 'start' THEN
-                    -- FORMATO NUEVO: {"open": true, "start": "09:00", "end": "22:00", "shifts": [...]}
-                    IF (day_schedule->>'open')::boolean IS NOT TRUE THEN
-                        RAISE NOTICE '🚫 Día % cerrado (formato nuevo), saltando', day_of_week_text;
+                    -- Validar que open y close sean horas válidas, no booleanos
+                    IF day_schedule->>'open' ~ '^[0-9]{2}:[0-9]{2}$' AND day_schedule->>'close' ~ '^[0-9]{2}:[0-9]{2}$' THEN
+                        slot_time := (day_schedule->>'open')::time;
+                        end_time := (day_schedule->>'close')::time;
+                    ELSE
+                        RAISE NOTICE '⚠️ Formato de hora inválido en formato antiguo para %: open=%, close=%, saltando día', day_of_week_text, day_schedule->>'open', day_schedule->>'close';
                         loop_date := loop_date + INTERVAL '1 day';
                         CONTINUE;
                     END IF;
                     
-                    -- Usar horario principal (start/end)
-                    slot_time := (day_schedule->>'start')::time;
-                    end_time := (day_schedule->>'end')::time;
+                ELSIF day_schedule ? 'open' AND day_schedule ? 'start' THEN
+                    -- FORMATO NUEVO: {"open": true, "start": "09:00", "end": "22:00", "shifts": [...]}
+                    
+                    -- Verificar si el día está abierto (open debe ser boolean true)
+                    IF day_schedule->>'open' != 'true' THEN
+                        RAISE NOTICE '🚫 Día % cerrado (formato nuevo: open=%), saltando', day_of_week_text, day_schedule->>'open';
+                        loop_date := loop_date + INTERVAL '1 day';
+                        CONTINUE;
+                    END IF;
+                    
+                    -- Validar que start y end sean horas válidas, no booleanos
+                    IF day_schedule->>'start' ~ '^[0-9]{2}:[0-9]{2}$' AND day_schedule->>'end' ~ '^[0-9]{2}:[0-9]{2}$' THEN
+                        slot_time := (day_schedule->>'start')::time;
+                        end_time := (day_schedule->>'end')::time;
+                    ELSE
+                        RAISE NOTICE '⚠️ Formato de hora inválido en formato nuevo para %: start=%, end=%, saltando día', day_of_week_text, day_schedule->>'start', day_schedule->>'end';
+                        loop_date := loop_date + INTERVAL '1 day';
+                        CONTINUE;
+                    END IF;
                     
                     -- TODO: En futuro, procesar también los shifts individuales
                     -- Por ahora usamos solo el horario principal para simplificar
@@ -275,9 +290,47 @@ AND (
 );
 */
 
--- 6. HACER PRUEBA RÁPIDA (opcional)
+-- 6. DEBUGGING DETALLADO - Verificar cada día individualmente
+WITH restaurant_hours AS (
+    SELECT 
+        id,
+        settings->'operating_hours' as operating_hours
+    FROM restaurants 
+    WHERE id = '310e1734-381d-4fda-8806-7c338a28c6be'
+),
+day_breakdown AS (
+    SELECT 
+        r.id,
+        (jsonb_each(r.operating_hours)).key as day_key,
+        (jsonb_each(r.operating_hours)).value as day_data
+    FROM restaurant_hours r
+)
+SELECT 
+    'DEBUGGING HORARIOS' as info,
+    day_key,
+    day_data,
+    day_data->>'open' as open_value,
+    day_data->>'start' as start_value,
+    day_data->>'end' as end_value,
+    CASE 
+        WHEN day_data->>'open' = 'true' THEN 'ABIERTO'
+        WHEN day_data->>'open' = 'false' THEN 'CERRADO'
+        ELSE 'FORMATO_INVALIDO'
+    END as status_interpretado,
+    CASE 
+        WHEN day_data->>'start' ~ '^[0-9]{2}:[0-9]{2}$' THEN 'HORA_VALIDA'
+        ELSE 'HORA_INVALIDA'
+    END as start_validation,
+    CASE 
+        WHEN day_data->>'end' ~ '^[0-9]{2}:[0-9]{2}$' THEN 'HORA_VALIDA'
+        ELSE 'HORA_INVALIDA'
+    END as end_validation
+FROM day_breakdown
+ORDER BY day_key;
+
+-- 7. HACER PRUEBA RÁPIDA (opcional)
 -- SELECT generate_availability_slots(
---     (SELECT id FROM restaurants WHERE owner_id = auth.uid() LIMIT 1),
+--     '310e1734-381d-4fda-8806-7c338a28c6be'::uuid,
 --     CURRENT_DATE,
---     CURRENT_DATE + INTERVAL '7 days'
+--     CURRENT_DATE + INTERVAL '2 days'
 -- ) as slots_created;
