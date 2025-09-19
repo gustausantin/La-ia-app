@@ -354,7 +354,109 @@ CREATE TABLE messages (
 
 # 🔧 **SERVICIOS Y COMPONENTES PRINCIPALES**
 
-## 🛡️ **SISTEMA DE DETECCIÓN DE CONFLICTOS** ⭐ **NUEVO**
+## 🚨 **SISTEMA REVOLUCIONARIO DE NO-SHOWS** ⭐ **SEPTIEMBRE 2025**
+
+### **`NoShowManager.jsx`**
+**Ubicación:** `src/components/NoShowManager.jsx`
+
+**🎯 Propósito:** Sistema más avanzado del mercado para prevenir y gestionar no-shows con algoritmos predictivos.
+
+#### **🧠 Algoritmo Predictivo de 6 Factores:**
+
+1. **Historial del Cliente** (0-40 puntos):
+   - No-show rate > 30% → +40 puntos
+   - No-show rate > 10% → +20 puntos
+
+2. **Inactividad** (0-25 puntos):
+   - >180 días sin visita → +25 puntos
+   - >90 días sin visita → +15 puntos
+
+3. **Horario de Riesgo** (0-15 puntos):
+   - Reservas ≥21:00 → +15 puntos
+
+4. **Tamaño de Grupo** (0-10 puntos):
+   - Grupos ≥6 personas → +10 puntos
+
+5. **Canal de Reserva** (0-10 puntos):
+   - Phone/walk-in → +10 puntos
+
+6. **Antelación** (0-20 puntos):
+   - <4 horas antelación → +20 puntos
+
+#### **🎯 Niveles de Riesgo:**
+- **Alto** (>60 puntos): Llamada de confirmación obligatoria
+- **Medio** (30-60 puntos): WhatsApp de recordatorio
+- **Bajo** (<30 puntos): Recordatorio estándar
+
+#### **🚀 Funciones RPC Creadas:**
+
+```sql
+-- Estadísticas históricas por cliente
+get_customer_noshow_stats(p_restaurant_id uuid)
+
+-- Métricas generales del restaurante  
+get_restaurant_noshow_metrics(p_restaurant_id uuid, p_days_back integer)
+
+-- Predicciones para próximas reservas
+predict_upcoming_noshows(p_restaurant_id uuid, p_days_ahead integer)
+
+-- Marcado automático de no-shows
+auto_mark_noshows()
+```
+
+### **`DashboardRevolutionary.jsx`**
+**Ubicación:** `src/components/DashboardRevolutionary.jsx`
+
+**🎯 Propósito:** Dashboard ejecutivo que muestra valor monetario tangible generado por el sistema.
+
+#### **📊 Widgets Revolucionarios:**
+
+1. **Estado General del Sistema** (Semáforo):
+   - Verde: Todo perfecto
+   - Amarillo: Requiere atención
+   - Rojo: Acción requerida
+
+2. **Control No-Shows**:
+   - No-shows evitados esta semana
+   - Reservas de alto riesgo hoy
+   - Acciones recomendadas
+
+3. **Clientes que Vuelven**:
+   - Retornos esta semana
+   - Clientes leales
+   - Top 3 clientes
+
+4. **Oportunidades CRM**:
+   - Acciones pendientes ejecutables
+   - Campañas sugeridas
+
+5. **Valor Generado Total** ⭐ **REVOLUCIONARIO**:
+   ```javascript
+   const totalValue = {
+     noShowsRecovered: evitados × ticketMedio,
+     crmGenerated: clientesCRM × valorPromedio,
+     automationSavings: tiempoAhorrado × costoHora
+   }
+   ```
+
+#### **💰 Cálculo de ROI Tangible:**
+- **No-shows evitados**: 2 × 70€ = 140€
+- **Clientes CRM recuperados**: 5 × 85€ = 425€
+- **Tiempo ahorrado**: 3h × 15€ = 45€
+- **TOTAL GENERADO**: **610€ esta semana**
+
+### **`NoShowControl.jsx`**
+**Ubicación:** `src/pages/NoShowControl.jsx`
+
+**🎯 Propósito:** Página completa dedicada al control avanzado de no-shows.
+
+#### **Funcionalidades:**
+- Vista detallada de todas las predicciones
+- Acciones de prevención ejecutables
+- Análisis histórico por cliente
+- Métricas de efectividad del sistema
+
+## 🛡️ **SISTEMA DE DETECCIÓN DE CONFLICTOS** ⭐ **EXISTENTE**
 
 ### **`ConflictDetectionService.js`**
 **Ubicación:** `src/services/ConflictDetectionService.js`

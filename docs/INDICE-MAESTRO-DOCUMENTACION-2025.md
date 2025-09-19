@@ -55,7 +55,20 @@
 
 **🔗 Cuándo leerlo:** Antes de modificar BD o crear migraciones
 
-### **3. `SISTEMA-CONFLICTOS-DISPONIBILIDADES-2025.md`** ⭐ **NUEVO**
+### **3. `SISTEMA-NOSHOWS-REVOLUCIONARIO-2025.md`** ⭐ **SEPTIEMBRE 2025**
+**🎯 Propósito:** Sistema más avanzado del mundo para prevenir no-shows  
+**👥 Audiencia:** Desarrolladores, product managers, restauradores  
+**📊 Contenido:**
+- Algoritmo predictivo de 6 factores
+- Funciones RPC especializadas
+- Dashboard ejecutivo con ROI tangible
+- UI simple para complejidad avanzada
+- Cálculos de valor monetario
+- Ventaja competitiva única
+
+**🔗 Cuándo leerlo:** CRÍTICO - Antes de tocar el sistema de no-shows
+
+### **4. `SISTEMA-CONFLICTOS-DISPONIBILIDADES-2025.md`** ⭐ **EXISTENTE**
 **🎯 Propósito:** Sistema avanzado de detección de conflictos  
 **👥 Audiencia:** Desarrolladores frontend/backend  
 **📊 Contenido:**
@@ -378,8 +391,8 @@
 
 **📅 Última actualización:** 19 Septiembre 2025  
 **👨‍💻 Mantenido por:** Equipo LA-IA Development  
-**🎯 Estado:** ÍNDICE OPTIMIZADO Y LIMPIO  
-**🔗 Total documentos:** 12 documentos principales ⬇️ (Optimizado - eliminados redundantes)
+**🎯 Estado:** DOCUMENTACIÓN REVOLUCIONARIA COMPLETADA  
+**🔗 Total documentos:** 13 documentos principales ⬆️ (+1 Sistema No-Shows Revolucionario)
 
 ---
 
