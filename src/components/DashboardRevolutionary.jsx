@@ -730,13 +730,23 @@ const DashboardRevolutionary = () => {
     }, [restaurant?.id]);
 
     // Revisar en CRM - Redirige al CRM para manejar la acción
-    const reviewCRMAction = async (action) => {
-        if (action.action === 'view_all') {
-            navigate('/crm?tab=opportunities');
-            toast.info('Redirigiendo al CRM para ver todas las oportunidades');
-        } else {
-            navigate('/crm?action=' + action.action);
-            toast.info(`Abriendo CRM para revisar: ${action.title}`);
+    const reviewCRMAction = async (opportunity) => {
+        try {
+            if (opportunity && opportunity.action === 'view_all') {
+                navigate('/crm?tab=opportunities');
+                toast.info('Redirigiendo al CRM para ver todas las oportunidades');
+            } else if (opportunity && opportunity.action) {
+                navigate('/crm?action=' + opportunity.action);
+                toast.info(`Abriendo CRM para revisar: ${opportunity.title || 'oportunidad'}`);
+            } else {
+                // Fallback: ir al CRM principal
+                navigate('/crm');
+                toast.info('Abriendo CRM');
+            }
+        } catch (error) {
+            console.error('Error en reviewCRMAction:', error);
+            navigate('/crm');
+            toast.error('Error al navegar al CRM, abriendo página principal');
         }
     };
 
