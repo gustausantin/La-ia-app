@@ -273,8 +273,17 @@ const ComunicacionSimplificada = () => {
                             {filteredConversations.length === 0 ? (
                                 <div className="p-6 text-center text-gray-500">
                                     <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                    <div className="text-sm">No hay conversaciones</div>
-                                    <div className="text-xs">Las conversaciones aparecerán aquí</div>
+                                    <div className="text-sm font-medium">Sistema preparado para conversaciones</div>
+                                    <div className="text-xs mt-2 space-y-1">
+                                        <div>✅ WhatsApp - Listo para N8n</div>
+                                        <div>✅ Instagram - Listo para N8n</div>
+                                        <div>✅ Facebook - Listo para N8n</div>
+                                        <div>✅ Web Chat - Listo para N8n</div>
+                                        <div>✅ Vapi - Listo para N8n</div>
+                                    </div>
+                                    <div className="text-xs mt-3 text-blue-600 bg-blue-50 p-2 rounded">
+                                        💡 Las conversaciones aparecerán automáticamente cuando se conecten los flujos N8n
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="space-y-1 p-2">
