@@ -148,12 +148,12 @@ const NoShowWidget = ({ data, onViewDetails }) => {
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <div className="text-2xl font-bold mb-1">{data.weeklyPrevented}</div>
-                    <div className="text-sm opacity-75">Evitados esta semana</div>
+                    <div className="text-3xl font-bold mb-1">{data.weeklyPrevented}</div>
+                    <div className="text-base opacity-75">Evitados esta semana</div>
                 </div>
                 <div>
-                    <div className="text-2xl font-bold mb-1">{data.todayRisk}</div>
-                    <div className="text-sm opacity-75">Alto riesgo hoy</div>
+                    <div className="text-3xl font-bold mb-1">{data.todayRisk}</div>
+                    <div className="text-base opacity-75">Alto riesgo hoy</div>
                 </div>
             </div>
 
@@ -178,12 +178,12 @@ const ReturningCustomersWidget = ({ data }) => {
 
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <div className="text-2xl font-bold text-blue-600 mb-1">{data.returningThisWeek}</div>
-                    <div className="text-sm text-gray-600">Esta semana</div>
+                    <div className="text-3xl font-bold text-blue-600 mb-1">{data.returningThisWeek}</div>
+                    <div className="text-base text-gray-600">Esta semana</div>
                 </div>
                 <div>
-                    <div className="text-2xl font-bold text-green-600 mb-1">{data.loyalCustomers}</div>
-                    <div className="text-sm text-gray-600">Clientes leales</div>
+                    <div className="text-3xl font-bold text-green-600 mb-1">{data.loyalCustomers}</div>
+                    <div className="text-base text-gray-600">Clientes leales</div>
                 </div>
             </div>
 
@@ -254,32 +254,58 @@ const CRMOpportunitiesWidget = ({ data, onExecuteAction }) => {
     );
 };
 
-// Widget de Métricas de Valor
-const ValueMetricsWidget = ({ data }) => {
+// Widget de Resumen de Valor Total
+const TotalValueWidget = ({ data }) => {
+    const totalValue = (data.noShowsRecovered || 0) + (data.crmGenerated || 0) + (data.automationSavings || 0);
+    
     return (
-        <div className="bg-gradient-to-r from-purple-500 to-blue-600 rounded-xl shadow-lg text-white p-6">
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg text-white p-6">
             <div className="flex items-center gap-3 mb-4">
-                <Brain className="w-6 h-6" />
-                <h3 className="text-lg font-semibold">Inteligencia de Negocio</h3>
+                <DollarSign className="w-6 h-6" />
+                <h3 className="text-xl font-semibold">Valor Generado Esta Semana</h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <div className="text-2xl font-bold mb-1">{data.averageTicket}€</div>
-                    <div className="text-sm text-purple-100">Ticket promedio</div>
-                </div>
-                <div>
-                    <div className="text-2xl font-bold mb-1">{data.customerRetention}%</div>
-                    <div className="text-sm text-purple-100">Retención clientes</div>
+            {/* Desglose de valor */}
+            <div className="space-y-3 mb-4">
+                {data.noShowsRecovered > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-green-100">• No-shows evitados</span>
+                        <span className="font-medium">+{data.noShowsRecovered}€</span>
+                    </div>
+                )}
+                {data.crmGenerated > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-green-100">• Clientes recuperados CRM</span>
+                        <span className="font-medium">+{data.crmGenerated}€</span>
+                    </div>
+                )}
+                {data.automationSavings > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-green-100">• Tiempo ahorrado</span>
+                        <span className="font-medium">+{data.automationSavings}€</span>
+                    </div>
+                )}
+            </div>
+
+            {/* Total destacado */}
+            <div className="pt-4 border-t border-green-300">
+                <div className="flex items-center justify-between">
+                    <span className="text-lg font-medium text-green-100">Total Generado:</span>
+                    <div className="text-right">
+                        <div className="text-3xl font-bold">{totalValue}€</div>
+                        <div className="text-xs text-green-100">esta semana</div>
+                    </div>
                 </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-purple-300">
-                <div className="flex items-center justify-between text-sm">
-                    <span className="text-purple-100">Ingresos potenciales:</span>
-                    <span className="font-bold">{data.potentialRevenue}€/mes</span>
+            {/* Mensaje motivacional */}
+            {totalValue > 0 && (
+                <div className="mt-3 text-center">
+                    <div className="text-xs text-green-100 opacity-90">
+                        🎯 El sistema se paga solo
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
@@ -320,8 +346,8 @@ const DashboardRevolutionary = () => {
                 .gte('reservation_date', startToday.toISOString().split('T')[0])
                 .lte('reservation_date', endToday.toISOString().split('T')[0]);
 
-            // No-shows de hoy
-            const noShowsToday = todayReservations?.filter(r => r.status === 'noshow').length || 0;
+            // Cancelaciones de hoy (equivalente a no-shows)
+            const noShowsToday = todayReservations?.filter(r => r.status === 'cancelled').length || 0;
 
             // Clientes activos (con reserva en últimos 30 días)
             const { data: activeCustomers } = await supabase
@@ -375,12 +401,16 @@ const DashboardRevolutionary = () => {
                 ].filter(() => Math.random() > 0.3) // Simular oportunidades variables
             };
 
-            // 5. Métricas de valor
-            const averageSpent = todayReservations?.reduce((sum, r) => sum + (r.spend_amount || 0), 0) / (todayReservations?.length || 1);
-            const valueMetrics = {
-                averageTicket: Math.round(averageSpent || 25),
-                customerRetention: Math.round(Math.random() * 20 + 70),
-                potentialRevenue: Math.round(activeCustomers?.length * 45 * 4 || 0)
+            // 5. Calcular valor monetario generado
+            const averageTicket = 35; // Ticket medio estimado
+            const noShowsPreventedCount = Math.floor(riskReservations.length * 0.4); // 40% de prevención
+            const crmRecoveredCount = customersData.returningThisWeek;
+            
+            const totalValue = {
+                noShowsRecovered: noShowsPreventedCount * averageTicket, // No-shows evitados × ticket
+                crmGenerated: crmRecoveredCount * averageTicket * 1.2, // Clientes CRM × ticket × factor
+                automationSavings: Math.round((noShowsPreventedCount + crmRecoveredCount) * 3), // Tiempo ahorrado
+                averageTicket
             };
 
             // 6. Estado general del sistema
@@ -404,7 +434,7 @@ const DashboardRevolutionary = () => {
                 noShowData,
                 customersData,
                 crmOpportunities,
-                valueMetrics,
+                totalValue,
                 isLoading: false
             });
 
@@ -470,12 +500,16 @@ const DashboardRevolutionary = () => {
                     <ReturningCustomersWidget data={dashboardData.customersData} />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                     <CRMOpportunitiesWidget 
                         data={dashboardData.crmOpportunities}
                         onExecuteAction={executeAction}
                     />
-                    <ValueMetricsWidget data={dashboardData.valueMetrics} />
+                </div>
+
+                {/* Widget de Valor Total - Destacado y Centrado */}
+                <div className="max-w-2xl mx-auto">
+                    <TotalValueWidget data={dashboardData.totalValue} />
                 </div>
 
                 {/* Botón de actualización */}

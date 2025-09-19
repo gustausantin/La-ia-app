@@ -107,7 +107,7 @@ const NoShowManager = () => {
                     )
                 `)
                 .eq('restaurant_id', restaurant.id)
-                .in('status', ['confirmada', 'pendiente'])
+                .in('status', ['confirmed', 'pending'])
                 .gte('reservation_date', new Date().toISOString().split('T')[0])
                 .lte('reservation_date', new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
                 .order('reservation_date', { ascending: true })
@@ -123,7 +123,7 @@ const NoShowManager = () => {
                     customers (name)
                 `)
                 .eq('restaurant_id', restaurant.id)
-                .eq('status', 'noshow')
+                .eq('status', 'cancelled')
                 .gte('reservation_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
                 .order('reservation_date', { ascending: false });
 
