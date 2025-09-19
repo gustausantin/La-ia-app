@@ -732,26 +732,12 @@ const DashboardRevolutionary = () => {
     // Revisar en CRM - Redirige al CRM para manejar la acción
     const reviewCRMAction = async (opportunity) => {
         try {
-            if (opportunity && opportunity.action === 'view_all') {
-                navigate('/crm?tab=opportunities');
-                toast('Redirigiendo al CRM para ver todas las oportunidades', {
-                    icon: 'ℹ️',
-                    duration: 3000
-                });
-            } else if (opportunity && opportunity.action) {
-                navigate('/crm?action=' + opportunity.action);
-                toast(`Abriendo CRM para revisar: ${opportunity.title || 'oportunidad'}`, {
-                    icon: 'ℹ️',
-                    duration: 3000
-                });
-            } else {
-                // Fallback: ir al CRM principal
-                navigate('/crm');
-                toast('Abriendo CRM', {
-                    icon: 'ℹ️',
-                    duration: 3000
-                });
-            }
+            // SIEMPRE redirigir al CRM V2 (CRM Inteligente)
+            navigate('/crm-v2');
+            toast('Abriendo CRM Inteligente', {
+                icon: '🤖',
+                duration: 3000
+            });
         } catch (error) {
             console.error('Error en reviewCRMAction:', error);
             navigate('/crm');
