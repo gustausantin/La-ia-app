@@ -135,14 +135,14 @@ const MessageArea = React.memo(({
                 <ThumbsUp className="w-3 h-3 text-green-600" />
               </button>
               <button 
-                onClick={() => toast.info('Feedback enviado')}
+                onClick={() => toast('Feedback enviado', { icon: '✅' })}
                 className="p-1 hover:bg-red-100 rounded transition-colors"
                 title="Mejorar respuesta"
               >
                 <ThumbsDown className="w-3 h-3 text-red-600" />
               </button>
               <button 
-                onClick={() => toast.info('Transfiriendo a humano...')}
+                onClick={() => toast('Transfiriendo a humano...', { icon: '👤' })}
                 className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
               >
                 Transferir a humano

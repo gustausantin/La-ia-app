@@ -734,14 +734,23 @@ const DashboardRevolutionary = () => {
         try {
             if (opportunity && opportunity.action === 'view_all') {
                 navigate('/crm?tab=opportunities');
-                toast.info('Redirigiendo al CRM para ver todas las oportunidades');
+                toast('Redirigiendo al CRM para ver todas las oportunidades', {
+                    icon: 'ℹ️',
+                    duration: 3000
+                });
             } else if (opportunity && opportunity.action) {
                 navigate('/crm?action=' + opportunity.action);
-                toast.info(`Abriendo CRM para revisar: ${opportunity.title || 'oportunidad'}`);
+                toast(`Abriendo CRM para revisar: ${opportunity.title || 'oportunidad'}`, {
+                    icon: 'ℹ️',
+                    duration: 3000
+                });
             } else {
                 // Fallback: ir al CRM principal
                 navigate('/crm');
-                toast.info('Abriendo CRM');
+                toast('Abriendo CRM', {
+                    icon: 'ℹ️',
+                    duration: 3000
+                });
             }
         } catch (error) {
             console.error('Error en reviewCRMAction:', error);

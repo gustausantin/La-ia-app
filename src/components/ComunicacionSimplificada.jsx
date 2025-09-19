@@ -150,7 +150,11 @@ const ComunicacionSimplificada = () => {
             setConversations(exampleConversations);
             setFilteredConversations(exampleConversations);
             
-            toast.info('Usando datos de ejemplo para conversaciones');
+            // Toast con método correcto de react-hot-toast
+            toast('Usando datos de ejemplo para conversaciones', {
+                icon: 'ℹ️',
+                duration: 3000
+            });
         } finally {
             setIsLoading(false);
         }

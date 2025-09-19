@@ -250,7 +250,7 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
       <div className="p-4 border-t border-gray-200 space-y-2">
         <button
           onClick={() => {
-            toast.info("Navegando a crear reserva...");
+            toast("Navegando a crear reserva...", { icon: '📅' });
           }}
           className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
         >
@@ -259,7 +259,7 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
         </button>
         <button
           onClick={() => {
-            toast.info("Ver perfil completo próximamente");
+            toast("Ver perfil completo próximamente", { icon: '👤' });
           }}
           className="w-full py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
         >

@@ -251,8 +251,11 @@ const NoShowManager = () => {
                 error: 'No se pudieron cargar los datos. Usando datos de ejemplo.'
             });
             
-            // Toast menos alarmante
-            toast.info('Cargando datos de ejemplo para no-shows');
+            // Toast con método correcto de react-hot-toast
+            toast('Cargando datos de ejemplo para no-shows', {
+                icon: 'ℹ️',
+                duration: 3000
+            });
         }
     }, [restaurant?.id, calculateNoShowRisk]);
 
