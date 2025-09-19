@@ -129,53 +129,68 @@ const NoShowManager = () => {
 
             if (noShowsError) throw noShowsError;
 
-            // 3. Usar función RPC para estadísticas de no-shows por cliente
-            const { data: customerStats, error: statsError } = await supabase
-                .rpc('get_customer_noshow_stats', {
-                    p_restaurant_id: restaurant.id
-                });
-
-            if (statsError) {
-                console.warn('Error cargando customer stats:', statsError);
-                // Continuar con array vacío si hay error
+            // 3. Intentar usar función RPC para estadísticas de no-shows por cliente
+            let customerStats = [];
+            let restaurantMetrics = null;
+            let predictions = [];
+            
+            try {
+                const { data: stats, error: statsError } = await supabase
+                    .rpc('get_customer_noshow_stats', {
+                        p_restaurant_id: restaurant.id
+                    });
+                if (!statsError) customerStats = stats || [];
+            } catch (error) {
+                console.log('RPC get_customer_noshow_stats no disponible, usando datos simulados');
             }
 
-            // 4. Obtener métricas generales del restaurante
-            const { data: restaurantMetrics, error: metricsError } = await supabase
-                .rpc('get_restaurant_noshow_metrics', {
-                    p_restaurant_id: restaurant.id,
-                    p_days_back: 30
-                });
-
-            if (metricsError) {
-                console.warn('Error cargando restaurant metrics:', metricsError);
+            try {
+                const { data: metrics, error: metricsError } = await supabase
+                    .rpc('get_restaurant_noshow_metrics', {
+                        p_restaurant_id: restaurant.id,
+                        p_days_back: 30
+                    });
+                if (!metricsError) restaurantMetrics = metrics;
+            } catch (error) {
+                console.log('RPC get_restaurant_noshow_metrics no disponible, usando datos simulados');
             }
 
-            // 5. Obtener predicciones de próximas reservas
-            const { data: predictions, error: predictionsError } = await supabase
-                .rpc('predict_upcoming_noshows', {
-                    p_restaurant_id: restaurant.id,
-                    p_days_ahead: 7
-                });
-
-            if (predictionsError) {
-                console.warn('Error cargando predictions:', predictionsError);
+            try {
+                const { data: preds, error: predictionsError } = await supabase
+                    .rpc('predict_upcoming_noshows', {
+                        p_restaurant_id: restaurant.id,
+                        p_days_ahead: 7
+                    });
+                if (!predictionsError) predictions = preds || [];
+            } catch (error) {
+                console.log('RPC predict_upcoming_noshows no disponible, usando datos simulados');
             }
 
-            // 6. USAR PREDICCIONES REALES DE LA FUNCIÓN RPC
-            const riskReservations = predictions?.map(pred => ({
-                id: pred.reservation_id,
-                customer_name: pred.customer_name,
-                reservation_date: pred.reservation_date,
-                reservation_time: pred.reservation_time,
-                party_size: pred.party_size,
-                risk: {
-                    score: pred.risk_score,
-                    level: pred.risk_level,
-                    factors: pred.risk_factors || []
-                },
-                recommended_action: pred.recommended_action
-            })) || [];
+            // 6. USAR PREDICCIONES REALES O SIMULADAS
+            let riskReservations = [];
+            if (predictions && predictions.length > 0) {
+                riskReservations = predictions.map(pred => ({
+                    id: pred.reservation_id,
+                    customer_name: pred.customer_name,
+                    reservation_date: pred.reservation_date,
+                    reservation_time: pred.reservation_time,
+                    party_size: pred.party_size,
+                    risk: {
+                        score: pred.risk_score,
+                        level: pred.risk_level,
+                        factors: pred.risk_factors || []
+                    },
+                    recommended_action: pred.recommended_action
+                }));
+            } else {
+                // Fallback: usar reservas próximas y calcular riesgo manualmente
+                riskReservations = upcomingReservations?.map(reservation => ({
+                    ...reservation,
+                    customer_name: reservation.customers?.name || reservation.customer_name || 'Cliente',
+                    risk: calculateNoShowRisk(reservation),
+                    recommended_action: 'Monitorear'
+                })).filter(r => r.risk.level !== 'low') || [];
+            }
 
             // Contar reservas de alto riesgo para hoy
             const todayHighRisk = riskReservations.filter(r => 
