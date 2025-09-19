@@ -432,7 +432,7 @@ export default function Calendario() {
                                                     className="w-full text-xs text-blue-600 hover:text-blue-800 py-1"
                                                     onClick={() => {
                                                         // TODO: Implementar múltiples turnos
-                                                        toast.info("Múltiples turnos próximamente");
+                                                        toast("Múltiples turnos próximamente", { icon: '⏰' });
                                                     }}
                                                 >
                                                     + Añadir turno
