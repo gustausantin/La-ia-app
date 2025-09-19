@@ -30,6 +30,8 @@ Esta documentación contiene **TODA LA INFORMACIÓN** necesaria para que cualqui
 ### 🤖 **CARACTERÍSTICAS PRINCIPALES:**
 - **Agente IA 24/7** que maneja reservas automáticamente
 - **CRM Inteligente v2** con segmentación automática y IA predictiva
+- **Sistema Revolucionario de No-Shows** con algoritmos predictivos ⭐ **NUEVO**
+- **Dashboard Ejecutivo** enfocado en valor monetario tangible ⭐ **NUEVO**
 - **Sistema de Disponibilidades** robusto con detección de conflictos
 - **Validación avanzada** de reservas con availability_slots
 - **Gestión completa de conflictos** en tiempo real
@@ -39,13 +41,15 @@ Esta documentación contiene **TODA LA INFORMACIÓN** necesaria para que cualqui
 - **PWA completa** con instalación offline
 
 ### 🏆 **DIFERENCIADORES ÚNICOS MUNDIALES:**
-1. **Sistema de detección de conflictos** más avanzado del mercado
-2. **Validación obligatoria** de disponibilidad antes de crear reservas
-3. **CRM IA con 7 segmentos automáticos** (Nuevo, Activo, VIP, Inactivo, Riesgo, etc.)
-4. **Protección inteligente** de recursos con reservas futuras
-5. **Automatizaciones enterprise** con cooldown y consent GDPR
-6. **Analytics predictivos** con machine learning
-7. **Omnicanalidad total** con 5 canales integrados
+1. **Sistema Revolucionario de No-Shows** con algoritmos predictivos de 6 factores ⭐ **NUEVO**
+2. **Dashboard Ejecutivo** que muestra valor monetario tangible generado ⭐ **NUEVO**
+3. **Sistema de detección de conflictos** más avanzado del mercado
+4. **Validación obligatoria** de disponibilidad antes de crear reservas
+5. **CRM IA con 7 segmentos automáticos** (Nuevo, Activo, VIP, Inactivo, Riesgo, etc.)
+6. **Protección inteligente** de recursos con reservas futuras
+7. **Automatizaciones enterprise** con cooldown y consent GDPR
+8. **Analytics predictivos** con machine learning
+9. **Omnicanalidad total** con 5 canales integrados
 
 ---
 
