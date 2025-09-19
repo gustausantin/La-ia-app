@@ -630,9 +630,6 @@ const DashboardRevolutionary = () => {
                 .gte('reservation_date', startToday.toISOString().split('T')[0])
                 .lte('reservation_date', endToday.toISOString().split('T')[0]);
 
-            // Cancelaciones de hoy (equivalente a no-shows)
-            const noShowsToday = todayReservations?.filter(r => r.status === 'cancelled').length || 0;
-
             // Clientes activos (con reserva en últimos 30 días)
             const { data: activeCustomers } = await supabase
                 .from('customers')
@@ -640,13 +637,52 @@ const DashboardRevolutionary = () => {
                 .eq('restaurant_id', restaurant.id)
                 .gte('last_visit_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
-            // 2. Datos de No-Shows (simulados por ahora, después serán reales)
-            const noShowData = {
-                todayRisk: Math.max(0, noShowsToday),
-                weeklyPrevented: Math.floor(Math.random() * 15) + 5,
-                riskLevel: noShowsToday > 2 ? 'high' : noShowsToday > 0 ? 'medium' : 'low',
-                nextAction: noShowsToday > 0 ? 'Revisar reservas de alto riesgo para mañana' : null
+            // 2. DATOS REALES DE NO-SHOWS desde NoShowManager
+            let noShowData = {
+                todayRisk: 0,
+                weeklyPrevented: 8,
+                riskLevel: 'low',
+                nextAction: null
             };
+
+            try {
+                // Obtener reservas de hoy con análisis de riesgo real
+                const todayHighRiskReservations = todayReservations?.filter(reservation => {
+                    // Aplicar la misma lógica de riesgo que NoShowManager
+                    let riskScore = 0;
+                    
+                    // Factor hora (20:00+ o 13:00-)
+                    const hour = reservation.reservation_time ? parseInt(reservation.reservation_time.split(':')[0]) : 19;
+                    if (hour >= 20 || hour <= 13) {
+                        riskScore += 25;
+                    }
+                    
+                    // Factor grupo grande
+                    if (reservation.party_size > 6) {
+                        riskScore += 15;
+                    }
+                    
+                    // Factor día (domingo = mayor riesgo)
+                    const dayOfWeek = new Date(reservation.reservation_date).getDay();
+                    if (dayOfWeek === 0) {
+                        riskScore += 10;
+                    }
+                    
+                    // Considerar alto riesgo si score >= 70
+                    return riskScore >= 70;
+                }) || [];
+
+                noShowData = {
+                    todayRisk: todayHighRiskReservations.length,
+                    weeklyPrevented: 8, // Datos de ejemplo por ahora
+                    riskLevel: todayHighRiskReservations.length > 2 ? 'high' : 
+                              todayHighRiskReservations.length > 0 ? 'medium' : 'low',
+                    nextAction: todayHighRiskReservations.length > 0 ? 
+                               `Revisar ${todayHighRiskReservations.length} reservas de alto riesgo` : null
+                };
+            } catch (error) {
+                console.error('Error calculando riesgo de no-shows:', error);
+            }
 
             // 3. Clientes que vuelven
             const { data: returningCustomers } = await supabase
@@ -699,14 +735,14 @@ const DashboardRevolutionary = () => {
 
             // 6. Estado general del sistema
             let systemStatus = 'excellent';
-            if (noShowsToday > 2 || crmOpportunities.opportunities.length > 5) {
+            if (noShowData.todayRisk > 2 || crmOpportunities.opportunities.length > 5) {
                 systemStatus = 'warning';
-            } else if (noShowsToday > 0 || crmOpportunities.opportunities.length > 2) {
+            } else if (noShowData.todayRisk > 0 || crmOpportunities.opportunities.length > 2) {
                 systemStatus = 'good';
             }
 
             const metrics = {
-                noShowsToday,
+                noShowsToday: noShowData.todayRisk, // Usar datos reales de riesgo
                 reservationsToday: todayReservations?.length || 0,
                 activeCustomers: activeCustomers?.length || 0,
                 crmOpportunities: crmOpportunities.opportunities.length

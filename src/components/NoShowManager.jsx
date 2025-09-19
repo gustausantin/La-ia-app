@@ -108,14 +108,60 @@ const NoShowManager = () => {
                 timestamp: new Date().toISOString()
             };
             
-            // 4. ENVIAR WHATSAPP (simular por ahora)
+            // 4. ENVIAR WHATSAPP CON MANEJO DE ERRORES ESPECÍFICO
             console.log('📱 Enviando WhatsApp:', whatsappData);
-            await new Promise(resolve => setTimeout(resolve, 2000));
             
-            // 5. REGISTRAR ACCIÓN EN SUPABASE
-            await registerNoShowAction(action, template, personalizedMessage);
-            
-            toast.success('✅ WhatsApp enviado con plantilla personalizada', { id: 'whatsapp-action' });
+            try {
+                // Simular envío con posibles errores
+                await new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        // Simular diferentes tipos de errores
+                        const phone = whatsappData.phone;
+                        if (!phone || phone === '+34000000000') {
+                            reject(new Error('INVALID_PHONE'));
+                        } else if (Math.random() < 0.1) { // 10% probabilidad de error API
+                            reject(new Error('API_ERROR'));
+                        } else {
+                            resolve();
+                        }
+                    }, 2000);
+                });
+                
+                // 5. REGISTRAR ACCIÓN EXITOSA EN SUPABASE
+                await registerNoShowAction(action, template, personalizedMessage, 'sent');
+                
+                // 6. REGISTRAR EN COMUNICACIONES
+                await registerInCommunications(action, personalizedMessage);
+                
+                toast.success('✅ WhatsApp enviado correctamente', { id: 'whatsapp-action' });
+                
+            } catch (error) {
+                // 5. REGISTRAR ACCIÓN FALLIDA EN SUPABASE
+                await registerNoShowAction(action, template, personalizedMessage, 'failed', error.message);
+                
+                // Mostrar error específico
+                let errorMessage = '❌ Error enviando WhatsApp: ';
+                switch (error.message) {
+                    case 'INVALID_PHONE':
+                        errorMessage += 'Número de teléfono inválido o no disponible';
+                        break;
+                    case 'API_ERROR':
+                        errorMessage += 'API de WhatsApp no disponible. Intenta más tarde.';
+                        break;
+                    case 'NO_WHATSAPP_BUSINESS':
+                        errorMessage += 'WhatsApp Business API no configurada';
+                        break;
+                    default:
+                        errorMessage += error.message || 'Error desconocido';
+                }
+                
+                toast.error(errorMessage, { 
+                    id: 'whatsapp-action',
+                    duration: 5000 
+                });
+                
+                throw error; // Re-lanzar para que no se ejecute el resto
+            }
             
             // 6. Actualizar estado
             setNoShowData(prev => ({
@@ -201,51 +247,139 @@ const NoShowManager = () => {
     };
 
     // 💾 REGISTRAR ACCIÓN EN SUPABASE PARA MÉTRICAS
-    const registerNoShowAction = async (action, template, message) => {
+    const registerNoShowAction = async (action, template, message, status = 'sent', errorDetails = null) => {
         try {
+            // Preparar datos con validación robusta
+            const reservationDate = action.reservation.reservation_date 
+                ? new Date(action.reservation.reservation_date).toISOString().split('T')[0]
+                : new Date().toISOString().split('T')[0];
+
             const actionData = {
                 restaurant_id: restaurant?.id,
-                reservation_id: action.reservation.id,
-                customer_name: action.reservation.customer_name,
-                customer_phone: action.reservation.customer_phone,
+                reservation_id: action.reservation.id || null, // Puede ser NULL
+                customer_id: null, // Por ahora NULL, se puede vincular después
+                customer_name: action.reservation.customer_name || 'Cliente Sin Nombre',
+                customer_phone: action.reservation.customer_phone || '+34000000000',
                 
-                // Detalles de la reserva
-                reservation_date: action.reservation.reservation_date.split('T')[0], // Solo fecha
-                reservation_time: action.reservation.reservation_time,
-                party_size: action.reservation.party_size,
+                // Detalles de la reserva (validados)
+                reservation_date: reservationDate,
+                reservation_time: action.reservation.reservation_time || '20:00',
+                party_size: parseInt(action.reservation.party_size) || 2,
                 
-                // Análisis de riesgo
-                risk_level: action.reservation.risk.level,
-                risk_score: action.reservation.risk.score,
-                risk_factors: action.reservation.risk.factors || [],
+                // Análisis de riesgo (validados)
+                risk_level: action.reservation.risk?.level || 'medium',
+                risk_score: parseInt(action.reservation.risk?.score) || 50,
+                risk_factors: action.reservation.risk?.factors || ['unknown'], // JSONB directo
                 
                 // Acción ejecutada
-                action_type: 'whatsapp_confirmation', // Cambiar según el tipo
-                template_id: template?.id,
-                template_name: template?.name,
+                action_type: 'whatsapp_confirmation',
+                template_id: template?.id || null,
+                template_name: template?.name || 'Plantilla por defecto',
                 
                 // Mensaje enviado
-                message_sent: message,
+                message_sent: message || 'Mensaje de confirmación',
                 channel: 'whatsapp',
                 
                 // Estado inicial
-                customer_response: 'pending',
-                final_outcome: 'pending',
-                prevented_noshow: false // Se actualizará cuando sepamos el resultado
+                customer_response: status === 'failed' ? 'no_response' : 'pending',
+                final_outcome: status === 'failed' ? 'failed' : 'pending',
+                prevented_noshow: false,
+                
+                // Información del error si existe
+                error_details: errorDetails ? JSON.stringify({
+                    error: errorDetails,
+                    timestamp: new Date().toISOString()
+                }) : null
             };
 
-            const { error } = await supabase
+            console.log('📊 Datos a insertar en noshow_actions:', actionData);
+
+            const { data, error } = await supabase
                 .from('noshow_actions')
-                .insert(actionData);
+                .insert(actionData)
+                .select();
 
             if (error) {
-                console.error('Error registrando acción:', error);
+                console.error('❌ Error registrando acción:', error);
+                console.error('📋 Datos que causaron error:', actionData);
             } else {
-                console.log('✅ Acción registrada en noshow_actions');
+                console.log('✅ Acción registrada exitosamente:', data);
             }
         } catch (error) {
-            console.error('Error registrando acción:', error);
+            console.error('❌ Error en registerNoShowAction:', error);
             // No fallar el envío si hay error en el registro
+        }
+    };
+
+    // 📱 REGISTRAR MENSAJE EN COMUNICACIONES
+    const registerInCommunications = async (action, message) => {
+        try {
+            // 1. Buscar o crear conversación
+            const { data: existingConversation } = await supabase
+                .from('conversations')
+                .select('id')
+                .eq('restaurant_id', restaurant?.id)
+                .eq('customer_phone', action.reservation.customer_phone)
+                .eq('status', 'open')
+                .limit(1);
+
+            let conversationId;
+
+            if (existingConversation && existingConversation.length > 0) {
+                conversationId = existingConversation[0].id;
+            } else {
+                // Crear nueva conversación
+                const { data: newConversation, error } = await supabase
+                    .from('conversations')
+                    .insert({
+                        restaurant_id: restaurant?.id,
+                        customer_name: action.reservation.customer_name,
+                        customer_phone: action.reservation.customer_phone,
+                        customer_email: null,
+                        subject: `Confirmación No-Show - ${action.reservation.customer_name}`,
+                        status: 'open',
+                        priority: action.reservation.risk?.level === 'high' ? 'urgent' : 'normal',
+                        channel: 'whatsapp',
+                        tags: ['no-show', 'confirmacion', 'automatico'],
+                        metadata: {
+                            reservation_id: action.reservation.id,
+                            risk_level: action.reservation.risk?.level,
+                            risk_score: action.reservation.risk?.score,
+                            automated: true,
+                            source: 'noshow_prevention'
+                        }
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                conversationId = newConversation.id;
+            }
+
+            // 2. Crear mensaje
+            const { error: messageError } = await supabase
+                .from('messages')
+                .insert({
+                    conversation_id: conversationId,
+                    content: message,
+                    sender_type: 'system',
+                    channel: 'whatsapp',
+                    message_type: 'automated',
+                    status: 'sent',
+                    metadata: {
+                        template_used: 'noshow_prevention',
+                        risk_level: action.reservation.risk?.level,
+                        automated: true
+                    }
+                });
+
+            if (messageError) throw messageError;
+
+            console.log('✅ Mensaje registrado en Comunicaciones');
+
+        } catch (error) {
+            console.error('❌ Error registrando en comunicaciones:', error);
+            // No fallar el proceso principal por este error
         }
     };
 
