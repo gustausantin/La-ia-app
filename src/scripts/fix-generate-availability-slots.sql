@@ -113,11 +113,47 @@ BEGIN
         -- Obtener horario del día
         day_schedule := operating_hours->day_of_week_text;
         
-        -- Solo procesar si el día no está cerrado
-        IF day_schedule IS NOT NULL AND (day_schedule->>'closed')::boolean IS NOT TRUE THEN
-            -- Extraer horas de apertura y cierre
-            slot_time := (day_schedule->>'open')::time;
-            end_time := (day_schedule->>'close')::time;
+        -- PARSING ULTRA-ROBUSTO para AMBOS formatos de horarios
+        IF day_schedule IS NOT NULL THEN
+            BEGIN
+                -- DETECTAR FORMATO DE HORARIOS
+                IF day_schedule ? 'open' AND day_schedule ? 'closed' THEN
+                    -- FORMATO ANTIGUO: {"open": "09:00", "close": "22:00", "closed": false}
+                    IF (day_schedule->>'closed')::boolean IS TRUE THEN
+                        RAISE NOTICE '🚫 Día % cerrado (formato antiguo), saltando', day_of_week_text;
+                        loop_date := loop_date + INTERVAL '1 day';
+                        CONTINUE;
+                    END IF;
+                    
+                    slot_time := (day_schedule->>'open')::time;
+                    end_time := (day_schedule->>'close')::time;
+                    
+                ELSIF day_schedule ? 'open' AND day_schedule ? 'start' THEN
+                    -- FORMATO NUEVO: {"open": true, "start": "09:00", "end": "22:00", "shifts": [...]}
+                    IF (day_schedule->>'open')::boolean IS NOT TRUE THEN
+                        RAISE NOTICE '🚫 Día % cerrado (formato nuevo), saltando', day_of_week_text;
+                        loop_date := loop_date + INTERVAL '1 day';
+                        CONTINUE;
+                    END IF;
+                    
+                    -- Usar horario principal (start/end)
+                    slot_time := (day_schedule->>'start')::time;
+                    end_time := (day_schedule->>'end')::time;
+                    
+                    -- TODO: En futuro, procesar también los shifts individuales
+                    -- Por ahora usamos solo el horario principal para simplificar
+                    
+                ELSE
+                    RAISE NOTICE '⚠️ Formato de horario no reconocido para %: %, saltando día', day_of_week_text, day_schedule;
+                    loop_date := loop_date + INTERVAL '1 day';
+                    CONTINUE;
+                END IF;
+                
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE '❌ Error parsing horarios para %: %, saltando día', day_of_week_text, SQLERRM;
+                loop_date := loop_date + INTERVAL '1 day';
+                CONTINUE;
+            END;
             
             RAISE NOTICE '📅 Procesando % (%) de % a %', loop_date, day_of_week_text, slot_time, end_time;
             
@@ -197,7 +233,49 @@ FROM information_schema.routines
 WHERE routine_name = 'generate_availability_slots'
 AND routine_schema = 'public';
 
--- 5. HACER PRUEBA RÁPIDA (opcional)
+-- 5. VERIFICAR CONFIGURACIÓN DE HORARIOS
+-- Mostrar formato actual de horarios
+SELECT 
+    id,
+    name,
+    CASE 
+        WHEN settings->'operating_hours'->'monday' ? 'open' AND settings->'operating_hours'->'monday' ? 'closed' THEN 'FORMATO_ANTIGUO'
+        WHEN settings->'operating_hours'->'monday' ? 'open' AND settings->'operating_hours'->'monday' ? 'start' THEN 'FORMATO_NUEVO_CON_SHIFTS'
+        ELSE 'FORMATO_DESCONOCIDO'
+    END as formato_detectado,
+    settings->'operating_hours' as horarios_actuales
+FROM restaurants 
+WHERE settings->'operating_hours' IS NOT NULL;
+
+-- CORREGIR horarios malformados (opcional - ejecutar si hay resultados arriba)
+/*
+UPDATE restaurants 
+SET settings = jsonb_set(
+    settings,
+    '{operating_hours}',
+    '{
+        "monday": {"open": "12:00", "close": "23:00", "closed": false},
+        "tuesday": {"open": "12:00", "close": "23:00", "closed": false},
+        "wednesday": {"open": "12:00", "close": "23:00", "closed": false},
+        "thursday": {"open": "12:00", "close": "23:00", "closed": false},
+        "friday": {"open": "12:00", "close": "23:00", "closed": false},
+        "saturday": {"open": "12:00", "close": "23:00", "closed": false},
+        "sunday": {"open": "12:00", "close": "23:00", "closed": false}
+    }'::jsonb
+)
+WHERE settings->'operating_hours' IS NOT NULL
+AND (
+    settings->'operating_hours'->>'monday' LIKE '%false%' OR
+    settings->'operating_hours'->>'tuesday' LIKE '%false%' OR
+    settings->'operating_hours'->>'wednesday' LIKE '%false%' OR
+    settings->'operating_hours'->>'thursday' LIKE '%false%' OR
+    settings->'operating_hours'->>'friday' LIKE '%false%' OR
+    settings->'operating_hours'->>'saturday' LIKE '%false%' OR
+    settings->'operating_hours'->>'sunday' LIKE '%false%'
+);
+*/
+
+-- 6. HACER PRUEBA RÁPIDA (opcional)
 -- SELECT generate_availability_slots(
 --     (SELECT id FROM restaurants WHERE owner_id = auth.uid() LIMIT 1),
 --     CURRENT_DATE,
