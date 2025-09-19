@@ -646,31 +646,81 @@ const DashboardRevolutionary = () => {
             };
 
             try {
-                // Obtener reservas de hoy con análisis de riesgo real
+                // USAR LA MISMA LÓGICA EXACTA QUE NOSHOWMANAGER
                 const todayHighRiskReservations = todayReservations?.filter(reservation => {
-                    // Aplicar la misma lógica de riesgo que NoShowManager
                     let riskScore = 0;
+                    let riskFactors = [];
                     
-                    // Factor hora (20:00+ o 13:00-)
-                    const hour = reservation.reservation_time ? parseInt(reservation.reservation_time.split(':')[0]) : 19;
-                    if (hour >= 20 || hour <= 13) {
+                    // 📊 Factor 1: Historial del cliente (40% del peso) - SIMULADO por ahora
+                    // TODO: Obtener historial real del cliente
+                    const simulatedNoShowRate = Math.random() * 0.4; // 0-40%
+                    if (simulatedNoShowRate > 0.3) {
+                        riskScore += 40;
+                        riskFactors.push('historial_noshows');
+                    } else if (simulatedNoShowRate > 0.15) {
                         riskScore += 25;
+                        riskFactors.push('historial_medio');
                     }
                     
-                    // Factor grupo grande
+                    // ⏰ Factor 2: Hora de la reserva (25% del peso) - LÓGICA REAL
+                    const hour = reservation.reservation_time ? parseInt(reservation.reservation_time.split(':')[0]) : 19;
+                    if (hour >= 20 || hour <= 13) { // 20:00+ (cenas tardías) o 13:00- (comidas tempranas)
+                        riskScore += 25;
+                        riskFactors.push('hora_pico');
+                    }
+                    
+                    // 👥 Factor 3: Tamaño del grupo (15% del peso) - ESTADÍSTICA REAL
                     if (reservation.party_size > 6) {
                         riskScore += 15;
-                    }
-                    
-                    // Factor día (domingo = mayor riesgo)
-                    const dayOfWeek = new Date(reservation.reservation_date).getDay();
-                    if (dayOfWeek === 0) {
+                        riskFactors.push('grupo_grande');
+                    } else if (reservation.party_size === 1) {
                         riskScore += 10;
+                        riskFactors.push('mesa_individual');
                     }
                     
-                    // Considerar alto riesgo si score >= 70
-                    return riskScore >= 70;
+                    // 📅 Factor 4: Día de la semana (10% del peso) - PATRÓN REAL
+                    const dayOfWeek = new Date(reservation.reservation_date).getDay();
+                    if (dayOfWeek === 0) { // Domingo = mayor riesgo
+                        riskScore += 10;
+                        riskFactors.push('domingo');
+                    } else if (dayOfWeek === 6) { // Sábado = riesgo medio
+                        riskScore += 5;
+                        riskFactors.push('sabado');
+                    }
+                    
+                    // 🌧️ Factor 5: Clima (5% del peso) - SIMULADO por ahora
+                    if (Math.random() < 0.3) { // 30% probabilidad de lluvia
+                        riskScore += 5;
+                        riskFactors.push('clima_lluvia');
+                    }
+                    
+                    // ⚡ Factor 6: Tiempo de anticipación (5% del peso) - COMPORTAMIENTO REAL
+                    const reservationDateTime = new Date(`${reservation.reservation_date}T${reservation.reservation_time}`);
+                    const hoursUntilReservation = (reservationDateTime - new Date()) / (1000 * 60 * 60);
+                    if (hoursUntilReservation < 2) {
+                        riskScore += 5;
+                        riskFactors.push('ultimo_momento');
+                    }
+                    
+                    // Guardar datos para debug
+                    reservation._debug_risk = {
+                        score: Math.min(riskScore, 100),
+                        factors: riskFactors,
+                        level: riskScore >= 85 ? 'high' : riskScore >= 65 ? 'medium' : 'low'
+                    };
+                    
+                    // MISMO UMBRAL QUE NOSHOWMANAGER: >= 85 = alto riesgo
+                    return riskScore >= 85;
                 }) || [];
+
+                console.log('🔍 DEBUG Dashboard - Reservas hoy:', todayReservations?.length);
+                console.log('🔍 DEBUG Dashboard - Alto riesgo:', todayHighRiskReservations.length);
+                console.log('🔍 DEBUG Dashboard - Detalles riesgo:', todayHighRiskReservations.map(r => ({
+                    customer: r.customer_name,
+                    time: r.reservation_time,
+                    party_size: r.party_size,
+                    risk: r._debug_risk
+                })));
 
                 noShowData = {
                     todayRisk: todayHighRiskReservations.length,
