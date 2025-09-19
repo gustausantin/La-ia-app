@@ -202,7 +202,7 @@ const NoShowWidget = ({ data, onViewDetails }) => {
                 <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600 flex items-center gap-2">
                         <Target className="w-4 h-4" />
-                        Efectividad del sistema:
+                        Reservas confirmadas:
                     </span>
                     <span className="font-medium text-green-600">73% de éxito</span>
                 </div>
@@ -251,10 +251,10 @@ const NoShowWidget = ({ data, onViewDetails }) => {
                     {/* Algoritmo en acción */}
                     <div className="flex items-center justify-between text-sm p-2 bg-blue-50 rounded">
                         <span className="text-gray-600 flex items-center gap-2">
-                            <Brain className="w-4 h-4" />
-                            Algoritmo IA:
+                            <Shield className="w-4 h-4" />
+                            Protegiendo tus ingresos:
                         </span>
-                        <span className="font-medium text-blue-600">6 factores activos</span>
+                        <span className="font-medium text-blue-600">Detectamos reservas problemáticas</span>
                     </div>
 
                     {/* Ahorro estimado */}
@@ -532,7 +532,7 @@ const TotalValueWidget = ({ data }) => {
             {totalValue > 0 && (
                 <div className="mt-4 pt-3 border-t border-gray-200 text-center">
                     <div className="text-sm text-green-600 font-medium bg-green-50 rounded-lg px-3 py-2">
-                        💡 ROI positivo - El sistema se autofinancia
+                        💰 Ya recuperaste la inversión - Todo es ganancia
                     </div>
                 </div>
             )}
@@ -568,7 +568,7 @@ const TotalValueWidget = ({ data }) => {
                         </div>
                         <div className="flex items-center justify-between text-sm p-2 bg-purple-50 rounded">
                             <span className="text-gray-600">🎯 Tiempo de retorno:</span>
-                            <span className="font-medium text-purple-600">Sistema pagado en 3 días</span>
+                            <span className="font-medium text-purple-600">Se pagó solo en 3 días</span>
                         </div>
                     </div>
 
@@ -585,7 +585,7 @@ const TotalValueWidget = ({ data }) => {
                     {/* Call to action */}
                     <div className="p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border-l-4 border-green-400">
                         <div className="text-sm text-green-800">
-                            <strong>🚀 Impacto:</strong> El sistema genera <strong>{Math.round(totalValue / 129 * 100)}% más valor</strong> que su costo mensual
+                            <strong>🚀 Resultado:</strong> Cada euro invertido te devuelve <strong>{Math.round(totalValue / 129)}€</strong>
                         </div>
                     </div>
                 </div>
