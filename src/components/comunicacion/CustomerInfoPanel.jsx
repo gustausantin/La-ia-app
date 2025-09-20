@@ -20,25 +20,21 @@ import toast from 'react-hot-toast';
 const CustomerInfoPanel = ({ customer, onClose }) => {
   const [activeTab, setActiveTab] = useState("info");
 
-  // Mock data para el cliente
+  // DATOS REALES DEL CLIENTE DESDE SUPABASE
   const customerData = {
-    name: customer?.name || "Ana García",
-    phone: customer?.phone || "+34 612 345 678",
-    email: customer?.email || "ana.garcia@email.com",
-    location: "Madrid, España",
-    visits: 12,
-    totalSpent: 480,
-    avgSpent: 40,
-    lastVisit: "Hace 3 días",
-    favoriteTable: "Mesa 7 (terraza)",
-    allergies: ["Gluten"],
-    preferences: ["Vegetariano", "Sin alcohol"],
-    orders: [
-      { date: "2024-01-15", items: "Ensalada César, Agua", total: 15 },
-      { date: "2024-01-10", items: "Pizza Margherita, Cerveza", total: 22 },
-      { date: "2024-01-05", items: "Pasta Carbonara, Vino", total: 28 }
-    ],
-    satisfaction: 4.8,
+    name: customer?.name || "Cliente",
+    phone: customer?.phone || "",
+    email: customer?.email || "",
+    location: customer?.city || "",
+    visits: customer?.total_visits || 0,
+    totalSpent: customer?.total_spent || 0,
+    avgSpent: customer?.avg_ticket || 0,
+    lastVisit: customer?.last_visit_at ? new Date(customer.last_visit_at).toLocaleDateString('es-ES') : "Sin visitas",
+    favoriteTable: customer?.notes?.includes('mesa') ? customer.notes : "Sin preferencia",
+    allergies: customer?.tags?.filter(tag => tag.includes('alergia')) || [],
+    preferences: customer?.tags?.filter(tag => !tag.includes('alergia')) || [],
+    orders: [], // TODO: Obtener desde tabla reservations/consumos
+    satisfaction: customer?.satisfaction_score || 0,
     sentiment: "positive"
   };
 

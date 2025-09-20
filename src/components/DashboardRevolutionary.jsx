@@ -184,7 +184,7 @@ const NoShowWidget = ({ data, onViewDetails }) => {
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="text-center bg-blue-50 rounded-lg p-3">
                     <div className="text-2xl font-bold text-blue-600 mb-1">
-                        {data.weeklyPrevented || 18}
+                        {data.weeklyPrevented || 0}
                     </div>
                     <div className="text-sm text-gray-600">Evitados esta semana</div>
                 </div>
@@ -776,7 +776,7 @@ const DashboardRevolutionary = () => {
 
             // 5. Calcular valor monetario generado - UNIFICADO
             const averageTicket = 35; // Ticket medio estimado
-            const noShowsPreventedCount = noShowData.weeklyPrevented || 8; // USAR EL MISMO VALOR
+            const noShowsPreventedCount = noShowData.weeklyPrevented || 0; // SOLO DATOS REALES
             const crmRecoveredCount = customersData.returningThisWeek;
             
             const totalValue = {
