@@ -611,12 +611,12 @@ const NoShowManager = () => {
             // OBTENER DATOS REALES DE ACCIONES DE LA SEMANA - IGUAL QUE DASHBOARD
             const { data: weeklyActions } = await supabase
                 .from('noshow_actions')
-                .select('outcome')
+                .select('final_outcome')
                 .eq('restaurant_id', restaurant.id)
                 .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
             const weeklyPreventedReal = weeklyActions?.filter(action => 
-                action.outcome === 'prevented' || action.outcome === 'confirmed'
+                action.final_outcome === 'attended'
             ).length || 0;
 
             setNoShowData({
