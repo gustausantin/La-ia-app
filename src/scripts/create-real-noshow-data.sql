@@ -30,12 +30,13 @@ SET
         WHEN name = 'Lua Santin' THEN 7
         ELSE total_visits
     END,
-    no_show_count = CASE 
-        WHEN name = 'Carlos Mendez' THEN 3  -- 37.5% no-show rate = ALTO RIESGO
-        WHEN name = 'Ana Rodriguez' THEN 1  -- 20% no-show rate = MEDIO RIESGO
-        WHEN name = 'Luis Martinez' THEN 0  -- 0% no-show rate = BAJO RIESGO
-        WHEN name = 'Maria Garcia' THEN 2   -- 66% no-show rate = ALTO RIESGO
-        ELSE 0
+    -- NOTA: no_show_count NO existe en customers - usaremos total_visits para calcular el riesgo
+    churn_risk_score = CASE 
+        WHEN name = 'Carlos Mendez' THEN 85  -- ALTO RIESGO (37.5% no-show rate)
+        WHEN name = 'Ana Rodriguez' THEN 60  -- MEDIO RIESGO (20% no-show rate)
+        WHEN name = 'Luis Martinez' THEN 20  -- BAJO RIESGO (0% no-show rate)
+        WHEN name = 'Maria Garcia' THEN 90   -- ALTO RIESGO (66% no-show rate)
+        ELSE churn_risk_score
     END,
     last_visit_at = CASE 
         WHEN name = 'Carlos Mendez' THEN CURRENT_DATE - INTERVAL '5 days'
@@ -73,7 +74,7 @@ INSERT INTO reservations (
 SELECT 
     r.id as restaurant_id,
     c.id as customer_id,
-    c.customer_name,
+        c.customer_name,
     c.phone,
     c.email,
     CURRENT_DATE as reservation_date,
@@ -90,7 +91,7 @@ CROSS JOIN (
         'Carlos Mendez' as customer_name,
         '+34666111222' as phone,
         'carlos.mendez@email.com' as email,
-        '20:00' as reservation_time,
+        '20:00'::TIME as reservation_time,
         8 as party_size,
         'Mesa grande para celebración' as special_requests
     
@@ -102,7 +103,7 @@ CROSS JOIN (
         'Maria Garcia' as customer_name,
         '+34666333444' as phone,
         'maria.garcia@email.com' as email,
-        '21:30' as reservation_time,
+        '21:30'::TIME as reservation_time,
         4 as party_size,
         'Sin restricciones' as special_requests
         
@@ -114,7 +115,7 @@ CROSS JOIN (
         'Ana Rodriguez' as customer_name,
         '+34666555666' as phone,
         'ana.rodriguez@email.com' as email,
-        '19:30' as reservation_time,
+        '19:30'::TIME as reservation_time,
         2 as party_size,
         'Mesa tranquila' as special_requests
         
@@ -126,7 +127,7 @@ CROSS JOIN (
         'Luis Martinez' as customer_name,
         '+34666777888' as phone,
         'luis.martinez@email.com' as email,
-        '19:00' as reservation_time,
+        '19:00'::TIME as reservation_time,
         3 as party_size,
         'Como siempre' as special_requests
         
@@ -138,7 +139,7 @@ CROSS JOIN (
         'Pedro Nuevo' as customer_name,
         '+34666999000' as phone,
         'pedro.nuevo@email.com' as email,
-        '20:30' as reservation_time,
+        '20:30'::TIME as reservation_time,
         1 as party_size,
         'Primera vez en el restaurante' as special_requests
 ) c
@@ -154,22 +155,31 @@ INSERT INTO noshow_actions (
     restaurant_id,
     reservation_id,
     customer_id,
+    customer_name,
+    customer_phone,
+    reservation_date,
+    reservation_time,
+    party_size,
     risk_level,
     risk_score,
     risk_factors,
     template_id,
     action_type,
     message_sent,
-    status,
-    response_received,
-    outcome,
+    customer_response,
+    final_outcome,
     created_at,
-    executed_at
+    sent_at
 )
 SELECT 
     r.id as restaurant_id,
     res.id as reservation_id,
     c.id as customer_id,
+    c.name as customer_name,
+    c.phone as customer_phone,
+    res.reservation_date as reservation_date,
+    res.reservation_time as reservation_time,
+    res.party_size as party_size,
     CASE 
         WHEN c.name = 'Carlos Mendez' THEN 'high'
         WHEN c.name = 'Ana Rodriguez' THEN 'medium' 
@@ -185,7 +195,7 @@ SELECT
         WHEN c.name = 'Ana Rodriguez' THEN '["historial_medio", "cliente_nuevo"]'::jsonb
         ELSE '["cliente_fiel"]'::jsonb
     END as risk_factors,
-    (SELECT id FROM message_templates WHERE template_name = 'noshow_prevention_high' LIMIT 1) as template_id,
+    (SELECT id FROM message_templates WHERE name = 'noshow_prevention_high' LIMIT 1) as template_id,
     'whatsapp_confirmation' as action_type,
     CASE 
         WHEN c.name = 'Carlos Mendez' THEN 'Hola Carlos, confirmamos tu reserva para 8 personas hoy a las 20:00. ¡Te esperamos!'
@@ -193,22 +203,17 @@ SELECT
         ELSE 'Mensaje de confirmación estándar'
     END as message_sent,
     CASE 
-        WHEN c.name = 'Carlos Mendez' THEN 'sent'
-        WHEN c.name = 'Ana Rodriguez' THEN 'sent'
-        ELSE 'failed'
-    END as status,
-    CASE 
-        WHEN c.name = 'Carlos Mendez' THEN 'Perfecto, allí estaremos'
-        WHEN c.name = 'Ana Rodriguez' THEN 'Confirmado'
-        ELSE NULL
-    END as response_received,
-    CASE 
-        WHEN c.name = 'Carlos Mendez' THEN 'prevented'  -- No-show evitado
-        WHEN c.name = 'Ana Rodriguez' THEN 'confirmed'  -- Cliente confirmó
+        WHEN c.name = 'Carlos Mendez' THEN 'confirmed'
+        WHEN c.name = 'Ana Rodriguez' THEN 'confirmed'
         ELSE 'no_response'
-    END as outcome,
+    END as customer_response,
+    CASE 
+        WHEN c.name = 'Carlos Mendez' THEN 'attended'   -- Cliente vino
+        WHEN c.name = 'Ana Rodriguez' THEN 'attended'   -- Cliente vino
+        ELSE 'pending'
+    END as final_outcome,
     CURRENT_DATE - INTERVAL '3 days' as created_at,
-    CURRENT_DATE - INTERVAL '3 days' + INTERVAL '5 minutes' as executed_at
+    CURRENT_DATE - INTERVAL '3 days' + INTERVAL '5 minutes' as sent_at
 FROM restaurants r
 CROSS JOIN customers c
 LEFT JOIN reservations res ON res.customer_id = c.id AND res.reservation_date = CURRENT_DATE - INTERVAL '3 days'
@@ -224,24 +229,34 @@ LIMIT 5;
 INSERT INTO noshow_actions (
     restaurant_id,
     customer_id,
+    customer_name,
+    customer_phone,
+    reservation_date,
+    reservation_time,
+    party_size,
     risk_level,
     risk_score,
     action_type,
-    status,
-    outcome,
+    customer_response,
+    final_outcome,
     created_at,
-    executed_at
+    sent_at
 )
 SELECT 
     r.id as restaurant_id,
     c.id as customer_id,
+    c.name as customer_name,
+    c.phone as customer_phone,
+    CURRENT_DATE - INTERVAL '1 day' * floor(random() * 7) as reservation_date,
+    ('19:00'::TIME + INTERVAL '30 minutes' * floor(random() * 8)) as reservation_time,
+    (floor(random() * 6) + 1)::INTEGER as party_size,
     (ARRAY['high', 'medium', 'low'])[floor(random() * 3 + 1)] as risk_level,
     floor(random() * 50 + 50) as risk_score,
     'whatsapp_confirmation' as action_type,
-    (ARRAY['sent', 'failed'])[floor(random() * 2 + 1)] as status,
-    (ARRAY['prevented', 'confirmed', 'no_show', 'no_response'])[floor(random() * 4 + 1)] as outcome,
+    (ARRAY['confirmed', 'no_response', 'cancelled'])[floor(random() * 3 + 1)] as customer_response,
+    (ARRAY['attended', 'no_show', 'cancelled', 'pending'])[floor(random() * 4 + 1)] as final_outcome,
     CURRENT_DATE - INTERVAL '1 day' * floor(random() * 7) as created_at,
-    CURRENT_DATE - INTERVAL '1 day' * floor(random() * 7) + INTERVAL '10 minutes' as executed_at
+    CURRENT_DATE - INTERVAL '1 day' * floor(random() * 7) + INTERVAL '10 minutes' as sent_at
 FROM restaurants r
 CROSS JOIN customers c
 WHERE r.name = 'Restaurante Demo'
@@ -257,8 +272,8 @@ BEGIN
     RAISE NOTICE '=== RESUMEN DE DATOS REALES CREADOS ===';
     RAISE NOTICE 'Reservas hoy: %', (SELECT COUNT(*) FROM reservations WHERE reservation_date = CURRENT_DATE);
     RAISE NOTICE 'Acciones esta semana: %', (SELECT COUNT(*) FROM noshow_actions WHERE created_at >= CURRENT_DATE - INTERVAL '7 days');
-    RAISE NOTICE 'Clientes con historial no-show: %', (SELECT COUNT(*) FROM customers WHERE no_show_count > 0);
-    RAISE NOTICE 'No-shows evitados esta semana: %', (SELECT COUNT(*) FROM noshow_actions WHERE outcome = 'prevented' AND created_at >= CURRENT_DATE - INTERVAL '7 days');
+    RAISE NOTICE 'Clientes con riesgo alto: %', (SELECT COUNT(*) FROM customers WHERE churn_risk_score > 70);
+    RAISE NOTICE 'No-shows evitados esta semana: %', (SELECT COUNT(*) FROM noshow_actions WHERE final_outcome = 'attended' AND created_at >= CURRENT_DATE - INTERVAL '7 days');
 END $$;
 
 COMMIT;
@@ -273,20 +288,20 @@ SELECT
     r.reservation_time,
     r.party_size,
     CASE 
-        WHEN c.no_show_count::float / NULLIF(c.total_visits, 0) > 0.3 THEN 'ALTO'
-        WHEN c.no_show_count::float / NULLIF(c.total_visits, 0) > 0.15 THEN 'MEDIO'
+        WHEN c.churn_risk_score >= 85 THEN 'ALTO'
+        WHEN c.churn_risk_score >= 60 THEN 'MEDIO'
         ELSE 'BAJO'
     END as riesgo_calculado
 FROM reservations r
 JOIN customers c ON r.customer_id = c.id
 WHERE r.reservation_date = CURRENT_DATE
-ORDER BY c.no_show_count DESC;
+ORDER BY c.churn_risk_score DESC;
 
 -- Ver estadísticas de no-shows esta semana
 SELECT 
     COUNT(*) as total_acciones,
-    COUNT(*) FILTER (WHERE status = 'sent') as enviadas,
-    COUNT(*) FILTER (WHERE outcome = 'prevented') as evitadas,
+    COUNT(*) FILTER (WHERE customer_response = 'confirmed') as confirmadas,
+    COUNT(*) FILTER (WHERE final_outcome = 'attended') as evitadas,
     COUNT(*) FILTER (WHERE risk_level = 'high') as alto_riesgo
 FROM noshow_actions 
 WHERE created_at >= CURRENT_DATE - INTERVAL '7 days';
