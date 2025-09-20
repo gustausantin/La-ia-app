@@ -25,9 +25,11 @@ const RealtimeStats = React.memo(({ conversations = [], messages = [] }) => {
       return messageDate.toDateString() === today.toDateString();
     }).length;
 
+    // Calcular tiempo de respuesta real desde metadata de conversaciones
     const responseTime = conversations.reduce((acc, conv) => {
-      // Mock calculation - en producción sería más complejo
-      return acc + (Math.random() * 5 + 1); // 1-6 minutos
+      // Usar tiempo de respuesta real de la conversación o 0 si no existe
+      const convResponseTime = conv.response_time || conv.avg_response_time || 0;
+      return acc + convResponseTime;
     }, 0) / Math.max(totalConversations, 1);
 
     const satisfactionRate = conversations.length > 0 ? 
@@ -90,7 +92,7 @@ const RealtimeStats = React.memo(({ conversations = [], messages = [] }) => {
           label="Mensajes hoy"
           value={stats.todayMessages}
           color="green"
-          trend="+12%"
+          trend={null}
         />
 
         <StatCard
@@ -106,7 +108,7 @@ const RealtimeStats = React.memo(({ conversations = [], messages = [] }) => {
           label="IA Eficiencia"
           value={`${stats.aiEfficiency}%`}
           color="purple"
-          trend="+5%"
+          trend={null}
         />
       </div>
 

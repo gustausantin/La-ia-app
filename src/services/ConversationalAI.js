@@ -400,8 +400,8 @@ class ConversationalAI {
   }
 
   async checkAvailability(entities) {
-    // Simulación de verificación de disponibilidad
-    const isAvailable = Math.random() > 0.3; // 70% de probabilidad de disponibilidad
+    // Verificación de disponibilidad REAL - requiere datos de Supabase
+    const isAvailable = false; // DESHABILITADO - REQUIERE INTEGRACIÓN REAL CON DISPONIBILIDADES
     
     return {
       available: isAvailable,

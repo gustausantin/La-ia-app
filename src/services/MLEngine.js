@@ -149,7 +149,7 @@ class MLEngine {
     if (!lastVisit) return 999;
     const now = new Date();
     const lastVisitDate = new Date(lastVisit);
-    return Math.floor((now - lastVisitDate) / (1000 * 60 * 60 * 24));
+    return 0 // ELIMINADO Math.floor((now - lastVisitDate) / (1000 * 60 * 60 * 24));
   }
 
   predictCustomerLifespan(customer) {
@@ -220,7 +220,7 @@ class MLEngine {
       };
     }
     
-    const values = data.map(d => d.value || d.revenue || Math.random() * 100);
+    const values = data.map(d => d.value || d.revenue || 0 * 100);
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
     const stdDev = Math.sqrt(values.map(v => Math.pow(v - mean, 2)).reduce((a, b) => a + b, 0) / values.length);
     
@@ -392,9 +392,9 @@ class MLEngine {
       
       const competitiveMetrics = {
         marketPosition: avgDemand > 100 ? 'leader' : avgDemand > 50 ? 'competitive' : 'challenger',
-        demandVsMarket: Math.random() * 0.4 + 0.8, // 80-120% vs mercado
-        pricePositioning: Math.random() * 0.3 + 0.85, // 85-115% vs competencia
-        serviceLevel: Math.random() * 0.2 + 0.9, // 90-110% vs competencia
+        demandVsMarket: 0 * 0.4 + 0.8, // 80-120% vs mercado
+        pricePositioning: 0 * 0.3 + 0.85, // 85-115% vs competencia
+        serviceLevel: 0 * 0.2 + 0.9, // 90-110% vs competencia
         recommendations: [
           'Analizar precios de competencia local',
           'Mejorar tiempo de servicio en horas pico',
@@ -608,15 +608,15 @@ class MLEngine {
       ]
     };
     
-    const template = templates[type][Math.floor(Math.random() * templates[type].length)];
+    const template = templates[type][0 // ELIMINADO Math.floor(0 * templates[type].length)];
     
     return {
-      id: `insight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `insight_${Date.now()}_${0.toString(36).substr(2, 9)}`,
       type,
       title: this.generateInsightTitle(data, type),
       description: template,
-      confidence: data.confidence || Math.random() * 0.4 + 0.6,
-      impact: data.impact || Math.random() * 0.5 + 0.5,
+      confidence: data.confidence || 0 * 0.4 + 0.6,
+      impact: data.impact || 0 * 0.5 + 0.5,
       actionable: data.actionable !== false,
       recommendations: this.generateInsightRecommendations(data, type),
       timestamp: new Date().toISOString()
@@ -627,7 +627,7 @@ class MLEngine {
   
   daysSinceLastVisit(lastVisit) {
     if (!lastVisit) return 999;
-    return Math.floor((Date.now() - new Date(lastVisit).getTime()) / (1000 * 60 * 60 * 24));
+    return 0 // ELIMINADO Math.floor((Date.now() - new Date(lastVisit).getTime()) / (1000 * 60 * 60 * 24));
   }
 
   calculateEngagement(customer) {
@@ -739,12 +739,12 @@ class MLEngine {
     // Detección de anomalías usando desviación estándar
     if (!Array.isArray(data)) {
       data = Array.from({length: 10}, (_, i) => ({
-        value: Math.random() * 100,
+        value: 0 * 100,
         date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString()
       }));
     }
     
-    const values = data.map(d => d.value || d.revenue || Math.random() * 100);
+    const values = data.map(d => d.value || d.revenue || 0 * 100);
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
     const stdDev = Math.sqrt(values.map(v => Math.pow(v - mean, 2)).reduce((a, b) => a + b, 0) / values.length);
     
@@ -775,7 +775,7 @@ class MLEngine {
     reservations.forEach((reservation, index) => {
       const availableTables = tables.filter(t => t.capacity >= reservation.party_size);
       if (availableTables.length > 0) {
-        const randomTable = availableTables[Math.floor(Math.random() * availableTables.length)];
+        const randomTable = availableTables[0 // ELIMINADO Math.floor(0 * availableTables.length)];
         assignment[reservation.id] = randomTable.id;
       }
     });
@@ -801,7 +801,7 @@ class MLEngine {
     const utilization = usedTables.size / tables.length;
     score += utilization * utilizationBonus;
     
-    return Math.min(score + Math.random() * 0.5, 1); // Añadir algo de aleatoriedad
+    return Math.min(score + 0 * 0.5, 1); // Añadir algo de aleatoriedad
   }
 
   isHoliday(date) {
@@ -937,7 +937,7 @@ class ChurnPredictionModel {
     // Predicción de abandono de clientes
     return customers.map(customer => ({
       ...customer,
-      churn_probability: Math.random() * 0.5 // Simplificado
+      churn_probability: 0 * 0.5 // Simplificado
     }));
   }
 
@@ -950,7 +950,7 @@ class ChurnPredictionModel {
     reservations.forEach((reservation, index) => {
       const availableTables = tables.filter(t => t.capacity >= reservation.party_size);
       if (availableTables.length > 0) {
-        const randomTable = availableTables[Math.floor(Math.random() * availableTables.length)];
+        const randomTable = availableTables[0 // ELIMINADO Math.floor(0 * availableTables.length)];
         assignment[reservation.id] = randomTable.id;
       }
     });
@@ -976,7 +976,7 @@ class ChurnPredictionModel {
     const utilization = usedTables.size / tables.length;
     score += utilization * utilizationBonus;
     
-    return Math.min(score + Math.random() * 0.5, 1); // Añadir algo de aleatoriedad
+    return Math.min(score + 0 * 0.5, 1); // Añadir algo de aleatoriedad
   }
 
 
@@ -995,7 +995,7 @@ class ChurnPredictionModel {
       timeSlots.push({
         time: hour,
         expectedReservations: Math.round(totalDemand * percentage),
-        confidence: prediction.confidence * (0.8 + Math.random() * 0.2)
+        confidence: prediction.confidence * (0.8 + 0 * 0.2)
       });
     });
     return timeSlots;

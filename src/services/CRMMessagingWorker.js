@@ -310,7 +310,7 @@ export class CRMMessagingWorker {
     await this.sleep(500);
     
     return {
-      sid: `SM${Date.now()}${Math.random().toString(36).substr(2, 9)}`,
+      sid: `SM${Date.now()}${Date.now().toString(36)}`,
       status: 'sent',
       to: messageData.to,
       from: messageData.from,
@@ -333,7 +333,7 @@ export class CRMMessagingWorker {
     await this.sleep(500);
     
     return {
-      message_id: `msg_${Date.now()}${Math.random().toString(36).substr(2, 9)}`,
+      message_id: `msg_${Date.now()}${Date.now().toString(36)}`,
       status: 'sent',
       to: emailData.to,
       from: emailData.from,
