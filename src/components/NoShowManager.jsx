@@ -608,9 +608,20 @@ const NoShowManager = () => {
                 }
             ];
 
+            // OBTENER DATOS REALES DE ACCIONES DE LA SEMANA - IGUAL QUE DASHBOARD
+            const { data: weeklyActions } = await supabase
+                .from('noshow_actions')
+                .select('outcome')
+                .eq('restaurant_id', restaurant.id)
+                .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+            const weeklyPreventedReal = weeklyActions?.filter(action => 
+                action.outcome === 'prevented' || action.outcome === 'confirmed'
+            ).length || 0;
+
             setNoShowData({
                 todayRisk: 2,
-                weeklyPrevented: 8,
+                weeklyPrevented: weeklyPreventedReal, // DATO REAL DE SUPABASE
                 riskLevel: 'medium',
                 riskReservations: exampleRiskReservations,
                 recentNoShows: [],
