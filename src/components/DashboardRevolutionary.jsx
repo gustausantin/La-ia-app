@@ -629,10 +629,10 @@ const DashboardRevolutionary = () => {
                 .eq('restaurant_id', restaurant.id)
                 .gte('last_visit_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
-            // 2. DATOS REALES DE NO-SHOWS desde NoShowManager
+            // 2. DATOS REALES DE NO-SHOWS - SOLO DESDE SUPABASE
             let noShowData = {
                 todayRisk: 0,
-                weeklyPrevented: 12, // Valor más realista por defecto
+                weeklyPrevented: 0, // SOLO datos reales de Supabase
                 riskLevel: 'low',
                 nextAction: null
             };
@@ -714,9 +714,20 @@ const DashboardRevolutionary = () => {
                     risk: r._debug_risk
                 })));
 
+                // OBTENER DATOS REALES DE ACCIONES DE LA SEMANA
+                const { data: weeklyActions } = await supabase
+                    .from('noshow_actions')
+                    .select('outcome')
+                    .eq('restaurant_id', restaurant.id)
+                    .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+                const weeklyPrevented = weeklyActions?.filter(action => 
+                    action.outcome === 'prevented' || action.outcome === 'confirmed'
+                ).length || 0;
+
                 noShowData = {
                     todayRisk: todayHighRiskReservations.length,
-                    weeklyPrevented: Math.floor((todayReservations?.length || 0) * 0.3), // 30% de las reservas de hoy × 7 días
+                    weeklyPrevented: weeklyPrevented, // DATO REAL DE SUPABASE
                     riskLevel: todayHighRiskReservations.length > 2 ? 'high' : 
                               todayHighRiskReservations.length > 0 ? 'medium' : 'low',
                     nextAction: todayHighRiskReservations.length > 0 ? 
