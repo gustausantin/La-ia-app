@@ -21,33 +21,33 @@ BEGIN;
 UPDATE customers 
 SET 
     total_visits = CASE 
-        WHEN customer_name = 'Carlos Mendez' THEN 8
-        WHEN customer_name = 'Ana Rodriguez' THEN 5
-        WHEN customer_name = 'Luis Martinez' THEN 12
-        WHEN customer_name = 'Maria Garcia' THEN 3
-        WHEN customer_name = 'Nil Molina' THEN 9
-        WHEN customer_name = 'Macarena Santin' THEN 9
-        WHEN customer_name = 'Lua Santin' THEN 7
+        WHEN name = 'Carlos Mendez' THEN 8
+        WHEN name = 'Ana Rodriguez' THEN 5
+        WHEN name = 'Luis Martinez' THEN 12
+        WHEN name = 'Maria Garcia' THEN 3
+        WHEN name = 'Nil Molina' THEN 9
+        WHEN name = 'Macarena Santin' THEN 9
+        WHEN name = 'Lua Santin' THEN 7
         ELSE total_visits
     END,
     no_show_count = CASE 
-        WHEN customer_name = 'Carlos Mendez' THEN 3  -- 37.5% no-show rate = ALTO RIESGO
-        WHEN customer_name = 'Ana Rodriguez' THEN 1  -- 20% no-show rate = MEDIO RIESGO
-        WHEN customer_name = 'Luis Martinez' THEN 0  -- 0% no-show rate = BAJO RIESGO
-        WHEN customer_name = 'Maria Garcia' THEN 2   -- 66% no-show rate = ALTO RIESGO
+        WHEN name = 'Carlos Mendez' THEN 3  -- 37.5% no-show rate = ALTO RIESGO
+        WHEN name = 'Ana Rodriguez' THEN 1  -- 20% no-show rate = MEDIO RIESGO
+        WHEN name = 'Luis Martinez' THEN 0  -- 0% no-show rate = BAJO RIESGO
+        WHEN name = 'Maria Garcia' THEN 2   -- 66% no-show rate = ALTO RIESGO
         ELSE 0
     END,
     last_visit_at = CASE 
-        WHEN customer_name = 'Carlos Mendez' THEN CURRENT_DATE - INTERVAL '5 days'
-        WHEN customer_name = 'Ana Rodriguez' THEN CURRENT_DATE - INTERVAL '12 days'
-        WHEN customer_name = 'Luis Martinez' THEN CURRENT_DATE - INTERVAL '3 days'
-        WHEN customer_name = 'Maria Garcia' THEN CURRENT_DATE - INTERVAL '45 days'
-        WHEN customer_name = 'Nil Molina' THEN CURRENT_DATE - INTERVAL '2 days'
-        WHEN customer_name = 'Macarena Santin' THEN CURRENT_DATE - INTERVAL '1 day'
-        WHEN customer_name = 'Lua Santin' THEN CURRENT_DATE - INTERVAL '4 days'
+        WHEN name = 'Carlos Mendez' THEN CURRENT_DATE - INTERVAL '5 days'
+        WHEN name = 'Ana Rodriguez' THEN CURRENT_DATE - INTERVAL '12 days'
+        WHEN name = 'Luis Martinez' THEN CURRENT_DATE - INTERVAL '3 days'
+        WHEN name = 'Maria Garcia' THEN CURRENT_DATE - INTERVAL '45 days'
+        WHEN name = 'Nil Molina' THEN CURRENT_DATE - INTERVAL '2 days'
+        WHEN name = 'Macarena Santin' THEN CURRENT_DATE - INTERVAL '1 day'
+        WHEN name = 'Lua Santin' THEN CURRENT_DATE - INTERVAL '4 days'
         ELSE last_visit_at
     END
-WHERE customer_name IN ('Carlos Mendez', 'Ana Rodriguez', 'Luis Martinez', 'Maria Garcia', 'Nil Molina', 'Macarena Santin', 'Lua Santin');
+WHERE name IN ('Carlos Mendez', 'Ana Rodriguez', 'Luis Martinez', 'Maria Garcia', 'Nil Molina', 'Macarena Santin', 'Lua Santin');
 
 -- ==========================================
 -- 2. CREAR RESERVAS HOY CON RIESGO REAL
@@ -86,7 +86,7 @@ FROM restaurants r
 CROSS JOIN (
     -- RESERVA 1: Carlos Mendez - ALTO RIESGO (37.5% no-show + grupo grande + hora pico)
     SELECT 
-        (SELECT id FROM customers WHERE customer_name = 'Carlos Mendez' LIMIT 1) as id,
+        (SELECT id FROM customers WHERE name = 'Carlos Mendez' LIMIT 1) as id,
         'Carlos Mendez' as customer_name,
         '+34666111222' as phone,
         'carlos.mendez@email.com' as email,
@@ -98,7 +98,7 @@ CROSS JOIN (
     
     -- RESERVA 2: Maria Garcia - ALTO RIESGO (66% no-show + último momento + domingo)
     SELECT 
-        (SELECT id FROM customers WHERE customer_name = 'Maria Garcia' LIMIT 1) as id,
+        (SELECT id FROM customers WHERE name = 'Maria Garcia' LIMIT 1) as id,
         'Maria Garcia' as customer_name,
         '+34666333444' as phone,
         'maria.garcia@email.com' as email,
@@ -110,7 +110,7 @@ CROSS JOIN (
     
     -- RESERVA 3: Ana Rodriguez - RIESGO MEDIO (20% no-show + hora normal)
     SELECT 
-        (SELECT id FROM customers WHERE customer_name = 'Ana Rodriguez' LIMIT 1) as id,
+        (SELECT id FROM customers WHERE name = 'Ana Rodriguez' LIMIT 1) as id,
         'Ana Rodriguez' as customer_name,
         '+34666555666' as phone,
         'ana.rodriguez@email.com' as email,
@@ -122,7 +122,7 @@ CROSS JOIN (
     
     -- RESERVA 4: Luis Martinez - BAJO RIESGO (0% no-show + cliente fiel)
     SELECT 
-        (SELECT id FROM customers WHERE customer_name = 'Luis Martinez' LIMIT 1) as id,
+        (SELECT id FROM customers WHERE name = 'Luis Martinez' LIMIT 1) as id,
         'Luis Martinez' as customer_name,
         '+34666777888' as phone,
         'luis.martinez@email.com' as email,
@@ -134,7 +134,7 @@ CROSS JOIN (
     
     -- RESERVA 5: Cliente Nuevo - RIESGO MEDIO (cliente nuevo + mesa individual)
     SELECT 
-        (SELECT id FROM customers WHERE customer_name = 'Pedro Nuevo' LIMIT 1) as id,
+        (SELECT id FROM customers WHERE name = 'Pedro Nuevo' LIMIT 1) as id,
         'Pedro Nuevo' as customer_name,
         '+34666999000' as phone,
         'pedro.nuevo@email.com' as email,
@@ -171,40 +171,40 @@ SELECT
     res.id as reservation_id,
     c.id as customer_id,
     CASE 
-        WHEN c.customer_name = 'Carlos Mendez' THEN 'high'
-        WHEN c.customer_name = 'Ana Rodriguez' THEN 'medium' 
+        WHEN c.name = 'Carlos Mendez' THEN 'high'
+        WHEN c.name = 'Ana Rodriguez' THEN 'medium' 
         ELSE 'low'
     END as risk_level,
     CASE 
-        WHEN c.customer_name = 'Carlos Mendez' THEN 85
-        WHEN c.customer_name = 'Ana Rodriguez' THEN 65
+        WHEN c.name = 'Carlos Mendez' THEN 85
+        WHEN c.name = 'Ana Rodriguez' THEN 65
         ELSE 35
     END as risk_score,
     CASE 
-        WHEN c.customer_name = 'Carlos Mendez' THEN '["historial_noshows", "hora_pico", "grupo_grande"]'::jsonb
-        WHEN c.customer_name = 'Ana Rodriguez' THEN '["historial_medio", "cliente_nuevo"]'::jsonb
+        WHEN c.name = 'Carlos Mendez' THEN '["historial_noshows", "hora_pico", "grupo_grande"]'::jsonb
+        WHEN c.name = 'Ana Rodriguez' THEN '["historial_medio", "cliente_nuevo"]'::jsonb
         ELSE '["cliente_fiel"]'::jsonb
     END as risk_factors,
     (SELECT id FROM message_templates WHERE template_name = 'noshow_prevention_high' LIMIT 1) as template_id,
     'whatsapp_confirmation' as action_type,
     CASE 
-        WHEN c.customer_name = 'Carlos Mendez' THEN 'Hola Carlos, confirmamos tu reserva para 8 personas hoy a las 20:00. ¡Te esperamos!'
-        WHEN c.customer_name = 'Ana Rodriguez' THEN 'Hola Ana, recordatorio de tu reserva para 2 personas hoy a las 19:30.'
+        WHEN c.name = 'Carlos Mendez' THEN 'Hola Carlos, confirmamos tu reserva para 8 personas hoy a las 20:00. ¡Te esperamos!'
+        WHEN c.name = 'Ana Rodriguez' THEN 'Hola Ana, recordatorio de tu reserva para 2 personas hoy a las 19:30.'
         ELSE 'Mensaje de confirmación estándar'
     END as message_sent,
     CASE 
-        WHEN c.customer_name = 'Carlos Mendez' THEN 'sent'
-        WHEN c.customer_name = 'Ana Rodriguez' THEN 'sent'
+        WHEN c.name = 'Carlos Mendez' THEN 'sent'
+        WHEN c.name = 'Ana Rodriguez' THEN 'sent'
         ELSE 'failed'
     END as status,
     CASE 
-        WHEN c.customer_name = 'Carlos Mendez' THEN 'Perfecto, allí estaremos'
-        WHEN c.customer_name = 'Ana Rodriguez' THEN 'Confirmado'
+        WHEN c.name = 'Carlos Mendez' THEN 'Perfecto, allí estaremos'
+        WHEN c.name = 'Ana Rodriguez' THEN 'Confirmado'
         ELSE NULL
     END as response_received,
     CASE 
-        WHEN c.customer_name = 'Carlos Mendez' THEN 'prevented'  -- No-show evitado
-        WHEN c.customer_name = 'Ana Rodriguez' THEN 'confirmed'  -- Cliente confirmó
+        WHEN c.name = 'Carlos Mendez' THEN 'prevented'  -- No-show evitado
+        WHEN c.name = 'Ana Rodriguez' THEN 'confirmed'  -- Cliente confirmó
         ELSE 'no_response'
     END as outcome,
     CURRENT_DATE - INTERVAL '3 days' as created_at,
@@ -213,7 +213,7 @@ FROM restaurants r
 CROSS JOIN customers c
 LEFT JOIN reservations res ON res.customer_id = c.id AND res.reservation_date = CURRENT_DATE - INTERVAL '3 days'
 WHERE r.name = 'Restaurante Demo' 
-AND c.customer_name IN ('Carlos Mendez', 'Ana Rodriguez', 'Luis Martinez')
+AND c.name IN ('Carlos Mendez', 'Ana Rodriguez', 'Luis Martinez')
 LIMIT 5;
 
 -- ==========================================
@@ -269,9 +269,9 @@ COMMIT;
 
 -- Ver reservas de hoy con riesgo
 SELECT 
-    customer_name,
-    reservation_time,
-    party_size,
+    r.customer_name,
+    r.reservation_time,
+    r.party_size,
     CASE 
         WHEN c.no_show_count::float / NULLIF(c.total_visits, 0) > 0.3 THEN 'ALTO'
         WHEN c.no_show_count::float / NULLIF(c.total_visits, 0) > 0.15 THEN 'MEDIO'
