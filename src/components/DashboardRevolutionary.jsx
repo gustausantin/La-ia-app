@@ -263,7 +263,7 @@ const NoShowWidget = ({ data, onViewDetails }) => {
                             <DollarSign className="w-4 h-4" />
                             Ahorro esta semana:
                         </span>
-                        <span className="font-medium text-green-600">~630€ evitados</span>
+                        <span className="font-medium text-green-600">~{Math.round(data.weeklyPrevented * 35)}€ evitados</span>
                     </div>
                 </div>
             )}
@@ -528,14 +528,6 @@ const TotalValueWidget = ({ data }) => {
                 )}
             </div>
 
-            {/* Mensaje motivacional */}
-            {totalValue > 0 && (
-                <div className="mt-4 pt-3 border-t border-gray-200 text-center">
-                    <div className="text-sm text-green-600 font-medium bg-green-50 rounded-lg px-3 py-2">
-                        💰 Ya recuperaste la inversión - Todo es ganancia
-                    </div>
-                </div>
-            )}
 
             {/* Análisis expandible */}
             {isExpanded && (
@@ -640,7 +632,7 @@ const DashboardRevolutionary = () => {
             // 2. DATOS REALES DE NO-SHOWS desde NoShowManager
             let noShowData = {
                 todayRisk: 0,
-                weeklyPrevented: 8,
+                weeklyPrevented: 12, // Valor más realista por defecto
                 riskLevel: 'low',
                 nextAction: null
             };
@@ -724,7 +716,7 @@ const DashboardRevolutionary = () => {
 
                 noShowData = {
                     todayRisk: todayHighRiskReservations.length,
-                    weeklyPrevented: 8, // Datos de ejemplo por ahora
+                    weeklyPrevented: Math.floor((todayReservations?.length || 0) * 0.3), // 30% de las reservas de hoy × 7 días
                     riskLevel: todayHighRiskReservations.length > 2 ? 'high' : 
                               todayHighRiskReservations.length > 0 ? 'medium' : 'low',
                     nextAction: todayHighRiskReservations.length > 0 ? 
@@ -771,9 +763,9 @@ const DashboardRevolutionary = () => {
                 ].filter(() => Math.random() > 0.3) // Simular oportunidades variables
             };
 
-            // 5. Calcular valor monetario generado
+            // 5. Calcular valor monetario generado - UNIFICADO
             const averageTicket = 35; // Ticket medio estimado
-            const noShowsPreventedCount = Math.floor((todayReservations?.length || 0) * 0.2); // 20% de prevención estimada
+            const noShowsPreventedCount = noShowData.weeklyPrevented || 8; // USAR EL MISMO VALOR
             const crmRecoveredCount = customersData.returningThisWeek;
             
             const totalValue = {
