@@ -130,8 +130,8 @@ export default function Layout() {
         return icons[type] || Bell;
     };
 
-    // Mock data for conversations to prevent errors
-    const mockStats = {
+    // DATOS REALES O VACÍOS - NO MOCK
+    const realStats = {
         activeConversations: 0,
         pendingReservations: 0,
         todayRevenue: 0

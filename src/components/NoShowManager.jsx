@@ -587,26 +587,7 @@ const NoShowManager = () => {
             console.error('Error cargando datos de no-shows:', error);
             
             // Crear datos de ejemplo realistas para que la UI sea funcional
-            const exampleRiskReservations = [
-                {
-                    id: 'example-1',
-                    customer_name: 'Carlos Mendez',
-                    reservation_date: new Date().toISOString(),
-                    reservation_time: '20:00',
-                    party_size: 4,
-                    risk: { level: 'high', score: 85, factors: ['historial_noshows', 'hora_pico', 'clima_lluvia'] },
-                    recommended_action: 'WhatsApp confirmación'
-                },
-                {
-                    id: 'example-2',
-                    customer_name: 'Ana Rodriguez',
-                    reservation_date: new Date(Date.now() + 24*60*60*1000).toISOString(),
-                    reservation_time: '19:30',
-                    party_size: 2,
-                    risk: { level: 'medium', score: 65, factors: ['cliente_nuevo', 'reserva_online'] },
-                    recommended_action: 'WhatsApp recordatorio'
-                }
-            ];
+            // ELIMINADO: exampleRiskReservations - SOLO DATOS REALES
 
             // OBTENER DATOS REALES DE ACCIONES DE LA SEMANA - IGUAL QUE DASHBOARD
             const { data: weeklyActions } = await supabase
@@ -619,29 +600,73 @@ const NoShowManager = () => {
                 action.final_outcome === 'attended'
             ).length || 0;
 
+            // CALCULAR RESERVAS DE HOY CON ALTO RIESGO - DESDE SUPABASE
+            const { data: todayReservations } = await supabase
+                .from('reservations')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .eq('reservation_date', new Date().toISOString().split('T')[0]);
+
+            // CALCULAR RIESGO REAL USANDO LA MISMA LÓGICA QUE DASHBOARD
+            const todayHighRiskReservations = todayReservations?.filter(reservation => {
+                let riskScore = 0;
+                
+                // Factor 1: Hora de la reserva (25% del peso)
+                const hour = parseInt(reservation.reservation_time?.split(':')[0] || '19');
+                if (hour >= 20 || hour <= 13) {
+                    riskScore += 25;
+                }
+                
+                // Factor 2: Tamaño del grupo (15% del peso)
+                if (reservation.party_size > 6) {
+                    riskScore += 15;
+                } else if (reservation.party_size === 1) {
+                    riskScore += 10;
+                }
+                
+                // Factor 3: Día de la semana (10% del peso)
+                const dayOfWeek = new Date(reservation.reservation_date).getDay();
+                if (dayOfWeek === 0) { // Domingo
+                    riskScore += 10;
+                } else if (dayOfWeek === 6) { // Sábado
+                    riskScore += 5;
+                }
+                
+                return riskScore >= 85; // MISMO UMBRAL QUE DASHBOARD
+            }) || [];
+
+            const todayRiskCount = todayHighRiskReservations.length;
+            const riskLevel = todayRiskCount > 2 ? 'high' : todayRiskCount > 0 ? 'medium' : 'low';
+
             setNoShowData({
-                todayRisk: 2,
+                todayRisk: todayRiskCount, // DATO REAL DE SUPABASE
                 weeklyPrevented: weeklyPreventedReal, // DATO REAL DE SUPABASE
-                riskLevel: 'medium',
-                riskReservations: exampleRiskReservations,
-                recentNoShows: [],
-                preventionActions: [
-                    {
-                        type: 'call',
-                        priority: 'high',
-                        reservation: exampleRiskReservations[0],
-                        action: 'WhatsApp confirmación',
-                        message: 'Enviar WhatsApp a Carlos Mendez: "Hola Carlos, confirmamos tu reserva para 4 personas hoy a las 20:00. ¡Te esperamos!"'
-                    }
-                ],
+                riskLevel: riskLevel, // CALCULADO DESDE DATOS REALES
+                riskReservations: todayHighRiskReservations, // RESERVAS REALES
+                recentNoShows: [], // TODO: Obtener desde noshow_actions
+                preventionActions: todayHighRiskReservations.map(reservation => ({
+                    type: 'whatsapp',
+                    priority: 'high',
+                    reservation: reservation,
+                    action: 'WhatsApp confirmación',
+                    message: `Enviar WhatsApp a ${reservation.customer_name}: "Hola ${reservation.customer_name}, confirmamos tu reserva para ${reservation.party_size} personas hoy a las ${reservation.reservation_time}. ¡Te esperamos!"`
+                })),
                 predictions: {
-                    totalAnalyzed: 12,
-                    highRisk: 2,
-                    mediumRisk: 3
+                    totalAnalyzed: todayReservations?.length || 0,
+                    highRisk: todayHighRiskReservations.length,
+                    mediumRisk: todayReservations?.filter(r => {
+                        let score = 0;
+                        const hour = parseInt(r.reservation_time?.split(':')[0] || '19');
+                        if (hour >= 20 || hour <= 13) score += 25;
+                        if (r.party_size > 6) score += 15;
+                        else if (r.party_size === 1) score += 10;
+                        return score >= 50 && score < 85;
+                    }).length || 0
                 },
                 restaurantMetrics: {
-                    total_noshows: 15,
-                    prevention_rate: 0.73
+                    total_noshows: weeklyActions?.filter(a => a.final_outcome === 'no_show').length || 0,
+                    prevention_rate: weeklyActions?.length > 0 ? 
+                        (weeklyActions.filter(a => a.final_outcome === 'attended').length / weeklyActions.length) : 0
                 },
                 isLoading: false,
                 error: null

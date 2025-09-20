@@ -139,25 +139,7 @@ export default function Analytics() {
     const [roiInfo, setRoiInfo] = useState({});
     const [simpleInsights, setSimpleInsights] = useState([]);
     
-    // Datos demo para mostrar funcionalidad
-    const demoData = {
-        metrics: {
-            totalConversaciones: 241,
-            reservasExitosas: 178,
-            tasaConversion: 73.9,
-            tiempoRespuesta: 2.2,
-            satisfaccion: 4.3,
-        },
-        chartData: [
-            { date: '21 ene', conversaciones: 25, reservas: 18 },
-            { date: '22 ene', conversaciones: 30, reservas: 22 },
-            { date: '23 ene', conversaciones: 28, reservas: 20 },
-            { date: '24 ene', conversaciones: 35, reservas: 26 },
-            { date: '25 ene', conversaciones: 40, reservas: 30 },
-            { date: '26 ene', conversaciones: 45, reservas: 34 },
-            { date: '27 ene', conversaciones: 38, reservas: 28 },
-        ]
-    };
+    // ELIMINADO: demoData - SOLO DATOS REALES DE SUPABASE
     
     // Cargar datos del usuario
     const loadUserData = useCallback(async () => {
@@ -271,9 +253,9 @@ export default function Analytics() {
     }, [isReady, loadUserData]);
     
     // Decidir qué datos mostrar
-    const displayMetrics = showDemo ? demoData.metrics : userMetrics;
-    const displayChartData = showDemo ? demoData.chartData : chartData;
-    const displayROI = showDemo ? SimpleROICalculator.calculate(demoData.metrics.reservasExitosas) : roiInfo;
+    const displayMetrics = userMetrics; // SOLO DATOS REALES
+    const displayChartData = chartData; // SOLO DATOS REALES  
+    const displayROI = roiInfo; // SOLO DATOS REALES
     
     if (!isReady || loading) {
         return (

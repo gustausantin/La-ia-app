@@ -130,25 +130,9 @@ const ComunicacionSimplificada = () => {
         } catch (error) {
             console.error('Error cargando conversaciones:', error);
             
-            // Crear datos de ejemplo para que la UI funcione
-            const exampleConversations = [
-                {
-                    id: 'example-1',
-                    customer_name: 'Cliente Ejemplo',
-                    customer_phone: '+34666000000',
-                    customer_email: 'ejemplo@email.com',
-                    subject: 'Conversación de ejemplo',
-                    status: 'open',
-                    priority: 'normal',
-                    channel: 'whatsapp',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                    metadata: { last_message: 'Esta es una conversación de ejemplo' }
-                }
-            ];
-            
-            setConversations(exampleConversations);
-            setFilteredConversations(exampleConversations);
+            // NO HAY DATOS - MOSTRAR ESTADO VACÍO
+            setConversations([]);
+            setFilteredConversations([]);
             
             // Toast con método correcto de react-hot-toast
             toast('Usando datos de ejemplo para conversaciones', {

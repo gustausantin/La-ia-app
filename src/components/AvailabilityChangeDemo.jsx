@@ -24,19 +24,12 @@ const AvailabilityChangeDemo = () => {
         // Simular un delay como si fuera una operación real
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        const demoData = {
-            table_change: { id: 'demo-table-1', name: 'Mesa Demo', capacity: 4 },
-            schedule_change: { monday: { open: '10:00', close: '23:00' } },
-            policy_change: { reservation_duration: 120, buffer_time: 20 },
-            special_event_change: { id: 'demo-event-1', name: 'Evento Demo', start_date: '2025-09-20' }
-        };
+        // ELIMINADO: demoData - SOLO DATOS REALES
 
-        const actions = {
-            table_change: () => changeDetection.onTableChange('added', demoData.table_change),
-            schedule_change: () => changeDetection.onScheduleChange(demoData.schedule_change),
-            policy_change: () => changeDetection.onPolicyChange(demoData.policy_change),
-            special_event_change: () => changeDetection.onSpecialEventChange('added', demoData.special_event_change)
-        };
+        // COMPONENTE DESHABILITADO - NO HAY DATOS DEMO
+        toast.error('❌ Funcionalidad deshabilitada - Solo datos reales permitidos');
+        setLoading(false);
+        return;
 
         if (actions[type]) {
             actions[type]();
