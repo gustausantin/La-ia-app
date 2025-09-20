@@ -32,39 +32,77 @@ const AnalyticsDashboard = React.memo(({ conversations = [], messages = [] }) =>
   // Colores para gráficos
   const CHART_COLORS = ['#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#EC4899'];
 
-  // Calcular datos de analytics con memoización
+  // Calcular datos de analytics REALES desde conversaciones y mensajes
   const analyticsData = useMemo(() => {
-    // Datos de ejemplo mejorados - en producción vendrían de la base de datos
-    const conversationsByHour = Array.from({ length: 24 }, (_, hour) => ({
-      hour: `${hour.toString().padStart(2, '0')}:00`,
-      conversations: Math.floor(Math.random() * 10) + 1,
-      ai_handled: Math.floor(Math.random() * 8) + 1,
-    }));
+    // Datos REALES calculados desde props
+    const conversationsByHour = Array.from({ length: 24 }, (_, hour) => {
+      const hourStr = `${hour.toString().padStart(2, '0')}:00`;
+      const hourConversations = conversations.filter(conv => {
+        const convHour = new Date(conv.created_at).getHours();
+        return convHour === hour;
+      });
+      return {
+        hour: hourStr,
+        conversations: hourConversations.length,
+        ai_handled: hourConversations.filter(c => c.ai_handled).length,
+      };
+    });
 
-    const responseTimeData = Array.from({ length: 7 }, (_, day) => ({
-      day: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][day],
-      ai_response: Math.random() * 2 + 0.5,
-      human_response: Math.random() * 10 + 5,
-    }));
+    const responseTimeData = Array.from({ length: 7 }, (_, dayIndex) => {
+      const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+      const dayConversations = conversations.filter(conv => {
+        const convDay = new Date(conv.created_at).getDay();
+        return convDay === (dayIndex + 1) % 7; // Ajustar para que Lun=1
+      });
+      
+      const aiResponseTimes = dayConversations.filter(c => c.ai_handled).map(c => c.response_time || 0);
+      const humanResponseTimes = dayConversations.filter(c => !c.ai_handled).map(c => c.response_time || 0);
+      
+      return {
+        day: dayNames[dayIndex],
+        ai_response: aiResponseTimes.length > 0 ? aiResponseTimes.reduce((a, b) => a + b, 0) / aiResponseTimes.length : 0,
+        human_response: humanResponseTimes.length > 0 ? humanResponseTimes.reduce((a, b) => a + b, 0) / humanResponseTimes.length : 0,
+      };
+    });
 
-    const channelDistribution = [
-      { name: 'WhatsApp', count: 45, percentage: 45 },
-      { name: 'Teléfono', count: 25, percentage: 25 },
-      { name: 'Email', count: 20, percentage: 20 },
-      { name: 'Web', count: 10, percentage: 10 },
-    ];
+    // Calcular distribución real por canal
+    const channels = ['whatsapp', 'phone', 'email', 'web'];
+    const channelCounts = channels.map(channel => {
+      const count = conversations.filter(c => c.channel === channel).length;
+      return { name: channel === 'whatsapp' ? 'WhatsApp' : channel === 'phone' ? 'Teléfono' : channel === 'email' ? 'Email' : 'Web', count, percentage: conversations.length > 0 ? Math.round((count / conversations.length) * 100) : 0 };
+    });
+    const channelDistribution = channelCounts.filter(c => c.count > 0);
 
-    const satisfactionTrend = Array.from({ length: 30 }, (_, day) => ({
-      day: day + 1,
-      satisfaction: 3.5 + Math.random() * 1.5,
-      volume: Math.floor(Math.random() * 50) + 10,
-    }));
+    // Calcular tendencia de satisfacción real (últimos 30 días)
+    const satisfactionTrend = Array.from({ length: 30 }, (_, dayIndex) => {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() - (29 - dayIndex));
+      const dayConversations = conversations.filter(conv => {
+        const convDate = new Date(conv.created_at);
+        return convDate.toDateString() === targetDate.toDateString();
+      });
+      
+      const satisfactionScores = dayConversations.map(c => c.satisfaction_rating || c.satisfaction_score || 0).filter(s => s > 0);
+      
+      return {
+        day: dayIndex + 1,
+        satisfaction: satisfactionScores.length > 0 ? satisfactionScores.reduce((a, b) => a + b, 0) / satisfactionScores.length : 0,
+        volume: dayConversations.length,
+      };
+    });
 
+    // Calcular métricas de IA reales
+    const totalConversations = conversations.length;
+    const aiHandledCount = conversations.filter(c => c.ai_handled).length;
+    const resolvedCount = conversations.filter(c => c.status === 'resolved' || c.status === 'closed').length;
+    const handoffCount = conversations.filter(c => c.human_takeover).length;
+    const accurateCount = conversations.filter(c => (c.satisfaction_rating || c.satisfaction_score || 0) >= 4).length;
+    
     const aiMetrics = {
-      automation_rate: 78,
-      resolution_rate: 85,
-      handoff_rate: 15,
-      accuracy: 92,
+      automation_rate: totalConversations > 0 ? Math.round((aiHandledCount / totalConversations) * 100) : 0,
+      resolution_rate: totalConversations > 0 ? Math.round((resolvedCount / totalConversations) * 100) : 0,
+      handoff_rate: totalConversations > 0 ? Math.round((handoffCount / totalConversations) * 100) : 0,
+      accuracy: totalConversations > 0 ? Math.round((accurateCount / totalConversations) * 100) : 0,
     };
 
     return {
@@ -126,15 +164,15 @@ const AnalyticsDashboard = React.memo(({ conversations = [], messages = [] }) =>
         <MetricCard
           icon={MessageSquare}
           title="Conversaciones"
-          value="1,247"
-          subtitle="Este mes"
+          value={conversations.length.toLocaleString()}
+          subtitle="Total"
           trend={12}
           color="blue"
         />
         <MetricCard
           icon={Clock}
           title="Tiempo de Respuesta"
-          value="1.2min"
+          value={conversations.length > 0 ? `${(conversations.reduce((acc, c) => acc + (c.response_time || 0), 0) / conversations.length).toFixed(1)}min` : '0min'}
           subtitle="Promedio"
           trend={-8}
           color="green"
@@ -150,7 +188,7 @@ const AnalyticsDashboard = React.memo(({ conversations = [], messages = [] }) =>
         <MetricCard
           icon={Star}
           title="Satisfacción"
-          value="4.6/5"
+          value={conversations.length > 0 ? `${(conversations.reduce((acc, c) => acc + (c.satisfaction_rating || c.satisfaction_score || 0), 0) / conversations.length).toFixed(1)}/5` : '0/5'}
           subtitle="Promedio del cliente"
           trend={3}
           color="yellow"

@@ -643,16 +643,16 @@ const DashboardRevolutionary = () => {
                     let riskScore = 0;
                     let riskFactors = [];
                     
-                    // 📊 Factor 1: Historial del cliente (40% del peso) - SIMULADO por ahora
-                    // TODO: Obtener historial real del cliente
-                    const simulatedNoShowRate = Math.random() * 0.4; // 0-40%
-                    if (simulatedNoShowRate > 0.3) {
-                        riskScore += 40;
-                        riskFactors.push('historial_noshows');
-                    } else if (simulatedNoShowRate > 0.15) {
-                        riskScore += 25;
-                        riskFactors.push('historial_medio');
-                    }
+                // 📊 Factor 1: Historial del cliente (40% del peso) - DATOS REALES
+                // Usar historial real del cliente desde customers table
+                const customerNoShowRate = reservation.customer?.churn_risk_score || 0;
+                if (customerNoShowRate > 70) {
+                    riskScore += 40;
+                    riskFactors.push('historial_noshows');
+                } else if (customerNoShowRate > 40) {
+                    riskScore += 25;
+                    riskFactors.push('historial_medio');
+                }
                     
                     // ⏰ Factor 2: Hora de la reserva (25% del peso) - LÓGICA REAL
                     const hour = reservation.reservation_time ? parseInt(reservation.reservation_time.split(':')[0]) : 19;
@@ -680,11 +680,8 @@ const DashboardRevolutionary = () => {
                         riskFactors.push('sabado');
                     }
                     
-                    // 🌧️ Factor 5: Clima (5% del peso) - SIMULADO por ahora
-                    if (Math.random() < 0.3) { // 30% probabilidad de lluvia
-                        riskScore += 5;
-                        riskFactors.push('clima_lluvia');
-                    }
+                // 🌧️ Factor 5: Clima (5% del peso) - DESHABILITADO (requiere API externa)
+                // Factor clima deshabilitado hasta integrar API meteorológica real
                     
                     // ⚡ Factor 6: Tiempo de anticipación (5% del peso) - COMPORTAMIENTO REAL
                     const reservationDateTime = new Date(`${reservation.reservation_date}T${reservation.reservation_time}`);
@@ -771,7 +768,10 @@ const DashboardRevolutionary = () => {
                         description: '3 clientes VIP cumplen años',
                         action: 'birthday_campaign'
                     }
-                ].filter(() => Math.random() > 0.3) // Simular oportunidades variables
+                ].filter(opp => {
+                    // Solo mostrar oportunidades con datos reales de Supabase
+                    return opp.data && opp.data.length > 0;
+                })
             };
 
             // 5. Calcular valor monetario generado - UNIFICADO

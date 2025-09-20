@@ -32,37 +32,37 @@ const AdvancedCharts = React.memo(({ data, dateRange }) => {
       return {
         day: `${day}`,
         date: `2024-01-${day.toString().padStart(2, '0')}`,
-        reservas: Math.floor(Math.random() * 20) + 5,
-        ingresos: Math.floor(Math.random() * 2000) + 500,
-        consultas: Math.floor(Math.random() * 40) + 10,
-        conversion: Math.random() * 30 + 15,
-        satisfaction: Math.random() * 1.5 + 3.5,
+        reservas: 0, // DATOS REALES REQUERIDOS
+        ingresos: 0, // DATOS REALES REQUERIDOS
+        consultas: 0, // DATOS REALES REQUERIDOS
+        conversion: 0, // DATOS REALES REQUERIDOS
+        satisfaction: 0, // DATOS REALES REQUERIDOS
       };
     });
 
     // Datos por hora del día
     const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
       hour: `${hour.toString().padStart(2, '0')}:00`,
-      reservas: Math.floor(Math.random() * 8) + 1,
-      consultas: Math.floor(Math.random() * 15) + 3,
-      tiempo_respuesta: Math.random() * 3 + 0.5,
+      reservas: 0, // DATOS REALES REQUERIDOS
+      consultas: 0, // DATOS REALES REQUERIDOS
+      tiempo_respuesta: 0, // DATOS REALES REQUERIDOS
     }));
 
-    // Datos de embudo de conversión
+    // Datos de embudo de conversión - SOLO DATOS REALES
     const funnelData = [
-      { stage: 'Consultas', value: 1247, percentage: 100 },
-      { stage: 'Interesados', value: 892, percentage: 71.5 },
-      { stage: 'Propuestas', value: 634, percentage: 50.8 },
-      { stage: 'Reservas', value: 356, percentage: 28.5 },
-      { stage: 'Completadas', value: 327, percentage: 26.2 },
+      { stage: 'Consultas', value: 0, percentage: 0 }, // REQUIERE DATOS REALES
+      { stage: 'Interesados', value: 0, percentage: 0 }, // REQUIERE DATOS REALES
+      { stage: 'Propuestas', value: 0, percentage: 0 }, // REQUIERE DATOS REALES
+      { stage: 'Reservas', value: 0, percentage: 0 }, // REQUIERE DATOS REALES
+      { stage: 'Completadas', value: 0, percentage: 0 }, // REQUIERE DATOS REALES
     ];
 
-    // Datos de canales
+    // Datos de canales - SOLO DATOS REALES
     const channelPerformance = [
-      { canal: 'WhatsApp', reservas: 145, conversion: 32.1, satisfaccion: 4.8 },
-      { canal: 'Teléfono', reservas: 89, conversion: 28.4, satisfaccion: 4.6 },
-      { canal: 'Web', reservas: 67, conversion: 22.3, satisfaccion: 4.4 },
-      { canal: 'Email', reservas: 34, conversion: 18.7, satisfaccion: 4.2 },
+      { canal: 'WhatsApp', reservas: 0, conversion: 0, satisfaccion: 0 }, // REQUIERE DATOS REALES
+      { canal: 'Teléfono', reservas: 0, conversion: 0, satisfaccion: 0 }, // REQUIERE DATOS REALES
+      { canal: 'Web', reservas: 0, conversion: 0, satisfaccion: 0 }, // REQUIERE DATOS REALES
+      { canal: 'Email', reservas: 0, conversion: 0, satisfaccion: 0 }, // REQUIERE DATOS REALES
     ];
 
     return {

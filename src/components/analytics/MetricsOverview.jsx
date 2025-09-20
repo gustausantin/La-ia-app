@@ -30,28 +30,28 @@ const MetricsOverview = React.memo(({ data, dateRange }) => {
     }
 
     return {
-      totalReservations: data.totalReservations || 247,
-      totalRevenue: data.totalRevenue || 18420,
-      averageTicket: data.averageTicket || 74.6,
-      conversionRate: data.conversionRate || 28.5,
-      agentEfficiency: data.agentEfficiency || 94.2,
-      customerSatisfaction: data.customerSatisfaction || 4.7,
-      responseTime: data.responseTime || 1.2,
-      activeConversations: data.activeConversations || 12
+      totalReservations: data.totalReservations || 0,
+      totalRevenue: data.totalRevenue || 0,
+      averageTicket: data.averageTicket || 0,
+      conversionRate: data.conversionRate || 0,
+      agentEfficiency: data.agentEfficiency || 0,
+      customerSatisfaction: data.customerSatisfaction || 0,
+      responseTime: data.responseTime || 0,
+      activeConversations: data.activeConversations || 0
     };
   }, [data]);
 
-  // Comparación con período anterior (mock data)
+  // Comparación con período anterior (debe venir de props o ser calculado)
   const previousMetrics = useMemo(() => ({
-    totalReservations: 198,
-    totalRevenue: 15340,
-    averageTicket: 69.2,
-    conversionRate: 24.1,
-    agentEfficiency: 87.3,
-    customerSatisfaction: 4.4,
-    responseTime: 2.1,
-    activeConversations: 8
-  }), []);
+    totalReservations: data?.previousTotalReservations || 0,
+    totalRevenue: data?.previousTotalRevenue || 0,
+    averageTicket: data?.previousAverageTicket || 0,
+    conversionRate: data?.previousConversionRate || 0,
+    agentEfficiency: data?.previousAgentEfficiency || 0,
+    customerSatisfaction: data?.previousCustomerSatisfaction || 0,
+    responseTime: data?.previousResponseTime || 0,
+    activeConversations: data?.previousActiveConversations || 0
+  }), [data]);
 
   // Calcular cambios porcentuales
   const getPercentageChange = (current, previous) => {
