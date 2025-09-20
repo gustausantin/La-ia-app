@@ -271,7 +271,7 @@ const AvailabilityManager = () => {
                 slotsCreated: results.affected_count,
                 dateRange: `HOY hasta ${endDateFormatted}`,
                 duration: duration,
-                buffer: buffer,
+                buffer: 15, // Buffer por defecto en minutos
                 timestamp: new Date().toLocaleString(),
                 smartRegeneration: true,
                 action: results.action,
@@ -370,7 +370,7 @@ const AvailabilityManager = () => {
             const summaryMessage = `✅ Disponibilidades generadas exitosamente:
             
 📊 RESUMEN:
-• ${data} slots creados
+• ${data.slots_created || 0} slots creados
 • Desde HOY hasta ${endDateFormatted} (${advanceDays} días)
 • Duración por reserva: ${duration} min
 • Slots consecutivos cada hora
@@ -389,10 +389,10 @@ const AvailabilityManager = () => {
 
             // Actualizar estado local inmediatamente para reflejar cambios
             const successData = {
-                slotsCreated: data,
+                slotsCreated: data.slots_created || 0,
                 dateRange: `HOY hasta ${endDateFormatted}`,
                 duration: duration,
-                buffer: buffer,
+                buffer: 15, // Buffer por defecto en minutos
                 timestamp: new Date().toLocaleString()
             };
             
