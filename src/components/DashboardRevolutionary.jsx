@@ -714,12 +714,12 @@ const DashboardRevolutionary = () => {
                 // OBTENER DATOS REALES DE ACCIONES DE LA SEMANA
                 const { data: weeklyActions } = await supabase
                     .from('noshow_actions')
-                    .select('final_outcome')
+                    .select('final_outcome, customer_response, prevented_noshow')
                     .eq('restaurant_id', restaurant.id)
                     .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
                 const weeklyPrevented = weeklyActions?.filter(action => 
-                    action.final_outcome === 'attended'
+                    action.customer_response === 'confirmed' || action.prevented_noshow === true
                 ).length || 0;
 
                 noShowData = {
@@ -794,8 +794,16 @@ const DashboardRevolutionary = () => {
                 systemStatus = 'good';
             }
 
+            // Obtener no-shows gestionados HOY
+            const { data: todayNoShows } = await supabase
+                .from('noshow_actions')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .gte('reservation_date', format(new Date(), 'yyyy-MM-dd'))
+                .lte('reservation_date', format(new Date(), 'yyyy-MM-dd'));
+
             const metrics = {
-                noShowsToday: noShowData.todayRisk, // Usar datos reales de riesgo
+                noShowsToday: todayNoShows?.length || 0, // No-shows gestionados hoy
                 reservationsToday: todayReservations?.length || 0,
                 activeCustomers: activeCustomers?.length || 0,
                 crmOpportunities: crmOpportunities.opportunities.length
