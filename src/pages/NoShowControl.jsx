@@ -1,6 +1,6 @@
 // NoShowControl.jsx - Página simple de control de no-shows
 import React from "react";
-import NoShowManagerSimple from "../components/NoShowManagerSimple";
+import NoShowManagerProfesional from "../components/NoShowManagerProfesional";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -34,7 +34,7 @@ export default function NoShowControl() {
 
             {/* Contenido principal */}
             <div className="max-w-7xl mx-auto p-6">
-                <NoShowManagerSimple />
+                <NoShowManagerProfesional />
             </div>
         </div>
     );
