@@ -588,41 +588,48 @@ const NoShowManager = () => {
         } catch (error) {
             console.error('Error cargando datos de no-shows:', error);
             
-            // Crear datos de ejemplo realistas para que la UI sea funcional
-            // ELIMINADO: exampleRiskReservations - SOLO DATOS REALES
+            // En caso de error, establecer datos vacíos pero válidos
+            try {
+                // OBTENER DATOS REALES DE ACCIONES DE LA SEMANA - IGUAL QUE DASHBOARD
+                const { data: weeklyActions } = await supabase
+                    .from('noshow_actions')
+                    .select('final_outcome')
+                    .eq('restaurant_id', restaurant.id)
+                    .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
-            // OBTENER DATOS REALES DE ACCIONES DE LA SEMANA - IGUAL QUE DASHBOARD
-            const { data: weeklyActions } = await supabase
-                .from('noshow_actions')
-                .select('final_outcome')
-                .eq('restaurant_id', restaurant.id)
-                .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+                const weeklyPreventedReal = weeklyActions?.filter(action => 
+                    action.final_outcome === 'attended'
+                ).length || 0;
 
-            const weeklyPreventedReal = weeklyActions?.filter(action => 
-                action.final_outcome === 'attended'
-            ).length || 0;
+                // Obtener no-shows recientes
+                const { data: recentNoShows } = await supabase
+                    .from('noshow_actions')
+                    .select('*')
+                    .eq('restaurant_id', restaurant.id)
+                    .order('created_at', { ascending: false })
+                    .limit(5);
 
-            // CALCULAR RESERVAS DE HOY CON ALTO RIESGO - DESDE SUPABASE
-            const { data: todayReservations } = await supabase
-                .from('reservations')
-                .select('*')
-                .eq('restaurant_id', restaurant.id)
-                .eq('reservation_date', new Date().toISOString().split('T')[0]);
+                // CALCULAR RESERVAS DE HOY CON ALTO RIESGO - DESDE SUPABASE
+                const { data: todayReservations } = await supabase
+                    .from('reservations')
+                    .select('*')
+                    .eq('restaurant_id', restaurant.id)
+                    .eq('reservation_date', new Date().toISOString().split('T')[0]);
 
-            // USAR EXACTAMENTE LA MISMA LÓGICA QUE EL DASHBOARD - DESDE NOSHOW_ACTIONS
-            const { data: todayNoShowActions } = await supabase
-                .from('noshow_actions')
-                .select('*')
-                .eq('restaurant_id', restaurant.id)
-                .eq('reservation_date', new Date().toISOString().split('T')[0]);
-            
-            // Obtener SOLO alto riesgo para coherencia con Dashboard
-            const { data: todayHighRiskActions } = await supabase
-                .from('noshow_actions')
-                .select('*')
-                .eq('restaurant_id', restaurant.id)
-                .eq('reservation_date', new Date().toISOString().split('T')[0])
-                .eq('risk_level', 'high');
+                // USAR EXACTAMENTE LA MISMA LÓGICA QUE EL DASHBOARD - DESDE NOSHOW_ACTIONS
+                const { data: todayNoShowActions } = await supabase
+                    .from('noshow_actions')
+                    .select('*')
+                    .eq('restaurant_id', restaurant.id)
+                    .eq('reservation_date', new Date().toISOString().split('T')[0]);
+                
+                // Obtener SOLO alto riesgo para coherencia con Dashboard
+                const { data: todayHighRiskActions } = await supabase
+                    .from('noshow_actions')
+                    .select('*')
+                    .eq('restaurant_id', restaurant.id)
+                    .eq('reservation_date', new Date().toISOString().split('T')[0])
+                    .eq('risk_level', 'high');
 
             const todayHighRiskNoShows = todayHighRiskActions?.length || 0; // USAR LA QUERY ESPECÍFICA
             const todayMediumRiskNoShows = todayNoShowActions?.filter(action => action.risk_level === 'medium').length || 0;
@@ -658,11 +665,36 @@ const NoShowManager = () => {
                 error: null
             });
             
-            // Toast con método correcto de react-hot-toast
-            toast('Cargando datos de ejemplo para no-shows', {
-                icon: 'ℹ️',
-                duration: 3000
-            });
+                // Toast con método correcto de react-hot-toast
+                toast('Datos de no-shows cargados', {
+                    icon: 'ℹ️',
+                    duration: 3000
+                });
+            } catch (innerError) {
+                // Si falla incluso el fallback, establecer estado vacío pero válido
+                console.error('Error en fallback de no-shows:', innerError);
+                setNoShowData({
+                    todayRisk: 0,
+                    weeklyPrevented: 0,
+                    riskLevel: 'low',
+                    riskReservations: [],
+                    recentNoShows: [],
+                    preventionActions: [],
+                    predictions: {
+                        totalAnalyzed: 0,
+                        highRisk: 0,
+                        mediumRisk: 0
+                    },
+                    restaurantMetrics: {
+                        total_noshows: 0,
+                        prevention_rate: 0
+                    },
+                    isLoading: false,
+                    error: 'Error cargando datos'
+                });
+                
+                toast.error('Error cargando datos de no-shows. Por favor, recarga la página.');
+            }
         }
     }, [restaurant?.id, calculateNoShowRisk]);
 
