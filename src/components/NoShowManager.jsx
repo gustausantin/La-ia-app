@@ -446,6 +446,16 @@ const NoShowManager = () => {
         try {
             setNoShowData(prev => ({ ...prev, isLoading: true }));
 
+            // 0. NO-SHOWS REALES de la tabla noshow_actions (PRIMERO)
+            const { data: recentNoShows, error: noShowsError } = await supabase
+                .from('noshow_actions')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .gte('reservation_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+                .order('reservation_date', { ascending: false });
+
+            if (noShowsError) throw noShowsError;
+
             // 1. Reservas de hoy y mañana para análisis de riesgo
             const { data: upcomingReservations, error: reservationsError } = await supabase
                 .from('reservations')
@@ -468,15 +478,7 @@ const NoShowManager = () => {
 
             if (reservationsError) throw reservationsError;
 
-            // 2. NO-SHOWS REALES de la tabla noshow_actions
-            const { data: recentNoShows, error: noShowsError } = await supabase
-                .from('noshow_actions')
-                .select('*')
-                .eq('restaurant_id', restaurant.id)
-                .gte('reservation_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-                .order('reservation_date', { ascending: false });
-
-            if (noShowsError) throw noShowsError;
+            // 2. (NO-SHOWS ya cargados arriba)
 
             // 3. Intentar usar función RPC para estadísticas de no-shows por cliente
             let customerStats = [];

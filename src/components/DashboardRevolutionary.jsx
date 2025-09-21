@@ -236,7 +236,11 @@ const NoShowWidget = ({ data, onViewDetails }) => {
                             <Clock className="w-4 h-4" />
                             Próximas 2h:
                         </span>
-                        <span className="font-medium">3 reservas riesgo medio</span>
+                        <span className="font-medium">
+                            {data.riskLevel === 'high' ? `${data.todayRisk} alto riesgo` : 
+                             data.riskLevel === 'medium' ? `${data.todayRisk} riesgo medio` : 
+                             'Sin riesgo detectado'}
+                        </span>
                     </div>
 
                     {/* Patrón detectado */}
