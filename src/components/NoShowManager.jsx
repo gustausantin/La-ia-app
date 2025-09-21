@@ -458,7 +458,7 @@ const NoShowManager = () => {
 
             if (noShowsError) throw noShowsError;
             
-            recentNoShows = noShowsData || []; // ASIGNAR AQUÍ
+            // No asignar aquí, se asignará más adelante con datos más específicos
 
             // 1. Reservas de hoy y mañana para análisis de riesgo
             const { data: upcomingReservations, error: reservationsError } = await supabase
@@ -609,6 +609,7 @@ const NoShowManager = () => {
                     .order('created_at', { ascending: false })
                     .limit(5);
                 
+                // Asignar a la variable ya declarada
                 recentNoShows = recentNoShowsData || [];
 
                 // CALCULAR RESERVAS DE HOY CON ALTO RIESGO - DESDE SUPABASE
