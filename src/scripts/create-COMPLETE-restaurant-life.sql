@@ -504,7 +504,7 @@ WHERE r.name = 'Restaurante Demo'
 AND c.restaurant_id = r.id
 AND t.restaurant_id = r.id
 AND t.capacity >= reserva_data.party_size  -- Mesa debe tener capacidad suficiente
-AND random() < 0.3; -- Solo 30% de combinaciones cliente-mesa para evitar demasiados datos
+AND random() < 0.8; -- 80% de combinaciones cliente-mesa para generar suficientes datos
 
 -- ==========================================
 -- 7. CREAR TICKETS DE CONSUMO PARA CADA RESERVA COMPLETADA
@@ -919,7 +919,7 @@ WHERE r.name = 'Restaurante Demo'
 AND c.restaurant_id = r.id
 AND t.restaurant_id = r.id
 AND t.capacity >= reserva_hoy.party_size
-AND random() < 0.15;  -- Solo algunas combinaciones
+AND random() < 0.6;  -- 60% de combinaciones para generar más reservas hoy
 
 -- Reservas futuras (próximos 30 días)
 INSERT INTO reservations (
@@ -961,9 +961,9 @@ AND t.restaurant_id = r.id
 AND t.capacity >= future_size.party_size
 AND EXTRACT(DOW FROM future_date.reservation_date) NOT IN (1, 2)  -- No lunes ni martes
 AND random() < CASE 
-    WHEN c.segment_auto = 'vip' THEN 0.08
-    WHEN c.segment_auto = 'regular' THEN 0.04
-    ELSE 0.02
+    WHEN c.segment_auto = 'vip' THEN 0.25      -- VIP: 25% más reservas futuras
+    WHEN c.segment_auto = 'regular' THEN 0.15  -- Regular: 15% más reservas
+    ELSE 0.08                                  -- Otros: 8% más reservas
 END;
 
 -- ==========================================
@@ -1039,7 +1039,76 @@ AND res.restaurant_id IN (SELECT id FROM restaurants WHERE name = 'Restaurante D
 AND (res.party_size >= 6 OR res.party_size = 1 OR EXTRACT(hour FROM res.reservation_time) >= 20);
 
 -- ==========================================
--- 12. ESTADÍSTICAS FINALES Y VERIFICACIÓN
+-- 12. CREAR SUGERENCIAS CRM (ALERTAS)
+-- ==========================================
+
+INSERT INTO crm_suggestions (
+    restaurant_id, customer_id, type, title, description, 
+    suggested_content, suggested_subject, template_id, priority, status,
+    created_at, updated_at
+)
+SELECT 
+    c.restaurant_id,
+    c.id as customer_id,
+    sugerencia_data.type,
+    sugerencia_data.title,
+    sugerencia_data.description,
+    sugerencia_data.suggested_content,
+    sugerencia_data.suggested_subject,
+    ct.id as template_id,
+    sugerencia_data.priority,
+    'pending' as status,
+    NOW() - (random() * INTERVAL '7 days') as created_at,
+    NOW() as updated_at
+FROM customers c
+LEFT JOIN crm_templates ct ON ct.type = 'reactivacion'
+CROSS JOIN LATERAL (
+    VALUES 
+        -- Sugerencias para clientes VIP
+        (CASE WHEN c.segment_auto = 'vip' THEN 'vip_upgrade' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'vip' THEN 'Cliente VIP: Atención Especial' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'vip' THEN 'Cliente VIP con ' || c.total_visits || ' visitas. Ofrecer mesa preferencial y atención personalizada.' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'vip' THEN 'Estimado ' || c.name || ', como cliente VIP queremos ofrecerte nuestra nueva experiencia gastronómica exclusiva.' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'vip' THEN 'Experiencia VIP Exclusiva' ELSE NULL END,
+         'high'),
+         
+        -- Sugerencias para clientes en riesgo
+        (CASE WHEN c.segment_auto = 'en_riesgo' THEN 'reactivacion' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'en_riesgo' THEN 'Cliente en Riesgo: Reactivar' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'en_riesgo' THEN 'Cliente sin visitas desde hace ' || c.recency_days || ' días. Enviar oferta de reactivación.' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'en_riesgo' THEN 'Hola ' || c.name || ', te echamos de menos. Tenemos una oferta especial para ti: 20% descuento en tu próxima visita.' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'en_riesgo' THEN 'Te echamos de menos - Oferta especial' ELSE NULL END,
+         'high'),
+         
+        -- Sugerencias para clientes inactivos
+        (CASE WHEN c.segment_auto = 'inactivo' THEN 'reactivacion' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'inactivo' THEN 'Cliente Inactivo: Recuperar' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'inactivo' THEN 'Cliente inactivo desde hace ' || c.recency_days || ' días. Campaña de recuperación urgente.' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'inactivo' THEN 'Hola ' || c.name || ', queremos recuperarte con una oferta irresistible: menú especial a precio reducido.' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'inactivo' THEN '¡Vuelve! Oferta de recuperación' ELSE NULL END,
+         'medium'),
+         
+        -- Sugerencias para clientes nuevos
+        (CASE WHEN c.segment_auto = 'nuevo' THEN 'bienvenida' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'nuevo' THEN 'Cliente Nuevo: Fidelizar' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'nuevo' THEN 'Cliente nuevo con ' || c.total_visits || ' visitas. Enviar bienvenida y promoción de fidelización.' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'nuevo' THEN 'Bienvenido ' || c.name || ', gracias por elegirnos. Como nuevo cliente, disfruta de un 15% de descuento en tu segunda visita.' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'nuevo' THEN 'Bienvenido - Descuento segunda visita' ELSE NULL END,
+         'medium'),
+         
+        -- Sugerencias para clientes regulares (upsell)
+        (CASE WHEN c.segment_auto = 'regular' AND c.avg_ticket < 80 THEN 'marketing' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'regular' AND c.avg_ticket < 80 THEN 'Cliente Regular: Upsell' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'regular' AND c.avg_ticket < 80 THEN 'Cliente regular con ticket promedio de ' || c.avg_ticket || '€. Oportunidad de upsell con menú premium.' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'regular' AND c.avg_ticket < 80 THEN 'Hola ' || c.name || ', como cliente habitual queremos invitarte a probar nuestro menú premium con ingredientes exclusivos.' ELSE NULL END,
+         CASE WHEN c.segment_auto = 'regular' AND c.avg_ticket < 80 THEN 'Prueba nuestro menú premium' ELSE NULL END,
+         'low')
+) AS sugerencia_data(type, title, description, suggested_content, suggested_subject, priority)
+WHERE c.restaurant_id IN (SELECT id FROM restaurants WHERE name = 'Restaurante Demo')
+AND sugerencia_data.type IS NOT NULL;
+
+-- ==========================================
+-- 13. ESTADÍSTICAS FINALES Y VERIFICACIÓN
 -- ==========================================
 
 DO $$
@@ -1052,6 +1121,7 @@ DECLARE
     total_noshows INTEGER;
     total_templates INTEGER;
     total_tables INTEGER;
+    total_crm_suggestions INTEGER;
     today_reservations INTEGER;
     today_high_risk INTEGER;
     revenue_total NUMERIC;
@@ -1066,6 +1136,7 @@ BEGIN
     SELECT COUNT(*) INTO total_noshows FROM noshow_actions WHERE restaurant_id IN (SELECT id FROM restaurants WHERE name = 'Restaurante Demo');
     SELECT COUNT(*) INTO total_templates FROM message_templates WHERE restaurant_id IN (SELECT id FROM restaurants WHERE name = 'Restaurante Demo');
     SELECT COUNT(*) INTO total_tables FROM tables WHERE restaurant_id IN (SELECT id FROM restaurants WHERE name = 'Restaurante Demo');
+    SELECT COUNT(*) INTO total_crm_suggestions FROM crm_suggestions WHERE restaurant_id IN (SELECT id FROM restaurants WHERE name = 'Restaurante Demo');
     
     -- Estadísticas de HOY
     SELECT COUNT(*) INTO today_reservations FROM reservations WHERE restaurant_id IN (SELECT id FROM restaurants WHERE name = 'Restaurante Demo') AND reservation_date = CURRENT_DATE;
@@ -1087,6 +1158,7 @@ BEGIN
     RAISE NOTICE '📨 Mensajes intercambiados: %', total_messages;
     RAISE NOTICE '🚫 Acciones no-show: %', total_noshows;
     RAISE NOTICE '📋 Plantillas mensajería: %', total_templates;
+    RAISE NOTICE '🔔 Sugerencias CRM: %', total_crm_suggestions;
     RAISE NOTICE '';
     RAISE NOTICE '📈 ESTADÍSTICAS HOY:';
     RAISE NOTICE '📅 Reservas HOY: %', today_reservations;
