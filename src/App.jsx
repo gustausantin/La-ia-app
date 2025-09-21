@@ -36,7 +36,7 @@ const CRMProximosMensajes = lazy(() => import('./pages/CRMProximosMensajes'));
 
 // 🚀 CRM v2 - Nuevas páginas
 const Consumos = lazy(() => import('./pages/Consumos'));
-const CRMv2 = lazy(() => import('./pages/CRMv2Complete')); // CRM original
+const CRMv2 = lazy(() => import('./pages/CRMSimple')); // CRM SIMPLE - Una página con todo claro
 const AvailabilityTester = lazy(() => import('./components/AvailabilityTester'));
 
 // 🛡️ Sistema de No-Shows Revolucionario

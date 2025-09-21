@@ -115,9 +115,13 @@ const NoShowManagerProfesional = () => {
                     };
                 });
 
-                // Filtrar solo las de alto riesgo - MISMO UMBRAL QUE DASHBOARD (>= 85)
+                // Mostrar TODAS las reservas con riesgo (para coherencia con Dashboard)
+                // El Dashboard cuenta TODAS las noshow_actions, no solo las de alto riesgo
+                const reservasConAlgunRiesgo = reservasConRiesgo.filter(r => r.riskScore > 0);
+                setReservasRiesgo(reservasConAlgunRiesgo);
+                
+                // Para el contador principal, usar las de alto riesgo
                 const reservasAltoRiesgo = reservasConRiesgo.filter(r => r.riskScore >= 85);
-                setReservasRiesgo(reservasAltoRiesgo);
 
                 // 3. Cargar datos de la semana
                 const weekAgo = new Date();
@@ -137,8 +141,15 @@ const NoShowManagerProfesional = () => {
                     ? Math.round((prevented / noShowActions.length) * 100)
                     : 0;
                 
+                // Obtener TODAS las noshow_actions de HOY (como hace el Dashboard)
+                const { data: todayNoShowActions } = await supabase
+                    .from('noshow_actions')
+                    .select('*')
+                    .eq('restaurant_id', restaurant.id)
+                    .eq('reservation_date', format(new Date(), 'yyyy-MM-dd'));
+                
                 setData({
-                    todayRisk: reservasAltoRiesgo.length,
+                    todayRisk: todayNoShowActions?.length || reservasAltoRiesgo.length, // Usar el mismo número que el Dashboard
                     weeklyPrevented: prevented,
                     riskLevel: reservasAltoRiesgo.length > 2 ? 'high' : reservasAltoRiesgo.length > 0 ? 'medium' : 'low',
                     successRate: successRate || 73
@@ -450,14 +461,17 @@ const NoShowManagerProfesional = () => {
                 </div>
             </div>
 
-            {/* ACCIONES - Reservas en riesgo HOY */}
+            {/* ACCIONES - Reservas que necesitan gestión */}
             {reservasRiesgo.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
                     <div className="p-6 bg-yellow-50 border-b border-yellow-200">
                         <h3 className="text-lg font-semibold text-yellow-900 flex items-center gap-2">
                             <AlertCircle className="w-5 h-5 text-yellow-600" />
-                            Reservas en Riesgo Hoy - REQUIEREN ACCIÓN
+                            {data.todayRisk} Acciones de No-Show HOY - GESTIONAR AHORA
                         </h3>
+                        <p className="text-sm text-yellow-700 mt-1">
+                            {reservasRiesgo.filter(r => r.riskScore >= 85).length} de alto riesgo (≥85 puntos) requieren acción inmediata
+                        </p>
                     </div>
                     <div className="divide-y divide-gray-200">
                         {reservasRiesgo.map((reserva) => (
