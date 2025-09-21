@@ -726,13 +726,24 @@ const DashboardRevolutionary = () => {
                     action.customer_response === 'confirmed' || action.prevented_noshow === true
                 ).length || 0;
 
+                // OBTENER NO-SHOWS DE HOY CON ALTO RIESGO
+                const { data: todayNoShowActions } = await supabase
+                    .from('noshow_actions')
+                    .select('*')
+                    .eq('restaurant_id', restaurant.id)
+                    .eq('reservation_date', format(new Date(), 'yyyy-MM-dd'))
+                    .eq('risk_level', 'high');
+
+                const todayHighRiskNoShows = todayNoShowActions?.length || 0;
+
                 noShowData = {
-                    todayRisk: todayHighRiskReservations.length,
+                    todayRisk: todayHighRiskNoShows, // MOSTRAR NO-SHOWS DE ALTO RIESGO HOY, NO RESERVAS
                     weeklyPrevented: weeklyPrevented, // DATO REAL DE SUPABASE
-                    riskLevel: todayHighRiskReservations.length > 2 ? 'high' : 
-                              todayHighRiskReservations.length > 0 ? 'medium' : 'low',
-                    nextAction: todayHighRiskReservations.length > 0 ? 
-                               `Revisar ${todayHighRiskReservations.length} reservas de alto riesgo` : null
+                    riskLevel: todayHighRiskNoShows > 2 ? 'high' : 
+                              todayHighRiskNoShows > 0 ? 'medium' : 'low',
+                    nextAction: todayHighRiskNoShows > 0 ? 
+                               `${todayHighRiskNoShows} no-shows de alto riesgo gestionados hoy` : 
+                               'Sin alertas de riesgo'
                 };
             } catch (error) {
                 console.error('Error calculando riesgo de no-shows:', error);
@@ -759,23 +770,23 @@ const DashboardRevolutionary = () => {
                 })) || []
             };
 
-            // 4. Oportunidades CRM (simuladas por ahora)
+            // 4. Oportunidades CRM REALES desde Supabase
+            const { data: crmSuggestions } = await supabase
+                .from('crm_suggestions')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .eq('status', 'pending')
+                .order('priority', { ascending: false })
+                .limit(10);
+
             const crmOpportunities = {
-                opportunities: [
-                    {
-                        title: 'Clientes inactivos >90 días',
-                        description: '12 clientes sin visitar desde hace 3 meses',
-                        action: 'win_back_campaign'
-                    },
-                    {
-                        title: 'Cumpleaños esta semana',
-                        description: '3 clientes VIP cumplen años',
-                        action: 'birthday_campaign'
-                    }
-                ].filter(opp => {
-                    // Solo mostrar oportunidades con datos reales de Supabase
-                    return opp.data && opp.data.length > 0;
-                })
+                opportunities: crmSuggestions?.map(suggestion => ({
+                    id: suggestion.id,
+                    title: suggestion.title || suggestion.type,
+                    description: suggestion.description || `${suggestion.type} - Prioridad ${suggestion.priority}`,
+                    action: suggestion.type,
+                    priority: suggestion.priority
+                })) || []
             };
 
             // 5. Calcular valor monetario generado - UNIFICADO
