@@ -844,16 +844,29 @@ const DashboardRevolutionary = () => {
     // Revisar en CRM - Redirige al CRM para manejar la acción
     const reviewCRMAction = async (opportunity) => {
         try {
+            console.log('🔍 DEBUG: Navegando a CRM con oportunidad:', opportunity);
+            
             // SIEMPRE redirigir al CRM V2 (CRM Inteligente)
             navigate('/crm-v2');
-            toast('Abriendo CRM Inteligente', {
-                icon: '🤖',
+            
+            toast.success('🤖 Abriendo CRM Inteligente para gestionar la oportunidad', {
                 duration: 3000
             });
         } catch (error) {
-            console.error('Error en reviewCRMAction:', error);
-            navigate('/crm');
-            toast.error('Error al navegar al CRM, abriendo página principal');
+            console.error('❌ Error en reviewCRMAction:', error);
+            
+            // Fallback: intentar con CRM principal
+            try {
+                navigate('/crm');
+                toast.success('📋 Abriendo CRM principal', {
+                    duration: 3000
+                });
+            } catch (fallbackError) {
+                console.error('❌ Error también en fallback:', fallbackError);
+                toast.error('❌ Error al navegar al CRM. Recarga la página e intenta de nuevo.', {
+                    duration: 5000
+                });
+            }
         }
     };
 

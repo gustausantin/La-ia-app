@@ -609,61 +609,45 @@ const NoShowManager = () => {
                 .eq('restaurant_id', restaurant.id)
                 .eq('reservation_date', new Date().toISOString().split('T')[0]);
 
-            // CALCULAR RIESGO REAL USANDO LA MISMA LÓGICA QUE DASHBOARD
-            const todayHighRiskReservations = todayReservations?.filter(reservation => {
-                let riskScore = 0;
-                
-                // Factor 1: Hora de la reserva (25% del peso)
-                const hour = parseInt(reservation.reservation_time?.split(':')[0] || '19');
-                if (hour >= 20 || hour <= 13) {
-                    riskScore += 25;
-                }
-                
-                // Factor 2: Tamaño del grupo (15% del peso)
-                if (reservation.party_size > 6) {
-                    riskScore += 15;
-                } else if (reservation.party_size === 1) {
-                    riskScore += 10;
-                }
-                
-                // Factor 3: Día de la semana (10% del peso)
-                const dayOfWeek = new Date(reservation.reservation_date).getDay();
-                if (dayOfWeek === 0) { // Domingo
-                    riskScore += 10;
-                } else if (dayOfWeek === 6) { // Sábado
-                    riskScore += 5;
-                }
-                
-                return riskScore >= 85; // MISMO UMBRAL QUE DASHBOARD
-            }) || [];
+            // USAR EXACTAMENTE LA MISMA LÓGICA QUE EL DASHBOARD - DESDE NOSHOW_ACTIONS
+            const { data: todayNoShowActions } = await supabase
+                .from('noshow_actions')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .eq('reservation_date', new Date().toISOString().split('T')[0]);
+            
+            // Obtener SOLO alto riesgo para coherencia con Dashboard
+            const { data: todayHighRiskActions } = await supabase
+                .from('noshow_actions')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .eq('reservation_date', new Date().toISOString().split('T')[0])
+                .eq('risk_level', 'high');
 
-            const todayRiskCount = todayHighRiskReservations.length;
+            const todayHighRiskNoShows = todayHighRiskActions?.length || 0; // USAR LA QUERY ESPECÍFICA
+            const todayMediumRiskNoShows = todayNoShowActions?.filter(action => action.risk_level === 'medium').length || 0;
+            const todayLowRiskNoShows = todayNoShowActions?.filter(action => action.risk_level === 'low').length || 0;
+            
+            const todayRiskCount = todayHighRiskNoShows; // EXACTAMENTE IGUAL QUE DASHBOARD
             const riskLevel = todayRiskCount > 2 ? 'high' : todayRiskCount > 0 ? 'medium' : 'low';
 
             setNoShowData({
                 todayRisk: todayRiskCount, // DATO REAL DE SUPABASE
                 weeklyPrevented: weeklyPreventedReal, // DATO REAL DE SUPABASE
                 riskLevel: riskLevel, // CALCULADO DESDE DATOS REALES
-                riskReservations: todayHighRiskReservations, // RESERVAS REALES
+                riskReservations: todayHighRiskActions || [], // USAR DIRECTAMENTE LA QUERY DE ALTO RIESGO
                 recentNoShows: recentNoShows?.slice(0, 5) || [], // NO-SHOWS REALES
-                preventionActions: todayHighRiskReservations.map(reservation => ({
+                preventionActions: todayHighRiskActions?.map(action => ({
                     type: 'whatsapp',
                     priority: 'high',
-                    reservation: reservation,
+                    reservation: action,
                     action: 'WhatsApp confirmación',
-                    message: `Enviar WhatsApp a ${reservation.customer_name}: "Hola ${reservation.customer_name}, confirmamos tu reserva para ${reservation.party_size} personas hoy a las ${reservation.reservation_time}. ¡Te esperamos!"`
-                })),
+                    message: `Enviar WhatsApp a ${action.customer_name}: "Hola ${action.customer_name}, confirmamos tu reserva para ${action.party_size} personas hoy a las ${action.reservation_time}. ¡Te esperamos!"`
+                })) || [],
                 predictions: {
-                    totalAnalyzed: todayReservations?.length || 0,
-                    highRisk: todayHighRiskReservations.length,
-                    mediumRisk: todayReservations?.filter(r => {
-                        let score = 0;
-                        const hour = parseInt(r.reservation_time?.split(':')[0] || '19');
-                        if (hour >= 20 || hour <= 13) score += 25;
-                        if (r.party_size > 6) score += 15;
-                        else if (r.party_size === 1) score += 10;
-                        return score >= 50 && score < 85;
-                    }).length || 0
+                    totalAnalyzed: todayNoShowActions?.length || 0,
+                    highRisk: todayHighRiskNoShows,
+                    mediumRisk: todayMediumRiskNoShows
                 },
                 restaurantMetrics: {
                     total_noshows: weeklyActions?.filter(a => a.final_outcome === 'no_show').length || 0,
