@@ -68,9 +68,7 @@ export const useCommunicationStore = create()(
           const { data, error } = await supabase
             .from('conversations')
             .select(`
-              *,
-              customer:customers(*),
-              last_message:messages(*)
+              *
             `)
             .order('updated_at', { ascending: false });
           
