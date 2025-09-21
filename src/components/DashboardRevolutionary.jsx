@@ -622,12 +622,12 @@ const DashboardRevolutionary = () => {
                 .gte('reservation_date', startToday.toISOString().split('T')[0])
                 .lte('reservation_date', endToday.toISOString().split('T')[0]);
 
-            // Clientes activos (con reserva en últimos 30 días)
+            // Clientes activos (todos los que NO son inactivos)
             const { data: activeCustomers } = await supabase
                 .from('customers')
                 .select('id')
                 .eq('restaurant_id', restaurant.id)
-                .gte('last_visit_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+                .neq('segment_auto', 'inactivo');
 
             // 2. DATOS REALES DE NO-SHOWS - SOLO DESDE SUPABASE
             let noShowData = {
