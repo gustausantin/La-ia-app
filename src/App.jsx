@@ -20,7 +20,6 @@ const Confirm = lazy(() => import('./pages/Confirm'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Reservas = lazy(() => import('./pages/Reservas'));
 const Clientes = lazy(() => import('./pages/Clientes'));
-const CRMInteligente = lazy(() => import('./pages/CRMInteligente'));
 const PlantillasCRM = lazy(() => import('./pages/PlantillasCRM'));
 const Mesas = lazy(() => import('./pages/Mesas'));
 const Calendario = lazy(() => import('./pages/Calendario'));
@@ -138,14 +137,6 @@ function AppContent() {
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <Clientes />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/crm" 
-                element={
-                  <Suspense fallback={<PageLoading />}>
-                    <CRMInteligente />
                   </Suspense>
                 } 
               />
