@@ -12,7 +12,7 @@ import {
 import toast from "react-hot-toast";
 import CustomerModal from "../components/CustomerModal";
 
-// SEGMENTACIÓN INTELIGENTE - UNIFICADA CON CRM
+// SEGMENTACIÓN INTELIGENTE - TODOS LOS SEGMENTOS REALES
 const CUSTOMER_SEGMENTS = {
     nuevo: { 
         label: "Nuevo", 
@@ -21,8 +21,8 @@ const CUSTOMER_SEGMENTS = {
         description: "Cliente recién registrado",
         priority: 1
     },
-    activo: { 
-        label: "Activo", 
+    regular: { 
+        label: "Regular", 
         icon: "⭐", 
         color: "green",
         description: "Cliente con visitas regulares",
@@ -35,19 +35,33 @@ const CUSTOMER_SEGMENTS = {
         description: "Very Important Person - Cliente prioritario",
         priority: 5
     },
+    ocasional: { 
+        label: "Ocasional", 
+        icon: "🕐", 
+        color: "yellow",
+        description: "Cliente con visitas esporádicas",
+        priority: 3
+    },
     inactivo: { 
         label: "Inactivo", 
         icon: "😴", 
         color: "gray",
         description: "Sin visitas recientes",
-        priority: 3
+        priority: 4
     },
-    riesgo: { 
+    en_riesgo: { 
         label: "En Riesgo", 
         icon: "⚠️", 
         color: "orange",
         description: "Cliente que puede perderse",
-        priority: 4
+        priority: 6
+    },
+    alto_valor: { 
+        label: "Alto Valor", 
+        icon: "💎", 
+        color: "indigo",
+        description: "Cliente de alto valor económico",
+        priority: 7
     }
 };
 

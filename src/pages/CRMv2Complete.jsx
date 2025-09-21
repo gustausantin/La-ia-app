@@ -76,10 +76,10 @@ const CRMv2Complete = () => {
 
             if (customersError) throw customersError;
 
-            // Cargar mensajes recientes
+            // Cargar mensajes recientes (SIN JOIN problemático)
             const { data: messages, error: messagesError } = await supabase
                 .from('customer_interactions')
-                .select('*, customers(name)')
+                .select('*')
                 .eq('restaurant_id', restaurantId)
                 .gte('created_at', format(subDays(new Date(), 7), 'yyyy-MM-dd'))
                 .order('created_at', { ascending: false })
