@@ -18,7 +18,7 @@ const CRMv2Complete = () => {
     const navigate = useNavigate();
     const { restaurant, restaurantId, isReady } = useAuthContext();
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('dashboard');
+    const [activeTab, setActiveTab] = useState('messages'); // Ir directo a mensajes
     const [customerFeatures, setCustomerFeatures] = useState([]);
     const [messageQueue, setMessageQueue] = useState([]);
     const [automationRules, setAutomationRules] = useState([]);
