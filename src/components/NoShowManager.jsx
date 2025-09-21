@@ -468,15 +468,11 @@ const NoShowManager = () => {
 
             if (reservationsError) throw reservationsError;
 
-            // 2. Historial de no-shows de la última semana
+            // 2. NO-SHOWS REALES de la tabla noshow_actions
             const { data: recentNoShows, error: noShowsError } = await supabase
-                .from('reservations')
-                .select(`
-                    *,
-                    customers (name)
-                `)
+                .from('noshow_actions')
+                .select('*')
                 .eq('restaurant_id', restaurant.id)
-                .eq('status', 'cancelled')
                 .gte('reservation_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
                 .order('reservation_date', { ascending: false });
 
@@ -643,7 +639,7 @@ const NoShowManager = () => {
                 weeklyPrevented: weeklyPreventedReal, // DATO REAL DE SUPABASE
                 riskLevel: riskLevel, // CALCULADO DESDE DATOS REALES
                 riskReservations: todayHighRiskReservations, // RESERVAS REALES
-                recentNoShows: [], // TODO: Obtener desde noshow_actions
+                recentNoShows: recentNoShows?.slice(0, 5) || [], // NO-SHOWS REALES
                 preventionActions: todayHighRiskReservations.map(reservation => ({
                     type: 'whatsapp',
                     priority: 'high',

@@ -595,9 +595,9 @@ export default function Reservas() {
         try {
             const today = format(new Date(), 'yyyy-MM-dd');
 
-            // 1. Reservas del agente desde reservations
-            const agentReservationsData = reservations.filter(r => r.source === "agent");
-            const manualReservationsData = reservations.filter(r => r.source === "manual" || !r.source);
+            // 1. Reservas del agente desde reservations (CAMPO CORRECTO: reservation_source)
+            const agentReservationsData = reservations.filter(r => r.reservation_source === "ia");
+            const manualReservationsData = reservations.filter(r => r.reservation_source === "manual" || !r.reservation_source);
             
             console.log('🔍 DEBUG INSIGHTS:');
             console.log(`  Total reservas: ${reservations.length}`);
@@ -609,10 +609,10 @@ export default function Reservas() {
             // 2. Calcular métricas del agente desde datos existentes (sin tabla externa)
             let agentMetrics = null;
             try {
-                // Calcular métricas desde reservas del agente
+                // Calcular métricas desde reservas del agente (CAMPO CORRECTO)
                 const agentReservationsToday = reservations.filter(r => {
                     const reservationDate = format(parseISO(r.created_at), 'yyyy-MM-dd');
-                    return reservationDate === today && r.source === 'agent';
+                    return reservationDate === today && r.reservation_source === 'ia';
                 });
                 
                 agentMetrics = {
@@ -629,10 +629,10 @@ export default function Reservas() {
             // 3. Usar datos de reservas como conversaciones (sin tabla externa)
             let agentConversations = [];
             try {
-                // Simular conversaciones desde reservas del agente
+                // Simular conversaciones desde reservas del agente (CAMPO CORRECTO)
                 const agentReservationsToday = reservations.filter(r => {
                     const reservationDate = format(parseISO(r.created_at), 'yyyy-MM-dd');
-                    return reservationDate === today && r.source === 'agent';
+                    return reservationDate === today && r.reservation_source === 'ia';
                 });
                 
                 agentConversations = agentReservationsToday.map(r => ({
@@ -698,8 +698,8 @@ export default function Reservas() {
 
         } catch (error) {
             console.error("Error cargando estadísticas del agente:", error);
-            // Fallback usando solo datos de reservations
-            const agentReservations = reservations.filter(r => r.source === "agent").length;
+            // Fallback usando solo datos de reservations (CAMPO CORRECTO)
+            const agentReservations = reservations.filter(r => r.reservation_source === "ia").length;
             setAgentStats(prev => ({
                 ...prev,
                 agentReservations: agentReservations,
