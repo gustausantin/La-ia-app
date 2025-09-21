@@ -726,23 +726,17 @@ const DashboardRevolutionary = () => {
                     action.customer_response === 'confirmed' || action.prevented_noshow === true
                 ).length || 0;
 
-                // OBTENER NO-SHOWS DE HOY CON ALTO RIESGO
-                const { data: todayNoShowActions } = await supabase
-                    .from('noshow_actions')
-                    .select('*')
-                    .eq('restaurant_id', restaurant.id)
-                    .eq('reservation_date', format(new Date(), 'yyyy-MM-dd'))
-                    .eq('risk_level', 'high');
-
-                const todayHighRiskNoShows = todayNoShowActions?.length || 0;
+                // USAR LA MISMA LÓGICA QUE NoShowManagerProfesional
+                // Contar las reservas de hoy con alto riesgo (>= 85 puntos)
+                const todayHighRiskCount = todayHighRiskReservations.length;
 
                 noShowData = {
-                    todayRisk: todayHighRiskNoShows, // MOSTRAR NO-SHOWS DE ALTO RIESGO HOY, NO RESERVAS
+                    todayRisk: todayHighRiskCount, // RESERVAS de alto riesgo HOY
                     weeklyPrevented: weeklyPrevented, // DATO REAL DE SUPABASE
-                    riskLevel: todayHighRiskNoShows > 2 ? 'high' : 
-                              todayHighRiskNoShows > 0 ? 'medium' : 'low',
-                    nextAction: todayHighRiskNoShows > 0 ? 
-                               `${todayHighRiskNoShows} no-shows de alto riesgo gestionados hoy` : 
+                    riskLevel: todayHighRiskCount > 2 ? 'high' : 
+                              todayHighRiskCount > 0 ? 'medium' : 'low',
+                    nextAction: todayHighRiskCount > 0 ? 
+                               `${todayHighRiskCount} reservas de alto riesgo necesitan atención` : 
                                'Sin alertas de riesgo'
                 };
             } catch (error) {

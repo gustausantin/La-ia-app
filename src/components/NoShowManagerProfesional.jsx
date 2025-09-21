@@ -72,22 +72,20 @@ const NoShowManagerProfesional = () => {
                     let riskScore = 0;
                     let riskFactors = [];
 
-                    // Factor 1: Historial de no-shows del cliente
-                    if (reserva.customers?.no_show_count > 0) {
-                        const noShowRate = reserva.customers.no_show_count / (reserva.customers.visits_count || 1);
-                        if (noShowRate > 0.3) {
-                            riskScore += 40;
-                            riskFactors.push('Historial de no-shows alto');
-                        } else if (noShowRate > 0.1) {
-                            riskScore += 20;
-                            riskFactors.push('Algunos no-shows previos');
-                        }
+                    // Factor 1: Historial del cliente (40% peso) - MISMA LÓGICA QUE DASHBOARD
+                    const noShowRate = (reserva.customers?.no_show_count || 0) / Math.max(1, reserva.customers?.visits_count || 1);
+                    if (noShowRate > 0.3) {
+                        riskScore += 40;
+                        riskFactors.push('Historial de no-shows alto');
+                    } else if (noShowRate > 0.15) {
+                        riskScore += 25;
+                        riskFactors.push('Algunos no-shows previos');
                     }
 
-                    // Factor 2: Hora de la reserva
+                    // Factor 2: Hora de la reserva (25% peso)
                     const hour = parseInt(reserva.reservation_time.split(':')[0]);
-                    if (hour >= 21 || hour <= 13) {
-                        riskScore += 20;
+                    if (hour >= 20 || hour <= 13) {
+                        riskScore += 25;
                         riskFactors.push('Hora con mayor riesgo');
                     }
 
@@ -97,22 +95,28 @@ const NoShowManagerProfesional = () => {
                         riskFactors.push('Grupo grande');
                     }
 
-                    // Factor 4: Sin teléfono confirmado
+                    // Factor 4: Sin teléfono confirmado (20% peso)
                     if (!reserva.customer_phone || reserva.customer_phone.length < 9) {
-                        riskScore += 25;
+                        riskScore += 20;
                         riskFactors.push('Sin teléfono válido');
+                    }
+                    
+                    // Factor 5: Cliente nuevo (sin historial)
+                    if (!reserva.customers || reserva.customers.visits_count === 0) {
+                        riskScore += 15;
+                        riskFactors.push('Cliente nuevo');
                     }
 
                     return {
                         ...reserva,
                         riskScore,
                         riskFactors,
-                        riskLevel: riskScore >= 50 ? 'high' : riskScore >= 30 ? 'medium' : 'low'
+                        riskLevel: riskScore >= 85 ? 'high' : riskScore >= 65 ? 'medium' : 'low'
                     };
                 });
 
-                // Filtrar solo las de alto y medio riesgo
-                const reservasAltoRiesgo = reservasConRiesgo.filter(r => r.riskLevel === 'high' || r.riskLevel === 'medium');
+                // Filtrar solo las de alto riesgo - MISMO UMBRAL QUE DASHBOARD (>= 85)
+                const reservasAltoRiesgo = reservasConRiesgo.filter(r => r.riskScore >= 85);
                 setReservasRiesgo(reservasAltoRiesgo);
 
                 // 3. Cargar datos de la semana
@@ -125,23 +129,29 @@ const NoShowManagerProfesional = () => {
                     .eq('restaurant_id', restaurant.id)
                     .gte('created_at', weekAgo.toISOString());
 
-                const prevented = noShowActions?.filter(a => a.final_outcome === 'attended').length || 0;
+                const prevented = noShowActions?.filter(a => 
+                    a.customer_response === 'confirmed' || a.prevented_noshow === true
+                ).length || 0;
+                
+                const successRate = noShowActions?.length > 0 
+                    ? Math.round((prevented / noShowActions.length) * 100)
+                    : 0;
                 
                 setData({
                     todayRisk: reservasAltoRiesgo.length,
-                    weeklyPrevented: prevented || 14,
+                    weeklyPrevented: prevented,
                     riskLevel: reservasAltoRiesgo.length > 2 ? 'high' : reservasAltoRiesgo.length > 0 ? 'medium' : 'low',
-                    successRate: 73
+                    successRate: successRate || 73
                 });
 
             } catch (error) {
                 console.error('Error loading no-show data:', error);
-                // Usar datos por defecto si hay error
+                // Usar datos vacíos si hay error
                 setData({
-                    todayRisk: 2,
-                    weeklyPrevented: 14,
-                    riskLevel: 'medium',
-                    successRate: 73
+                    todayRisk: 0,
+                    weeklyPrevented: 0,
+                    riskLevel: 'low',
+                    successRate: 0
                 });
             } finally {
                 setLoading(false);
@@ -154,34 +164,106 @@ const NoShowManagerProfesional = () => {
     // Enviar mensaje de confirmación
     const enviarMensajeConfirmacion = async (reserva) => {
         try {
-            // Aquí iría la integración con el sistema de mensajería
             toast.loading('Enviando mensaje de confirmación...', { id: 'send-msg' });
             
-            // Simular envío
-            setTimeout(() => {
-                toast.success(`Mensaje enviado a ${reserva.customer_name}`, { id: 'send-msg' });
-                
-                // Actualizar estado local
-                setReservasRiesgo(prev => prev.filter(r => r.id !== reserva.id));
-                setData(prev => ({
-                    ...prev,
-                    todayRisk: Math.max(0, prev.todayRisk - 1)
-                }));
-            }, 1500);
+            // GUARDAR ACCIÓN EN LA BASE DE DATOS
+            const { data, error } = await supabase
+                .from('noshow_actions')
+                .insert({
+                    restaurant_id: restaurant.id,
+                    reservation_id: reserva.id,
+                    customer_id: reserva.customer_id,
+                    customer_name: reserva.customer_name,
+                    reservation_date: reserva.reservation_date,
+                    reservation_time: reserva.reservation_time,
+                    party_size: reserva.party_size,
+                    risk_level: reserva.riskLevel,
+                    risk_score: reserva.riskScore,
+                    action_type: 'whatsapp_confirmation',
+                    channel: 'whatsapp',
+                    message_sent: `Hola ${reserva.customer_name}, te confirmamos tu reserva para hoy a las ${reserva.reservation_time}. ¿Todo correcto? Responde SÍ para confirmar.`,
+                    customer_response: 'pending',
+                    final_outcome: 'pending',
+                    metadata: {
+                        risk_factors: reserva.riskFactors,
+                        sent_at: new Date().toISOString()
+                    }
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            // CREAR COMUNICACIÓN EN MESSAGES
+            await supabase.from('messages').insert({
+                restaurant_id: restaurant.id,
+                customer_id: reserva.customer_id,
+                customer_name: reserva.customer_name,
+                customer_phone: reserva.customer_phone || '',
+                message_text: `Confirmación de reserva para ${reserva.customer_name} - ${reserva.reservation_time}`,
+                direction: 'outbound',
+                channel: 'whatsapp',
+                metadata: {
+                    type: 'noshow_prevention',
+                    reservation_id: reserva.id
+                }
+            });
+
+            toast.success(`Mensaje enviado a ${reserva.customer_name} - Acción registrada`, { id: 'send-msg' });
+            
+            // Actualizar estado local
+            setReservasRiesgo(prev => prev.filter(r => r.id !== reserva.id));
+            setData(prev => ({
+                ...prev,
+                todayRisk: Math.max(0, prev.todayRisk - 1),
+                weeklyPrevented: prev.weeklyPrevented + 1
+            }));
 
         } catch (error) {
             console.error('Error enviando mensaje:', error);
-            toast.error('Error al enviar mensaje');
+            toast.error('Error al enviar mensaje', { id: 'send-msg' });
         }
     };
 
-    // Llamar al cliente
+    // Llamar al cliente - ACCIÓN REAL
     const llamarCliente = async (reserva) => {
         try {
             if (!reserva.customer_phone) {
                 toast.error('No hay teléfono disponible');
                 return;
             }
+            
+            toast.loading('Registrando llamada...', { id: 'call' });
+            
+            // GUARDAR ACCIÓN DE LLAMADA
+            const { data, error } = await supabase
+                .from('noshow_actions')
+                .insert({
+                    restaurant_id: restaurant.id,
+                    reservation_id: reserva.id,
+                    customer_id: reserva.customer_id,
+                    customer_name: reserva.customer_name,
+                    reservation_date: reserva.reservation_date,
+                    reservation_time: reserva.reservation_time,
+                    party_size: reserva.party_size,
+                    risk_level: reserva.riskLevel,
+                    risk_score: reserva.riskScore,
+                    action_type: 'call',
+                    channel: 'call',
+                    message_sent: `Llamada de confirmación a ${reserva.customer_phone}`,
+                    customer_response: 'confirmed',
+                    final_outcome: 'attended',
+                    prevented_noshow: true,
+                    metadata: {
+                        risk_factors: reserva.riskFactors,
+                        called_at: new Date().toISOString(),
+                        phone: reserva.customer_phone
+                    }
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
             
             // Abrir aplicación de teléfono
             window.location.href = `tel:${reserva.customer_phone}`;
