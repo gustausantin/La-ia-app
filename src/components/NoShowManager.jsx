@@ -602,12 +602,14 @@ const NoShowManager = () => {
                 ).length || 0;
 
                 // Obtener no-shows recientes
-                const { data: recentNoShows } = await supabase
+                const { data: recentNoShowsData } = await supabase
                     .from('noshow_actions')
                     .select('*')
                     .eq('restaurant_id', restaurant.id)
                     .order('created_at', { ascending: false })
                     .limit(5);
+                
+                recentNoShows = recentNoShowsData || [];
 
                 // CALCULAR RESERVAS DE HOY CON ALTO RIESGO - DESDE SUPABASE
                 const { data: todayReservations } = await supabase
