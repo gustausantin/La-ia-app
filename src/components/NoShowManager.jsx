@@ -443,11 +443,13 @@ const NoShowManager = () => {
     const loadNoShowData = useCallback(async () => {
         if (!restaurant?.id) return;
 
+        let recentNoShows = []; // DECLARAR FUERA DEL TRY PARA QUE ESTÉ DISPONIBLE EN EL CATCH
+
         try {
             setNoShowData(prev => ({ ...prev, isLoading: true }));
 
             // 0. NO-SHOWS REALES de la tabla noshow_actions (PRIMERO)
-            const { data: recentNoShows, error: noShowsError } = await supabase
+            const { data: noShowsData, error: noShowsError } = await supabase
                 .from('noshow_actions')
                 .select('*')
                 .eq('restaurant_id', restaurant.id)
@@ -455,6 +457,8 @@ const NoShowManager = () => {
                 .order('reservation_date', { ascending: false });
 
             if (noShowsError) throw noShowsError;
+            
+            recentNoShows = noShowsData || []; // ASIGNAR AQUÍ
 
             // 1. Reservas de hoy y mañana para análisis de riesgo
             const { data: upcomingReservations, error: reservationsError } = await supabase

@@ -88,39 +88,12 @@ const ComunicacionSimplificada = () => {
         try {
             setIsLoading(true);
 
-            // Primero intentar con la relación customers, si falla usar campos directos
-            let data, error;
-            
-            try {
-                const response = await supabase
-                    .from('conversations')
-                    .select(`
-                        *,
-                        customers (
-                            id,
-                            name,
-                            email,
-                            phone
-                        )
-                    `)
-                    .eq('restaurant_id', restaurant.id)
-                    .order('updated_at', { ascending: false });
-                
-                data = response.data;
-                error = response.error;
-            } catch (relationError) {
-                console.log('Relación customers no disponible, usando campos directos');
-                
-                // Fallback: usar campos directos de la tabla conversations
-                const response = await supabase
-                    .from('conversations')
-                    .select('*')
-                    .eq('restaurant_id', restaurant.id)
-                    .order('updated_at', { ascending: false });
-                
-                data = response.data;
-                error = response.error;
-            }
+            // Usar campos directos de conversations (no hay relación con customers)
+            const { data, error } = await supabase
+                .from('conversations')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .order('updated_at', { ascending: false });
 
             if (error) throw error;
 
@@ -170,8 +143,9 @@ const ComunicacionSimplificada = () => {
         // Filtro por búsqueda
         if (searchTerm) {
             filtered = filtered.filter(conv => 
-                conv.customers?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                conv.customers?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                conv.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                conv.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                conv.customer_phone?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
