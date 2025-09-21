@@ -1,7 +1,7 @@
 // Comunicacion.jsx - Página Simplificada de Comunicación  
 import React from "react";
-import ComunicacionSimplificada from "../components/ComunicacionSimplificada";
+import ComunicacionMejorada from "../components/ComunicacionMejorada";
 
 export default function Comunicacion() {
-    return <ComunicacionSimplificada />;
+    return <ComunicacionMejorada />;
 }
