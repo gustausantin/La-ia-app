@@ -293,6 +293,14 @@ const Configuracion = () => {
 
                 if (restaurant) {
                     console.log("âœ… Restaurant cargado:", restaurant);
+                    console.log("🔍 DATOS ESPECÍFICOS:");
+                    console.log("- name:", restaurant.name);
+                    console.log("- email:", restaurant.email);
+                    console.log("- phone:", restaurant.phone);
+                    console.log("- address:", restaurant.address);
+                    console.log("- city:", restaurant.city);
+                    console.log("- postal_code:", restaurant.postal_code);
+                    console.log("- cuisine_type:", restaurant.cuisine_type);
 
                     // Fusionar configuraciones manteniendo estructura completa
                     const restaurantSettings = restaurant.settings || {};
@@ -353,6 +361,13 @@ const Configuracion = () => {
                     });
 
                     console.log("✅ Configuración cargada completamente");
+                    console.log("🔍 SETTINGS FINALES APLICADOS:");
+                    console.log("- name:", restaurant.name || "");
+                    console.log("- email:", restaurant.email || "");
+                    console.log("- phone:", restaurant.phone || "");
+                    console.log("- address:", restaurant.address || "");
+                    console.log("- city:", restaurant.city || "");
+                    console.log("- postal_code:", restaurant.postal_code || "");
                 } else {
                     console.log("âš ï¸ No se encontrÃ³ restaurant");
                 }
