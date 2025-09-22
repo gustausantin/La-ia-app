@@ -256,15 +256,18 @@ const NoShowManagerSimple = () => {
                         </span>
                     </div>
 
-                    <div className="flex items-center justify-between py-3 border-b">
-                        <div className="flex items-center gap-2">
-                            <Target className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm text-gray-700">Patrón detectado:</span>
+                    {/* Patrón detectado - SOLO DATOS REALES */}
+                    {data.detectedPattern && (
+                        <div className="flex items-center justify-between py-3 border-b">
+                            <div className="flex items-center gap-2">
+                                <Target className="w-4 h-4 text-gray-500" />
+                                <span className="text-sm text-gray-700">Patrón detectado:</span>
+                            </div>
+                            <span className="font-medium text-gray-900">
+                                {data.detectedPattern}
+                            </span>
                         </div>
-                        <span className="font-medium text-gray-900">
-                            Viernes 19-21h (40%)
-                        </span>
-                    </div>
+                    )}
 
                     <div className="flex items-center justify-between py-3 border-b">
                         <div className="flex items-center gap-2">

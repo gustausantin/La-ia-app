@@ -230,7 +230,7 @@ export default function Analytics() {
                     insights.push({
                         type: 'success',
                         title: '¡Excelente conversión!',
-                        message: 'Tu agente convierte muy bien. Estás en el top 10% de restaurantes.',
+                        message: 'Tu agente tiene una buena tasa de conversión.',
                         icon: Star
                     });
                 }

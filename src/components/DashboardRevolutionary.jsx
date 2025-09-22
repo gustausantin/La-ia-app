@@ -243,14 +243,16 @@ const NoShowWidget = ({ data, onViewDetails }) => {
                         </span>
                     </div>
 
-                    {/* Patrón detectado */}
-                    <div className="flex items-center justify-between text-sm p-2 bg-orange-50 rounded">
-                        <span className="text-gray-600 flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4" />
-                            Patrón detectado:
-                        </span>
-                        <span className="font-medium">Viernes 19-21h (40%)</span>
-                    </div>
+                    {/* Patrón detectado - SOLO DATOS REALES */}
+                    {data.detectedPattern && (
+                        <div className="flex items-center justify-between text-sm p-2 bg-orange-50 rounded">
+                            <span className="text-gray-600 flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4" />
+                                Patrón detectado:
+                            </span>
+                            <span className="font-medium">{data.detectedPattern}</span>
+                        </div>
+                    )}
 
                     {/* Algoritmo en acción */}
                     <div className="flex items-center justify-between text-sm p-2 bg-blue-50 rounded">
@@ -377,12 +379,12 @@ const ReturningCustomersWidget = ({ data }) => {
                         <div className="p-3 bg-yellow-50 rounded-lg">
                             <div className="text-sm font-medium text-yellow-700">VIP (5+ visitas)</div>
                             <div className="text-lg font-bold text-yellow-600">3 clientes</div>
-                            <div className="text-xs text-yellow-600">~1,050€ valor total</div>
+                            <div className="text-xs text-yellow-600">~{(3 * (data.avgTicket || 0) * 5).toLocaleString()}€ valor total</div>
                         </div>
                         <div className="p-3 bg-green-50 rounded-lg">
                             <div className="text-sm font-medium text-green-700">Regulares (2-4)</div>
                             <div className="text-lg font-bold text-green-600">8 clientes</div>
-                            <div className="text-xs text-green-600">~840€ valor total</div>
+                            <div className="text-xs text-green-600">~{(8 * (data.avgTicket || 0) * 3).toLocaleString()}€ valor total</div>
                         </div>
                     </div>
 
@@ -390,15 +392,15 @@ const ReturningCustomersWidget = ({ data }) => {
                     <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm p-2 bg-blue-50 rounded">
                             <span className="text-gray-600">📊 Crecimiento mensual:</span>
-                            <span className="font-medium text-blue-600">+12% nuevos clientes</span>
+                            <span className="font-medium text-blue-600">{data.monthlyGrowth || 0}% nuevos clientes</span>
                         </div>
                         <div className="flex items-center justify-between text-sm p-2 bg-green-50 rounded">
                             <span className="text-gray-600">🔄 Frecuencia promedio:</span>
-                            <span className="font-medium text-green-600">1.8 visitas/mes</span>
+                            <span className="font-medium text-green-600">{data.avgVisitsPerMonth || 0} visitas/mes</span>
                         </div>
                         <div className="flex items-center justify-between text-sm p-2 bg-purple-50 rounded">
                             <span className="text-gray-600">💎 Valor de vida (LTV):</span>
-                            <span className="font-medium text-purple-600">~420€ promedio</span>
+                            <span className="font-medium text-purple-600">~{data.avgLTV || 0}€ promedio</span>
                         </div>
                     </div>
 
@@ -547,7 +549,7 @@ const TotalValueWidget = ({ data }) => {
                         </div>
                         <div className="p-3 bg-blue-50 rounded-lg">
                             <div className="text-sm font-medium text-blue-700">Costo Mensual</div>
-                            <div className="text-2xl font-bold text-blue-600">129€</div>
+                            <div className="text-2xl font-bold text-blue-600">{data.monthlyCost || 0}€</div>
                             <div className="text-xs text-blue-600">suscripción</div>
                         </div>
                     </div>
