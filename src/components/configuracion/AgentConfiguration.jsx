@@ -534,7 +534,7 @@ const AgentConfiguration = React.memo(({ settings, onUpdate }) => {
               <MetricCard
                 icon={UserCheck}
                 label="Satisfacción del Cliente"
-                current={4.7}
+                current={0}
                 target={agentConfig.target_metrics.customer_satisfaction}
                 unit="/5"
                 color="green"

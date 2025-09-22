@@ -31,9 +31,9 @@ const NoShowManagerProfesional = () => {
     const [reservasRiesgo, setReservasRiesgo] = useState([]);
     const [data, setData] = useState({
         todayRisk: 0,
-        weeklyPrevented: 14,
+        weeklyPrevented: 0,
         riskLevel: 'low',
-        successRate: 73
+        successRate: 0
     });
 
     // Cargar datos reales
@@ -124,7 +124,7 @@ const NoShowManagerProfesional = () => {
                     todayRisk: todayNoShowActions?.length || reservasAltoRiesgo.length, // Usar el mismo número que el Dashboard
                     weeklyPrevented: prevented,
                     riskLevel: reservasAltoRiesgo.length > 2 ? 'high' : reservasAltoRiesgo.length > 0 ? 'medium' : 'low',
-                    successRate: successRate || 73
+                    successRate: successRate || 0
                 });
 
             } catch (error) {

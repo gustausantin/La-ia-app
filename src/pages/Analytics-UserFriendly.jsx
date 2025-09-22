@@ -54,31 +54,37 @@ const COLORS = {
     purple: '#8B5CF6',
 };
 
-// 💰 CALCULADORA ROI "PALABRAS DE LA CALLE"
+// 💰 CALCULADORA ROI BASADA EN DATOS REALES
 const SimpleROICalculator = {
-    calculate: (reservas) => {
-        // Cálculos realistas para restaurante mediano
-        const avgTicket = 35; // Ticket promedio €35
-        const monthlyRevenue = reservas * avgTicket;
-        const manualCost = 1800; // Salario empleado part-time
-        const aiCost = 199; // Precio accesible
+    calculate: (reservas, avgTicketReal = 0) => {
+        // SOLO USAR DATOS REALES - NO HARDCODEADOS
+        if (!avgTicketReal || reservas === 0) {
+            return {
+                monthlyRevenue: 0,
+                monthlySavings: 0,
+                additionalRevenue: 0,
+                totalBenefit: 0,
+                paybackWeeks: 0,
+                simpleMessage: "Sin datos suficientes para calcular ROI",
+                savingsMessage: "Necesitas más datos de reservas",
+                paybackMessage: "ROI se calculará con datos reales",
+            };
+        }
         
-        const savings = manualCost - aiCost;
-        const additionalRevenue = monthlyRevenue * 0.15; // 15% más reservas con IA
-        const totalBenefit = savings + additionalRevenue;
+        const monthlyRevenue = reservas * avgTicketReal;
+        const savings = 0; // Sin datos reales de costos
+        const additionalRevenue = 0; // Sin datos reales de comparación
+        const totalBenefit = monthlyRevenue;
         
         return {
-            // En palabras simples
             monthlyRevenue: monthlyRevenue,
             monthlySavings: savings,
             additionalRevenue: additionalRevenue,
             totalBenefit: totalBenefit,
-            paybackWeeks: Math.ceil((aiCost * 12) / (totalBenefit * 12 / 52)),
-            
-            // Mensajes fáciles de entender
-            simpleMessage: `Generas €${monthlyRevenue.toLocaleString()} extra al mes`,
-            savingsMessage: `Ahorras €${savings.toLocaleString()} en personal`,
-            paybackMessage: `Se paga solo en ${Math.ceil(aiCost / (totalBenefit / 4))} semanas`,
+            paybackWeeks: 0,
+            simpleMessage: `Ingresos reales: €${monthlyRevenue.toLocaleString()}`,
+            savingsMessage: "Datos de ahorro no disponibles",
+            paybackMessage: "ROI basado en datos reales",
         };
     }
 };
@@ -155,22 +161,22 @@ export default function Analytics() {
                 .eq('restaurant_id', restaurantId)
                 .order('created_at', { ascending: true });
 
-            // Simular métricas desde reservas reales
+            // Usar SOLO datos reales de reservas - SIN SIMULACIÓN
             const metricsData = reservationsData ? 
                 reservationsData.reduce((acc, reservation) => {
                     const date = reservation.created_at.split('T')[0];
                     const existing = acc.find(m => m.date === date);
                     if (existing) {
                         existing.successful_bookings += 1;
-                        existing.total_conversations += 1.3;
+                        existing.total_conversations += 1; // Solo contar reservas reales
                     } else {
                         acc.push({
                             date,
                             successful_bookings: 1,
-                            total_conversations: 1.3,
-                            avg_response_time: 2.1,
-                            conversion_rate: 75,
-                            customer_satisfaction: 4.2
+                            total_conversations: 1, // Solo datos reales
+                            avg_response_time: 0, // Sin datos reales
+                            conversion_rate: 0, // Sin datos reales
+                            customer_satisfaction: 0 // Sin datos reales
                         });
                     }
                     return acc;
