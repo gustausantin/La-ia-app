@@ -184,8 +184,8 @@ export default function Login() {
     setMessage("");
 
     try {
-      // Usar el endpoint personalizado de registro
-      const response = await fetch('/api/register', {
+      // Usar el endpoint simplificado de registro
+      const response = await fetch('/api/register-simple', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -193,19 +193,16 @@ export default function Login() {
         body: JSON.stringify({
           email,
           password,
-          firstName: restaurantName.split(' ')[0] || 'Usuario',
-          lastName: restaurantName.split(' ').slice(1).join(' ') || 'Restaurante',
-          restaurantName,
-          phone: phone || null,
-          city: city || null,
-          address: address || null,
-          postalCode: postalCode || null,
-          cuisineType: cuisineType || null,
-          country: 'España'
+          restaurantName
         }),
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        throw new Error(`Error de servidor: ${response.status} - ${response.statusText}`);
+      }
 
       if (!response.ok) {
         throw new Error(result.details || result.error || 'Error en el registro');
