@@ -124,12 +124,11 @@ export const useRestaurantStore = create()(
               .from('restaurant_settings')
               .select('*')
               .eq('restaurant_id', restaurant.id)
-              .single();
-            
+              .maybeSingle();
+            if (error) throw error;
             if (data) {
               set({ settings: { ...get().settings, ...data.settings } });
             }
-            
           } catch (error) {
             log.error('❌ Failed to load settings:', error);
           }
