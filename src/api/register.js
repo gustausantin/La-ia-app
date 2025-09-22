@@ -79,7 +79,7 @@ export default async function handler(req, res) {
     });
 
     // Configurar la URL de confirmación personalizada
-    const confirmationUrl = `${process.env.SITE_URL || 'https://7fa71e82-53a4-4e1e-8-replit.dev'}/confirm`;
+    const confirmationUrl = `${process.env.SITE_URL || 'https://la-ia-app.vercel.app'}/confirm`;
 
     if (authError) {
       // Manejar específicamente el rate limit

@@ -67,6 +67,8 @@ export default function Login() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
+  const [showResendButton, setShowResendButton] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   // Estados para login
   const [email, setEmail] = useState("");
@@ -90,6 +92,41 @@ export default function Login() {
 
   const { login } = useAuthContext();
 
+  const handleResendConfirmation = async () => {
+    setResendLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/confirm`,
+        }
+      });
+
+      if (resendError) {
+        throw resendError;
+      }
+
+      setMessage(`✅ ¡Email de confirmación reenviado!
+      
+📧 Hemos enviado un nuevo email de confirmación a: ${email}
+
+🔗 Por favor, revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta.`);
+      
+    } catch (err) {
+      if (err.message.includes('rate_limit') || err.message.includes('over_email_send_rate_limit')) {
+        setError("Has alcanzado el límite de emails por hora. Inténtalo más tarde.");
+      } else {
+        setError(`Error al reenviar email: ${err.message}`);
+      }
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -102,10 +139,13 @@ export default function Login() {
       if (!result.success) {
         if (result.error?.includes("Email not confirmed")) {
           setError("Por favor confirma tu email antes de hacer login. Revisa tu bandeja de entrada.");
+          setShowResendButton(true);
         } else if (result.error?.includes("Invalid login credentials")) {
           setError("Email o contraseña incorrectos.");
+          setShowResendButton(false);
         } else {
           setError(result.error || "Error al iniciar sesión");
+          setShowResendButton(false);
         }
       }
     } catch (err) {
@@ -185,6 +225,7 @@ export default function Login() {
 
 ⏰ Una vez confirmado, se creará automáticamente tu restaurante y podrás acceder al dashboard.`);
         
+        setShowResendButton(true);
         setLoading(false);
         return;
       }
@@ -379,12 +420,48 @@ export default function Login() {
             {error && (
                 <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-xl">
                   <p className="text-red-700 text-sm font-semibold">{error}</p>
+                  {showResendButton && (
+                    <button
+                      onClick={handleResendConfirmation}
+                      disabled={resendLoading}
+                      className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-semibold rounded-lg transition-colors duration-200 flex items-center gap-2"
+                    >
+                      {resendLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          📧 Reenviar Email de Confirmación
+                        </>
+                      )}
+                    </button>
+                  )}
               </div>
             )}
 
             {message && (
                 <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-xl">
                   <p className="text-green-700 text-sm font-semibold whitespace-pre-line">{message}</p>
+                  {showResendButton && (
+                    <button
+                      onClick={handleResendConfirmation}
+                      disabled={resendLoading}
+                      className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-semibold rounded-lg transition-colors duration-200 flex items-center gap-2"
+                    >
+                      {resendLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          📧 Reenviar Email de Confirmación
+                        </>
+                      )}
+                    </button>
+                  )}
               </div>
             )}
 
