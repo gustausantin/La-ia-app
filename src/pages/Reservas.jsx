@@ -459,7 +459,7 @@ export default function Reservas() {
         agentReservations: 0,
         conversionRate: 0,
         avgResponseTime: "0s",
-        peakChannel: "WhatsApp",
+        peakChannel: "—",
         satisfaction: 0,
     });
     const [agentInsights, setAgentInsights] = useState([]);
@@ -623,7 +623,7 @@ export default function Reservas() {
                 agentMetrics = {
                     total_conversations: agentReservationsToday.length,
                     successful_bookings: agentReservationsToday.filter(r => r.status !== 'cancelled').length,
-                    avg_response_time: 2.5, // Valor por defecto hasta conectar APIs
+                    avg_response_time: 0, // Sin datos reales → 0s
                     conversion_rate: agentReservationsToday.length > 0 ? 
                         (agentReservationsToday.filter(r => r.status !== 'cancelled').length / agentReservationsToday.length) * 100 : 0
                 };
@@ -697,7 +697,7 @@ export default function Reservas() {
                 agentReservations: agentMetrics?.successful_bookings || agentReservations,
                 conversionRate: agentMetrics?.conversion_rate || conversionRate,
                 avgResponseTime: agentMetrics?.avg_response_time ? `${agentMetrics.avg_response_time}s` : "0s",
-                peakChannel: channelPerformance?.channel || "WhatsApp",
+                peakChannel: channelPerformance?.channel || "—",
                 satisfaction: avgSatisfaction
             });
 
