@@ -26,6 +26,7 @@ import toast from 'react-hot-toast';
 const NoShowManagerProfesional = () => {
     const { restaurant } = useAuthContext();
     const [loading, setLoading] = useState(true);
+    const [showRiskExplanation, setShowRiskExplanation] = useState(false);
     const [mostrarAyuda, setMostrarAyuda] = useState(false);
     const [reservasRiesgo, setReservasRiesgo] = useState([]);
     const [data, setData] = useState({
@@ -530,10 +531,10 @@ const NoShowManagerProfesional = () => {
                                             }`} />
                                             <div>
                                                 <span className="font-semibold text-gray-900">
-                                                    {reserva.customer_name || 'Cliente sin nombre'}
+                                                    Mesa {reserva.table_number || 'TBD'} - {reserva.customer_name || 'Cliente sin nombre'}
                                                 </span>
                                                 <span className="text-gray-600 ml-2">
-                                                    • {reserva.reservation_time} • {reserva.party_size} personas
+                                                    • {reserva.reservation_time.substring(0, 5)} • {reserva.party_size} personas
                                                 </span>
                                             </div>
                                         </div>
@@ -556,33 +557,33 @@ const NoShowManagerProfesional = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    {/* BOTONES COMO CRM - ENVIAR O IGNORAR */}
-                                    <div className="flex flex-col gap-2">
-                                        <button
-                                            onClick={() => enviarMensajeConfirmacion(reserva)}
-                                            className={`px-4 py-2 text-white rounded-lg transition-colors flex items-center gap-2 font-medium ${
-                                                reserva.riskLevel === 'high' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
-                                            }`}
-                                        >
-                                            <MessageSquare className="w-4 h-4" />
-                                            ENVIAR WHATSAPP
-                                        </button>
+                                    {/* BOTONES IGUALES AL CRM */}
+                                    <div className="flex gap-2">
+                                        {(reserva.riskLevel === 'high' || reserva.riskLevel === 'medium') && (
+                                            <button
+                                                onClick={() => enviarMensajeConfirmacion(reserva)}
+                                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+                                            >
+                                                <MessageSquare className="w-4 h-4" />
+                                                Enviar
+                                            </button>
+                                        )}
                                         
                                         <button
                                             onClick={() => ignorarReserva(reserva)}
-                                            className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
+                                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg flex items-center gap-2 transition-colors"
                                         >
                                             <X className="w-4 h-4" />
-                                            IGNORAR
+                                            Ignorar
                                         </button>
                                         
                                         {reserva.customer_phone && reserva.riskLevel === 'high' && (
                                             <button
                                                 onClick={() => llamarCliente(reserva)}
-                                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
+                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors"
                                             >
                                                 <Phone className="w-4 h-4" />
-                                                LLAMAR
+                                                Llamar
                                             </button>
                                         )}
                                     </div>
