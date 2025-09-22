@@ -151,6 +151,15 @@ const Configuracion = () => {
 
             if (restaurant) {
                 console.log("✅ DATOS DEL RESTAURANTE OBTENIDOS:", restaurant);
+                console.log("🔍 CAMPOS ESPECÍFICOS:");
+                console.log("- name:", restaurant.name);
+                console.log("- email:", restaurant.email);
+                console.log("- phone:", restaurant.phone);
+                console.log("- address:", restaurant.address);
+                console.log("- city:", restaurant.city);
+                console.log("- postal_code:", restaurant.postal_code);
+                console.log("- cuisine_type:", restaurant.cuisine_type);
+                console.log("- settings:", restaurant.settings);
                 
                 // Fusionar configuraciones manteniendo estructura completa
                 const dbSettings = restaurant.settings || {};
