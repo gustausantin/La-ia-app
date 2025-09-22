@@ -305,11 +305,11 @@ const Configuracion = () => {
                     setSettings({
                         // Información básica desde BD
                         name: restaurant.name || "",
-                        description: dbSettings.description || "",
+                        description: restaurant.description || "",
                         cuisine_type: restaurant.cuisine_type || "",
                         phone: restaurant.phone || "",
                         email: restaurant.email || "",
-                        website: dbSettings.website || "",
+                        website: restaurant.website || "",
                         address: restaurant.address || "",
                         city: restaurant.city || "",
                         postal_code: restaurant.postal_code || "",
