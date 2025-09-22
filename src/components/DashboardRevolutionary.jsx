@@ -328,7 +328,7 @@ const ReturningCustomersWidget = ({ data }) => {
             {/* Top clientes con valor real */}
             <div className="space-y-2">
                 <div className="text-sm font-medium text-gray-700 mb-2">🏆 Tus mejores clientes:</div>
-                {data.topCustomers?.slice(0, 3).map((customer, index) => {
+                {(data.topCustomers || []).slice(0, 3).map((customer, index) => {
                     const customerValue = getCustomerValue(customer.visits);
                     const isVIP = customer.visits >= 5;
                     
@@ -362,12 +362,14 @@ const ReturningCustomersWidget = ({ data }) => {
             </div>
 
             {/* Solo el insight MÁS valioso */}
-            <div className="mt-4 pt-3 border-t border-gray-200 text-center">
-                <div className="text-sm text-gray-600">
-                    💰 <span className="font-medium">Ticket promedio: {avgTicket}€</span> • 
-                    📈 <span className="font-medium text-green-600">{data.retentionRate || 0}% retención</span>
+            {avgTicket > 0 && (
+                <div className="mt-4 pt-3 border-t border-gray-200 text-center">
+                    <div className="text-sm text-gray-600">
+                        💰 <span className="font-medium">Ticket promedio: {avgTicket}€</span> • 
+                        📈 <span className="font-medium text-green-600">{data.retentionRate || 0}% retención</span>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Detalles expandibles */}
             {isExpanded && (
@@ -378,13 +380,13 @@ const ReturningCustomersWidget = ({ data }) => {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 bg-yellow-50 rounded-lg">
                             <div className="text-sm font-medium text-yellow-700">VIP (5+ visitas)</div>
-                            <div className="text-lg font-bold text-yellow-600">3 clientes</div>
-                            <div className="text-xs text-yellow-600">~{(3 * (data.avgTicket || 0) * 5).toLocaleString()}€ valor total</div>
+                            <div className="text-lg font-bold text-yellow-600">{data.vipCount || 0} clientes</div>
+                            <div className="text-xs text-yellow-600">~{((data.vipCount || 0) * (data.avgTicket || 0) * 5).toLocaleString()}€ valor total</div>
                         </div>
                         <div className="p-3 bg-green-50 rounded-lg">
                             <div className="text-sm font-medium text-green-700">Regulares (2-4)</div>
-                            <div className="text-lg font-bold text-green-600">8 clientes</div>
-                            <div className="text-xs text-green-600">~{(8 * (data.avgTicket || 0) * 3).toLocaleString()}€ valor total</div>
+                            <div className="text-lg font-bold text-green-600">{data.regularCount || 0} clientes</div>
+                            <div className="text-xs text-green-600">~{((data.regularCount || 0) * (data.avgTicket || 0) * 3).toLocaleString()}€ valor total</div>
                         </div>
                     </div>
 
@@ -405,11 +407,13 @@ const ReturningCustomersWidget = ({ data }) => {
                     </div>
 
                     {/* Acciones recomendadas */}
-                    <div className="p-3 bg-orange-50 rounded-lg border-l-4 border-orange-400">
-                        <div className="text-sm text-orange-800">
-                            <strong>💡 Oportunidad:</strong> 2 clientes regulares cerca de ser VIP
+                    {data.nearVipCount > 0 && (
+                        <div className="p-3 bg-orange-50 rounded-lg border-l-4 border-orange-400">
+                            <div className="text-sm text-orange-800">
+                                <strong>💡 Oportunidad:</strong> {data.nearVipCount} clientes regulares cerca de ser VIP
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             )}
         </div>

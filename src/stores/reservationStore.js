@@ -91,19 +91,35 @@ export const useReservationStore = create()(
         try {
           log.info('📝 Creating new reservation');
           
-          const { data, error } = await supabase
-            .from('reservations')
-            .insert({
-              ...reservationData,
-              status: 'confirmed',
-              created_at: new Date().toISOString(),
-            })
-            .select(`
-              *,
-              customer:customers(*),
-              table:tables(*)
-            `)
-            .single();
+          // Usar RPC validada para evitar solapes
+          const payload = {
+            reservation_date: reservationData.reservation_date || reservationData.date,
+            reservation_time: reservationData.reservation_time || reservationData.time,
+            party_size: reservationData.party_size,
+            table_id: reservationData.table_id || null,
+            status: reservationData.status || 'pending',
+            customer_name: reservationData.customer_name,
+            customer_email: reservationData.customer_email,
+            customer_phone: reservationData.customer_phone,
+            channel: reservationData.channel || 'manual',
+            source: reservationData.source || 'manual',
+            special_requests: reservationData.special_requests || null,
+            notes: reservationData.notes || null
+          };
+
+          const { data: rpcData, error: rpcError } = await supabase
+            .rpc('create_reservation_validated', {
+              p_restaurant_id: reservationData.restaurant_id,
+              p_payload: payload,
+              p_slot_minutes: 90
+            });
+
+          if (rpcError) throw rpcError;
+          if (!rpcData?.success) {
+            throw new Error(rpcData?.error || 'No se pudo crear la reserva');
+          }
+
+          const data = rpcData.reservation;
           
           if (error) throw error;
           
