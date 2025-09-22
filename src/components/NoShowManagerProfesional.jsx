@@ -410,42 +410,42 @@ const NoShowManagerProfesional = () => {
                 </div>
             )}
 
-            {/* Métricas principales */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Métricas principales - MÁS PEQUEÑAS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Evitados esta semana */}
-                <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-blue-900">Evitados esta semana</h3>
-                        <CheckCircle className="w-5 h-5 text-blue-600" />
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium text-blue-900">Evitados esta semana</h3>
+                        <CheckCircle className="w-4 h-4 text-blue-600" />
                     </div>
-                    <div className="text-4xl font-bold text-blue-600">{data.weeklyPrevented}</div>
-                    <p className="text-sm text-blue-700 mt-2">Tasa de éxito: {data.successRate}%</p>
+                    <div className="text-2xl font-bold text-blue-600">{data.weeklyPrevented}</div>
+                    <p className="text-xs text-blue-700 mt-1">Tasa de éxito: {data.successRate}%</p>
                 </div>
 
-                {/* No-shows detectados hoy - COLORES CORRECTOS */}
-                <div className={`rounded-xl p-6 border ${
+                {/* No-shows detectados hoy - MÁS PEQUEÑO */}
+                <div className={`rounded-lg p-4 border ${
                     reservasRiesgo.filter(r => r.riskLevel === 'high').length > 0 ? 'bg-red-50 border-red-200' :
                     reservasRiesgo.filter(r => r.riskLevel === 'medium').length > 0 ? 'bg-yellow-50 border-yellow-200' :
                     'bg-green-50 border-green-200'
                 }`}>
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className={`text-lg font-semibold ${
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className={`text-sm font-medium ${
                             reservasRiesgo.filter(r => r.riskLevel === 'high').length > 0 ? 'text-red-900' :
                             reservasRiesgo.filter(r => r.riskLevel === 'medium').length > 0 ? 'text-yellow-900' :
                             'text-green-900'
                         }`}>No-shows detectados hoy</h3>
-                        <AlertTriangle className={`w-5 h-5 ${
+                        <AlertTriangle className={`w-4 h-4 ${
                             reservasRiesgo.filter(r => r.riskLevel === 'high').length > 0 ? 'text-red-600' :
                             reservasRiesgo.filter(r => r.riskLevel === 'medium').length > 0 ? 'text-yellow-600' :
                             'text-green-600'
                         }`} />
                     </div>
-                    <div className={`text-4xl font-bold ${
+                    <div className={`text-2xl font-bold ${
                         reservasRiesgo.filter(r => r.riskLevel === 'high').length > 0 ? 'text-red-600' :
                         reservasRiesgo.filter(r => r.riskLevel === 'medium').length > 0 ? 'text-yellow-600' :
                         'text-green-600'
                     }`}>{reservasRiesgo.length}</div>
-                    <div className="text-sm mt-2 space-y-1">
+                    <div className="text-xs mt-1 space-y-0.5">
                         <div className="text-red-600 font-medium">
                             {reservasRiesgo.filter(r => r.riskLevel === 'high').length} Alto riesgo
                         </div>
@@ -459,75 +459,50 @@ const NoShowManagerProfesional = () => {
                 </div>
             </div>
 
-            {/* ANÁLISIS DETALLADO - SIEMPRE VISIBLE */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <Brain className="w-5 h-5 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Análisis Detallado</h3>
+            {/* ANÁLISIS DETALLADO ELIMINADO - Como pediste */}
+
+            {/* MINI-DASHBOARD INFO */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-4 border border-blue-200">
+                <div className="flex items-center gap-2 mb-3">
+                    <Target className="w-5 h-5 text-blue-600" />
+                    <h4 className="font-bold text-blue-900">Resumen de Riesgos</h4>
                 </div>
-
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between py-3 border-b">
-                        <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm text-gray-700">Próximas 2h:</span>
-                        </div>
-                        <span className="font-medium text-gray-900">
-                            {reservasRiesgo.filter(r => {
-                                const hour = parseInt(r.reservation_time.split(':')[0]);
-                                const currentHour = new Date().getHours();
-                                return hour >= currentHour && hour <= currentHour + 2;
-                            }).length} reservas en riesgo
-                        </span>
+                
+                <div className="grid grid-cols-4 gap-3 mb-3">
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-gray-800">{reservasRiesgo.length}</div>
+                        <div className="text-xs text-gray-600">Total</div>
                     </div>
-
-                    <div className="flex items-center justify-between py-3 border-b">
-                        <div className="flex items-center gap-2">
-                            <Target className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm text-gray-700">Patrón detectado:</span>
-                        </div>
-                        <span className="font-medium text-gray-900">
-                            Viernes 19-21h (40%)
-                        </span>
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-red-600">{reservasRiesgo.filter(r => r.riskLevel === 'high').length}</div>
+                        <div className="text-xs text-red-700">Alto</div>
                     </div>
-
-                    <div className="flex items-center justify-between py-3 border-b">
-                        <div className="flex items-center gap-2">
-                            <Shield className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm text-gray-700">Protegiendo tus ingresos:</span>
-                        </div>
-                        <span className="font-medium text-green-600">
-                            ~{data.weeklyPrevented * 45}€ evitados
-                        </span>
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-yellow-600">{reservasRiesgo.filter(r => r.riskLevel === 'medium').length}</div>
+                        <div className="text-xs text-yellow-700">Medio</div>
                     </div>
-
-                    <div className="flex items-center justify-between py-3">
-                        <div className="flex items-center gap-2">
-                            <TrendingDown className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm text-gray-700">Ahorro esta semana:</span>
-                        </div>
-                        <span className="font-medium text-green-600">
-                            ~{data.weeklyPrevented * 45}€ evitados
-                        </span>
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">{reservasRiesgo.filter(r => r.riskLevel === 'low').length}</div>
+                        <div className="text-xs text-green-700">Bajo</div>
                     </div>
                 </div>
-            </div>
-
-            {/* DEBUG INFO */}
-            <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                <h4 className="font-bold text-blue-900">🔍 DEBUG INFO:</h4>
-                <p>Total reservasRiesgo: {reservasRiesgo.length}</p>
-                <p>Alto riesgo: {reservasRiesgo.filter(r => r.riskLevel === 'high').length}</p>
-                <p>Medio riesgo: {reservasRiesgo.filter(r => r.riskLevel === 'medium').length}</p>
-                <p>Bajo riesgo: {reservasRiesgo.filter(r => r.riskLevel === 'low').length}</p>
+                
                 {reservasRiesgo.length > 0 && (
-                    <div className="mt-2">
-                        <p className="font-medium">Primeras 3 reservas:</p>
-                        {reservasRiesgo.slice(0, 3).map(r => (
-                            <div key={r.id} className="text-xs">
-                                {r.customer_name} - {r.riskLevel} ({r.riskScore} pts)
-                            </div>
-                        ))}
+                    <div className="bg-white rounded p-2">
+                        <p className="text-xs font-medium text-gray-700 mb-1">Próximas acciones:</p>
+                        <div className="text-xs text-gray-600 space-y-0.5">
+                            {reservasRiesgo.slice(0, 3).map(r => (
+                                <div key={r.id} className="flex justify-between">
+                                    <span>Mesa {r.table_number} - {r.customer_name}</span>
+                                    <span className={`font-medium ${
+                                        r.riskLevel === 'high' ? 'text-red-600' :
+                                        r.riskLevel === 'medium' ? 'text-yellow-600' : 'text-green-600'
+                                    }`}>
+                                        {r.riskLevel === 'high' ? 'URGENTE' : r.riskLevel === 'medium' ? 'MEDIO' : 'BAJO'}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
