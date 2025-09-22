@@ -113,12 +113,15 @@ const Configuracion = () => {
     useEffect(() => {
         const loadSettings = async () => {
             setLoading(true);
+            console.log("📄 CARGANDO CONFIGURACIÓN - INICIO");
             
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
+                console.log("❌ No hay usuario autenticado");
                 setLoading(false);
                 return;
             }
+            console.log("✅ Usuario autenticado:", user.email);
 
             const { data: mapping, error: mappingError } = await supabase
                 .from('user_restaurant_mapping')
@@ -127,11 +130,13 @@ const Configuracion = () => {
                 .single();
                 
             if (mappingError || !mapping) {
+                console.error("❌ Error o no se encontró mapping usuario-restaurante:", mappingError);
                 setLoading(false);
                 return;
             }
             
             const currentRestaurantId = mapping.restaurant_id;
+            console.log("🏪 Restaurant ID encontrado:", currentRestaurantId);
 
             const { data: restaurant, error: restaurantError } = await supabase
                 .from("restaurants")
@@ -140,17 +145,24 @@ const Configuracion = () => {
                 .single();
 
             if (restaurantError) {
+                console.error("❌ Error cargando restaurant:", restaurantError);
                 throw restaurantError;
             }
 
             if (restaurant) {
+                console.log("✅ DATOS DEL RESTAURANTE OBTENIDOS:", restaurant);
+                
+                // Fusionar configuraciones manteniendo estructura completa
+                const dbSettings = restaurant.settings || {};
+                
                 setSettings({
+                    // Información básica desde BD
                     name: restaurant.name || "",
-                    description: restaurant.description || "",
+                    description: dbSettings.description || "",
                     cuisine_type: restaurant.cuisine_type || "",
                     phone: restaurant.phone || "",
                     email: restaurant.email || "",
-                    website: restaurant.website || "",
+                    website: dbSettings.website || "",
                     address: restaurant.address || "",
                     city: restaurant.city || "",
                     postal_code: restaurant.postal_code || "",
@@ -158,12 +170,19 @@ const Configuracion = () => {
                     timezone: restaurant.timezone || "Europe/Madrid",
                     currency: restaurant.currency || "EUR",
                     language: restaurant.language || "es",
-                    logo_url: restaurant.logo_url || "",
-                    capacity_total: restaurant.capacity_total || 0,
-                    price_range: restaurant.price_range || "",
+                    logo_url: dbSettings.logo_url || "",
+                    capacity_total: dbSettings.capacity_total || 0,
+                    price_range: dbSettings.price_range || "",
+                    
+                    // Canales desde BD
                     channels: restaurant.channels || {},
+                    
+                    // Notificaciones desde BD
                     notifications: restaurant.notifications || {},
                 });
+                console.log("✅ CONFIGURACIÓN CARGADA EXITOSAMENTE");
+            } else {
+                console.log("⚠️ No se encontró restaurant");
             }
 
             setLoading(false);
@@ -182,6 +201,16 @@ const Configuracion = () => {
             setSaving(true);
 
             if (section === "Información General") {
+                // Obtener configuración actual para hacer merge
+                const { data: currentData } = await supabase
+                    .from("restaurants")
+                    .select("settings")
+                    .eq("id", restaurantId)
+                    .single();
+                    
+                const currentSettings = currentData?.settings || {};
+                
+                // Guardar campos directos + campos en settings
                 const { error } = await supabase
                     .from("restaurants")
                     .update({
@@ -192,6 +221,14 @@ const Configuracion = () => {
                         city: settings.city,
                         postal_code: settings.postal_code,
                         cuisine_type: settings.cuisine_type,
+                        settings: {
+                            ...currentSettings,
+                            description: settings.description,
+                            website: settings.website,
+                            logo_url: settings.logo_url,
+                            capacity_total: settings.capacity_total,
+                            price_range: settings.price_range
+                        },
                         updated_at: new Date().toISOString()
                     })
                     .eq("id", restaurantId);
