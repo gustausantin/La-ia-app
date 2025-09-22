@@ -13,6 +13,7 @@ import {
 import toast from 'react-hot-toast';
 import CustomerModal from '../components/CustomerModal';
 import { calculateSegment } from '../services/CRMv2Service';
+import CRMIntegrationService from '../services/CRMIntegrationService';
 
 const CRMv2Complete = () => {
     const navigate = useNavigate();
@@ -687,8 +688,36 @@ El equipo del restaurante`,
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => {
-                                                // TODO: Enviar todos los mensajes
-                                                toast.success('Todos los mensajes enviados automáticamente');
+                                                // Enviar todos los mensajes con integración real según canal
+                                                (async () => {
+                                                    try {
+                                                        const results = [];
+                                                        for (const msg of messageQueue) {
+                                                            const channel = msg.channel || 'whatsapp';
+                                                            const payload = {
+                                                                to: msg.customer_phone || undefined,
+                                                                body: msg.content,
+                                                                subject: msg.subject,
+                                                                templateName: msg.provider_template_name,
+                                                                variables: msg.variables_used || undefined
+                                                            };
+                                                            if (channel === 'whatsapp') {
+                                                                results.push(await CRMIntegrationService.sendWhatsAppMessage(restaurantId, payload));
+                                                            } else if (channel === 'email') {
+                                                                // Derivar email del cliente si no viene en msg
+                                                                const customer = customerFeatures.find(c => c.id === msg.customer_id);
+                                                                results.push(await CRMIntegrationService.sendEmailMessage(restaurantId, {
+                                                                    ...payload,
+                                                                    to: payload.to || customer?.email
+                                                                }));
+                                                            }
+                                                        }
+                                                        toast.success(`Mensajes procesados: ${results.filter(r => r?.success).length}/${results.length}`);
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                        toast.error('Error al enviar mensajes');
+                                                    }
+                                                })();
                                             }}
                                             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
                                         >
@@ -799,10 +828,36 @@ El equipo del restaurante`}
                                                             No Enviar
                                                         </button>
                                                         <button
-                                                            onClick={() => {
-                                                                // TODO: Enviar mensaje específico
-                                                                const customerName = message.customers?.name || message.customer_name;
-                                                                toast.success(`Mensaje enviado a ${customerName}`);
+                                                            onClick={async () => {
+                                                                try {
+                                                                    const channel = message.channel || 'whatsapp';
+                                                                    const payload = {
+                                                                        to: message.customer_phone || undefined,
+                                                                        body: message.content,
+                                                                        subject: message.subject,
+                                                                        templateName: message.provider_template_name,
+                                                                        variables: message.variables_used || undefined
+                                                                    };
+                                                                    let result;
+                                                                    if (channel === 'whatsapp') {
+                                                                        result = await CRMIntegrationService.sendWhatsAppMessage(restaurantId, payload);
+                                                                    } else if (channel === 'email') {
+                                                                        const customer = customerFeatures.find(c => c.id === message.customer_id);
+                                                                        result = await CRMIntegrationService.sendEmailMessage(restaurantId, {
+                                                                            ...payload,
+                                                                            to: payload.to || customer?.email
+                                                                        });
+                                                                    }
+                                                                    const customerName = message.customers?.name || message.customer_name;
+                                                                    if (result?.success) {
+                                                                        toast.success(`Mensaje enviado a ${customerName}`);
+                                                                    } else {
+                                                                        toast.error(`Error enviando a ${customerName}: ${result?.error || 'desconocido'}`);
+                                                                    }
+                                                                } catch (err) {
+                                                                    console.error(err);
+                                                                    toast.error('Error al enviar mensaje');
+                                                                }
                                                             }}
                                                             className="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 rounded transition-colors"
                                                         >

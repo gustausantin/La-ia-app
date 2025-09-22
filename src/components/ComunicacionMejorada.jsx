@@ -38,67 +38,7 @@ const ComunicacionMejorada = () => {
         cerradas: 0
     });
 
-    // Generar conversaciones de ejemplo si no hay datos
-    const generateSampleConversations = useCallback(() => {
-        const oneWeekAgo = subDays(new Date(), 7);
-        const sampleConversations = [
-            {
-                id: 'conv_1',
-                restaurant_id: restaurant?.id,
-                customer_name: 'María García',
-                customer_phone: '+34 655 123 456',
-                customer_email: 'maria.garcia@email.com',
-                channel: 'whatsapp',
-                status: 'open',
-                priority: 'normal',
-                subject: 'Reserva para cumpleaños',
-                last_message: 'Perfecto, nos vemos el sábado',
-                last_message_at: new Date().toISOString(),
-                created_at: subDays(new Date(), 2).toISOString(),
-                updated_at: new Date().toISOString(),
-                unread_count: 0,
-                ai_handled: true
-            },
-            {
-                id: 'conv_2',
-                restaurant_id: restaurant?.id,
-                customer_name: 'Carlos López',
-                customer_phone: '+34 612 987 654',
-                customer_email: 'carlos.lopez@email.com',
-                channel: 'email',
-                status: 'pending',
-                priority: 'high',
-                subject: 'Consulta menú vegano',
-                last_message: '¿Tienen opciones veganas?',
-                last_message_at: subDays(new Date(), 1).toISOString(),
-                created_at: subDays(new Date(), 3).toISOString(),
-                updated_at: subDays(new Date(), 1).toISOString(),
-                unread_count: 1,
-                ai_handled: false
-            },
-            {
-                id: 'conv_3',
-                restaurant_id: restaurant?.id,
-                customer_name: 'Ana Martínez',
-                customer_phone: '+34 678 234 567',
-                channel: 'instagram',
-                status: 'closed',
-                priority: 'normal',
-                subject: 'Horario de apertura',
-                last_message: 'Gracias por la información',
-                last_message_at: subDays(new Date(), 4).toISOString(),
-                created_at: subDays(new Date(), 5).toISOString(),
-                updated_at: subDays(new Date(), 4).toISOString(),
-                unread_count: 0,
-                ai_handled: true
-            }
-        ];
-
-        // Solo mostrar conversaciones de la última semana
-        return sampleConversations.filter(conv => 
-            new Date(conv.created_at) >= oneWeekAgo
-        );
-    }, [restaurant?.id]);
+    // Eliminado: datos de ejemplo. Solo datos reales de Supabase.
 
     // Cargar conversaciones
     const loadConversations = useCallback(async () => {
@@ -108,7 +48,6 @@ const ComunicacionMejorada = () => {
             setLoading(true);
             const oneWeekAgo = format(subDays(new Date(), 7), 'yyyy-MM-dd');
 
-            // Intentar cargar conversaciones reales
             const { data, error } = await supabase
                 .from('conversations')
                 .select('*')
@@ -118,17 +57,10 @@ const ComunicacionMejorada = () => {
 
             if (error) throw error;
 
-            if (data && data.length > 0) {
-                setConversations(data);
-            } else {
-                // Si no hay datos, usar ejemplos
-                const sampleData = generateSampleConversations();
-                setConversations(sampleData);
-                toast.info('Mostrando conversaciones de ejemplo');
-            }
+            setConversations(data || []);
 
             // Calcular estadísticas
-            const allConversations = data || generateSampleConversations();
+            const allConversations = data || [];
             setStats({
                 total: allConversations.length,
                 activas: allConversations.filter(c => c.status === 'open').length,
@@ -138,15 +70,8 @@ const ComunicacionMejorada = () => {
 
         } catch (error) {
             console.error('Error cargando conversaciones:', error);
-            // Usar datos de ejemplo si hay error
-            const sampleData = generateSampleConversations();
-            setConversations(sampleData);
-            setStats({
-                total: sampleData.length,
-                activas: sampleData.filter(c => c.status === 'open').length,
-                pendientes: sampleData.filter(c => c.status === 'pending').length,
-                cerradas: sampleData.filter(c => c.status === 'closed').length
-            });
+            setConversations([]);
+            setStats({ total: 0, activas: 0, pendientes: 0, cerradas: 0 });
         } finally {
             setLoading(false);
         }
