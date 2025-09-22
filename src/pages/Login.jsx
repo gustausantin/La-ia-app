@@ -184,40 +184,48 @@ export default function Login() {
     setMessage("");
 
     try {
-      // Usar el endpoint simplificado de registro
-      const response = await fetch('/api/register-simple', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            restaurant_name: restaurantName,
+            phone: phone,
+            city: city,
+            address: address,
+            postal_code: postalCode,
+            cuisine_type: cuisineType,
+          },
+          emailRedirectTo: `${window.location.origin}/confirm`,
         },
-        body: JSON.stringify({
-          email,
-          password,
-          restaurantName
-        }),
       });
 
-      let result;
-      try {
-        result = await response.json();
-      } catch (jsonError) {
-        throw new Error(`Error de servidor: ${response.status} - ${response.statusText}`);
+      if (authError) {
+        throw authError;
       }
 
-      if (!response.ok) {
-        throw new Error(result.details || result.error || 'Error en el registro');
-      }
-
-      if (result.success) {
+      if (authData.user) {
+        localStorage.setItem('pendingRegistration', JSON.stringify({
+          restaurantName: restaurantName.trim(),
+          phone: phone || null,
+          city: city || null,
+          address: address || null,
+          postalCode: postalCode || null,
+          cuisineType: cuisineType || null,
+          userId: authData.user.id,
+          email: email,
+          timestamp: new Date().toISOString()
+        }));
+        
         setMessage(`✅ ¡Registro exitoso! 
         
-🎉 Tu cuenta ha sido creada y tu restaurante "${restaurantName}" está listo.
+📧 Hemos enviado un email de confirmación a: ${email}
 
-🚀 Puedes iniciar sesión inmediatamente con tu email y contraseña.
+🔗 Por favor, revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta.
 
-💡 No necesitas confirmar tu email - puedes empezar a usar La-IA ahora mismo.`);
+⏰ Una vez confirmado, se creará automáticamente tu restaurante y podrás acceder al dashboard.`);
         
-        setShowResendButton(false); // No necesario con bypass
+        setShowResendButton(true);
         setLoading(false);
         return;
       }
