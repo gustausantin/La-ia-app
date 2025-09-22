@@ -172,12 +172,33 @@ const NoShowManagerProfesional = () => {
         loadData();
     }, [restaurant?.id]);
 
-    // Enviar mensaje de confirmación
+    // Enviar mensaje de confirmación usando PLANTILLAS CRM
     const enviarMensajeConfirmacion = async (reserva) => {
         try {
-            toast.loading('Enviando mensaje de confirmación...', { id: 'send-msg' });
+            toast.loading('Obteniendo plantilla y enviando mensaje...', { id: 'send-msg' });
             
-            // GUARDAR ACCIÓN EN LA BASE DE DATOS
+            // 1. OBTENER PLANTILLA CRM PARA NO-SHOWS
+            const { data: plantillas } = await supabase
+                .from('message_templates')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .eq('category', 'noshow_prevention')
+                .eq('is_active', true)
+                .single();
+
+            // Si no hay plantilla, usar mensaje por defecto
+            let mensajeFinal = `Hola ${reserva.customer_name}, te confirmamos tu reserva para hoy a las ${reserva.reservation_time}. ¿Todo correcto? Responde SÍ para confirmar.`;
+            
+            if (plantillas?.content) {
+                // Personalizar plantilla con datos de la reserva
+                mensajeFinal = plantillas.content
+                    .replace('{{customer_name}}', reserva.customer_name)
+                    .replace('{{reservation_time}}', reserva.reservation_time)
+                    .replace('{{party_size}}', reserva.party_size)
+                    .replace('{{restaurant_name}}', restaurant.name || 'nuestro restaurante');
+            }
+            
+            // 2. GUARDAR ACCIÓN EN LA BASE DE DATOS
             const { data, error } = await supabase
                 .from('noshow_actions')
                 .insert({
@@ -192,11 +213,12 @@ const NoShowManagerProfesional = () => {
                     risk_score: reserva.riskScore,
                     action_type: 'whatsapp_confirmation',
                     channel: 'whatsapp',
-                    message_sent: `Hola ${reserva.customer_name}, te confirmamos tu reserva para hoy a las ${reserva.reservation_time}. ¿Todo correcto? Responde SÍ para confirmar.`,
+                    message_sent: mensajeFinal,
                     customer_response: 'pending',
                     final_outcome: 'pending',
                     metadata: {
                         risk_factors: reserva.riskFactors,
+                        template_used: plantillas?.id || 'default',
                         sent_at: new Date().toISOString()
                     }
                 })
@@ -205,18 +227,58 @@ const NoShowManagerProfesional = () => {
 
             if (error) throw error;
 
-            // CREAR COMUNICACIÓN EN MESSAGES
+            // 3. CREAR COMUNICACIÓN EN MESSAGES Y CONVERSATIONS
+            // Primero crear o actualizar conversación
+            const { data: conversation } = await supabase
+                .from('conversations')
+                .upsert({
+                    restaurant_id: restaurant.id,
+                    customer_id: reserva.customer_id,
+                    customer_name: reserva.customer_name,
+                    customer_phone: reserva.customer_phone || '',
+                    customer_email: reserva.customer_email || '',
+                    channel: 'whatsapp',
+                    status: 'active',
+                    priority: 'high', // Alta prioridad por ser prevención de no-show
+                    last_message: mensajeFinal,
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'restaurant_id,customer_phone',
+                    ignoreDuplicates: false
+                })
+                .select()
+                .single();
+
+            // Luego crear el mensaje
             await supabase.from('messages').insert({
                 restaurant_id: restaurant.id,
                 customer_id: reserva.customer_id,
                 customer_name: reserva.customer_name,
                 customer_phone: reserva.customer_phone || '',
-                message_text: `Confirmación de reserva para ${reserva.customer_name} - ${reserva.reservation_time}`,
+                message_text: mensajeFinal,
                 direction: 'outbound',
                 channel: 'whatsapp',
                 metadata: {
                     type: 'noshow_prevention',
-                    reservation_id: reserva.id
+                    reservation_id: reserva.id,
+                    risk_score: reserva.riskScore,
+                    template_id: plantillas?.id
+                }
+            });
+
+            // 4. CREAR SUGERENCIA CRM PARA SEGUIMIENTO
+            await supabase.from('crm_suggestions').insert({
+                restaurant_id: restaurant.id,
+                customer_id: reserva.customer_id,
+                type: 'noshow_followup',
+                title: `Seguimiento prevención no-show: ${reserva.customer_name}`,
+                description: `Cliente de alto riesgo (${reserva.riskScore} puntos). Mensaje enviado. Pendiente confirmación.`,
+                priority: 'high',
+                status: 'pending',
+                metadata: {
+                    reservation_id: reserva.id,
+                    risk_factors: reserva.riskFactors,
+                    message_sent: true
                 }
             });
 
