@@ -467,6 +467,13 @@ const NoShowManagerProfesional = () => {
                 <div className="flex items-center gap-2 mb-3">
                     <Target className="w-5 h-5 text-blue-600" />
                     <h4 className="font-bold text-blue-900">Resumen de Riesgos</h4>
+                    <button
+                        onClick={() => setShowRiskExplanation(true)}
+                        className="ml-auto p-1 text-blue-400 hover:text-blue-600 rounded-full hover:bg-blue-100"
+                        title="¿Cómo calculamos el riesgo?"
+                    >
+                        <Info className="w-4 h-4" />
+                    </button>
                 </div>
                 
                 <div className="grid grid-cols-4 gap-3 mb-3">
@@ -606,6 +613,67 @@ const NoShowManagerProfesional = () => {
                             <p className="text-sm text-green-700 mt-1">
                                 Todas las reservas están confirmadas o tienen bajo riesgo de no-show
                             </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL EXPLICATIVO DE FACTORES DE RIESGO */}
+            {showRiskExplanation && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                    <Target className="w-6 h-6 text-blue-600" />
+                                    ¿Cómo Calculamos el Riesgo?
+                                </h2>
+                                <button
+                                    onClick={() => setShowRiskExplanation(false)}
+                                    className="p-2 hover:bg-gray-100 rounded-lg"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-400">
+                                    <h3 className="font-semibold text-red-900 mb-2">🔴 ALTO RIESGO (85+ puntos)</h3>
+                                    <ul className="text-sm text-red-800 space-y-1">
+                                        <li>• Cliente con historial de no-shows</li>
+                                        <li>• Horarios problemáticos (19-21h viernes)</li>
+                                        <li>• Grupos grandes (6+ personas)</li>
+                                        <li>• Sin teléfono válido</li>
+                                    </ul>
+                                </div>
+                                
+                                <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400">
+                                    <h3 className="font-semibold text-yellow-900 mb-2">🟡 RIESGO MEDIO (65-84 puntos)</h3>
+                                    <ul className="text-sm text-yellow-800 space-y-1">
+                                        <li>• Cliente ocasional</li>
+                                        <li>• Horarios de riesgo moderado</li>
+                                        <li>• Grupos medianos (4-5 personas)</li>
+                                    </ul>
+                                </div>
+                                
+                                <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-400">
+                                    <h3 className="font-semibold text-green-900 mb-2">🟢 RIESGO BAJO (0-64 puntos)</h3>
+                                    <ul className="text-sm text-green-800 space-y-1">
+                                        <li>• Cliente VIP o regular</li>
+                                        <li>• Horarios seguros</li>
+                                        <li>• Grupos pequeños (1-3 personas)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-6 flex justify-end">
+                                <button
+                                    onClick={() => setShowRiskExplanation(false)}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                >
+                                    Entendido
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
