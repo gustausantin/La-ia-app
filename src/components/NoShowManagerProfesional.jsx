@@ -454,18 +454,9 @@ const NoShowManagerProfesional = () => {
                             'text-green-600'
                         }`} />
                     </div>
-                    <div className={`text-4xl font-bold ${
-                        data.riskLevel === 'high' ? 'text-red-600' :
-                        data.riskLevel === 'medium' ? 'text-yellow-600' :
-                        'text-green-600'
-                    }`}>{data.todayRisk}</div>
-                    <p className={`text-sm mt-2 ${
-                        data.riskLevel === 'high' ? 'text-red-700' :
-                        data.riskLevel === 'medium' ? 'text-yellow-700' :
-                        'text-green-700'
-                    }`}>
-                        Nivel: {data.riskLevel === 'high' ? 'Alto' : 
-                               data.riskLevel === 'medium' ? 'Medio' : 'Bajo'}
+                    <div className="text-4xl font-bold text-red-600">{data.todayRisk}</div>
+                    <p className="text-sm mt-2 text-red-700">
+                        Nivel: Alto - Requieren acción inmediata
                     </p>
                 </div>
             </div>
