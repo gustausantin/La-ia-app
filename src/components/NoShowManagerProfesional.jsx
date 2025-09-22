@@ -72,14 +72,15 @@ const NoShowManagerProfesional = () => {
                     let riskScore = 0;
                     let riskFactors = [];
 
-                    // Factor 1: Historial del cliente (40% peso) - MISMA LÓGICA QUE DASHBOARD
-                    const noShowRate = (reserva.customers?.no_show_count || 0) / Math.max(1, reserva.customers?.visits_count || 1);
-                    if (noShowRate > 0.3) {
+                    // Factor 1: Riesgo de churn del cliente (40% peso)
+                    // Usamos churn_risk_score que SÍ existe en nuestra BD
+                    const churnRisk = reserva.customers?.churn_risk_score || 0;
+                    if (churnRisk >= 85) {
                         riskScore += 40;
-                        riskFactors.push('Historial de no-shows alto');
-                    } else if (noShowRate > 0.15) {
+                        riskFactors.push('Cliente de alto riesgo');
+                    } else if (churnRisk >= 60) {
                         riskScore += 25;
-                        riskFactors.push('Algunos no-shows previos');
+                        riskFactors.push('Cliente de riesgo medio');
                     }
 
                     // Factor 2: Hora de la reserva (25% peso)
