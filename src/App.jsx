@@ -141,7 +141,7 @@ function AppContent() {
                 } 
               />
               <Route 
-                path="/crm-v2" 
+                path="/crm-inteligente" 
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <CRMv2 />

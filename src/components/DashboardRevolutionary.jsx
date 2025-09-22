@@ -783,8 +783,8 @@ const DashboardRevolutionary = () => {
         try {
             console.log('🔍 DEBUG: Navegando a CRM con oportunidad:', opportunity);
             
-            // SIEMPRE redirigir al CRM V2 (CRM Inteligente)
-            navigate('/crm-v2');
+            // Redirigir al CRM Inteligente
+            navigate('/crm-inteligente');
             
             toast.success('🤖 Abriendo CRM Inteligente para gestionar la oportunidad', {
                 duration: 3000
