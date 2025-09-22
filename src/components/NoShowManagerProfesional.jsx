@@ -51,79 +51,48 @@ const NoShowManagerProfesional = () => {
                 
                 // 1. Obtener reservas de hoy
                 const { data: todayReservations } = await supabase
-                    .from('reservations')
-                    .select(`
-                        *,
-                        customers (
-                            name,
-                            phone,
-                            email,
-                            churn_risk_score,
-                            visits_count,
-                            no_show_count
-                        )
-                    `)
+                    .from('noshow_actions')
+                    .select('*')
                     .eq('restaurant_id', restaurant.id)
-                    .eq('reservation_date', today)
-                    .in('status', ['pending', 'confirmed'])
-                    .order('reservation_time');
+                    .gte('reservation_date', today)
+                    .lte('reservation_date', today)
+                    .order('risk_score', { ascending: false });
 
-                // 2. Calcular riesgo para cada reserva
-                const reservasConRiesgo = (todayReservations || []).map(reserva => {
-                    let riskScore = 0;
+                console.log('🔍 DEBUG NoShow - Acciones encontradas:', todayReservations?.length || 0);
+                
+                // 2. Convertir noshow_actions a formato UI
+                const reservasConRiesgo = (todayReservations || []).map(action => {
                     let riskFactors = [];
-
-                    // Factor 1: Riesgo de churn del cliente (40% peso)
-                    // Usamos churn_risk_score que SÍ existe en nuestra BD
-                    const churnRisk = reserva.customers?.churn_risk_score || 0;
-                    if (churnRisk >= 85) {
-                        riskScore += 40;
-                        riskFactors.push('Cliente de alto riesgo');
-                    } else if (churnRisk >= 60) {
-                        riskScore += 25;
-                        riskFactors.push('Cliente de riesgo medio');
-                    }
-
-                    // Factor 2: Hora de la reserva (25% peso)
-                    const hour = parseInt(reserva.reservation_time.split(':')[0]);
-                    if (hour >= 20 || hour <= 13) {
-                        riskScore += 25;
-                        riskFactors.push('Hora con mayor riesgo');
-                    }
-
-                    // Factor 3: Tamaño del grupo
-                    if (reserva.party_size > 6) {
-                        riskScore += 15;
-                        riskFactors.push('Grupo grande');
-                    }
-
-                    // Factor 4: Sin teléfono confirmado (20% peso)
-                    if (!reserva.customer_phone || reserva.customer_phone.length < 9) {
-                        riskScore += 20;
-                        riskFactors.push('Sin teléfono válido');
-                    }
-                    
-                    // Factor 5: Cliente nuevo (sin historial)
-                    if (!reserva.customers || reserva.customers.visits_count === 0) {
-                        riskScore += 15;
-                        riskFactors.push('Cliente nuevo');
+                    if (action.risk_score >= 85) {
+                        riskFactors = ['Cliente de alto riesgo', 'Requiere acción inmediata'];
+                    } else if (action.risk_score >= 65) {
+                        riskFactors = ['Riesgo moderado', 'Monitoreo recomendado'];
+                    } else {
+                        riskFactors = ['Riesgo bajo', 'Seguimiento opcional'];
                     }
 
                     return {
-                        ...reserva,
-                        riskScore,
-                        riskFactors,
-                        riskLevel: riskScore >= 85 ? 'high' : riskScore >= 65 ? 'medium' : 'low'
+                        id: action.reservation_id || action.id,
+                        customer_name: action.customer_name,
+                        customer_phone: action.customer_phone || 'Sin teléfono',
+                        customer_email: 'Sin email',
+                        reservation_time: action.reservation_time,
+                        party_size: action.party_size,
+                        table_number: 'TBD',
+                        riskScore: action.risk_score,
+                        riskLevel: action.risk_level,
+                        riskFactors: riskFactors,
+                        reservation_date: action.reservation_date
                     };
                 });
 
-                // Mostrar TODAS las reservas con riesgo (para coherencia con Dashboard)
-                // El Dashboard cuenta TODAS las noshow_actions, no solo las de alto riesgo
-                const reservasConAlgunRiesgo = reservasConRiesgo.filter(r => r.riskScore > 0);
-                setReservasRiesgo(reservasConAlgunRiesgo);
+                console.log('🔍 DEBUG NoShow - Reservas procesadas:', reservasConRiesgo.length);
                 
-                // Para el contador principal, usar las de alto riesgo
-                const reservasAltoRiesgo = reservasConRiesgo.filter(r => r.riskScore >= 85);
+                // TODAS las reservas (como Dashboard)
+                setReservasRiesgo(reservasConRiesgo);
+                
+                // Para el contador principal
+                const reservasAltoRiesgo = reservasConRiesgo.filter(r => r.riskLevel === 'high');
 
                 // 3. Cargar datos de la semana
                 const weekAgo = new Date();
