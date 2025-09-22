@@ -40,30 +40,8 @@ const AIInsights = React.memo(({ data, dateRange }) => {
         costSavings: 0,
       },
 
-      // Patrones identificados
-      patterns: [
-        {
-          id: 'booking_pattern',
-          title: 'Patrón de Reservas',
-          description: 'Los martes tienen 23% menos reservas. Oportunidad para promociones especiales.',
-          category: 'Temporal',
-          strength: 'Alto',
-        },
-        {
-          id: 'customer_journey',
-          title: 'Jornada del Cliente',
-          description: 'Clientes que preguntan por menú tienen 67% más probabilidad de reservar.',
-          category: 'Comportamiento',
-          strength: 'Muy Alto',
-        },
-        {
-          id: 'seasonal_trend',
-          title: 'Tendencia Estacional',
-          description: 'Enero muestra incremento del 15% vs diciembre en reservas de cenas.',
-          category: 'Estacional',
-          strength: 'Medio',
-        },
-      ],
+      // Patrones identificados - SOLO DATOS REALES
+      patterns: [],
     };
   }, [data, dateRange]);
 
@@ -266,10 +244,10 @@ const AIInsights = React.memo(({ data, dateRange }) => {
           <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-700">Comprensión del lenguaje natural</span>
-              <span className="font-medium">96%</span>
+              <span className="font-medium">0%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-green-500 h-2 rounded-full" style={{ width: '96%' }} />
+              <div className="bg-green-500 h-2 rounded-full" style={{ width: '0%' }} />
             </div>
           </div>
           <div>
@@ -284,19 +262,19 @@ const AIInsights = React.memo(({ data, dateRange }) => {
           <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-700">Recomendaciones personalizadas</span>
-              <span className="font-medium">88%</span>
+              <span className="font-medium">0%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-purple-500 h-2 rounded-full" style={{ width: '88%' }} />
+              <div className="bg-purple-500 h-2 rounded-full" style={{ width: '0%' }} />
             </div>
           </div>
           <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-700">Gestión de conflictos</span>
-              <span className="font-medium">82%</span>
+              <span className="font-medium">0%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-orange-500 h-2 rounded-full" style={{ width: '82%' }} />
+              <div className="bg-orange-500 h-2 rounded-full" style={{ width: '0%' }} />
             </div>
           </div>
         </div>

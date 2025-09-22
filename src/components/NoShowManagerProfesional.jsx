@@ -388,7 +388,7 @@ const NoShowManagerProfesional = () => {
                             <strong>No-Show:</strong> Cliente con reserva confirmada que no se presenta sin avisar.
                         </div>
                         <div>
-                            <strong>Impacto:</strong> Mesa vacía = pérdida de €45-150 por reserva.
+                            <strong>Impacto:</strong> Mesa vacía = pérdida potencial de ingresos.
                         </div>
                         <div className="pt-2 border-t border-blue-200">
                             <strong>Factores de Riesgo que analizamos:</strong>
