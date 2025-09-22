@@ -21,7 +21,7 @@ export default function Confirm() {
         // Verificar si tenemos token en formato correcto
         if (!access_token && !token) {
           setStatus('error');
-          setMessage('⚠️ Enlace de confirmación inválido. Por favor, solicita un nuevo email de confirmación.');
+          setMessage('⚠️ Enlace de confirmación inválido o expirado.\n\nEsto puede ocurrir si:\n• El enlace tiene más de 24 horas\n• Ya fue usado anteriormente\n• Hay un error en el formato del enlace\n\nPor favor, solicita un nuevo email de confirmación desde la página de login.');
           return;
         }
 
