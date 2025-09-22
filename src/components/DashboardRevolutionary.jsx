@@ -631,65 +631,22 @@ const DashboardRevolutionary = () => {
             };
 
             try {
-                // USAR LA MISMA LÓGICA EXACTA QUE NOSHOWMANAGER
-                const todayHighRiskReservations = todayReservations?.filter(reservation => {
-                    let riskScore = 0;
-                    let riskFactors = [];
-                    
-                // Factor 1: Riesgo de churn del cliente (40% peso)
-                // Usamos churn_risk_score que SÍ existe en la tabla
-                const churnRisk = reservation.customers?.churn_risk_score || 0;
-                if (churnRisk >= 85) {
-                    riskScore += 40;
-                    riskFactors.push('Cliente de alto riesgo');
-                } else if (churnRisk >= 60) {
-                    riskScore += 25;
-                    riskFactors.push('Cliente de riesgo medio');
-                }
-                    
-                    // Factor 2: Hora de la reserva (25% peso) - EXACTAMENTE IGUAL QUE NoShowManagerProfesional
-                    const hour = parseInt(reservation.reservation_time?.split(':')[0] || '0');
-                    if (hour >= 20 || hour <= 13) {
-                        riskScore += 25;
-                        riskFactors.push('Hora con mayor riesgo');
-                    }
-                    
-                    // Factor 3: Tamaño del grupo - EXACTAMENTE IGUAL QUE NoShowManagerProfesional
-                    if (reservation.party_size > 6) {
-                        riskScore += 15;
-                        riskFactors.push('Grupo grande');
-                    }
-                    
-                    // Factor 4: Sin teléfono confirmado (20% peso) - EXACTAMENTE IGUAL QUE NoShowManagerProfesional
-                    if (!reservation.customer_phone || reservation.customer_phone.length < 9) {
-                        riskScore += 20;
-                        riskFactors.push('Sin teléfono válido');
-                    }
-                    
-                    // Factor 5: Cliente nuevo (sin historial) - EXACTAMENTE IGUAL QUE NoShowManagerProfesional
-                    if (!reservation.customers || reservation.customers.visits_count === 0) {
-                        riskScore += 15;
-                        riskFactors.push('Cliente nuevo');
-                    }
-                    
-                    // Guardar datos para debug
-                    reservation._debug_risk = {
-                        score: Math.min(riskScore, 100),
-                        factors: riskFactors,
-                        level: riskScore >= 85 ? 'high' : riskScore >= 65 ? 'medium' : 'low'
-                    };
-                    
-                    // MISMO UMBRAL QUE NOSHOWMANAGER: >= 85 = alto riesgo
-                    return riskScore >= 85;
-                }) || [];
+                // USAR EXACTAMENTE LA MISMA FUENTE QUE NoShowManagerProfesional
+                // Obtener no-shows de alto riesgo de HOY desde noshow_actions
+                const { data: todayHighRiskActions } = await supabase
+                    .from('noshow_actions')
+                    .select('*')
+                    .eq('restaurant_id', restaurant.id)
+                    .eq('reservation_date', format(new Date(), 'yyyy-MM-dd'))
+                    .eq('risk_level', 'high');
 
-                console.log('🔍 DEBUG Dashboard - Reservas hoy:', todayReservations?.length);
-                console.log('🔍 DEBUG Dashboard - Alto riesgo:', todayHighRiskReservations.length);
-                console.log('🔍 DEBUG Dashboard - Detalles riesgo:', todayHighRiskReservations.map(r => ({
-                    customer: r.customer_name,
-                    time: r.reservation_time,
-                    party_size: r.party_size,
-                    risk: r._debug_risk
+                const todayHighRiskCount = todayHighRiskActions?.length || 0;
+
+                console.log('🔍 DEBUG Dashboard - Alto riesgo HOY:', todayHighRiskCount);
+                console.log('🔍 DEBUG Dashboard - Detalles:', todayHighRiskActions?.map(a => ({
+                    customer: a.customer_name,
+                    time: a.reservation_time,
+                    score: a.risk_score
                 })));
 
                 // OBTENER DATOS REALES DE ACCIONES DE LA SEMANA
@@ -703,13 +660,9 @@ const DashboardRevolutionary = () => {
                     action.customer_response === 'confirmed' || action.prevented_noshow === true
                 ).length || 0;
 
-                // USAR LA MISMA LÓGICA QUE NoShowManagerProfesional
-                // Contar las reservas de hoy con alto riesgo (>= 85 puntos)
-                const todayHighRiskCount = todayHighRiskReservations.length;
-
                 noShowData = {
-                    todayRisk: todayHighRiskCount, // RESERVAS de alto riesgo HOY
-                    weeklyPrevented: weeklyPrevented, // DATO REAL DE SUPABASE
+                    todayRisk: todayHighRiskCount, // EXACTAMENTE LO MISMO QUE NoShowManagerProfesional
+                    weeklyPrevented: weeklyPrevented,
                     riskLevel: todayHighRiskCount > 2 ? 'high' : 
                               todayHighRiskCount > 0 ? 'medium' : 'low',
                     nextAction: todayHighRiskCount > 0 ? 
