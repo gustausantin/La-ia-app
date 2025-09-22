@@ -133,7 +133,8 @@ const SystemStatus = ({ status, metrics }) => {
 
 // Widget de No-Shows Mejorado
 const NoShowWidget = ({ data, onViewDetails }) => {
-    const [isExpanded, setIsExpanded] = React.useState(false);
+    // SIEMPRE EXPANDIDO - Eliminado botón Más/Menos según pedido del usuario
+    const isExpanded = true;
     
     const getRiskColor = (level) => {
         switch(level) {
@@ -160,24 +161,12 @@ const NoShowWidget = ({ data, onViewDetails }) => {
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900">Control No-Shows</h3>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button 
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="text-sm text-gray-600 hover:text-blue-600 flex items-center gap-1 px-2 py-1 rounded transition-colors"
-                        title={isExpanded ? "Ver menos" : "Ver más detalles"}
-                    >
-                        {isExpanded ? "Menos" : "Más"} 
-                        <div className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-                            <ArrowRight className="w-4 h-4 rotate-90" />
-                        </div>
-                    </button>
-                    <button 
-                        onClick={onViewDetails}
-                        className="text-sm text-blue-600 hover:underline flex items-center gap-1 bg-blue-50 px-3 py-1 rounded"
-                    >
-                        Ver todo <ArrowRight className="w-4 h-4" />
-                    </button>
-                </div>
+                <button 
+                    onClick={onViewDetails}
+                    className="text-sm text-blue-600 hover:underline flex items-center gap-1 bg-blue-50 px-3 py-1 rounded"
+                >
+                    Analizar y Ejecutar <ArrowRight className="w-4 h-4" />
+                </button>
             </div>
 
             {/* Métricas principales */}
@@ -647,52 +636,39 @@ const DashboardRevolutionary = () => {
                     let riskScore = 0;
                     let riskFactors = [];
                     
-                // 📊 Factor 1: Historial del cliente (40% del peso) - DATOS REALES
-                // Usar historial real del cliente desde customers table
-                const customerNoShowRate = reservation.customer?.churn_risk_score || 0;
-                if (customerNoShowRate > 70) {
+                // Factor 1: Historial del cliente (40% peso) - EXACTAMENTE IGUAL QUE NoShowManagerProfesional
+                const noShowRate = (reservation.customers?.no_show_count || 0) / Math.max(1, reservation.customers?.visits_count || 1);
+                if (noShowRate > 0.3) {
                     riskScore += 40;
-                    riskFactors.push('historial_noshows');
-                } else if (customerNoShowRate > 40) {
+                    riskFactors.push('Historial de no-shows alto');
+                } else if (noShowRate > 0.15) {
                     riskScore += 25;
-                    riskFactors.push('historial_medio');
+                    riskFactors.push('Algunos no-shows previos');
                 }
                     
-                    // ⏰ Factor 2: Hora de la reserva (25% del peso) - LÓGICA REAL
-                    const hour = reservation.reservation_time ? parseInt(reservation.reservation_time.split(':')[0]) : 19;
-                    if (hour >= 20 || hour <= 13) { // 20:00+ (cenas tardías) o 13:00- (comidas tempranas)
+                    // Factor 2: Hora de la reserva (25% peso) - EXACTAMENTE IGUAL QUE NoShowManagerProfesional
+                    const hour = parseInt(reservation.reservation_time?.split(':')[0] || '0');
+                    if (hour >= 20 || hour <= 13) {
                         riskScore += 25;
-                        riskFactors.push('hora_pico');
+                        riskFactors.push('Hora con mayor riesgo');
                     }
                     
-                    // 👥 Factor 3: Tamaño del grupo (15% del peso) - ESTADÍSTICA REAL
+                    // Factor 3: Tamaño del grupo - EXACTAMENTE IGUAL QUE NoShowManagerProfesional
                     if (reservation.party_size > 6) {
                         riskScore += 15;
-                        riskFactors.push('grupo_grande');
-                    } else if (reservation.party_size === 1) {
-                        riskScore += 10;
-                        riskFactors.push('mesa_individual');
+                        riskFactors.push('Grupo grande');
                     }
                     
-                    // 📅 Factor 4: Día de la semana (10% del peso) - PATRÓN REAL
-                    const dayOfWeek = new Date(reservation.reservation_date).getDay();
-                    if (dayOfWeek === 0) { // Domingo = mayor riesgo
-                        riskScore += 10;
-                        riskFactors.push('domingo');
-                    } else if (dayOfWeek === 6) { // Sábado = riesgo medio
-                        riskScore += 5;
-                        riskFactors.push('sabado');
+                    // Factor 4: Sin teléfono confirmado (20% peso) - EXACTAMENTE IGUAL QUE NoShowManagerProfesional
+                    if (!reservation.customer_phone || reservation.customer_phone.length < 9) {
+                        riskScore += 20;
+                        riskFactors.push('Sin teléfono válido');
                     }
                     
-                // 🌧️ Factor 5: Clima (5% del peso) - DESHABILITADO (requiere API externa)
-                // Factor clima deshabilitado hasta integrar API meteorológica real
-                    
-                    // ⚡ Factor 6: Tiempo de anticipación (5% del peso) - COMPORTAMIENTO REAL
-                    const reservationDateTime = new Date(`${reservation.reservation_date}T${reservation.reservation_time}`);
-                    const hoursUntilReservation = (reservationDateTime - new Date()) / (1000 * 60 * 60);
-                    if (hoursUntilReservation < 2) {
-                        riskScore += 5;
-                        riskFactors.push('ultimo_momento');
+                    // Factor 5: Cliente nuevo (sin historial) - EXACTAMENTE IGUAL QUE NoShowManagerProfesional
+                    if (!reservation.customers || reservation.customers.visits_count === 0) {
+                        riskScore += 15;
+                        riskFactors.push('Cliente nuevo');
                     }
                     
                     // Guardar datos para debug
