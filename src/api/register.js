@@ -116,6 +116,7 @@ export default async function handler(req, res) {
       name: restaurantName,
       cuisine_type: cuisineType,
       phone,
+      email, // Agregar email del restaurante
       address,
       city,
       postal_code: postalCode,
