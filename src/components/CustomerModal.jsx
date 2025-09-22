@@ -160,11 +160,9 @@ const CustomerModal = ({
                     .from('crm_settings')
                     .select('*')
                     .eq('restaurant_id', restaurantId)
-                    .single();
-                    
-                if (data && !error) {
-                    setCrmConfig(data);
-                }
+                    .maybeSingle();
+                if (error) throw error;
+                if (data) setCrmConfig(data);
             } catch (error) {
                 console.error('Error loading CRM config:', error);
             }
