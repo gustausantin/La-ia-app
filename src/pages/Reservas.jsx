@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
-import { format, parseISO, addDays, subDays } from "date-fns";
+import { format, parseISO, addDays, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import {
     Search,
@@ -469,7 +469,7 @@ export default function Reservas() {
         status: "",
         channel: "",
         source: "",
-        period: "last_month", // 🔧 Por defecto mostrar último mes
+        period: "this_month", // 🔧 Por defecto: mes en curso (incluye próximos días)
         dateRange: '',
         startDate: '',
         endDate: ''
@@ -488,6 +488,11 @@ export default function Reservas() {
         const today = new Date();
 
         switch (period) {
+            case "this_month":
+                return {
+                    start: format(startOfMonth(today), "yyyy-MM-dd"),
+                    end: format(endOfMonth(today), "yyyy-MM-dd"),
+                };
             case "today":
                 return {
                     start: format(today, "yyyy-MM-dd"),
@@ -734,6 +739,27 @@ export default function Reservas() {
             });
 
             let reservations = data || [];
+
+            // Fallback de diagnóstico: si RPC devuelve 0, probar lectura directa
+            if ((!reservations || reservations.length === 0)) {
+                try {
+                    const { data: directData, error: directError } = await supabase
+                        .from('reservations')
+                        .select('*')
+                        .eq('restaurant_id', restaurantId)
+                        .gte('reservation_date', dateRange.start)
+                        .lte('reservation_date', dateRange.end)
+                        .order('reservation_date', { ascending: true })
+                        .order('reservation_time', { ascending: true });
+
+                    if (!directError && directData && directData.length > 0) {
+                        reservations = directData;
+                        toast.success('Modo diagnóstico: mostrando reservas directamente de la tabla');
+                    }
+                } catch (fallbackErr) {
+                    console.log('Fallback directo falló:', fallbackErr);
+                }
+            }
             
             // Log específico para debugging
             const targetReservation = reservations.find(r => r.customer_name?.includes('Kiku'));
