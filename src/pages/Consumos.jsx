@@ -160,24 +160,10 @@ const Consumos = () => {
         }
     }, [restaurantId, dateRange]);
 
-    // Función para generar consumos automáticamente
+    // Función para generar consumos automáticamente - SOLO CON DATOS REALES
     const generateAutomaticReceipts = async (reservations) => {
-        const platos = [
-            { name: 'Paella de Mariscos', category: 'Principales', price: 28.50 },
-            { name: 'Gazpacho Andaluz', category: 'Entrantes', price: 8.50 },
-            { name: 'Tortilla Española', category: 'Entrantes', price: 12.00 },
-            { name: 'Croquetas de Jamón', category: 'Entrantes', price: 9.50 },
-            { name: 'Pulpo a la Gallega', category: 'Principales', price: 24.00 },
-            { name: 'Patatas Bravas', category: 'Entrantes', price: 7.50 },
-            { name: 'Gambas al Ajillo', category: 'Entrantes', price: 14.50 },
-            { name: 'Calamares', category: 'Entrantes', price: 11.00 },
-            { name: 'Ensalada Mixta', category: 'Ensaladas', price: 9.00 },
-            { name: 'Jamón Ibérico', category: 'Entrantes', price: 22.00 },
-            { name: 'Merluza a la Vasca', category: 'Principales', price: 26.00 },
-            { name: 'Crema Catalana', category: 'Postres', price: 6.50 },
-            { name: 'Sangría', category: 'Bebidas', price: 12.00 },
-            { name: 'Vino Rioja', category: 'Bebidas', price: 18.00 }
-        ];
+        // NO GENERAR DATOS FICTICIOS - Solo usar datos reales de Supabase
+        return [];
 
         const generatedReceipts = [];
         

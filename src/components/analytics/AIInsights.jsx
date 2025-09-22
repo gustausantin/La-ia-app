@@ -18,96 +18,26 @@ import {
 } from 'lucide-react';
 
 const AIInsights = React.memo(({ data, dateRange }) => {
-  // Generar insights inteligentes con memoización
+  // Generar insights SOLO con datos reales
   const insights = useMemo(() => {
-    // En producción, estos insights vendrían del backend/IA
+    // SOLO DATOS REALES - NO HARDCODEADOS
     return {
-      // Insights principales
-      mainInsights: [
-        {
-          id: 'peak_hours',
-          type: 'opportunity',
-          icon: Clock,
-          title: 'Horario de Mayor Demanda',
-          description: 'Las consultas aumentan 45% entre 19:00-21:00. Considera promociones en este horario.',
-          impact: 'high',
-          metric: '+45% consultas',
-          action: 'Crear promoción horario peak',
-          confidence: 92,
-        },
-        {
-          id: 'conversion_drop',
-          type: 'alert',
-          icon: TrendingUp,
-          title: 'Caída en Conversión WhatsApp',
-          description: 'La tasa de conversión en WhatsApp bajó 8% esta semana. Revisar respuestas automáticas.',
-          impact: 'medium',
-          metric: '-8% conversión',
-          action: 'Optimizar respuestas IA',
-          confidence: 87,
-        },
-        {
-          id: 'satisfaction_high',
-          type: 'success',
-          icon: Star,
-          title: 'Satisfacción Récord',
-          description: 'La satisfacción del cliente alcanzó 4.7/5, el máximo en 6 meses.',
-          impact: 'high',
-          metric: '4.7/5 ⭐',
-          action: 'Mantener estrategia actual',
-          confidence: 95,
-        },
-        {
-          id: 'ai_efficiency',
-          type: 'success',
-          icon: Bot,
-          title: 'IA Superando Objetivos',
-          description: 'El agente IA resuelve 94% de consultas sin intervención humana.',
-          impact: 'high',
-          metric: '94% autonomía',
-          action: 'Expandir capacidades IA',
-          confidence: 98,
-        },
-      ],
+      // Insights principales - VACÍO hasta tener datos reales
+      mainInsights: [],
 
-      // Recomendaciones predictivas
-      predictions: [
-        {
-          id: 'weekend_surge',
-          title: 'Incremento Fin de Semana',
-          description: 'Se prevé un aumento del 35% en reservas este fin de semana basado en patrones históricos.',
-          probability: 87,
-          impact: '+35% reservas',
-          timeframe: 'Este fin de semana',
-        },
-        {
-          id: 'table_preference',
-          title: 'Preferencia por Terraza',
-          description: 'El 68% de clientes prefiere mesas en terraza. Optimizar disponibilidad.',
-          probability: 91,
-          impact: '+12% satisfacción',
-          timeframe: 'Inmediato',
-        },
-        {
-          id: 'repeat_customers',
-          title: 'Clientes Recurrentes',
-          description: 'Identificados 23 clientes con alta probabilidad de repetir en los próximos 7 días.',
-          probability: 78,
-          impact: '€1,840 ingresos',
-          timeframe: 'Próximos 7 días',
-        },
-      ],
+      // Recomendaciones predictivas - VACÍO hasta tener datos reales
+      predictions: [],
 
-      // Métricas de la IA
+      // Métricas de la IA - SOLO DATOS REALES
       aiMetrics: {
-        totalInteractions: 1247,
-        successfulResolutions: 1173,
-        humanHandoffs: 74,
-        averageResponseTime: 1.2,
-        accuracyRate: 94.2,
-        learningProgress: 8.5,
-        customerSatisfaction: 4.7,
-        costSavings: 2340,
+        totalInteractions: 0,
+        successfulResolutions: 0,
+        humanHandoffs: 0,
+        averageResponseTime: 0,
+        accuracyRate: 0,
+        learningProgress: 0,
+        customerSatisfaction: 0,
+        costSavings: 0,
       },
 
       // Patrones identificados
@@ -345,10 +275,10 @@ const AIInsights = React.memo(({ data, dateRange }) => {
           <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-700">Gestión de reservas</span>
-              <span className="font-medium">94%</span>
+              <span className="font-medium">0%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-blue-500 h-2 rounded-full" style={{ width: '94%' }} />
+              <div className="bg-blue-500 h-2 rounded-full" style={{ width: '0%' }} />
             </div>
           </div>
           <div>

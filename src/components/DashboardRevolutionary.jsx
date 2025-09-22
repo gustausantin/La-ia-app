@@ -204,7 +204,7 @@ const NoShowWidget = ({ data, onViewDetails }) => {
                         <Target className="w-4 h-4" />
                         Reservas confirmadas:
                     </span>
-                    <span className="font-medium text-green-600">73% de éxito</span>
+                    <span className="font-medium text-green-600">{data.successRate || 0}% de éxito</span>
                 </div>
                 
                 {/* Solo mostrar si hay riesgo real */}
@@ -267,7 +267,7 @@ const NoShowWidget = ({ data, onViewDetails }) => {
                             <DollarSign className="w-4 h-4" />
                             Ahorro esta semana:
                         </span>
-                        <span className="font-medium text-green-600">~{Math.round(data.weeklyPrevented * 35)}€ evitados</span>
+                        <span className="font-medium text-green-600">~{Math.round(data.weeklyPrevented * (data.avgTicket || 0))}€ evitados</span>
                     </div>
                 </div>
             )}
@@ -279,8 +279,8 @@ const NoShowWidget = ({ data, onViewDetails }) => {
 const ReturningCustomersWidget = ({ data }) => {
     const [isExpanded, setIsExpanded] = React.useState(false);
     
-    // Calcular valor estimado por cliente
-    const avgTicket = 35; // Ticket promedio
+    // Calcular valor estimado por cliente DESDE DATOS REALES
+    const avgTicket = data.avgTicket || 0; // SOLO datos reales de Supabase
     const getCustomerValue = (visits) => visits * avgTicket;
     
     return (
@@ -312,12 +312,12 @@ const ReturningCustomersWidget = ({ data }) => {
             {/* Métricas de valor */}
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="text-center bg-purple-50 rounded-lg p-3">
-                    <div className="text-2xl font-bold text-purple-600 mb-1">{data.returningThisWeek || 7}</div>
+                    <div className="text-2xl font-bold text-purple-600 mb-1">{data.returningThisWeek || 0}</div>
                     <div className="text-sm text-gray-600">Regresaron</div>
-                    <div className="text-xs text-purple-600 font-medium">~{(data.returningThisWeek || 7) * avgTicket}€ generados</div>
+                    <div className="text-xs text-purple-600 font-medium">~{(data.returningThisWeek || 0) * avgTicket}€ generados</div>
                 </div>
                 <div className="text-center bg-green-50 rounded-lg p-3">
-                    <div className="text-2xl font-bold text-green-600 mb-1">{data.loyalCustomers || 3}</div>
+                    <div className="text-2xl font-bold text-green-600 mb-1">{data.loyalCustomers || 0}</div>
                     <div className="text-sm text-gray-600">VIP (5+ visitas)</div>
                     <div className="text-xs text-green-600 font-medium">Valor alto</div>
                 </div>
@@ -363,7 +363,7 @@ const ReturningCustomersWidget = ({ data }) => {
             <div className="mt-4 pt-3 border-t border-gray-200 text-center">
                 <div className="text-sm text-gray-600">
                     💰 <span className="font-medium">Ticket promedio: {avgTicket}€</span> • 
-                    📈 <span className="font-medium text-green-600">68% retención</span>
+                    📈 <span className="font-medium text-green-600">{data.retentionRate || 0}% retención</span>
                 </div>
             </div>
 
@@ -724,15 +724,15 @@ const DashboardRevolutionary = () => {
                 })) || []
             };
 
-            // 5. Calcular valor monetario generado - UNIFICADO
-            const averageTicket = 35; // Ticket medio estimado
+            // 5. Calcular valor monetario generado - SOLO DATOS REALES
+            const averageTicket = customersData.avgTicket || 0; // SOLO datos reales de Supabase
             const noShowsPreventedCount = noShowData.weeklyPrevented || 0; // SOLO DATOS REALES
             const crmRecoveredCount = customersData.returningThisWeek;
-            
+
             const totalValue = {
                 noShowsRecovered: noShowsPreventedCount * averageTicket, // No-shows evitados × ticket
-                crmGenerated: crmRecoveredCount * averageTicket * 1.2, // Clientes CRM × ticket × factor
-                automationSavings: Math.round((noShowsPreventedCount + crmRecoveredCount) * 3), // Tiempo ahorrado
+                crmGenerated: crmRecoveredCount * averageTicket, // Clientes CRM × ticket (sin factor ficticio)
+                automationSavings: 0, // Sin datos reales de tiempo ahorrado
                 averageTicket
             };
 
