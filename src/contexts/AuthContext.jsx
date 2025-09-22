@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+// Sync: import único de supabase para evitar duplicados en build
 import toast from 'react-hot-toast';
 import logger from '../utils/logger';
 import { realtimeService } from '../services/realtimeService';
