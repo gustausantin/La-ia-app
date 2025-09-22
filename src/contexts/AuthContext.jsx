@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import logger from '../utils/logger';
+import { realtimeService } from '../services/realtimeService';
 
 const AuthContext = createContext(null);
 
@@ -60,6 +61,9 @@ const AuthProvider = ({ children }) => {
         logger.info('Restaurant found', { name: map.restaurant.name });
         setRestaurant(map.restaurant); 
         setRestaurantId(map.restaurant.id); 
+        try {
+          await realtimeService.setRestaurantFilter(map.restaurant.id);
+        } catch {}
       } else {
         logger.info('No restaurant found - app continues normally');
         setRestaurant(null); 
@@ -116,6 +120,9 @@ const AuthProvider = ({ children }) => {
       
       setRestaurant(restaurantInfo);
       setRestaurantId(restaurantInfo.id);
+      try {
+        await realtimeService.setRestaurantFilter(restaurantInfo.id);
+      } catch {}
       
       // Disparar evento para que otras partes de la app se actualicen
       window.dispatchEvent(new CustomEvent('restaurant-created', { 

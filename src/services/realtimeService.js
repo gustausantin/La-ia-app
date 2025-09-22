@@ -14,6 +14,7 @@ class RealtimeService {
     this.subscriptions = new Map();
     this.eventHandlers = new Map();
     this.heartbeatInterval = null;
+    this.currentRestaurantId = null;
     
     // Estados del servicio
     this.connectionState = 'disconnected'; // disconnected, connecting, connected, reconnecting
@@ -54,7 +55,7 @@ class RealtimeService {
     try {
       log.info('📡 Setting up Supabase realtime channels');
       
-      // Canal principal del restaurante
+      // Canal principal del restaurante (sin filtro inicial)
       this.restaurantChannel = supabase
         .channel('restaurant-updates')
         .on('postgres_changes', {
@@ -139,6 +140,64 @@ class RealtimeService {
     } catch (error) {
       log.error('❌ Failed to setup Supabase realtime:', error);
       throw error;
+    }
+  }
+
+  // === FILTRO POR RESTAURANT ===
+  async setRestaurantFilter(restaurantId) {
+    try {
+      if (!restaurantId) return;
+      this.currentRestaurantId = restaurantId;
+
+      if (this.restaurantChannel) {
+        await supabase.removeChannel(this.restaurantChannel);
+        this.restaurantChannel = null;
+      }
+
+      const filter = `restaurant_id=eq.${restaurantId}`;
+
+      this.restaurantChannel = supabase
+        .channel(`restaurant-updates-${restaurantId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'reservations',
+          filter
+        }, (payload) => {
+          this.handleReservationUpdate(payload);
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter
+        }, (payload) => {
+          this.handleMessageUpdate(payload);
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter
+        }, (payload) => {
+          this.handleNotificationUpdate(payload);
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'daily_metrics',
+          filter
+        }, (payload) => {
+          this.handleMetricsUpdate(payload);
+        })
+        .subscribe((status) => {
+          log.info('📡 Restaurant scoped channel status:', status);
+          this.updateConnectionState(status === 'SUBSCRIBED' ? 'connected' : 'disconnected');
+        });
+
+      log.info('🎯 Realtime filtrado por restaurant_id', { restaurantId });
+    } catch (error) {
+      log.error('❌ Error setting restaurant filter:', error);
     }
   }
 
@@ -494,8 +553,14 @@ class RealtimeService {
   // === UTILIDADES ===
   getCurrentUserId() {
     try {
-      const { data: { session } } = supabase.auth.getSession();
-      return session?.user?.id || 'anonymous';
+      // Nota: getSession es asíncrono; este método puede no tener el valor inmediato
+      // Por compatibilidad, intentamos recuperar del storage si existe
+      const raw = localStorage.getItem('la-ia-auth-token');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed?.user?.id || 'anonymous';
+      }
+      return 'anonymous';
     } catch {
       return 'anonymous';
     }
