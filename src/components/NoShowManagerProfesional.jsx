@@ -453,28 +453,40 @@ const NoShowManagerProfesional = () => {
                     <p className="text-sm text-blue-700 mt-2">Tasa de éxito: {data.successRate}%</p>
                 </div>
 
-                {/* Alto riesgo hoy */}
+                {/* No-shows detectados hoy - COLORES CORRECTOS */}
                 <div className={`rounded-xl p-6 border ${
-                    data.riskLevel === 'high' ? 'bg-red-50 border-red-200' :
-                    data.riskLevel === 'medium' ? 'bg-yellow-50 border-yellow-200' :
+                    reservasRiesgo.filter(r => r.riskLevel === 'high').length > 0 ? 'bg-red-50 border-red-200' :
+                    reservasRiesgo.filter(r => r.riskLevel === 'medium').length > 0 ? 'bg-yellow-50 border-yellow-200' :
                     'bg-green-50 border-green-200'
                 }`}>
                     <div className="flex items-center justify-between mb-4">
                         <h3 className={`text-lg font-semibold ${
-                            data.riskLevel === 'high' ? 'text-red-900' :
-                            data.riskLevel === 'medium' ? 'text-yellow-900' :
+                            reservasRiesgo.filter(r => r.riskLevel === 'high').length > 0 ? 'text-red-900' :
+                            reservasRiesgo.filter(r => r.riskLevel === 'medium').length > 0 ? 'text-yellow-900' :
                             'text-green-900'
-                        }`}>Alto riesgo hoy</h3>
+                        }`}>No-shows detectados hoy</h3>
                         <AlertTriangle className={`w-5 h-5 ${
-                            data.riskLevel === 'high' ? 'text-red-600' :
-                            data.riskLevel === 'medium' ? 'text-yellow-600' :
+                            reservasRiesgo.filter(r => r.riskLevel === 'high').length > 0 ? 'text-red-600' :
+                            reservasRiesgo.filter(r => r.riskLevel === 'medium').length > 0 ? 'text-yellow-600' :
                             'text-green-600'
                         }`} />
                     </div>
-                    <div className="text-4xl font-bold text-red-600">{data.todayRisk}</div>
-                    <p className="text-sm mt-2 text-red-700">
-                        Nivel: Alto - Requieren acción inmediata
-                    </p>
+                    <div className={`text-4xl font-bold ${
+                        reservasRiesgo.filter(r => r.riskLevel === 'high').length > 0 ? 'text-red-600' :
+                        reservasRiesgo.filter(r => r.riskLevel === 'medium').length > 0 ? 'text-yellow-600' :
+                        'text-green-600'
+                    }`}>{reservasRiesgo.length}</div>
+                    <div className="text-sm mt-2 space-y-1">
+                        <div className="text-red-600 font-medium">
+                            {reservasRiesgo.filter(r => r.riskLevel === 'high').length} Alto riesgo
+                        </div>
+                        <div className="text-yellow-600">
+                            {reservasRiesgo.filter(r => r.riskLevel === 'medium').length} Riesgo medio
+                        </div>
+                        <div className="text-green-600">
+                            {reservasRiesgo.filter(r => r.riskLevel === 'low').length} Riesgo bajo
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -530,6 +542,25 @@ const NoShowManagerProfesional = () => {
                         </span>
                     </div>
                 </div>
+            </div>
+
+            {/* DEBUG INFO */}
+            <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <h4 className="font-bold text-blue-900">🔍 DEBUG INFO:</h4>
+                <p>Total reservasRiesgo: {reservasRiesgo.length}</p>
+                <p>Alto riesgo: {reservasRiesgo.filter(r => r.riskLevel === 'high').length}</p>
+                <p>Medio riesgo: {reservasRiesgo.filter(r => r.riskLevel === 'medium').length}</p>
+                <p>Bajo riesgo: {reservasRiesgo.filter(r => r.riskLevel === 'low').length}</p>
+                {reservasRiesgo.length > 0 && (
+                    <div className="mt-2">
+                        <p className="font-medium">Primeras 3 reservas:</p>
+                        {reservasRiesgo.slice(0, 3).map(r => (
+                            <div key={r.id} className="text-xs">
+                                {r.customer_name} - {r.riskLevel} ({r.riskScore} pts)
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* ACCIONES - Reservas que necesitan gestión */}
