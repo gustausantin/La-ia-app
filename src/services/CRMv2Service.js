@@ -214,9 +214,9 @@ export async function getCRMSettings(restaurantId) {
             .from('crm_settings')
             .select('*')
             .eq('restaurant_id', restaurantId)
-            .single();
+            .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') throw error; // Ignorar "no rows" error
+        if (error) throw error;
 
         return {
             success: true,

@@ -75,7 +75,7 @@ export default function Layout() {
         { name: "Clientes", path: "/clientes", icon: Users, badge: null },
         {
             name: "CRM Inteligente",
-            path: "/crm-v2",
+            path: "/crm-inteligente",
             icon: Brain,
             badge: null,
         },
