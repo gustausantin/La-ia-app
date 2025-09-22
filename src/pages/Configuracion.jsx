@@ -1,4 +1,4 @@
-// Configuracion.jsx - VERSIÓN ARREGLADA QUE FUNCIONA
+// Configuracion.jsx - VERSIÓN ACTUALIZADA CON CAMBIOS DE HORARIOS
 import React, { useState, useEffect } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -106,6 +106,40 @@ const Configuracion = () => {
         language: "es",
     });
 
+    // Pestañas de configuración (SIN HORARIOS)
+    const tabs = [
+        {
+            id: "general",
+            label: "General",
+            icon: <Building2 className="w-4 h-4" />,
+        },
+        {
+            id: "agent",
+            label: "Agente IA",
+            icon: <Bot className="w-4 h-4" />,
+        },
+        {
+            id: "crm",
+            label: "CRM IA",
+            icon: <Brain className="w-4 h-4" />,
+        },
+        {
+            id: "channels",
+            label: "Canales",
+            icon: <MessageSquare className="w-4 h-4" />,
+        },
+        {
+            id: "calendar",
+            label: "Horarios y Calendario", // RENOMBRADO
+            icon: <Calendar className="w-4 h-4" />,
+        },
+        {
+            id: "notifications",
+            label: "Notificaciones",
+            icon: <Bell className="w-4 h-4" />,
+        },
+    ];
+
     // CARGAR CONFIGURACIÓN - MÉTODO DIRECTO
     useEffect(() => {
         const loadSettings = async () => {
@@ -159,9 +193,6 @@ const Configuracion = () => {
                 console.log("- city:", restaurant.city);
                 console.log("- postal_code:", restaurant.postal_code);
                 console.log("- cuisine_type:", restaurant.cuisine_type);
-                console.log("- country:", restaurant.country);
-                console.log("- website:", restaurant.website);
-                console.log("- description:", restaurant.description);
 
                 // 4. MAPEAR DIRECTAMENTE LOS DATOS
                 const newSettings = {
@@ -286,162 +317,240 @@ const Configuracion = () => {
                 </p>
             </div>
 
-            {/* Información General */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                <div className="flex items-center gap-3 mb-6">
-                    <Building2 className="w-6 h-6 text-purple-600" />
-                    <h2 className="text-xl font-semibold text-gray-900">Información General</h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nombre del restaurante
-                        </label>
-                        <input
-                            type="text"
-                            value={settings.name}
-                            onChange={(e) => updateSetting('name', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="Mi Restaurante"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Tipo de cocina
-                        </label>
-                        <select
-                            value={settings.cuisine_type}
-                            onChange={(e) => updateSetting('cuisine_type', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        >
-                            <option value="">Selecciona el tipo</option>
-                            <option value="mediterranea">Mediterránea</option>
-                            <option value="italiana">Italiana</option>
-                            <option value="japonesa">Japonesa</option>
-                            <option value="mexicana">Mexicana</option>
-                            <option value="francesa">Francesa</option>
-                            <option value="china">China</option>
-                            <option value="india">India</option>
-                            <option value="fusion">Fusión</option>
-                            <option value="vegetariana">Vegetariana</option>
-                            <option value="otra">Otra</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Email de contacto
-                        </label>
-                        <input
-                            type="email"
-                            value={settings.email}
-                            onChange={(e) => updateSetting('email', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="contacto@mirestaurante.com"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Teléfono
-                        </label>
-                        <input
-                            type="tel"
-                            value={settings.phone}
-                            onChange={(e) => updateSetting('phone', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="+34 600 000 000"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Sitio web
-                        </label>
-                        <input
-                            type="url"
-                            value={settings.website}
-                            onChange={(e) => updateSetting('website', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="https://www.mirestaurante.com"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Dirección completa
-                        </label>
-                        <input
-                            type="text"
-                            value={settings.address}
-                            onChange={(e) => updateSetting('address', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="Calle Mayor 123, Madrid"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Ciudad
-                        </label>
-                        <input
-                            type="text"
-                            value={settings.city}
-                            onChange={(e) => updateSetting('city', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="Madrid"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Código postal
-                        </label>
-                        <input
-                            type="text"
-                            value={settings.postal_code}
-                            onChange={(e) => updateSetting('postal_code', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="28001"
-                        />
-                    </div>
-                </div>
-
-                <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Descripción del restaurante
-                    </label>
-                    <textarea
-                        value={settings.description}
-                        onChange={(e) => updateSetting('description', e.target.value)}
-                        rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Describe tu restaurante, especialidades, ambiente..."
-                    />
-                </div>
-
-                <div className="mt-6 flex justify-end">
+            {/* Pestañas */}
+            <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200">
+                {tabs.map((tab) => (
                     <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.label)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors ${
+                            activeTab === tab.label
+                                ? "bg-purple-50 text-purple-700 border-b-2 border-purple-600"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
                     >
-                        {saving ? (
-                            <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                Guardando...
-                            </>
-                        ) : (
-                            <>
-                                <Save className="w-4 h-4" />
-                                Guardar Cambios
-                            </>
-                        )}
+                        {tab.icon}
+                        {tab.label}
                     </button>
-                </div>
+                ))}
             </div>
+
+            {/* Contenido de pestañas */}
+            {activeTab === "General" && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <Building2 className="w-6 h-6 text-purple-600" />
+                        <h2 className="text-xl font-semibold text-gray-900">Información General</h2>
+                        <span className="text-sm text-gray-500">Configuración básica de tu restaurante</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Nombre del restaurante
+                            </label>
+                            <input
+                                type="text"
+                                value={settings.name}
+                                onChange={(e) => updateSetting('name', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="Mi Restaurante"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Tipo de cocina
+                            </label>
+                            <select
+                                value={settings.cuisine_type}
+                                onChange={(e) => updateSetting('cuisine_type', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="">Selecciona el tipo</option>
+                                <option value="mediterranea">Mediterránea</option>
+                                <option value="italiana">Italiana</option>
+                                <option value="japonesa">Japonesa</option>
+                                <option value="mexicana">Mexicana</option>
+                                <option value="francesa">Francesa</option>
+                                <option value="china">China</option>
+                                <option value="india">India</option>
+                                <option value="fusion">Fusión</option>
+                                <option value="vegetariana">Vegetariana</option>
+                                <option value="otra">Otra</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Email de contacto
+                            </label>
+                            <input
+                                type="email"
+                                value={settings.email}
+                                onChange={(e) => updateSetting('email', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="contacto@mirestaurante.com"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Teléfono
+                            </label>
+                            <input
+                                type="tel"
+                                value={settings.phone}
+                                onChange={(e) => updateSetting('phone', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="+34 600 000 000"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Sitio web
+                            </label>
+                            <input
+                                type="url"
+                                value={settings.website}
+                                onChange={(e) => updateSetting('website', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="https://www.mirestaurante.com"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Dirección completa
+                            </label>
+                            <input
+                                type="text"
+                                value={settings.address}
+                                onChange={(e) => updateSetting('address', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="Calle Mayor 123, Madrid"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Ciudad
+                            </label>
+                            <input
+                                type="text"
+                                value={settings.city}
+                                onChange={(e) => updateSetting('city', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="Madrid"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Código postal
+                            </label>
+                            <input
+                                type="text"
+                                value={settings.postal_code}
+                                onChange={(e) => updateSetting('postal_code', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="28001"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mt-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Descripción del restaurante
+                        </label>
+                        <textarea
+                            value={settings.description}
+                            onChange={(e) => updateSetting('description', e.target.value)}
+                            rows={4}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="Describe tu restaurante, especialidades, ambiente..."
+                        />
+                    </div>
+
+                    <div className="mt-6 flex justify-end">
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
+                        >
+                            {saving ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    Guardando...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="w-4 h-4" />
+                                    Guardar Cambios
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Horarios y Calendario - RENOMBRADO */}
+            {activeTab === "Horarios y Calendario" && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <Calendar className="w-6 h-6 text-purple-600" />
+                        <h2 className="text-xl font-semibold text-gray-900">Horarios y Calendario</h2>
+                        <span className="text-sm text-gray-500">Configura los horarios de operación y calendario</span>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
+                        <div className="flex items-start gap-3">
+                            <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+                            <div>
+                                <h4 className="font-medium text-blue-900 mb-2">Configuración de Horarios</h4>
+                                <p className="text-sm text-blue-800">
+                                    Los horarios del restaurante se configuran desde la página de <strong>Calendario</strong>. 
+                                    Allí podrás establecer los días de operación, horarios de apertura y cierre, 
+                                    y gestionar la disponibilidad para reservas.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="text-center py-8">
+                        <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                            Gestiona tus horarios desde el Calendario
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                            Ve a la sección de Calendario para configurar los horarios de operación de tu restaurante.
+                        </p>
+                        <button
+                            onClick={() => window.location.href = '/calendario'}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                            <Calendar className="w-4 h-4" />
+                            Ir al Calendario
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Otras pestañas - placeholder */}
+            {activeTab !== "General" && activeTab !== "Horarios y Calendario" && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div className="text-center py-8">
+                        <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                            {activeTab}
+                        </h3>
+                        <p className="text-gray-600">
+                            Esta sección está en desarrollo.
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
