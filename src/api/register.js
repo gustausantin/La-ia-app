@@ -61,13 +61,10 @@ export default async function handler(req, res) {
     // 2. CREAR USUARIO CON ADMIN API (FLUJO PROFESIONAL)
     // Step 2: Creating user account with admin API
 
-    // TEMPORAL: Bypass de confirmación de email para evitar rate limits
-    const bypassEmailConfirmation = true; // Cambiar a false cuando el SMTP funcione bien
-    
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: bypassEmailConfirmation, // TEMPORAL: true = sin confirmación
+      email_confirm: false, // Requiere confirmación por email
       user_metadata: {
         first_name: firstName,
         last_name: lastName,
@@ -77,8 +74,7 @@ export default async function handler(req, res) {
         postal_code: postalCode,
         country: country || 'España',
         registration_date: new Date().toISOString(),
-        source: 'direct_registration',
-        bypass_email_confirmation: bypassEmailConfirmation
+        source: 'direct_registration'
       }
     });
 
@@ -166,51 +162,47 @@ export default async function handler(req, res) {
       });
     }
     // 5. SALTAMOS LA CREACIÓN DE PERFIL - No es necesaria para el funcionamiento básico
-    // 6. ENVIAR EMAIL DE CONFIRMACIÓN (TEMPORAL: DESHABILITADO)
-    if (!bypassEmailConfirmation) {
-      try {
-        // Intentar enviar email con el método admin.generateLink
-        const { data: linkData, error: emailError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'signup',
-          email,
-          options: {
-            redirectTo: confirmationUrl
-          }
+    // 6. ENVIAR EMAIL DE CONFIRMACIÓN (CRÍTICO)
+    try {
+      // Intentar enviar email con el método admin.generateLink
+      const { data: linkData, error: emailError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'signup',
+        email,
+        options: {
+          redirectTo: confirmationUrl
+        }
+      });
+
+      if (emailError) {
+        // Fallback: Intentar con inviteUserByEmail
+        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+          redirectTo: confirmationUrl
         });
 
-        if (emailError) {
-          // Fallback: Intentar con inviteUserByEmail
-          const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-            redirectTo: confirmationUrl
-          });
-
-          if (inviteError) {
-            throw new Error('No se pudo enviar el email de confirmación');
-          }
+        if (inviteError) {
+          throw new Error('No se pudo enviar el email de confirmación');
+        } else {
         }
-      } catch (emailErr) {
-        // Si es un rate limit, devolver error específico
-        if (emailErr.message.includes('rate_limit') || emailErr.message.includes('over_email_send_rate_limit')) {
-          return res.status(429).json({
-            error: 'Límite de emails excedido',
-            details: 'Se ha alcanzado el límite de emails por hora. Inténtalo más tarde.',
-            code: 'RATE_LIMIT',
-            retryAfter: 3600 // 1 hora
-          });
-        }
-        
-        // Para otros errores, continuar pero avisar
+      } else {
       }
+    } catch (emailErr) {
+      // Si es un rate limit, devolver error específico
+      if (emailErr.message.includes('rate_limit') || emailErr.message.includes('over_email_send_rate_limit')) {
+        return res.status(429).json({
+          error: 'Límite de emails excedido',
+          details: 'Se ha alcanzado el límite de emails por hora. Inténtalo más tarde.',
+          code: 'RATE_LIMIT',
+          retryAfter: 3600 // 1 hora
+        });
+      }
+      
+      // Para otros errores, continuar pero avisar
     }
 
     // 7. RESPUESTA EXITOSA
-    const successMessage = bypassEmailConfirmation 
-      ? 'Cuenta creada exitosamente. Puedes iniciar sesión inmediatamente.'
-      : 'Cuenta creada exitosamente. Revisa tu email para confirmar tu cuenta.';
-      
     return res.status(200).json({
       success: true,
-      message: successMessage,
+      message: 'Cuenta creada exitosamente. Revisa tu email para confirmar tu cuenta.',
       data: {
         userId,
         restaurantId,
