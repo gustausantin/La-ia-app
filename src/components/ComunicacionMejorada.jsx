@@ -75,7 +75,7 @@ const ComunicacionMejorada = () => {
         } finally {
             setLoading(false);
         }
-    }, [restaurant?.id, generateSampleConversations]);
+    }, [restaurant?.id]);
 
     // Cargar mensajes de ejemplo
     const loadMessages = useCallback((conversationId) => {
