@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import logger from '../utils/logger';
 import { realtimeService } from '../services/realtimeService';
+import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext(null);
 
@@ -64,6 +65,12 @@ const AuthProvider = ({ children }) => {
         try {
           await realtimeService.setRestaurantFilter(map.restaurant.id);
         } catch {}
+        try {
+          // Asegurar defaults del tenant
+          await supabase.rpc('ensure_tenant_defaults', { p_restaurant_id: map.restaurant.id });
+        } catch (e) {
+          logger.warn('ensure_tenant_defaults failed (non-blocking):', e?.message || e);
+        }
       } else {
         logger.info('No restaurant found - app continues normally');
         setRestaurant(null); 
