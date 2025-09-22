@@ -192,11 +192,6 @@ const Configuracion = () => {
                         city: settings.city,
                         postal_code: settings.postal_code,
                         cuisine_type: settings.cuisine_type,
-                        description: settings.description,
-                        website: settings.website,
-                        logo_url: settings.logo_url,
-                        capacity_total: settings.capacity_total,
-                        price_range: settings.price_range,
                         updated_at: new Date().toISOString()
                     })
                     .eq("id", restaurantId);
