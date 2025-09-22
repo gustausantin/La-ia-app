@@ -150,48 +150,35 @@ const Configuracion = () => {
             }
 
             if (restaurant) {
-                console.log("✅ DATOS DEL RESTAURANTE OBTENIDOS:", restaurant);
-                console.log("🔍 CAMPOS ESPECÍFICOS:");
-                console.log("- name:", restaurant.name);
-                console.log("- email:", restaurant.email);
-                console.log("- phone:", restaurant.phone);
-                console.log("- address:", restaurant.address);
-                console.log("- city:", restaurant.city);
-                console.log("- postal_code:", restaurant.postal_code);
-                console.log("- cuisine_type:", restaurant.cuisine_type);
-                console.log("- settings:", restaurant.settings);
                 
                 // Fusionar configuraciones manteniendo estructura completa
                 const dbSettings = restaurant.settings || {};
                 
                 setSettings({
-                    // Información básica desde BD
+                    // ✅ DATOS DEL REGISTRO - CAMPOS DIRECTOS
                     name: restaurant.name || "",
-                    description: dbSettings.description || "",
-                    cuisine_type: restaurant.cuisine_type || "",
-                    phone: restaurant.phone || "",
                     email: restaurant.email || "",
-                    website: dbSettings.website || "",
+                    phone: restaurant.phone || "",
                     address: restaurant.address || "",
                     city: restaurant.city || "",
                     postal_code: restaurant.postal_code || "",
+                    cuisine_type: restaurant.cuisine_type || "",
+                    
+                    // ✅ DATOS ADICIONALES - DESDE SETTINGS
+                    description: dbSettings.description || "",
+                    website: dbSettings.website || "",
+                    logo_url: dbSettings.logo_url || "",
+                    
+                    // ✅ CONFIGURACIÓN TÉCNICA
                     country: restaurant.country || "ES",
                     timezone: restaurant.timezone || "Europe/Madrid",
                     currency: restaurant.currency || "EUR",
                     language: restaurant.language || "es",
-                    logo_url: dbSettings.logo_url || "",
-                    capacity_total: dbSettings.capacity_total || 0,
-                    price_range: dbSettings.price_range || "",
                     
-                    // Canales desde BD
+                    // ✅ CANALES Y NOTIFICACIONES
                     channels: restaurant.channels || {},
-                    
-                    // Notificaciones desde BD
                     notifications: restaurant.notifications || {},
                 });
-                console.log("✅ CONFIGURACIÓN CARGADA EXITOSAMENTE");
-            } else {
-                console.log("⚠️ No se encontró restaurant");
             }
 
             setLoading(false);
@@ -517,37 +504,6 @@ const Configuracion = () => {
                                             />
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Rango de precios
-                                            </label>
-                                            <select
-                                                value={settings.price_range}
-                                                onChange={(e) => setSettings(prev => ({ ...prev, price_range: e.target.value }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                            >
-                                                <option value="">Selecciona el rango</option>
-                                                <option value="€ - Económico (10-20€)">€ - Económico (10-20€)</option>
-                                                <option value="€€ - Moderado (20-35€)">€€ - Moderado (20-35€)</option>
-                                                <option value="€€€ - Alto (35-60€)">€€€ - Alto (35-60€)</option>
-                                                <option value="€€€€ - Premium (+60€)">€€€€ - Premium (+60€)</option>
-                                            </select>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Capacidad Total (comensales)
-                                            </label>
-                                            <input
-                                                type="number"
-                                                value={settings.capacity_total}
-                                                onChange={(e) => setSettings(prev => ({ ...prev, capacity_total: parseInt(e.target.value) || 0 }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                                placeholder="120"
-                                                min="1"
-                                                max="1000"
-                                            />
-                                        </div>
                                     </div>
 
                                     <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
