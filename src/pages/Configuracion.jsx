@@ -311,44 +311,10 @@ const Configuracion = () => {
                     }
                 } catch {}
 
-                let { error } = await supabase
-                    .from("restaurants")
-                    .update({
-                        channels: updatedChannels || {},
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq("id", restaurantId);
-
-                // Fallback temporal si el proyecto devuelve 400 "No API key found"
-                if (error && (error.message || '').includes('No API key')) {
-                    try {
-                        const { data: { session } } = await supabase.auth.getSession();
-                        const baseUrl = import.meta?.env?.VITE_SUPABASE_URL;
-                        const anon = import.meta?.env?.VITE_SUPABASE_ANON_KEY;
-                        const resp = await fetch(`${baseUrl}/rest/v1/restaurants?id=eq.${restaurantId}`, {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'apikey': anon,
-                                'Authorization': session?.access_token ? `Bearer ${session.access_token}` : `Bearer ${anon}`,
-                                'Prefer': 'return=representation'
-                            },
-                            body: JSON.stringify({
-                                channels: updatedChannels || {},
-                                updated_at: new Date().toISOString()
-                            })
-                        });
-                        if (!resp.ok) {
-                            let detail = '';
-                            try { detail = await resp.text(); } catch {}
-                            throw new Error(detail || `REST error ${resp.status}`);
-                        }
-                        error = null;
-                    } catch (e) {
-                        error = e;
-                    }
-                }
+                const { error } = await supabase.rpc('update_restaurant_channels', {
+                    p_restaurant_id: restaurantId,
+                    p_channels: updatedChannels
+                });
 
                 if (error) throw error;
             } else if (section === "Configuración de notificaciones") {
@@ -363,44 +329,10 @@ const Configuracion = () => {
                     }
                 };
 
-                let { error } = await supabase
-                    .from("restaurants")
-                    .update({
-                        notifications: updatedNotifications || {},
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq("id", restaurantId);
-
-                // Fallback temporal si el proyecto devuelve 400 "No API key found"
-                if (error && (error.message || '').includes('No API key')) {
-                    try {
-                        const { data: { session } } = await supabase.auth.getSession();
-                        const baseUrl = import.meta?.env?.VITE_SUPABASE_URL;
-                        const anon = import.meta?.env?.VITE_SUPABASE_ANON_KEY;
-                        const resp = await fetch(`${baseUrl}/rest/v1/restaurants?id=eq.${restaurantId}`, {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'apikey': anon,
-                                'Authorization': session?.access_token ? `Bearer ${session.access_token}` : `Bearer ${anon}`,
-                                'Prefer': 'return=representation'
-                            },
-                            body: JSON.stringify({
-                                notifications: updatedNotifications || {},
-                                updated_at: new Date().toISOString()
-                            })
-                        });
-                        if (!resp.ok) {
-                            let detail = '';
-                            try { detail = await resp.text(); } catch {}
-                            throw new Error(detail || `REST error ${resp.status}`);
-                        }
-                        error = null;
-                    } catch (e) {
-                        error = e;
-                    }
-                }
+                const { error } = await supabase.rpc('update_restaurant_notifications', {
+                    p_restaurant_id: restaurantId,
+                    p_notifications: updatedNotifications
+                });
 
                 if (error) throw error;
             }
