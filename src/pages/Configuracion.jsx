@@ -204,8 +204,8 @@ const Configuracion = () => {
                             phone_number: restaurant.channels?.whatsapp?.phone_number || ""
                         },
                         webchat: { enabled: restaurant.channels?.webchat?.enabled !== false, site_domain: restaurant.channels?.webchat?.site_domain || "", widget_key: restaurant.channels?.webchat?.widget_key || "" },
-                        instagram: { enabled: restaurant.channels?.instagram?.enabled || false },
-                        facebook: { enabled: restaurant.channels?.facebook?.enabled || false },
+                        instagram: { enabled: restaurant.channels?.instagram?.enabled || false, handle: restaurant.channels?.instagram?.handle || "" },
+                        facebook: { enabled: restaurant.channels?.facebook?.enabled || false, page_url: restaurant.channels?.facebook?.page_url || "" },
                         vapi: { enabled: restaurant.channels?.vapi?.enabled || false },
                         reservations_email: {
                             current_inbox: restaurant.channels?.reservations_email?.current_inbox || "",
@@ -280,20 +280,53 @@ const Configuracion = () => {
 
                 if (error) throw error;
             } else if (section === "Canales de comunicación") {
+                // Preparar canales con defaults
+                const updatedChannels = {
+                    ...settings.channels,
+                };
+                // Si usan mismo número para WhatsApp, reflejarlo
+                if (updatedChannels?.whatsapp?.use_same_phone && updatedChannels?.voice?.phone_number) {
+                    updatedChannels.whatsapp = {
+                        ...updatedChannels.whatsapp,
+                        phone_number: updatedChannels.voice.phone_number,
+                    };
+                }
+                // Generar alias de reenvío si está vacío
+                try {
+                    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'alias.local';
+                    if (updatedChannels?.reservations_email && !updatedChannels.reservations_email.forward_to) {
+                        updatedChannels.reservations_email = {
+                            ...updatedChannels.reservations_email,
+                            forward_to: `reservas-${restaurantId}@${hostname}`
+                        };
+                    }
+                } catch {}
+
                 const { error } = await supabase
                     .from("restaurants")
                     .update({
-                        channels: settings.channels || {},
+                        channels: updatedChannels || {},
                         updated_at: new Date().toISOString()
                     })
                     .eq("id", restaurantId);
 
                 if (error) throw error;
             } else if (section === "Configuración de notificaciones") {
+                // Defaults de horario silencioso
+                const qh = settings.notifications?.quiet_hours || {};
+                const updatedNotifications = {
+                    ...settings.notifications,
+                    quiet_hours: {
+                        start: qh.start || '08:00',
+                        end: qh.end || '22:00',
+                        mode: qh.mode || 'digest'
+                    }
+                };
+
                 const { error } = await supabase
                     .from("restaurants")
                     .update({
-                        notifications: settings.notifications || {},
+                        notifications: updatedNotifications || {},
                         updated_at: new Date().toISOString()
                     })
                     .eq("id", restaurantId);
@@ -766,6 +799,26 @@ const Configuracion = () => {
                                             }))}
                                         />
                                     </div>
+                                    {settings.channels?.instagram?.enabled && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Usuario o URL de Instagram</label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.channels?.instagram?.handle || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            instagram: { ...prev.channels?.instagram, handle: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                                    placeholder="@restaurante o https://instagram.com/restaurante"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
@@ -790,6 +843,26 @@ const Configuracion = () => {
                                             }))}
                                         />
                                     </div>
+                                    {settings.channels?.facebook?.enabled && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">URL de la página</label>
+                                                <input
+                                                    type="url"
+                                                    value={settings.channels?.facebook?.page_url || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            facebook: { ...prev.channels?.facebook, page_url: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-blue-800"
+                                                    placeholder="https://facebook.com/tu-pagina"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="bg-purple-50 p-6 rounded-xl border border-purple-200">
@@ -898,6 +971,71 @@ const Configuracion = () => {
                                                     }
                                                 }))}
                                             />
+                                        </div>
+                                        {/* Destinatarios y horario silencioso */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Emails destinatarios</label>
+                                                <input
+                                                    type="text"
+                                                    value={(settings.notifications?.recipient_emails || []).join(", ")}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            recipient_emails: e.target.value.split(',').map(x => x.trim()).filter(Boolean)
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    placeholder="ops@restaurante.com, direccion@restaurante.com"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">WhatsApp destinatarios</label>
+                                                <input
+                                                    type="text"
+                                                    value={(settings.notifications?.recipient_whatsapps || []).join(", ")}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            recipient_whatsapps: e.target.value.split(',').map(x => x.trim()).filter(Boolean)
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    placeholder="+34 600 000 000, +34 600 000 001"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Horario silencioso (inicio)</label>
+                                                <input
+                                                    type="time"
+                                                    value={settings.notifications?.quiet_hours?.start || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            quiet_hours: { ...prev.notifications?.quiet_hours, start: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Horario silencioso (fin)</label>
+                                                <input
+                                                    type="time"
+                                                    value={settings.notifications?.quiet_hours?.end || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            quiet_hours: { ...prev.notifications?.quiet_hours, end: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
