@@ -48,18 +48,12 @@ export default function Dashboard() {
                     </h2>
                     <p className="text-gray-600 text-center mb-6">
                         No se pudo cargar la información de tu restaurante. 
-                        Por favor, ejecuta el diagnóstico para identificar el problema.
+                        Por favor, intenta recargar la página o verificar tu configuración.
                     </p>
                     <div className="space-y-3">
                         <button
-                            onClick={() => navigate('/test-connection')}
-                            className="w-full bg-purple-600 text-white rounded-lg px-4 py-3 font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
-                        >
-                            🔍 Ejecutar Diagnóstico
-                        </button>
-                        <button
                             onClick={() => window.location.reload()}
-                            className="w-full bg-gray-200 text-gray-700 rounded-lg px-4 py-3 font-medium hover:bg-gray-300 transition-colors"
+                            className="w-full bg-purple-600 text-white rounded-lg px-4 py-3 font-medium hover:bg-purple-700 transition-colors"
                         >
                             🔄 Recargar Página
                         </button>
