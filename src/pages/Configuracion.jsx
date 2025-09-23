@@ -301,7 +301,7 @@ const Configuracion = () => {
                 }
                 // Generar alias de reenvío si está vacío
                 try {
-                    const envDomain = (typeof import !== 'undefined' && import.meta && import.meta.env && import.meta.env.VITE_ALIAS_EMAIL_DOMAIN) ? import.meta.env.VITE_ALIAS_EMAIL_DOMAIN : '';
+                    const envDomain = (import.meta?.env?.VITE_ALIAS_EMAIL_DOMAIN) || '';
                     const hostnameBase = envDomain || (typeof window !== 'undefined' ? window.location.hostname : 'alias.local');
                     if (updatedChannels?.reservations_email && !updatedChannels.reservations_email.forward_to) {
                         updatedChannels.reservations_email = {
