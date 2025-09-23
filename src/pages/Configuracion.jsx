@@ -184,31 +184,28 @@ const Configuracion = () => {
             }
             console.log("✅ Usuario autenticado:", user.email);
 
-            const { data: mapping, error: mappingError } = await supabase
-                .from('user_restaurant_mapping')
-                .select('restaurant_id')
-                .eq('auth_user_id', user.id)
-                .single();
-                
-            if (mappingError || !mapping) {
-                console.error("❌ Error o no se encontró mapping usuario-restaurante:", mappingError);
+            // Preferir el restaurantId del contexto si está disponible
+            let currentRestaurantId = restaurantId;
+            if (!currentRestaurantId) {
+                const { data: mapping } = await supabase
+                    .from('user_restaurant_mapping')
+                    .select('restaurant_id')
+                    .eq('auth_user_id', user.id)
+                    .maybeSingle();
+                currentRestaurantId = mapping?.restaurant_id || null;
+            }
+            if (!currentRestaurantId) {
+                console.warn("⚠️ No se pudo determinar el Restaurant ID (contexto/mapping vacío)");
                 setLoading(false);
                 return;
             }
-            
-            const currentRestaurantId = mapping.restaurant_id;
-            console.log("🏪 Restaurant ID encontrado:", currentRestaurantId);
+            console.log("🏪 Restaurant ID:", currentRestaurantId);
 
-            const { data: restaurant, error: restaurantError } = await supabase
+            const { data: restaurant } = await supabase
                 .from("restaurants")
                 .select("*")
                 .eq("id", currentRestaurantId)
-                .single();
-
-            if (restaurantError) {
-                console.error("❌ Error cargando restaurant:", restaurantError);
-                throw restaurantError;
-            }
+                .maybeSingle();
 
             if (restaurant) {
                 
@@ -279,7 +276,20 @@ const Configuracion = () => {
     }, []);
 
     const handleSave = async (section) => {
-        if (!restaurantId) {
+        // Determinar restaurantId de forma robusta
+        let effectiveRestaurantId = restaurantId;
+        if (!effectiveRestaurantId) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: mapping } = await supabase
+                    .from('user_restaurant_mapping')
+                    .select('restaurant_id')
+                    .eq('auth_user_id', user.id)
+                    .maybeSingle();
+                effectiveRestaurantId = mapping?.restaurant_id || null;
+            }
+        }
+        if (!effectiveRestaurantId) {
             toast.error("No se encontró el ID del restaurante");
             return;
         }
@@ -366,16 +376,16 @@ const Configuracion = () => {
                 try {
                     const envDomain = (import.meta?.env?.VITE_ALIAS_EMAIL_DOMAIN) || '';
                     const hostnameBase = envDomain || (typeof window !== 'undefined' ? window.location.hostname : 'alias.local');
-                    if (updatedChannels?.reservations_email && !updatedChannels.reservations_email.forward_to) {
+                if (updatedChannels?.reservations_email && !updatedChannels.reservations_email.forward_to) {
                         updatedChannels.reservations_email = {
                             ...updatedChannels.reservations_email,
-                            forward_to: `reservas-${restaurantId}@${hostnameBase}`
+                        forward_to: `reservas-${effectiveRestaurantId}@${hostnameBase}`
                         };
                     }
                 } catch {}
 
                 const { error } = await callRpcSafe('update_restaurant_channels', {
-                    p_restaurant_id: restaurantId,
+                    p_restaurant_id: effectiveRestaurantId,
                     p_channels: updatedChannels
                 });
                 if (error) {
@@ -405,7 +415,7 @@ const Configuracion = () => {
                 };
 
                 const { error } = await callRpcSafe('update_restaurant_notifications', {
-                    p_restaurant_id: restaurantId,
+                    p_restaurant_id: effectiveRestaurantId,
                     p_notifications: updatedNotifications
                 });
                 if (error) {
