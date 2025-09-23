@@ -1,4 +1,4 @@
-// Dashboard.jsx - DASHBOARD REVOLUCIONARIO ENFOCADO EN VALOR
+// Dashboard.jsx - DASHBOARD REVOLUCIONARIO ENFOCADO EN VALOR - OPUS 4 & 5 INCLUDED
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardRevolutionary from "../components/DashboardRevolutionary";

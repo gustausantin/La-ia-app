@@ -1,0 +1,25 @@
+[1mdiff --git a/src/pages/Dashboard.jsx b/src/pages/Dashboard.jsx[m
+[1mindex 2abdf8e..99d7f1e 100644[m
+[1m--- a/src/pages/Dashboard.jsx[m
+[1m+++ b/src/pages/Dashboard.jsx[m
+[36m@@ -48,18 +48,12 @@[m [mexport default function Dashboard() {[m
+                     </h2>[m
+                     <p className="text-gray-600 text-center mb-6">[m
+                         No se pudo cargar la información de tu restaurante. [m
+[31m-                        Por favor, ejecuta el diagnóstico para identificar el problema.[m
+[32m+[m[32m                        Por favor, intenta recargar la página o verificar tu configuración.[m
+                     </p>[m
+                     <div className="space-y-3">[m
+[31m-                        <button[m
+[31m-                            onClick={() => navigate('/test-connection')}[m
+[31m-                            className="w-full bg-purple-600 text-white rounded-lg px-4 py-3 font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"[m
+[31m-                        >[m
+[31m-                            🔍 Ejecutar Diagnóstico[m
+[31m-                        </button>[m
+                         <button[m
+                             onClick={() => window.location.reload()}[m
+[31m-                            className="w-full bg-gray-200 text-gray-700 rounded-lg px-4 py-3 font-medium hover:bg-gray-300 transition-colors"[m
+[32m+[m[32m                            className="w-full bg-purple-600 text-white rounded-lg px-4 py-3 font-medium hover:bg-purple-700 transition-colors"[m
+                         >[m
+                             🔄 Recargar Página[m
+                         </button>[m
