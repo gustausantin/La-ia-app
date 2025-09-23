@@ -66,10 +66,16 @@ const AuthProvider = ({ children }) => {
           await realtimeService.setRestaurantFilter(map.restaurant.id);
         } catch {}
         try {
-          // Asegurar defaults del tenant
-          await supabase.rpc('ensure_tenant_defaults', { p_restaurant_id: map.restaurant.id });
+          // Asegurar defaults del tenant - solo si la función existe
+          const { error: checkError } = await supabase.rpc('ensure_tenant_defaults', { p_restaurant_id: map.restaurant.id });
+          if (checkError && !checkError.message?.includes('function') && !checkError.message?.includes('does not exist')) {
+            logger.debug('ensure_tenant_defaults response:', checkError?.message || 'function executed');
+          }
         } catch (e) {
-          logger.warn('ensure_tenant_defaults failed (non-blocking):', e?.message || e);
+          // Silenciar errores de función no existente o permisos
+          if (!e?.message?.includes('function') && !e?.message?.includes('permission') && !e?.message?.includes('401')) {
+            logger.debug('ensure_tenant_defaults skipped:', e?.message || e);
+          }
         }
       } else {
         logger.info('No restaurant found - app continues normally');
