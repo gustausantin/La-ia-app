@@ -32,109 +32,130 @@ const AuthProvider = ({ children }) => {
   const lastSignInRef = useRef(null);
   const loadUserDataRef = useRef(false); // NUEVA PROTECCIÓN CONTRA EJECUCIONES MÚLTIPLES
 
-  // Función SIMPLIFICADA que falla rápido
+  // FUNCIÓN ULTRA SIMPLIFICADA Y DIRECTA
   const fetchRestaurantInfo = async (userId) => {
-    logger.debug('Fetching restaurant info for user', { userId });
+    console.log('🔵 INICIANDO fetchRestaurantInfo para usuario:', userId);
     
     if (!userId) { 
-      logger.warn('No userId provided');
+      console.error('❌ No hay userId');
       setRestaurant(null); 
       setRestaurantId(null); 
       return; 
     }
 
+    // INTENTO 1: Query directo simple
     try {
-      // Primero obtener el mapping
-      logger.debug('🔍 Buscando mapping para usuario:', userId);
+      console.log('📡 Intento 1: Query directo a user_restaurant_mapping...');
       const { data: mapping, error: mapErr } = await supabase
         .from('user_restaurant_mapping')
         .select('restaurant_id')
         .eq('auth_user_id', userId)
-        .maybeSingle();
-
-      logger.debug('📊 Resultado del mapping:', { mapping, error: mapErr });
-
-      if (mapErr) {
-        logger.error('❌ Error obteniendo mapping:', mapErr);
-        // Si es error de permisos, intentar con RPC
-        if (mapErr.code === '42501' || mapErr.message?.includes('permission')) {
-          logger.info('🔄 Intentando con RPC get_user_restaurant_info...');
-          const { data: rpcData, error: rpcErr } = await supabase
-            .rpc('get_user_restaurant_info', { user_id: userId });
-          
-          if (!rpcErr && rpcData?.restaurant_id) {
-            logger.info('✅ Restaurant obtenido vía RPC:', rpcData);
-            setRestaurant({
-              id: rpcData.restaurant_id,
-              name: rpcData.restaurant_name,
-              email: rpcData.email,
-              phone: rpcData.phone,
-              city: rpcData.city,
-              plan: rpcData.plan,
-              active: rpcData.active
-            });
-            setRestaurantId(rpcData.restaurant_id);
-            return;
-          }
-        }
-        throw mapErr;
-      }
-
-      if (!mapping?.restaurant_id) {
-        logger.warn('⚠️ No se encontró restaurant_id en el mapping');
-        setRestaurant(null);
-        setRestaurantId(null);
-        return;
-      }
-
-      // Ahora obtener los detalles del restaurante
-      logger.debug('🔍 Buscando detalles del restaurante:', mapping.restaurant_id);
-      const { data: restaurant, error: restErr } = await supabase
-        .from('restaurants')
-        .select('id, name, email, phone, address, city, country, postal_code, cuisine_type, plan, active, created_at')
-        .eq('id', mapping.restaurant_id)
         .single();
 
-      logger.debug('📊 Resultado del restaurant:', { restaurant, error: restErr });
+      if (mapping?.restaurant_id) {
+        console.log('✅ Mapping encontrado, restaurant_id:', mapping.restaurant_id);
+        
+        // Obtener datos del restaurante
+        const { data: rest, error: restErr } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('id', mapping.restaurant_id)
+          .single();
 
-      if (restErr) {
-        logger.error('❌ Error obteniendo restaurant:', restErr);
-        throw restErr;
-      }
-
-      if (restaurant) {
-        logger.info('Restaurant found', { name: restaurant.name });
-        setRestaurant(restaurant); 
-        setRestaurantId(restaurant.id); 
-        try {
-          await realtimeService.setRestaurantFilter(restaurant.id);
-        } catch {}
-        try {
-          // Asegurar defaults del tenant - solo si la función existe
-          const { error: checkError } = await supabase.rpc('ensure_tenant_defaults', { p_restaurant_id: restaurant.id });
-          if (checkError && !checkError.message?.includes('function') && !checkError.message?.includes('does not exist')) {
-            logger.debug('ensure_tenant_defaults response:', checkError?.message || 'function executed');
-          }
-        } catch (e) {
-          // Silenciar errores de función no existente o permisos
-          if (!e?.message?.includes('function') && !e?.message?.includes('permission') && !e?.message?.includes('401')) {
-            logger.debug('ensure_tenant_defaults skipped:', e?.message || e);
-          }
+        if (rest) {
+          console.log('✅ Restaurant encontrado:', rest.name);
+          setRestaurant(rest);
+          setRestaurantId(rest.id);
+          return;
         }
-      } else {
-        logger.info('No restaurant found - app continues normally');
-        setRestaurant(null); 
-        setRestaurantId(null);
       }
-      
     } catch (e) {
-      logger.error('fetchRestaurantInfo error:', e?.message || e);
-      // No bloquear la app, pero marcar que no hay restaurant
-      setRestaurant(null); 
-      setRestaurantId(null);
-    } finally {
-      logger.debug('fetchRestaurantInfo FINISHED');
+      console.log('⚠️ Intento 1 falló:', e.message);
     }
+
+    // INTENTO 2: RPC directa
+    try {
+      console.log('📡 Intento 2: RPC get_user_restaurant_info...');
+      const { data: rpcData, error: rpcErr } = await supabase
+        .rpc('get_user_restaurant_info', { user_id: userId });
+      
+      if (rpcData?.restaurant_id) {
+        console.log('✅ RPC exitosa, restaurant:', rpcData.restaurant_name);
+        setRestaurant({
+          id: rpcData.restaurant_id,
+          name: rpcData.restaurant_name,
+          email: rpcData.email,
+          phone: rpcData.phone,
+          city: rpcData.city,
+          plan: rpcData.plan,
+          active: rpcData.active
+        });
+        setRestaurantId(rpcData.restaurant_id);
+        return;
+      }
+    } catch (e) {
+      console.log('⚠️ Intento 2 falló:', e.message);
+    }
+
+    // INTENTO 3: Query con select expandido
+    try {
+      console.log('📡 Intento 3: Query con select expandido...');
+      const { data: maps, error } = await supabase
+        .from('user_restaurant_mapping')
+        .select(`
+          restaurant_id,
+          restaurant:restaurants(*)
+        `)
+        .eq('auth_user_id', userId)
+        .single();
+
+      if (maps?.restaurant) {
+        console.log('✅ Query expandido exitoso:', maps.restaurant.name);
+        setRestaurant(maps.restaurant);
+        setRestaurantId(maps.restaurant.id);
+        return;
+      }
+    } catch (e) {
+      console.log('⚠️ Intento 3 falló:', e.message);
+    }
+
+    // INTENTO 4: Buscar por email
+    try {
+      console.log('📡 Intento 4: Buscar restaurant por email del usuario...');
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user?.email) {
+        const { data: rest, error } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('email', user.email)
+          .single();
+
+        if (rest) {
+          console.log('✅ Restaurant encontrado por email:', rest.name);
+          setRestaurant(rest);
+          setRestaurantId(rest.id);
+          
+          // Intentar crear el mapping si no existe
+          await supabase
+            .from('user_restaurant_mapping')
+            .upsert({
+              auth_user_id: userId,
+              restaurant_id: rest.id,
+              role: 'owner'
+            }, { onConflict: 'auth_user_id' });
+          
+          return;
+        }
+      }
+    } catch (e) {
+      console.log('⚠️ Intento 4 falló:', e.message);
+    }
+
+    // Si llegamos aquí, no pudimos cargar el restaurant
+    console.error('❌ NO SE PUDO CARGAR EL RESTAURANT DESPUÉS DE 4 INTENTOS');
+    setRestaurant(null);
+    setRestaurantId(null);
   };
 
   // ENTERPRISE: Función para crear restaurant automáticamente para usuarios huérfanos
