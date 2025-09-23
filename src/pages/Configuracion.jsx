@@ -118,6 +118,40 @@ const Configuracion = () => {
     const [showHelpWA, setShowHelpWA] = useState(false);
     const [showHelpIG, setShowHelpIG] = useState(false);
     const [showHelpFB, setShowHelpFB] = useState(false);
+  const [showHelpDigest, setShowHelpDigest] = useState(false);
+
+  // Helper: RPC con fallback REST firmado si proyecto devuelve "No API key"
+  const callRpcSafe = async (fnName, args) => {
+    const { data, error } = await supabase.rpc(fnName, args);
+    if (!error) return { data };
+    if ((error.message || '').includes('No API key')) {
+      try {
+        const baseUrl = import.meta?.env?.VITE_SUPABASE_URL;
+        const anon = import.meta?.env?.VITE_SUPABASE_ANON_KEY;
+        const { data: { session } } = await supabase.auth.getSession();
+        const resp = await fetch(`${baseUrl}/rest/v1/rpc/${fnName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'apikey': anon,
+            'Authorization': session?.access_token ? `Bearer ${session.access_token}` : `Bearer ${anon}`
+          },
+          body: JSON.stringify(args)
+        });
+        if (!resp.ok) {
+          let detail = '';
+          try { detail = await resp.text(); } catch {}
+          throw new Error(detail || `REST error ${resp.status}`);
+        }
+        const json = await resp.json().catch(() => ({}));
+        return { data: json };
+      } catch (e) {
+        return { error: e };
+      }
+    }
+    return { error };
+  };
 
     const tabs = [
         {
@@ -340,7 +374,7 @@ const Configuracion = () => {
                     }
                 } catch {}
 
-                const { error } = await supabase.rpc('update_restaurant_channels', {
+                const { error } = await callRpcSafe('update_restaurant_channels', {
                     p_restaurant_id: restaurantId,
                     p_channels: updatedChannels
                 });
@@ -370,7 +404,7 @@ const Configuracion = () => {
                     }
                 };
 
-                const { error } = await supabase.rpc('update_restaurant_notifications', {
+                const { error } = await callRpcSafe('update_restaurant_notifications', {
                     p_restaurant_id: restaurantId,
                     p_notifications: updatedNotifications
                 });
@@ -1186,6 +1220,9 @@ const Configuracion = () => {
                                                 <h5 className="font-medium text-gray-900">Resumen diario (9:00)</h5>
                                                 <p className="text-sm text-gray-600">Envío de resumen de reservas de hoy y acciones pendientes</p>
                                             </div>
+                                            <button type="button" onClick={() => setShowHelpDigest(v => !v)} className="text-gray-500 hover:text-gray-700 mr-2">
+                                                <HelpCircle className="w-5 h-5" />
+                                            </button>
                                             <ToggleSwitch
                                                 enabled={settings.notifications?.daily_digest ?? false}
                                                 onChange={(enabled) => setSettings(prev => ({
@@ -1197,6 +1234,21 @@ const Configuracion = () => {
                                                 }))}
                                             />
                                         </div>
+                                        {showHelpDigest && (
+                                            <div className="mb-2 p-4 rounded-lg bg-purple-50 border border-purple-200 text-sm text-gray-700">
+                                                <p className="font-medium mb-1">Ejemplo de resumen diario</p>
+                                                <pre className="whitespace-pre-wrap text-xs">
+Resumen diario – Restaurante X (hoy 09:00)
+- Reservas hoy: 18 (10 confirmadas, 6 pendientes, 2 canceladas, 4 nuevas)
+- Próximas 3h: 7 reservas
+- Conflictos: 1 solape detectado
+- Recordatorios pendientes: 5
+- Riesgo no-show alto hoy: 2
+- Ingresos esperados: —
+- Sistema: OK (0 errores)
+                                                </pre>
+                                            </div>
+                                        )}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Hora del resumen</label>
