@@ -46,6 +46,12 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     params: {
       eventsPerSecond: 10
     }
+  },
+  global: {
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`
+    }
   }
 });
 
