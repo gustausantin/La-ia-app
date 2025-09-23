@@ -88,8 +88,28 @@ const Configuracion = () => {
         logo_url: "",
         capacity_total: 0,
         price_range: "",
-        channels: {},
-        notifications: {}
+        channels: {
+            // Modo simple por defecto (objetos precreados para evitar undefined)
+            voice: { enabled: false, phone_number: "" },
+            whatsapp: { enabled: false, use_same_phone: true, phone_number: "" },
+            webchat: { enabled: true },
+            instagram: { enabled: false },
+            facebook: { enabled: false },
+            vapi: { enabled: false },
+            reservations_email: { current_inbox: "", forward_to: "" },
+            external: { thefork_url: "", google_reserve_url: "" }
+        },
+        notifications: {
+            recipient_emails: [],
+            recipient_whatsapps: [],
+            quiet_hours: { start: "", end: "", mode: "mute" },
+            new_reservation: false,
+            cancelled_reservation: false,
+            new_customer: false,
+            vip_promotion: false,
+            agent_offline: false,
+            integration_errors: false
+        }
     });
 
     const tabs = [
@@ -176,8 +196,37 @@ const Configuracion = () => {
                     language: restaurant.language || "es",
                     
                     // ✅ CANALES Y NOTIFICACIONES
-                    channels: restaurant.channels || {},
-                    notifications: restaurant.notifications || {},
+                    channels: {
+                        voice: { enabled: restaurant.channels?.voice?.enabled || false, phone_number: restaurant.channels?.voice?.phone_number || "" },
+                        whatsapp: {
+                            enabled: restaurant.channels?.whatsapp?.enabled || false,
+                            use_same_phone: restaurant.channels?.whatsapp?.use_same_phone ?? true,
+                            phone_number: restaurant.channels?.whatsapp?.phone_number || ""
+                        },
+                        webchat: { enabled: restaurant.channels?.webchat?.enabled !== false, site_domain: restaurant.channels?.webchat?.site_domain || "", widget_key: restaurant.channels?.webchat?.widget_key || "" },
+                        instagram: { enabled: restaurant.channels?.instagram?.enabled || false },
+                        facebook: { enabled: restaurant.channels?.facebook?.enabled || false },
+                        vapi: { enabled: restaurant.channels?.vapi?.enabled || false },
+                        reservations_email: {
+                            current_inbox: restaurant.channels?.reservations_email?.current_inbox || "",
+                            forward_to: restaurant.channels?.reservations_email?.forward_to || ""
+                        },
+                        external: {
+                            thefork_url: restaurant.channels?.external?.thefork_url || "",
+                            google_reserve_url: restaurant.channels?.external?.google_reserve_url || ""
+                        }
+                    },
+                    notifications: {
+                        recipient_emails: restaurant.notifications?.recipient_emails || [],
+                        recipient_whatsapps: restaurant.notifications?.recipient_whatsapps || [],
+                        quiet_hours: restaurant.notifications?.quiet_hours || { start: "", end: "", mode: "mute" },
+                        new_reservation: restaurant.notifications?.new_reservation ?? false,
+                        cancelled_reservation: restaurant.notifications?.cancelled_reservation ?? false,
+                        new_customer: restaurant.notifications?.new_customer ?? false,
+                        vip_promotion: restaurant.notifications?.vip_promotion ?? false,
+                        agent_offline: restaurant.notifications?.agent_offline ?? false,
+                        integration_errors: restaurant.notifications?.integration_errors ?? false
+                    },
                 });
             }
 
@@ -532,6 +581,50 @@ const Configuracion = () => {
                             icon={<MessageSquare />}
                         >
                             <div className="space-y-6">
+                                {/* Teléfono principal (llamadas) */}
+                                <div className="bg-purple-50 p-6 rounded-xl border border-purple-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                                                <Phone className="w-4 h-4 text-white" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-medium text-gray-900">Teléfono de reservas (llamadas)</h4>
+                                                <p className="text-sm text-gray-600">Número donde hoy reciben llamadas</p>
+                                            </div>
+                                        </div>
+                                        <ToggleSwitch
+                                            enabled={settings.channels?.voice?.enabled || false}
+                                            onChange={(enabled) => setSettings(prev => ({
+                                                ...prev,
+                                                channels: {
+                                                    ...prev.channels,
+                                                    voice: { ...prev.channels?.voice, enabled }
+                                                }
+                                            }))}
+                                        />
+                                    </div>
+                                    {settings.channels?.voice?.enabled && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Número de teléfono</label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.channels?.voice?.phone_number || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            voice: { ...prev.channels?.voice, phone_number: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                    placeholder="+34 600 000 000"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="bg-green-50 p-6 rounded-xl border border-green-200">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-3">
@@ -556,13 +649,26 @@ const Configuracion = () => {
                                     </div>
                                     {settings.channels?.whatsapp?.enabled && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    id="wa-same-number"
+                                                    type="checkbox"
+                                                    checked={settings.channels?.whatsapp?.use_same_phone ?? true}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            whatsapp: { ...prev.channels?.whatsapp, use_same_phone: e.target.checked }
+                                                        }
+                                                    }))}
+                                                />
+                                                <label htmlFor="wa-same-number" className="text-sm text-gray-700">Usar el mismo número de llamadas</label>
+                                            </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Número de teléfono
-                                                </label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Número de teléfono</label>
                                                 <input
                                                     type="text"
-                                                    value={settings.channels?.whatsapp?.phone_number || ""}
+                                                    value={(settings.channels?.whatsapp?.use_same_phone ? settings.channels?.voice?.phone_number : settings.channels?.whatsapp?.phone_number) || ""}
                                                     onChange={(e) => setSettings(prev => ({
                                                         ...prev,
                                                         channels: {
@@ -572,24 +678,6 @@ const Configuracion = () => {
                                                     }))}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                                     placeholder="+34 600 000 000"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Token API
-                                                </label>
-                                                <input
-                                                    type="password"
-                                                    value={settings.channels?.whatsapp?.api_token || ""}
-                                                    onChange={(e) => setSettings(prev => ({
-                                                        ...prev,
-                                                        channels: {
-                                                            ...prev.channels,
-                                                            whatsapp: { ...prev.channels?.whatsapp, api_token: e.target.value }
-                                                        }
-                                                    }))}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                                    placeholder="Token de WhatsApp Business API"
                                                 />
                                             </div>
                                         </div>
@@ -618,6 +706,42 @@ const Configuracion = () => {
                                             }))}
                                         />
                                     </div>
+                                    {settings.channels?.webchat?.enabled !== false && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Dominio del sitio</label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.channels?.webchat?.site_domain || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            webchat: { ...prev.channels?.webchat, site_domain: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    placeholder="restaurante.com"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Widget Key (opcional)</label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.channels?.webchat?.widget_key || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            webchat: { ...prev.channels?.webchat, widget_key: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    placeholder="Opcional"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="bg-pink-50 p-6 rounded-xl border border-pink-200">
@@ -690,6 +814,26 @@ const Configuracion = () => {
                                             }))}
                                         />
                                     </div>
+                                    {settings.channels?.vapi?.enabled && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Número para el asistente (voz)</label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.channels?.vapi?.voice_number || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            vapi: { ...prev.channels?.vapi, voice_number: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                    placeholder="+34 910 000 000"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -729,7 +873,7 @@ const Configuracion = () => {
                                                 <p className="text-sm text-gray-600">Notificar cuando se confirme una nueva reserva</p>
                                             </div>
                                             <ToggleSwitch
-                                                enabled={settings.notifications?.new_reservation || true}
+                                                enabled={settings.notifications?.new_reservation ?? false}
                                                 onChange={(enabled) => setSettings(prev => ({
                                                     ...prev,
                                                     notifications: {
@@ -745,7 +889,7 @@ const Configuracion = () => {
                                                 <p className="text-sm text-gray-600">Alerta cuando se cancele una reserva</p>
                                             </div>
                                             <ToggleSwitch
-                                                enabled={settings.notifications?.cancelled_reservation || true}
+                                                enabled={settings.notifications?.cancelled_reservation ?? false}
                                                 onChange={(enabled) => setSettings(prev => ({
                                                     ...prev,
                                                     notifications: {
@@ -770,7 +914,7 @@ const Configuracion = () => {
                                                 <p className="text-sm text-gray-600">Notificar cuando se registre un nuevo cliente</p>
                                             </div>
                                             <ToggleSwitch
-                                                enabled={settings.notifications?.new_customer || true}
+                                                enabled={settings.notifications?.new_customer ?? false}
                                                 onChange={(enabled) => setSettings(prev => ({
                                                     ...prev,
                                                     notifications: {
@@ -786,7 +930,7 @@ const Configuracion = () => {
                                                 <p className="text-sm text-gray-600">Alerta cuando un cliente se convierta en VIP</p>
                                             </div>
                                             <ToggleSwitch
-                                                enabled={settings.notifications?.vip_promotion || true}
+                                                enabled={settings.notifications?.vip_promotion ?? false}
                                                 onChange={(enabled) => setSettings(prev => ({
                                                     ...prev,
                                                     notifications: {
@@ -811,7 +955,7 @@ const Configuracion = () => {
                                                 <p className="text-sm text-gray-600">Alerta si el agente IA deja de funcionar</p>
                                             </div>
                                             <ToggleSwitch
-                                                enabled={settings.notifications?.agent_offline || true}
+                                                enabled={settings.notifications?.agent_offline ?? false}
                                                 onChange={(enabled) => setSettings(prev => ({
                                                     ...prev,
                                                     notifications: {
@@ -827,7 +971,7 @@ const Configuracion = () => {
                                                 <p className="text-sm text-gray-600">Notificar errores en canales o integraciones</p>
                                             </div>
                                             <ToggleSwitch
-                                                enabled={settings.notifications?.integration_errors || true}
+                                                enabled={settings.notifications?.integration_errors ?? false}
                                                 onChange={(enabled) => setSettings(prev => ({
                                                     ...prev,
                                                     notifications: {
