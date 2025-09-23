@@ -393,9 +393,9 @@ const NoShowManagerProfesional = () => {
                         <div className="pt-2 border-t border-blue-200">
                             <strong>Factores de Riesgo que analizamos:</strong>
                             <ul className="mt-2 space-y-1 ml-4">
-                                <li>• <strong>Alto (🔴):</strong> Cliente con >30% no-shows previos</li>
+                                <li>• <strong>Alto (🔴):</strong> Cliente con más del 30% no-shows previos</li>
                                 <li>• <strong>Medio (🟡):</strong> Reservas después de 21h o antes de 13h</li>
-                                <li>• <strong>Medio (🟡):</strong> Grupos grandes (>6 personas)</li>
+                                <li>• <strong>Medio (🟡):</strong> Grupos grandes (más de 6 personas)</li>
                                 <li>• <strong>Alto (🔴):</strong> Sin teléfono de contacto válido</li>
                             </ul>
                         </div>

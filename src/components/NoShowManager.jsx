@@ -400,7 +400,7 @@ const NoShowManager = () => {
         // Factor 2: Tiempo desde última visita
         if (customerHistory?.days_since_last_visit > 180) {
             riskScore += 25;
-            riskFactors.push('Cliente inactivo >6 meses');
+            riskFactors.push('Cliente inactivo más de 6 meses');
         } else if (customerHistory?.days_since_last_visit > 90) {
             riskScore += 15;
             riskFactors.push('Cliente poco frecuente');
