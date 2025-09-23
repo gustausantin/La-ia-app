@@ -6,7 +6,7 @@
   "devCommand": "npm run dev",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api|assets|manifest.json|favicon.ico|icons).*)",
       "destination": "/index.html"
     }
   ],
@@ -17,6 +17,19 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
         }
       ]
     }

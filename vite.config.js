@@ -2,9 +2,22 @@
 import { defineConfig } from "vite";
 import { resolve } from "path";
 import react from "@vitejs/plugin-react";
+import { copyFileSync } from 'fs';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'copy-manifest',
+      writeBundle() {
+        try {
+          copyFileSync('./public/manifest.json', './dist/manifest.json');
+        } catch (e) {
+          console.warn('Could not copy manifest.json:', e.message);
+        }
+      }
+    }
+  ],
   base: '/',
   
   // ===== ALIAS PATHS ENTERPRISE =====

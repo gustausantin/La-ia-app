@@ -392,8 +392,6 @@ const Configuracion = () => {
                     console.error('RPC update_restaurant_channels error:', error);
                     throw error;
                 }
-
-                if (error) throw error;
             } else if (section === "Configuración de notificaciones") {
                 // Validaciones previas para notificaciones
                 const n = settings.notifications || {};
@@ -422,8 +420,6 @@ const Configuracion = () => {
                     console.error('RPC update_restaurant_notifications error:', error);
                     throw error;
                 }
-
-                if (error) throw error;
             }
 
             toast.success(`✅ ${section} guardado correctamente`);
