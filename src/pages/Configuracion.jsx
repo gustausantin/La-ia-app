@@ -288,6 +288,35 @@ const Configuracion = () => {
 
                 if (error) throw error;
             } else if (section === "Canales de comunicación") {
+                // Validaciones previas (no permitir guardar con campos críticos vacíos)
+                const ch = settings.channels || {};
+                const errors = [];
+                if (ch.voice?.enabled && !ch.voice?.phone_number) {
+                    errors.push('Teléfono de reservas: faltan números.');
+                }
+                if (ch.whatsapp?.enabled) {
+                    if (ch.whatsapp?.use_same_phone) {
+                        if (!ch.voice?.phone_number) errors.push('WhatsApp: usa mismo número, pero no hay teléfono en llamadas.');
+                    } else if (!ch.whatsapp?.phone_number) {
+                        errors.push('WhatsApp: falta el número.');
+                    }
+                }
+                if (ch.vapi?.enabled && !ch.vapi?.voice_number) {
+                    errors.push('VAPI: falta el número del asistente.');
+                }
+                if (ch.instagram?.enabled) {
+                    if (!ch.instagram?.handle) errors.push('Instagram: falta usuario/URL.');
+                    if (!ch.instagram?.invite_email) errors.push('Instagram: falta email para invitarnos como admin.');
+                }
+                if (ch.facebook?.enabled) {
+                    if (!ch.facebook?.page_url) errors.push('Facebook: falta URL de la página.');
+                    if (!ch.facebook?.invite_email) errors.push('Facebook: falta email para invitarnos como admin.');
+                }
+                // Email de reservas: si rellenan current_inbox pero no alias, lo genero más abajo; no bloquear
+                if (errors.length > 0) {
+                    toast.error(errors[0]);
+                    return;
+                }
                 // Preparar canales con defaults
                 const updatedChannels = {
                     ...settings.channels,
@@ -315,9 +344,21 @@ const Configuracion = () => {
                     p_restaurant_id: restaurantId,
                     p_channels: updatedChannels
                 });
+                if (error) {
+                    console.error('RPC update_restaurant_channels error:', error);
+                    throw error;
+                }
 
                 if (error) throw error;
             } else if (section === "Configuración de notificaciones") {
+                // Validaciones previas para notificaciones
+                const n = settings.notifications || {};
+                const anyEnabled = (n.new_reservation || n.cancelled_reservation || n.reservation_modified || n.daily_digest || n.agent_offline || n.integration_errors) === true;
+                const hasRecipients = (Array.isArray(n.recipient_emails) && n.recipient_emails.length > 0) || (Array.isArray(n.recipient_whatsapps) && n.recipient_whatsapps.length > 0);
+                if (anyEnabled && !hasRecipients) {
+                    toast.error('Añade al menos un destinatario (email o WhatsApp).');
+                    return;
+                }
                 // Defaults de horario silencioso
                 const qh = settings.notifications?.quiet_hours || {};
                 const updatedNotifications = {
@@ -333,6 +374,10 @@ const Configuracion = () => {
                     p_restaurant_id: restaurantId,
                     p_notifications: updatedNotifications
                 });
+                if (error) {
+                    console.error('RPC update_restaurant_notifications error:', error);
+                    throw error;
+                }
 
                 if (error) throw error;
             }
