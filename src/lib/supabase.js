@@ -46,6 +46,13 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     params: {
       eventsPerSecond: 10
     }
+  },
+  // Forzar cabeceras globales para evitar 400 'No API key found' en algunos entornos
+  global: {
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`
+    }
   }
 });
 
