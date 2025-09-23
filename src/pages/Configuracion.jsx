@@ -175,31 +175,62 @@ const Configuracion = () => {
         const loadSettings = async () => {
             setLoading(true);
             console.log("📄 CARGANDO CONFIGURACIÓN - INICIO");
+            console.log("🔍 Estado del contexto:", { 
+                restaurantId, 
+                restaurant,
+                user 
+            });
             
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
+            const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+            if (userError) {
+                console.error("❌ Error obteniendo usuario:", userError);
+                setLoading(false);
+                return;
+            }
+            if (!authUser) {
                 console.log("❌ No hay usuario autenticado");
                 setLoading(false);
                 return;
             }
-            console.log("✅ Usuario autenticado:", user.email);
+            console.log("✅ Usuario autenticado:", authUser.email, authUser.id);
 
             // Preferir el restaurantId del contexto si está disponible
             let currentRestaurantId = restaurantId;
             if (!currentRestaurantId) {
-                const { data: mapping } = await supabase
+                console.log("⚠️ No hay restaurantId en contexto, buscando en mapping...");
+                const { data: mapping, error: mapError } = await supabase
                     .from('user_restaurant_mapping')
                     .select('restaurant_id')
-                    .eq('auth_user_id', user.id)
+                    .eq('auth_user_id', authUser.id)
                     .maybeSingle();
-                currentRestaurantId = mapping?.restaurant_id || null;
+                
+                console.log("📊 Resultado del mapping:", { mapping, error: mapError });
+                
+                if (mapError && mapError.code === '42501') {
+                    console.log("🔄 Error de permisos, intentando con RPC...");
+                    try {
+                        const { data: rpcData, error: rpcErr } = await supabase
+                            .rpc('get_user_restaurant_info', { user_id: authUser.id });
+                        console.log("📊 Resultado RPC:", { rpcData, error: rpcErr });
+                        currentRestaurantId = rpcData?.restaurant_id || null;
+                    } catch (e) {
+                        console.error("❌ Error en RPC:", e);
+                    }
+                } else {
+                    currentRestaurantId = mapping?.restaurant_id || null;
+                }
             }
+            
             if (!currentRestaurantId) {
-                console.warn("⚠️ No se pudo determinar el Restaurant ID (contexto/mapping vacío)");
+                console.error("⚠️ No se pudo determinar el Restaurant ID");
+                console.log("📋 Información de depuración:", {
+                    contexto: { restaurantId, restaurant },
+                    usuario: authUser.id
+                });
                 setLoading(false);
                 return;
             }
-            console.log("🏪 Restaurant ID:", currentRestaurantId);
+            console.log("🏪 Restaurant ID encontrado:", currentRestaurantId);
 
             const { data: restaurant } = await supabase
                 .from("restaurants")

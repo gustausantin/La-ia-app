@@ -44,30 +44,74 @@ const AuthProvider = ({ children }) => {
     }
 
     try {
-      // Timeout AGRESIVO de 2 segundos
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-      // Solo un intento - mapping table
-      const { data: map, error: mapErr } = await supabase
+      // Primero obtener el mapping
+      logger.debug('🔍 Buscando mapping para usuario:', userId);
+      const { data: mapping, error: mapErr } = await supabase
         .from('user_restaurant_mapping')
-        .select('restaurant:restaurant_id(id, name, email, phone, address, city, country, postal_code, cuisine_type, plan, active, created_at)')
+        .select('restaurant_id')
         .eq('auth_user_id', userId)
-        .abortSignal(controller.signal)
         .maybeSingle();
 
-      clearTimeout(timeoutId);
+      logger.debug('📊 Resultado del mapping:', { mapping, error: mapErr });
 
-      if (map?.restaurant) {
-        logger.info('Restaurant found', { name: map.restaurant.name });
-        setRestaurant(map.restaurant); 
-        setRestaurantId(map.restaurant.id); 
+      if (mapErr) {
+        logger.error('❌ Error obteniendo mapping:', mapErr);
+        // Si es error de permisos, intentar con RPC
+        if (mapErr.code === '42501' || mapErr.message?.includes('permission')) {
+          logger.info('🔄 Intentando con RPC get_user_restaurant_info...');
+          const { data: rpcData, error: rpcErr } = await supabase
+            .rpc('get_user_restaurant_info', { user_id: userId });
+          
+          if (!rpcErr && rpcData?.restaurant_id) {
+            logger.info('✅ Restaurant obtenido vía RPC:', rpcData);
+            setRestaurant({
+              id: rpcData.restaurant_id,
+              name: rpcData.restaurant_name,
+              email: rpcData.email,
+              phone: rpcData.phone,
+              city: rpcData.city,
+              plan: rpcData.plan,
+              active: rpcData.active
+            });
+            setRestaurantId(rpcData.restaurant_id);
+            return;
+          }
+        }
+        throw mapErr;
+      }
+
+      if (!mapping?.restaurant_id) {
+        logger.warn('⚠️ No se encontró restaurant_id en el mapping');
+        setRestaurant(null);
+        setRestaurantId(null);
+        return;
+      }
+
+      // Ahora obtener los detalles del restaurante
+      logger.debug('🔍 Buscando detalles del restaurante:', mapping.restaurant_id);
+      const { data: restaurant, error: restErr } = await supabase
+        .from('restaurants')
+        .select('id, name, email, phone, address, city, country, postal_code, cuisine_type, plan, active, created_at')
+        .eq('id', mapping.restaurant_id)
+        .single();
+
+      logger.debug('📊 Resultado del restaurant:', { restaurant, error: restErr });
+
+      if (restErr) {
+        logger.error('❌ Error obteniendo restaurant:', restErr);
+        throw restErr;
+      }
+
+      if (restaurant) {
+        logger.info('Restaurant found', { name: restaurant.name });
+        setRestaurant(restaurant); 
+        setRestaurantId(restaurant.id); 
         try {
-          await realtimeService.setRestaurantFilter(map.restaurant.id);
+          await realtimeService.setRestaurantFilter(restaurant.id);
         } catch {}
         try {
           // Asegurar defaults del tenant - solo si la función existe
-          const { error: checkError } = await supabase.rpc('ensure_tenant_defaults', { p_restaurant_id: map.restaurant.id });
+          const { error: checkError } = await supabase.rpc('ensure_tenant_defaults', { p_restaurant_id: restaurant.id });
           if (checkError && !checkError.message?.includes('function') && !checkError.message?.includes('does not exist')) {
             logger.debug('ensure_tenant_defaults response:', checkError?.message || 'function executed');
           }
@@ -84,11 +128,8 @@ const AuthProvider = ({ children }) => {
       }
       
     } catch (e) {
-      if (e.name === 'AbortError') {
-        logger.warn('fetchRestaurantInfo ABORTED - app continues');
-      } else {
-        logger.error('fetchRestaurantInfo error (ignored)', e?.message || e);
-      }
+      logger.error('fetchRestaurantInfo error:', e?.message || e);
+      // No bloquear la app, pero marcar que no hay restaurant
       setRestaurant(null); 
       setRestaurantId(null);
     } finally {
@@ -151,27 +192,39 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // ENTERPRISE: loadUserData con protección ABSOLUTA contra ejecuciones múltiples
+  // ENTERPRISE: loadUserData con protección contra ejecuciones múltiples
   const loadUserData = async (u) => {
-    // PROTECCIÓN CRÍTICA: Solo permitir una ejecución por usuario por sesión
+    // PROTECCIÓN: Solo permitir una ejecución por usuario por sesión
     const userKey = `loadUserData_${u.id}`;
     if (loadUserDataRef.current || window[userKey]) {
       logger.warn('🛡️ loadUserData ya en progreso - ignorando ejecución duplicada');
       return;
     }
     
-    // Marcar como en progreso INMEDIATAMENTE
+    // Marcar como en progreso
     loadUserDataRef.current = true;
     window[userKey] = true;
     
+    logger.info('🔵 INICIANDO CARGA DE DATOS DE USUARIO', { 
+      userId: u.id, 
+      email: u.email,
+      timestamp: new Date().toISOString()
+    });
+    
     try {
-      logger.info('Loading user data for', { email: u.email });
+      logger.info('🔄 Loading user data for', { email: u.email });
       setUser(u);
       setStatus('signed_in');
       
       // CRÍTICO: Cargar restaurant para que todas las páginas funcionen
-      logger.info('Loading restaurant info...');
+      logger.info('🏢 Cargando información del restaurante...');
       await fetchRestaurantInfo(u.id);
+      
+      // Verificar qué se cargó
+      logger.info('📋 Estado después de fetchRestaurantInfo:', {
+        restaurant: restaurant,
+        restaurantId: restaurantId
+      });
       
       // ENTERPRISE ARCHITECTURE: Restaurant creation handled by PostgreSQL trigger
       // NO JavaScript migration needed - trigger guarantees restaurant exists
@@ -216,23 +269,32 @@ const AuthProvider = ({ children }) => {
   };
 
   const initSession = async () => {
-    logger.info('Initializing auth...');
+    logger.info('🔐 Inicializando autenticación...');
     setStatus('checking');
     
     try {
+      logger.debug('📡 Obteniendo sesión de Supabase...');
       const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) throw error;
+      
+      if (error) {
+        logger.error('❌ Error obteniendo sesión:', error);
+        throw error;
+      }
 
       if (session?.user) {
-        logger.info('Session found', { email: session.user.email });
+        logger.info('✅ Sesión encontrada', { 
+          userId: session.user.id,
+          email: session.user.email,
+          provider: session.user.app_metadata?.provider || 'email'
+        });
         await loadUserData(session.user); // AHORA es async
       } else {
-        logger.info('No session found');
+        logger.info('📭 No hay sesión activa');
         setUser(null); 
         setStatus('signed_out');
       }
     } catch (error) {
-      logger.error('Error getting session', error);
+      logger.error('💥 Error crítico en initSession:', error);
       setStatus('signed_out');
     }
   };
