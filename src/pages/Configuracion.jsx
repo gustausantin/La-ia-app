@@ -15,8 +15,9 @@ import {
     Facebook,
     Calendar,
     Users,
-    Clock,
-    AlertCircle
+        Clock,
+        AlertCircle,
+        HelpCircle
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -93,8 +94,8 @@ const Configuracion = () => {
             voice: { enabled: false, phone_number: "" },
             whatsapp: { enabled: false, use_same_phone: true, phone_number: "" },
             webchat: { enabled: true },
-            instagram: { enabled: false },
-            facebook: { enabled: false },
+            instagram: { enabled: false, handle: "", invite_email: "" },
+            facebook: { enabled: false, page_url: "", invite_email: "" },
             vapi: { enabled: false },
             reservations_email: { current_inbox: "", forward_to: "" },
             external: { thefork_url: "", google_reserve_url: "" }
@@ -105,12 +106,18 @@ const Configuracion = () => {
             quiet_hours: { start: "", end: "", mode: "mute" },
             new_reservation: false,
             cancelled_reservation: false,
-            new_customer: false,
-            vip_promotion: false,
-            agent_offline: false,
-            integration_errors: false
+            reservation_modified: false,
+            daily_digest: true,
+            digest_time: "09:00",
+            agent_offline: true,
+            integration_errors: true
         }
     });
+
+    // Ayudas (popovers) por canal
+    const [showHelpWA, setShowHelpWA] = useState(false);
+    const [showHelpIG, setShowHelpIG] = useState(false);
+    const [showHelpFB, setShowHelpFB] = useState(false);
 
     const tabs = [
         {
@@ -204,8 +211,8 @@ const Configuracion = () => {
                             phone_number: restaurant.channels?.whatsapp?.phone_number || ""
                         },
                         webchat: { enabled: restaurant.channels?.webchat?.enabled !== false, site_domain: restaurant.channels?.webchat?.site_domain || "", widget_key: restaurant.channels?.webchat?.widget_key || "" },
-                        instagram: { enabled: restaurant.channels?.instagram?.enabled || false, handle: restaurant.channels?.instagram?.handle || "" },
-                        facebook: { enabled: restaurant.channels?.facebook?.enabled || false, page_url: restaurant.channels?.facebook?.page_url || "" },
+                        instagram: { enabled: restaurant.channels?.instagram?.enabled || false, handle: restaurant.channels?.instagram?.handle || "", invite_email: restaurant.channels?.instagram?.invite_email || "" },
+                        facebook: { enabled: restaurant.channels?.facebook?.enabled || false, page_url: restaurant.channels?.facebook?.page_url || "", invite_email: restaurant.channels?.facebook?.invite_email || "" },
                         vapi: { enabled: restaurant.channels?.vapi?.enabled || false },
                         reservations_email: {
                             current_inbox: restaurant.channels?.reservations_email?.current_inbox || "",
@@ -222,10 +229,11 @@ const Configuracion = () => {
                         quiet_hours: restaurant.notifications?.quiet_hours || { start: "", end: "", mode: "mute" },
                         new_reservation: restaurant.notifications?.new_reservation ?? false,
                         cancelled_reservation: restaurant.notifications?.cancelled_reservation ?? false,
-                        new_customer: restaurant.notifications?.new_customer ?? false,
-                        vip_promotion: restaurant.notifications?.vip_promotion ?? false,
-                        agent_offline: restaurant.notifications?.agent_offline ?? false,
-                        integration_errors: restaurant.notifications?.integration_errors ?? false
+                        reservation_modified: restaurant.notifications?.reservation_modified ?? false,
+                        daily_digest: restaurant.notifications?.daily_digest ?? true,
+                        digest_time: restaurant.notifications?.digest_time || "09:00",
+                        agent_offline: restaurant.notifications?.agent_offline ?? true,
+                        integration_errors: restaurant.notifications?.integration_errors ?? true
                     },
                 });
             }
@@ -293,11 +301,12 @@ const Configuracion = () => {
                 }
                 // Generar alias de reenvío si está vacío
                 try {
-                    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'alias.local';
+                    const envDomain = (typeof import !== 'undefined' && import.meta && import.meta.env && import.meta.env.VITE_ALIAS_EMAIL_DOMAIN) ? import.meta.env.VITE_ALIAS_EMAIL_DOMAIN : '';
+                    const hostnameBase = envDomain || (typeof window !== 'undefined' ? window.location.hostname : 'alias.local');
                     if (updatedChannels?.reservations_email && !updatedChannels.reservations_email.forward_to) {
                         updatedChannels.reservations_email = {
                             ...updatedChannels.reservations_email,
-                            forward_to: `reservas-${restaurantId}@${hostname}`
+                            forward_to: `reservas-${restaurantId}@${hostnameBase}`
                         };
                     }
                 } catch {}
@@ -669,6 +678,9 @@ const Configuracion = () => {
                                                 <p className="text-sm text-gray-600">Canal principal de comunicación</p>
                                             </div>
                                         </div>
+                                        <button type="button" onClick={() => setShowHelpWA(v => !v)} className="text-gray-500 hover:text-gray-700">
+                                            <HelpCircle className="w-5 h-5" />
+                                        </button>
                                         <ToggleSwitch
                                             enabled={settings.channels?.whatsapp?.enabled || false}
                                             onChange={(enabled) => setSettings(prev => ({
@@ -680,6 +692,16 @@ const Configuracion = () => {
                                             }))}
                                         />
                                     </div>
+                                    {showHelpWA && (
+                                        <div className="mb-4 p-4 rounded-lg bg-green-50 border border-green-200 text-sm text-gray-700">
+                                            <p className="font-medium mb-1">¿Dónde consigo esto?</p>
+                                            <ol className="list-decimal ml-5 space-y-1">
+                                                <li>Indica el número que ya usas con tus clientes.</li>
+                                                <li>Cuando activemos WhatsApp Business API te pediremos un código SMS/llamada.</li>
+                                                <li>Si prefieres número nuevo, te lo damos listo y sin cortes.</li>
+                                            </ol>
+                                        </div>
+                                    )}
                                     {settings.channels?.whatsapp?.enabled && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="flex items-center gap-3">
@@ -788,6 +810,9 @@ const Configuracion = () => {
                                                 <p className="text-sm text-gray-600">Mensajes directos automáticos</p>
                                             </div>
                                         </div>
+                                        <button type="button" onClick={() => setShowHelpIG(v => !v)} className="text-gray-500 hover:text-gray-700">
+                                            <HelpCircle className="w-5 h-5" />
+                                        </button>
                                         <ToggleSwitch
                                             enabled={settings.channels?.instagram?.enabled || false}
                                             onChange={(enabled) => setSettings(prev => ({
@@ -799,6 +824,16 @@ const Configuracion = () => {
                                             }))}
                                         />
                                     </div>
+                                    {showHelpIG && (
+                                        <div className="mb-4 p-4 rounded-lg bg-pink-50 border border-pink-200 text-sm text-gray-700">
+                                            <p className="font-medium mb-1">¿Cómo conectarlo?</p>
+                                            <ol className="list-decimal ml-5 space-y-1">
+                                                <li>Escribe tu @usuario o URL de Instagram.</li>
+                                                <li>Déjanos un email para invitar a nuestro equipo como administrador.</li>
+                                                <li>Nosotros hacemos el resto y activamos los mensajes automáticos.</li>
+                                            </ol>
+                                        </div>
+                                    )}
                                     {settings.channels?.instagram?.enabled && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
@@ -817,6 +852,22 @@ const Configuracion = () => {
                                                     placeholder="@restaurante o https://instagram.com/restaurante"
                                                 />
                                             </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Email para invitarnos como administradores</label>
+                                                <input
+                                                    type="email"
+                                                    value={settings.channels?.instagram?.invite_email || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            instagram: { ...prev.channels?.instagram, invite_email: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                                    placeholder="ops@tu-empresa.com"
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -832,6 +883,9 @@ const Configuracion = () => {
                                                 <p className="text-sm text-gray-600">Chat de página de Facebook</p>
                                             </div>
                                         </div>
+                                        <button type="button" onClick={() => setShowHelpFB(v => !v)} className="text-gray-500 hover:text-gray-700">
+                                            <HelpCircle className="w-5 h-5" />
+                                        </button>
                                         <ToggleSwitch
                                             enabled={settings.channels?.facebook?.enabled || false}
                                             onChange={(enabled) => setSettings(prev => ({
@@ -843,6 +897,16 @@ const Configuracion = () => {
                                             }))}
                                         />
                                     </div>
+                                    {showHelpFB && (
+                                        <div className="mb-4 p-4 rounded-lg bg-blue-50 border border-blue-200 text-sm text-gray-700">
+                                            <p className="font-medium mb-1">¿Cómo conectarlo?</p>
+                                            <ol className="list-decimal ml-5 space-y-1">
+                                                <li>Pega la URL de tu página de Facebook.</li>
+                                                <li>Déjanos un email para invitar a nuestro equipo como administrador.</li>
+                                                <li>Activamos el chat y empezamos a recibir mensajes.</li>
+                                            </ol>
+                                        </div>
+                                    )}
                                     {settings.channels?.facebook?.enabled && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
@@ -859,6 +923,22 @@ const Configuracion = () => {
                                                     }))}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-blue-800"
                                                     placeholder="https://facebook.com/tu-pagina"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Email para añadirnos como administradores</label>
+                                                <input
+                                                    type="email"
+                                                    value={settings.channels?.facebook?.invite_email || ""}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        channels: {
+                                                            ...prev.channels,
+                                                            facebook: { ...prev.channels?.facebook, invite_email: e.target.value }
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-blue-800"
+                                                    placeholder="ops@tu-empresa.com"
                                                 />
                                             </div>
                                         </div>
@@ -1037,6 +1117,22 @@ const Configuracion = () => {
                                                 />
                                             </div>
                                         </div>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h5 className="font-medium text-gray-900">Reserva modificada</h5>
+                                                <p className="text-sm text-gray-600">Cambios de hora, mesa o comensales</p>
+                                            </div>
+                                            <ToggleSwitch
+                                                enabled={settings.notifications?.reservation_modified ?? false}
+                                                onChange={(enabled) => setSettings(prev => ({
+                                                    ...prev,
+                                                    notifications: {
+                                                        ...prev.notifications,
+                                                        reservation_modified: enabled
+                                                    }
+                                                }))}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1048,35 +1144,36 @@ const Configuracion = () => {
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <h5 className="font-medium text-gray-900">Nuevo cliente registrado</h5>
-                                                <p className="text-sm text-gray-600">Notificar cuando se registre un nuevo cliente</p>
+                                                <h5 className="font-medium text-gray-900">Resumen diario (9:00)</h5>
+                                                <p className="text-sm text-gray-600">Envío de resumen de reservas de hoy y acciones pendientes</p>
                                             </div>
                                             <ToggleSwitch
-                                                enabled={settings.notifications?.new_customer ?? false}
+                                                enabled={settings.notifications?.daily_digest ?? false}
                                                 onChange={(enabled) => setSettings(prev => ({
                                                     ...prev,
                                                     notifications: {
                                                         ...prev.notifications,
-                                                        new_customer: enabled
+                                                        daily_digest: enabled
                                                     }
                                                 }))}
                                             />
                                         </div>
-                                        <div className="flex items-center justify-between">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <h5 className="font-medium text-gray-900">Cliente VIP promocionado</h5>
-                                                <p className="text-sm text-gray-600">Alerta cuando un cliente se convierta en VIP</p>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Hora del resumen</label>
+                                                <input
+                                                    type="time"
+                                                    value={settings.notifications?.digest_time || "09:00"}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        notifications: {
+                                                            ...prev.notifications,
+                                                            digest_time: e.target.value
+                                                        }
+                                                    }))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                />
                                             </div>
-                                            <ToggleSwitch
-                                                enabled={settings.notifications?.vip_promotion ?? false}
-                                                onChange={(enabled) => setSettings(prev => ({
-                                                    ...prev,
-                                                    notifications: {
-                                                        ...prev.notifications,
-                                                        vip_promotion: enabled
-                                                    }
-                                                }))}
-                                            />
                                         </div>
                                     </div>
                                 </div>
