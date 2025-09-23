@@ -32,6 +32,7 @@ const Comunicacion = lazy(() =>
 );
 const Analytics = lazy(() => import('./pages/Analytics'));
 const Configuracion = lazy(() => import('./pages/Configuracion'));
+const TestConnection = lazy(() => import('./pages/TestConnection'));
 const CRMProximosMensajes = lazy(() => import('./pages/CRMProximosMensajes'));
 
 // 🚀 CRM v2 - Nuevas páginas
@@ -209,6 +210,14 @@ function AppContent() {
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <Configuracion />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/test-connection" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <TestConnection />
                   </Suspense>
                 } 
               />
