@@ -280,6 +280,11 @@ const AuthProvider = ({ children }) => {
         setRestaurantId(null);
         setStatus('signed_out');
         logger.info('User signed out (status=signed_out)');
+      } else if (event === 'INITIAL_SESSION' && session?.user) {
+        // Forzar carga de datos en arranque frío
+        setTimeout(async () => {
+          await loadUserData(session.user);
+        }, 0);
       }
     });
 
