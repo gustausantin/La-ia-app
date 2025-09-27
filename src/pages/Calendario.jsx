@@ -45,6 +45,13 @@ const testSchedule = [
 
 console.log('✅ SCHEDULE TEST:', testSchedule.map(d => `${d.day_of_week}:${d.is_open}`).join(', '));
 console.log('🎯 MARTES ABIERTO:', testSchedule.find(d => d.day_of_week === 'tuesday')?.is_open ? '✅' : '❌');
+
+// ALERTA VISUAL PARA DEBUG
+setTimeout(() => {
+    console.log('🔍🔍🔍 MIRA LA CONSOLA - Deberías ver logs del calendario aquí 🔍🔍🔍');
+    console.log('📅 Si configuras MARTES abierto, SOLO los martes deberían aparecer ABIERTOS');
+    console.log('❌ Si ves otros días abiertos, hay un problema grave');
+}, 2000);
 import { 
     Save, 
     Plus, 
