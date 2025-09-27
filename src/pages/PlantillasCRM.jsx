@@ -384,7 +384,23 @@ export default function PlantillasCRM() {
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Variables</p>
                                 <p className="text-2xl font-bold text-gray-900">
-                                    {templates.reduce((acc, t) => acc + (t.variables?.length || 0), 0)}
+                                    {(() => {
+                                        // Obtener variables únicas de todas las plantillas
+                                        const allVariables = new Set();
+                                        templates.forEach(t => {
+                                            if (t.variables && Array.isArray(t.variables)) {
+                                                t.variables.forEach(v => allVariables.add(v));
+                                            }
+                                        });
+                                        // Añadir variables estándar que siempre están disponibles
+                                        allVariables.add('restaurant_name');
+                                        allVariables.add('customer_name');
+                                        allVariables.add('last_visit_date');
+                                        allVariables.add('reservation_date');
+                                        allVariables.add('customer_phone');
+                                        allVariables.add('customer_email');
+                                        return allVariables.size;
+                                    })()}
                                 </p>
                             </div>
                         </div>
@@ -588,9 +604,21 @@ export default function PlantillasCRM() {
                                                     {"{customer_name}"}
                                                 </span>
                                                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                                    {"{customer_phone}"}
+                                                </span>
+                                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                                    {"{customer_email}"}
+                                                </span>
+                                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
                                                     {"{last_visit_date}"}
                                                 </span>
+                                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                                    {"{reservation_date}"}
+                                                </span>
                                             </div>
+                                            <p className="text-xs text-blue-700 mt-2">
+                                                💡 Usa estas variables en tus mensajes y se reemplazarán automáticamente con los datos reales del cliente.
+                                            </p>
                                         </div>
                                     </div>
                                 )}
