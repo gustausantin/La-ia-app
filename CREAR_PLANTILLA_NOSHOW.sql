@@ -14,7 +14,8 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM message_templates 
         WHERE restaurant_id = target_restaurant_id 
-        AND segment = 'noshow'
+        AND segment = 'ocasional'
+        AND name = 'Seguimiento No-Show'
     ) THEN
         -- Crear plantilla No-Show
         INSERT INTO message_templates (
@@ -32,7 +33,7 @@ BEGIN
         ) VALUES (
             target_restaurant_id,
             'Seguimiento No-Show',
-            'noshow',
+            'ocasional',
             'crm',
             'Te echamos de menos en {{restaurant_name}}',
             'Hola {{customer_name}},
@@ -66,4 +67,5 @@ END $$;
 SELECT segment, name, is_active 
 FROM message_templates 
 WHERE restaurant_id = (SELECT id FROM restaurants LIMIT 1)
-AND segment = 'noshow';
+AND segment = 'ocasional'
+AND name = 'Seguimiento No-Show';
