@@ -187,18 +187,30 @@ export default function Calendario() {
             const savedHours = restaurantData?.settings?.operating_hours || {};
             
             console.log('\n🔄 CARGANDO HORARIOS DESDE BD...');
-            console.log('📊 DATOS RAW:', savedHours);
+            console.log('📊 DATOS RAW:', JSON.stringify(savedHours, null, 2));
+            
+            // Debug detallado de cada día
+            console.log('🔍 VERIFICANDO CADA DÍA:');
+            console.log('  - domingo:', savedHours.sunday?.open, '→', savedHours.sunday?.open === true);
+            console.log('  - lunes:', savedHours.monday?.open, '→', savedHours.monday?.open === true);
+            console.log('  - martes:', savedHours.tuesday?.open, '→', savedHours.tuesday?.open === true);
+            console.log('  - miércoles:', savedHours.wednesday?.open, '→', savedHours.wednesday?.open === true);
+            console.log('  - jueves:', savedHours.thursday?.open, '→', savedHours.thursday?.open === true);
+            console.log('  - viernes:', savedHours.friday?.open, '→', savedHours.friday?.open === true);
+            console.log('  - sábado:', savedHours.saturday?.open, '→', savedHours.saturday?.open === true);
 
-            // CREAR SCHEDULE ULTRA-SIMPLE
+            // CREAR SCHEDULE DEFINITIVO - VERIFICACIÓN ESTRICTA DEL CAMPO 'open'
             const loadedSchedule = [
-                { day_of_week: 'sunday', day_name: 'Domingo', is_open: Boolean(savedHours.sunday?.open || savedHours.sunday?.is_open), slots: [] },
-                { day_of_week: 'monday', day_name: 'Lunes', is_open: Boolean(savedHours.monday?.open || savedHours.monday?.is_open), slots: [] },
-                { day_of_week: 'tuesday', day_name: 'Martes', is_open: Boolean(savedHours.tuesday?.open || savedHours.tuesday?.is_open), slots: [] },
-                { day_of_week: 'wednesday', day_name: 'Miércoles', is_open: Boolean(savedHours.wednesday?.open || savedHours.wednesday?.is_open), slots: [] },
-                { day_of_week: 'thursday', day_name: 'Jueves', is_open: Boolean(savedHours.thursday?.open || savedHours.thursday?.is_open), slots: [] },
-                { day_of_week: 'friday', day_name: 'Viernes', is_open: Boolean(savedHours.friday?.open || savedHours.friday?.is_open), slots: [] },
-                { day_of_week: 'saturday', day_name: 'Sábado', is_open: Boolean(savedHours.saturday?.open || savedHours.saturday?.is_open), slots: [] }
+                { day_of_week: 'sunday', day_name: 'Domingo', is_open: savedHours.sunday?.open === true, slots: [] },
+                { day_of_week: 'monday', day_name: 'Lunes', is_open: savedHours.monday?.open === true, slots: [] },
+                { day_of_week: 'tuesday', day_name: 'Martes', is_open: savedHours.tuesday?.open === true, slots: [] },
+                { day_of_week: 'wednesday', day_name: 'Miércoles', is_open: savedHours.wednesday?.open === true, slots: [] },
+                { day_of_week: 'thursday', day_name: 'Jueves', is_open: savedHours.thursday?.open === true, slots: [] },
+                { day_of_week: 'friday', day_name: 'Viernes', is_open: savedHours.friday?.open === true, slots: [] },
+                { day_of_week: 'saturday', day_name: 'Sábado', is_open: savedHours.saturday?.open === true, slots: [] }
             ];
+            
+            console.log('📅 SCHEDULE CARGADO:', loadedSchedule.map(d => `${d.day_name}: ${d.is_open ? '✅' : '❌'}`).join(', '));
 
             // Añadir horarios solo a días abiertos
             loadedSchedule.forEach(day => {
@@ -273,32 +285,47 @@ export default function Calendario() {
         }
     }, [restaurantId]);
 
-    // SOLUCIÓN ULTRA-SIMPLE - IMPOSIBLE QUE FALLE
+    // SOLUCIÓN DEFINITIVA - MATEMÁTICAMENTE IMPOSIBLE QUE FALLE
     const getDaySchedule = useCallback((date) => {
-        // Mapeo directo por índice numérico
-        const dayIndex = getDay(date); // 0=dom, 1=lun, 2=mar, 3=mié, 4=jue, 5=vie, 6=sáb
-
-        // Array directo - posición = índice del día
-        const daysConfig = [
-            { key: 'sunday', name: 'Domingo', config: schedule.find(s => s.day_of_week === 'sunday') },
-            { key: 'monday', name: 'Lunes', config: schedule.find(s => s.day_of_week === 'monday') },
-            { key: 'tuesday', name: 'Martes', config: schedule.find(s => s.day_of_week === 'tuesday') },
-            { key: 'wednesday', name: 'Miércoles', config: schedule.find(s => s.day_of_week === 'wednesday') },
-            { key: 'thursday', name: 'Jueves', config: schedule.find(s => s.day_of_week === 'thursday') },
-            { key: 'friday', name: 'Viernes', config: schedule.find(s => s.day_of_week === 'friday') },
-            { key: 'saturday', name: 'Sábado', config: schedule.find(s => s.day_of_week === 'saturday') }
+        // getDay() SIEMPRE devuelve 0=domingo, 1=lunes, 2=martes, 3=miércoles, 4=jueves, 5=viernes, 6=sábado
+        const dayIndex = getDay(date);
+        
+        // Mapeo DIRECTO por índice - GARANTIZADO por la especificación de JavaScript
+        const dayMapping = [
+            'sunday',    // índice 0 = domingo
+            'monday',    // índice 1 = lunes  
+            'tuesday',   // índice 2 = martes
+            'wednesday', // índice 3 = miércoles
+            'thursday',  // índice 4 = jueves
+            'friday',    // índice 5 = viernes
+            'saturday'   // índice 6 = sábado
+        ];
+        
+        const dayNames = [
+            'Domingo',   // índice 0
+            'Lunes',     // índice 1
+            'Martes',    // índice 2
+            'Miércoles', // índice 3
+            'Jueves',    // índice 4
+            'Viernes',   // índice 5
+            'Sábado'     // índice 6
         ];
 
-        const dayData = daysConfig[dayIndex];
-        const isOpen = dayData.config?.is_open || false;
+        const dayKey = dayMapping[dayIndex];
+        const dayName = dayNames[dayIndex];
+        const dayConfig = schedule.find(s => s.day_of_week === dayKey);
+        const isOpen = dayConfig?.is_open === true;
 
-        console.log(`🗓️ ${format(date, 'dd/MM')} = ${dayData.name} -> ${isOpen ? 'ABIERTO' : 'CERRADO'}`);
+        // Log detallado para debugging
+        console.log(`📅 Fecha: ${format(date, 'dd/MM/yyyy')} | dayIndex: ${dayIndex} | dayKey: ${dayKey} | ${dayName} | ${isOpen ? '✅ ABIERTO' : '❌ CERRADO'}`);
 
         return {
-            day_of_week: dayData.key,
-            day_name: dayData.name,
+            day_of_week: dayKey,
+            day_name: dayName,
             is_open: isOpen,
-            slots: isOpen ? [{ start_time: "09:00", end_time: "22:00" }] : []
+            slots: isOpen && dayConfig?.slots?.length > 0 
+                ? dayConfig.slots 
+                : (isOpen ? [{ start_time: "09:00", end_time: "22:00" }] : [])
         };
     }, [schedule]);
 
