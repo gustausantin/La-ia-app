@@ -305,14 +305,23 @@ export default function Calendario() {
         // DEBUG CRÍTICO - VERIFICAR QUE EL MAPEO ES CORRECTO
         console.log(`🔍 FECHA: ${format(date, 'dd/MM/yyyy')} -> Día ${dayOfWeekIndex} -> ${dayNameSpanish} (${dayName})`);
         
+        // VERIFICAR QUE EL SCHEDULE TIENE LOS DATOS CORRECTOS
+        console.log('📊 SCHEDULE COMPLETO:', schedule.map(s => `${s.day_of_week}=${s.is_open ? 'ABIERTO' : 'CERRADO'}`).join(', '));
+        
         // Buscar en el schedule cargado
         const daySchedule = schedule.find(s => s.day_of_week === dayName);
         
         if (daySchedule) {
             console.log(`✅ ENCONTRADO: ${dayNameSpanish} está ${daySchedule.is_open ? 'ABIERTO' : 'CERRADO'}`);
+            
+            // VERIFICACIÓN CRÍTICA: Solo miércoles debe estar abierto según la BD
+            const shouldBeOpen = daySchedule.is_open;
+            console.log(`🔍 VERIFICACIÓN: ${dayName} -> BD dice ${shouldBeOpen ? 'ABIERTO' : 'CERRADO'}`);
+            
             return {
                 ...daySchedule,
-                day_name: dayNameSpanish
+                day_name: dayNameSpanish,
+                is_open: shouldBeOpen // USAR EXACTAMENTE LO QUE DICE LA BD
             };
         }
         
