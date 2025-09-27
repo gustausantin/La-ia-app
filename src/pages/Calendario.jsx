@@ -269,11 +269,24 @@ export default function Calendario() {
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const dayName = dayNames[dayOfWeekIndex];
         
-        return schedule.find(s => s.day_of_week === dayName) || {
+        const daySchedule = schedule.find(s => s.day_of_week === dayName) || {
             day_of_week: dayName,
             is_open: false,
             slots: []
         };
+        
+        // 🐛 DEBUG: Log para detectar inconsistencias
+        if (format(date, 'dd') === '01') { // Solo log el día 1 de cada mes para no spam
+            console.log(`🔍 DEBUG ${format(date, 'MMM yyyy')} - ${dayName}:`, {
+                date: format(date, 'yyyy-MM-dd'),
+                dayName,
+                is_open: daySchedule.is_open,
+                schedule_length: schedule.length,
+                all_schedule: schedule.map(s => ({ day: s.day_of_week, open: s.is_open }))
+            });
+        }
+        
+        return daySchedule;
     }, [schedule]);
 
     // Funciones de navegación del calendario
