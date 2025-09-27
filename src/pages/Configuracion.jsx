@@ -107,8 +107,7 @@ const Configuracion = () => {
             new_reservation: false,
             cancelled_reservation: false,
             reservation_modified: false,
-            daily_digest: true,
-            digest_time: "09:00",
+            // daily_digest eliminado para MVP
             agent_offline: true,
             integration_errors: true
         }
@@ -292,8 +291,7 @@ const Configuracion = () => {
                         new_reservation: restaurant.notifications?.new_reservation ?? false,
                         cancelled_reservation: restaurant.notifications?.cancelled_reservation ?? false,
                         reservation_modified: restaurant.notifications?.reservation_modified ?? false,
-                        daily_digest: restaurant.notifications?.daily_digest ?? true,
-                        digest_time: restaurant.notifications?.digest_time || "09:00",
+                        // daily_digest eliminado para MVP
                         agent_offline: restaurant.notifications?.agent_offline ?? true,
                         integration_errors: restaurant.notifications?.integration_errors ?? true
                     },
@@ -426,7 +424,7 @@ const Configuracion = () => {
             } else if (section === "Configuración de notificaciones") {
                 // Validaciones previas para notificaciones
                 const n = settings.notifications || {};
-                const anyEnabled = (n.new_reservation || n.cancelled_reservation || n.reservation_modified || n.daily_digest || n.agent_offline || n.integration_errors) === true;
+                const anyEnabled = (n.new_reservation || n.cancelled_reservation || n.reservation_modified || n.agent_offline || n.integration_errors) === true;
                 const hasRecipients = (Array.isArray(n.recipient_emails) && n.recipient_emails.length > 0) || (Array.isArray(n.recipient_whatsapps) && n.recipient_whatsapps.length > 0);
                 if (anyEnabled && !hasRecipients) {
                     toast.error('Añade al menos un destinatario (email o WhatsApp).');
@@ -1252,57 +1250,7 @@ const Configuracion = () => {
                                         Notificaciones CRM
                                     </h4>
                                     <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <h5 className="font-medium text-gray-900">Resumen diario (9:00)</h5>
-                                                <p className="text-sm text-gray-600">Envío de resumen de reservas de hoy y acciones pendientes</p>
-                                            </div>
-                                            <button type="button" onClick={() => setShowHelpDigest(v => !v)} className="text-gray-500 hover:text-gray-700 mr-2">
-                                                <HelpCircle className="w-5 h-5" />
-                                            </button>
-                                            <ToggleSwitch
-                                                enabled={settings.notifications?.daily_digest ?? false}
-                                                onChange={(enabled) => setSettings(prev => ({
-                                                    ...prev,
-                                                    notifications: {
-                                                        ...prev.notifications,
-                                                        daily_digest: enabled
-                                                    }
-                                                }))}
-                                            />
-                                        </div>
-                                        {showHelpDigest && (
-                                            <div className="mb-2 p-4 rounded-lg bg-purple-50 border border-purple-200 text-sm text-gray-700">
-                                                <p className="font-medium mb-1">Ejemplo de resumen diario</p>
-                                                <pre className="whitespace-pre-wrap text-xs">
-Resumen diario – Restaurante X (hoy 09:00)
-- Reservas hoy: 18 (10 confirmadas, 6 pendientes, 2 canceladas, 4 nuevas)
-- Próximas 3h: 7 reservas
-- Conflictos: 1 solape detectado
-- Recordatorios pendientes: 5
-- Riesgo no-show alto hoy: 2
-- Ingresos esperados: —
-- Sistema: OK (0 errores)
-                                                </pre>
-                                            </div>
-                                        )}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Hora del resumen</label>
-                                                <input
-                                                    type="time"
-                                                    value={settings.notifications?.digest_time || "09:00"}
-                                                    onChange={(e) => setSettings(prev => ({
-                                                        ...prev,
-                                                        notifications: {
-                                                            ...prev.notifications,
-                                                            digest_time: e.target.value
-                                                        }
-                                                    }))}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                                />
-                                            </div>
-                                        </div>
+                                        {/* Resumen diario eliminado para MVP - demasiado complejo */}
                                     </div>
                                 </div>
 
