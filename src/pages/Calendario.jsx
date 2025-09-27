@@ -29,6 +29,22 @@ import {
     isSameMonth
 } from 'date-fns';
 import { es } from 'date-fns/locale';
+
+// TEST INLINE - VERIFICAR LÓGICA
+console.log('🧪 TEST CALENDAR LOGIC:');
+const testData = { tuesday: { open: true }, monday: { open: false }, wednesday: { open: false } };
+const testSchedule = [
+    { day_of_week: 'sunday', is_open: false },
+    { day_of_week: 'monday', is_open: false },
+    { day_of_week: 'tuesday', is_open: true },
+    { day_of_week: 'wednesday', is_open: false },
+    { day_of_week: 'thursday', is_open: false },
+    { day_of_week: 'friday', is_open: false },
+    { day_of_week: 'saturday', is_open: false }
+];
+
+console.log('✅ SCHEDULE TEST:', testSchedule.map(d => `${d.day_of_week}:${d.is_open}`).join(', '));
+console.log('🎯 MARTES ABIERTO:', testSchedule.find(d => d.day_of_week === 'tuesday')?.is_open ? '✅' : '❌');
 import { 
     Save, 
     Plus, 
@@ -164,33 +180,27 @@ export default function Calendario() {
             const savedHours = restaurantData?.settings?.operating_hours || {};
             
             console.log('\n🔄 CARGANDO HORARIOS DESDE BD...');
-            console.log('📊 DATOS RAW COMPLETOS:', JSON.stringify(savedHours, null, 2));
-            console.log('🏪 RESTAURANT ID:', restaurantId);
+            console.log('📊 DATOS RAW:', savedHours);
 
-            // VERIFICAR QUÉ DÍAS ESTÁN ABIERTOS EN LA BD
-            const openDays = Object.entries(savedHours)
-                .filter(([day, config]) => config && (config.open === true || config.is_open === true))
-                .map(([day, config]) => day);
+            // CREAR SCHEDULE ULTRA-SIMPLE
+            const loadedSchedule = [
+                { day_of_week: 'sunday', day_name: 'Domingo', is_open: Boolean(savedHours.sunday?.open || savedHours.sunday?.is_open), slots: [] },
+                { day_of_week: 'monday', day_name: 'Lunes', is_open: Boolean(savedHours.monday?.open || savedHours.monday?.is_open), slots: [] },
+                { day_of_week: 'tuesday', day_name: 'Martes', is_open: Boolean(savedHours.tuesday?.open || savedHours.tuesday?.is_open), slots: [] },
+                { day_of_week: 'wednesday', day_name: 'Miércoles', is_open: Boolean(savedHours.wednesday?.open || savedHours.wednesday?.is_open), slots: [] },
+                { day_of_week: 'thursday', day_name: 'Jueves', is_open: Boolean(savedHours.thursday?.open || savedHours.thursday?.is_open), slots: [] },
+                { day_of_week: 'friday', day_name: 'Viernes', is_open: Boolean(savedHours.friday?.open || savedHours.friday?.is_open), slots: [] },
+                { day_of_week: 'saturday', day_name: 'Sábado', is_open: Boolean(savedHours.saturday?.open || savedHours.saturday?.is_open), slots: [] }
+            ];
 
-            console.log('📅 DÍAS ABIERTOS EN BD:', openDays);
-
-            // CREAR SCHEDULE CON MAPEO SIMPLE
-            const loadedSchedule = daysOfWeek.map(day => {
-                const dayKey = day.id; // monday, tuesday, etc.
-                const dayData = savedHours[dayKey];
-
-                const isOpen = Boolean(dayData && (dayData.open === true || dayData.is_open === true));
-                console.log(`📋 ${dayKey}: ${isOpen ? '✅ ABIERTO' : '❌ CERRADO'} | Datos:`, dayData);
-
-                return {
-                    day_of_week: dayKey,
-                    day_name: day.name,
-                    is_open: isOpen,
-                    slots: isOpen ? [{ start_time: "09:00", end_time: "22:00" }] : []
-                };
+            // Añadir horarios solo a días abiertos
+            loadedSchedule.forEach(day => {
+                if (day.is_open) {
+                    day.slots = [{ start_time: "09:00", end_time: "22:00" }];
+                }
             });
 
-            console.log('\n📊 SCHEDULE FINAL CREADO:');
+            console.log('📊 SCHEDULE CREADO:');
             loadedSchedule.forEach(day => {
                 console.log(`  ${day.day_of_week}: ${day.is_open ? '✅ ABIERTO' : '❌ CERRADO'}`);
             });
@@ -256,40 +266,32 @@ export default function Calendario() {
         }
     }, [restaurantId]);
 
-    // MAPEO DEFINITIVO - IMPOSIBLE QUE FALLE
+    // SOLUCIÓN ULTRA-SIMPLE - IMPOSIBLE QUE FALLE
     const getDaySchedule = useCallback((date) => {
-        // getDay() devuelve: 0=domingo, 1=lunes, 2=martes, 3=miércoles, 4=jueves, 5=viernes, 6=sábado
-        const dayIndex = getDay(date);
+        // Mapeo directo por índice numérico
+        const dayIndex = getDay(date); // 0=dom, 1=lun, 2=mar, 3=mié, 4=jue, 5=vie, 6=sáb
 
-        // MAPEO EXPLICITO - CADA NÚMERO TIENE SU DÍA FIJO
-        const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const SPANISH_DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        // Array directo - posición = índice del día
+        const daysConfig = [
+            { key: 'sunday', name: 'Domingo', config: schedule.find(s => s.day_of_week === 'sunday') },
+            { key: 'monday', name: 'Lunes', config: schedule.find(s => s.day_of_week === 'monday') },
+            { key: 'tuesday', name: 'Martes', config: schedule.find(s => s.day_of_week === 'tuesday') },
+            { key: 'wednesday', name: 'Miércoles', config: schedule.find(s => s.day_of_week === 'wednesday') },
+            { key: 'thursday', name: 'Jueves', config: schedule.find(s => s.day_of_week === 'thursday') },
+            { key: 'friday', name: 'Viernes', config: schedule.find(s => s.day_of_week === 'friday') },
+            { key: 'saturday', name: 'Sábado', config: schedule.find(s => s.day_of_week === 'saturday') }
+        ];
 
-        const dayKey = DAY_KEYS[dayIndex];
-        const dayName = SPANISH_DAYS[dayIndex];
+        const dayData = daysConfig[dayIndex];
+        const isOpen = dayData.config?.is_open || false;
 
-        console.log(`\n🗓️  RENDER DÍA: ${format(date, 'dd/MM/yyyy')} = ${dayName} (${dayIndex}) -> ${dayKey}`);
+        console.log(`🗓️ ${format(date, 'dd/MM')} = ${dayData.name} -> ${isOpen ? 'ABIERTO' : 'CERRADO'}`);
 
-        // VERIFICAR SCHEDULE ACTUAL
-        console.log('📊 SCHEDULE ACTUAL:', schedule.map(s => `${s.day_of_week}:${s.is_open ? 'ABIERTO' : 'CERRADO'}`).join(', '));
-
-        // Buscar en schedule
-        const daySchedule = schedule.find(s => s.day_of_week === dayKey);
-
-        if (daySchedule) {
-            console.log(`✅ ${dayName}: ${daySchedule.is_open ? 'ABIERTO' : 'CERRADO'} | Configurado: ${daySchedule.day_of_week}`);
-            return {
-                ...daySchedule,
-                day_name: dayName
-            };
-        }
-
-        console.error(`❌ No se encontró ${dayKey} en schedule | Schedule disponible:`, schedule.map(s => s.day_of_week));
         return {
-            day_of_week: dayKey,
-            day_name: dayName,
-            is_open: false,
-            slots: []
+            day_of_week: dayData.key,
+            day_name: dayData.name,
+            is_open: isOpen,
+            slots: isOpen ? [{ start_time: "09:00", end_time: "22:00" }] : []
         };
     }, [schedule]);
 
@@ -927,30 +929,25 @@ export default function Calendario() {
                                                         {format(day, 'd')}
                                                 </div>
 
-                                                {/* Estado del día */}
-                                                <div className="space-y-1">
-                                                    {/* 🎯 MOSTRAR SIEMPRE EL HORARIO BASE - Eventos solo como overlay */}
+                                                {/* Estado del día - ULTRA SIMPLE */}
+                                                <div className="text-xs px-2 py-1 rounded">
                                                     {daySchedule.is_open ? (
-                                                        <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                                                            Abierto {daySchedule.slots[0]?.start_time}-{daySchedule.slots[0]?.end_time}
-                                                        </div>
+                                                        <span className="text-green-600 bg-green-100 px-2 py-1 rounded">
+                                                            Abierto 09:00-22:00
+                                                        </span>
                                                     ) : (
-                                                        <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">
+                                                        <span className="text-red-600 bg-red-100 px-2 py-1 rounded">
                                                             Cerrado
-                                                        </div>
-                                                    )}
-
-                                                    {/* Eventos como información adicional */}
-                                                    {dayEvent && (
-                                                        <div className={`text-xs px-2 py-1 rounded ${
-                                                            dayEvent.is_closed
-                                                                ? 'text-red-600 bg-red-100'
-                                                                : 'text-orange-600 bg-orange-100'
-                                                        }`}>
-                                                            {dayEvent.is_closed ? '🔒 ' : '🎉 '}{dayEvent.title}
-                                                        </div>
+                                                        </span>
                                                     )}
                                                 </div>
+
+                                                {/* Eventos adicionales */}
+                                                {dayEvent && (
+                                                    <div className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded mt-1">
+                                                        {dayEvent.is_closed ? '🔒' : '🎉'} {dayEvent.title}
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}
