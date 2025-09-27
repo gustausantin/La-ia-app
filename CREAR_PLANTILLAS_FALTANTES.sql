@@ -44,7 +44,7 @@ BEGIN
     ) VALUES (
         target_restaurant_id,
         'Cliente Activo - Agradecimiento',
-        'activo',
+        'active',
         'crm',
         'Gracias por ser parte de {{restaurant_name}}',
         'Hola {{customer_name}},
@@ -82,7 +82,7 @@ El equipo de {{restaurant_name}}',
     ) VALUES (
         target_restaurant_id,
         'Cliente en Riesgo - Atención Especial',
-        'riesgo',
+        'at_risk',
         'crm',
         '¿Cómo podemos mejorar tu experiencia en {{restaurant_name}}?',
         'Hola {{customer_name}},
@@ -112,7 +112,7 @@ El equipo de {{restaurant_name}}',
         SELECT name, segment, subject, is_active, created_at
         FROM message_templates 
         WHERE restaurant_id = target_restaurant_id
-        AND segment IN ('activo', 'riesgo')
+        AND segment IN ('active', 'at_risk')
         ORDER BY segment
     ) LOOP
         RAISE NOTICE '✅ %: % (activa: %)', rec.segment, rec.name, rec.is_active;
