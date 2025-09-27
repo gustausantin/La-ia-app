@@ -1053,7 +1053,6 @@ export default function Calendario() {
                     </div>
                 </div>
             )}
-            </div>
         </div>
         </CalendarioErrorBoundary>
     );
