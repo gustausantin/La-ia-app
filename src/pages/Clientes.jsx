@@ -639,7 +639,6 @@ export default function Clientes() {
                 onDelete={(customerId) => {
                     // Eliminar cliente de la lista
                     setCustomers(prev => prev.filter(c => c.id !== customerId));
-                    setFilteredCustomers(prev => prev.filter(c => c.id !== customerId));
                 }}
                 onSave={(updatedCustomer) => {
                     try {
