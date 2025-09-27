@@ -1191,23 +1191,6 @@ const Configuracion = () => {
                                                 <p className="text-xs text-gray-500 mt-1">Para nueva reserva, cancelada y modificada</p>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">⚙️ Emails para notificaciones del sistema</label>
-                                                <input
-                                                    type="text"
-                                                    value={(settings.notifications?.system_emails || []).join(", ")}
-                                                    onChange={(e) => setSettings(prev => ({
-                                                        ...prev,
-                                                        notifications: {
-                                                            ...prev.notifications,
-                                                            system_emails: e.target.value.split(',').map(x => x.trim()).filter(Boolean)
-                                                        }
-                                                    }))}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="admin@restaurante.com, soporte@restaurante.com"
-                                                />
-                                                <p className="text-xs text-gray-500 mt-1">Para errores del sistema, agente offline e integraciones</p>
-                                            </div>
-                                            <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Horario silencioso (inicio)</label>
                                                 <input
                                                     type="time"
@@ -1264,6 +1247,24 @@ const Configuracion = () => {
                                         Notificaciones del Sistema
                                     </h4>
                                     <div className="space-y-4">
+                                        {/* Emails para notificaciones del sistema */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">⚙️ Emails para notificaciones del sistema</label>
+                                            <input
+                                                type="text"
+                                                value={(settings.notifications?.system_emails || []).join(", ")}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    notifications: {
+                                                        ...prev.notifications,
+                                                        system_emails: e.target.value.split(',').map(x => x.trim()).filter(Boolean)
+                                                    }
+                                                }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                placeholder="admin@restaurante.com, soporte@restaurante.com"
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">Para errores del sistema, agente offline e integraciones</p>
+                                        </div>
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <h5 className="font-medium text-gray-900">Agente IA desconectado</h5>
