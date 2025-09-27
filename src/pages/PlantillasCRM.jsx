@@ -168,11 +168,11 @@ export default function PlantillasCRM() {
     const saveTemplate = async (templateData) => {
         try {
             const { error } = await supabase
-                .from("crm_templates")
+                .from("message_templates")
                 .update({
                     name: templateData.name,
                     subject: templateData.subject,
-                    content: templateData.content,
+                    content_markdown: templateData.content,
                     updated_at: new Date().toISOString()
                 })
                 .eq("id", templateData.id);
@@ -195,16 +195,16 @@ export default function PlantillasCRM() {
             const standardTemplate = STANDARD_TEMPLATES[type];
             
             const { error } = await supabase
-                .from("crm_templates")
+                .from("message_templates")
                 .insert({
                     restaurant_id: restaurantId,
                     name: standardTemplate.name,
-                    type: type,
+                    segment: type,
                     subject: standardTemplate.subject,
-                    content: standardTemplate.content,
+                    content_markdown: standardTemplate.content,
                     variables: ["restaurant_name", "customer_name"],
-                    active: true,
-                    priority: Object.keys(STANDARD_TEMPLATES).indexOf(type) + 1
+                    is_active: true,
+                    channel: "email"
                 });
 
             if (error) throw error;
@@ -221,16 +221,16 @@ export default function PlantillasCRM() {
     const duplicateTemplate = async (template) => {
         try {
             const { error } = await supabase
-                .from("crm_templates")
+                .from("message_templates")
                 .insert({
                     restaurant_id: restaurantId,
                     name: `${template.name} (Copia)`,
-                    type: template.type,
+                    segment: template.segment,
                     subject: template.subject,
-                    content: template.content,
+                    content_markdown: template.content_markdown,
                     variables: template.variables,
-                    active: true,
-                    priority: template.priority
+                    is_active: true,
+                    channel: template.channel || "email"
                 });
 
             if (error) throw error;
@@ -249,7 +249,7 @@ export default function PlantillasCRM() {
 
         try {
             const { error } = await supabase
-                .from("crm_templates")
+                .from("message_templates")
                 .delete()
                 .eq("id", templateId);
 
@@ -338,7 +338,7 @@ export default function PlantillasCRM() {
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Activas</p>
                                 <p className="text-2xl font-bold text-gray-900">
-                                    {templates.filter(t => t.active).length}
+                                    {templates.filter(t => t.is_active ?? t.active).length}
                                 </p>
                             </div>
                         </div>
@@ -351,7 +351,7 @@ export default function PlantillasCRM() {
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Tipos</p>
                                 <p className="text-2xl font-bold text-gray-900">
-                                    {new Set(templates.map(t => t.type)).size}
+                                    {new Set(templates.map(t => t.segment || t.type)).size}
                                 </p>
                             </div>
                         </div>
@@ -374,7 +374,7 @@ export default function PlantillasCRM() {
                 {/* Plantillas por Tipo */}
                 <div className="space-y-8">
                     {Object.entries(STANDARD_TEMPLATES).map(([type, standard]) => {
-                        const typeTemplates = templates.filter(t => t.type === type);
+                        const typeTemplates = templates.filter(t => t.segment === type);
                         
                         return (
                             <div key={type} className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -443,15 +443,15 @@ export default function PlantillasCRM() {
                                                         <strong>Asunto:</strong> {template.subject}
                                                     </p>
                                                     <p className="text-xs text-gray-500 line-clamp-3">
-                                                        {template.content.substring(0, 150)}...
+                                                        {(template.content_markdown || template.content || '').substring(0, 150)}...
                                                     </p>
                                                     <div className="flex items-center justify-between mt-3">
                                                         <span className={`text-xs px-2 py-1 rounded-full ${
-                                                            template.active 
+                                                            (template.is_active ?? template.active)
                                                                 ? 'bg-green-100 text-green-800' 
                                                                 : 'bg-gray-100 text-gray-800'
                                                         }`}>
-                                                            {template.active ? 'Activa' : 'Inactiva'}
+                                                            {(template.is_active ?? template.active) ? 'Activa' : 'Inactiva'}
                                                         </span>
                                                         <span className="text-xs text-gray-500">
                                                             Prioridad {template.priority}
@@ -509,7 +509,7 @@ export default function PlantillasCRM() {
                                                 Contenido del Mensaje
                                             </label>
                                             <div className="bg-gray-50 p-4 rounded-lg whitespace-pre-wrap">
-                                                {editingTemplate.content}
+                                                {editingTemplate.content_markdown || editingTemplate.content}
                                             </div>
                                         </div>
                                     </div>
@@ -548,10 +548,11 @@ export default function PlantillasCRM() {
                                                 Contenido del Mensaje
                                             </label>
                                             <textarea
-                                                value={editingTemplate.content}
+                                                value={editingTemplate.content_markdown || editingTemplate.content || ''}
                                                 onChange={(e) => setEditingTemplate(prev => ({
                                                     ...prev,
-                                                    content: e.target.value
+                                                    content: e.target.value,
+                                                    content_markdown: e.target.value
                                                 }))}
                                                 rows={12}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
