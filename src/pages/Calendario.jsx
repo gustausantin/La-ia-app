@@ -85,7 +85,7 @@ export default function Calendario() {
     const [saving, setSaving] = useState(false);
     const [schedule, setSchedule] = useState([]);
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [activeTab, setActiveTab] = useState('horarios');
+    const [activeTab, setActiveTab] = useState('calendario');
     const [showEventModal, setShowEventModal] = useState(false);
     
     // Estados para estadísticas calculadas
@@ -652,8 +652,7 @@ export default function Calendario() {
                         <nav className="flex space-x-8 px-6" aria-label="Tabs">
                             {[
                                 { id: 'horarios', name: 'Horarios del restaurante', icon: Clock },
-                                { id: 'calendario', name: 'Vista calendario', icon: Calendar },
-                                { id: 'eventos', name: 'Eventos especiales', icon: Star }
+                                { id: 'calendario', name: 'Vista calendario', icon: Calendar }
                             ].map((tab) => {
                                 const Icon = tab.icon;
                                 return (
@@ -934,28 +933,6 @@ export default function Calendario() {
                         </div>
                     )}
 
-                    {/* Tab: Eventos especiales */}
-                    {activeTab === 'eventos' && (
-                        <div className="p-6">
-                            <div className="text-center py-12">
-                                <Star className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                    Eventos especiales
-                                </h3>
-                                <p className="text-gray-600 mb-6">
-                                    Configura vacaciones, festivos y cierres puntuales
-                                </p>
-                                <button
-                                    onClick={() => setShowEventModal(true)}
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Crear evento especial
-                                </button>
-                            </div>
-                                </div>
-                            )}
-                        </div>
                 </div>
             </div>
 
@@ -965,7 +942,7 @@ export default function Calendario() {
                     <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold text-gray-900">
-                                Evento especial - {format(selectedDay, 'dd/MM/yyyy')}
+                                Crear evento - {format(selectedDay, 'dd/MM/yyyy')}
                             </h3>
                             <button
                                 onClick={() => setShowEventModal(false)}
