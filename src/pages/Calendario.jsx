@@ -115,6 +115,13 @@ export default function Calendario() {
         }
     }, [restaurantId]); // SOLO cuando cambia restaurantId, NO al navegar meses
 
+    // DEBUG: Verificar schedule en cada render
+    useEffect(() => {
+        if (schedule.length > 0) {
+            console.log('🔄 SCHEDULE ACTUAL EN RENDER:', schedule.map(s => `${s.day_of_week}:${s.is_open ? 'ABIERTO' : 'CERRADO'}`).join(', '));
+        }
+    });
+
     // Escuchar cambios de horarios desde Configuración
     useEffect(() => {
         const handleRestaurantReload = (event) => {
@@ -157,7 +164,15 @@ export default function Calendario() {
             const savedHours = restaurantData?.settings?.operating_hours || {};
             
             console.log('\n🔄 CARGANDO HORARIOS DESDE BD...');
-            console.log('Datos raw:', savedHours);
+            console.log('📊 DATOS RAW COMPLETOS:', JSON.stringify(savedHours, null, 2));
+            console.log('🏪 RESTAURANT ID:', restaurantId);
+
+            // VERIFICAR QUÉ DÍAS ESTÁN ABIERTOS EN LA BD
+            const openDays = Object.entries(savedHours)
+                .filter(([day, config]) => config && (config.open === true || config.is_open === true))
+                .map(([day, config]) => day);
+
+            console.log('📅 DÍAS ABIERTOS EN BD:', openDays);
 
             // CREAR SCHEDULE CON MAPEO SIMPLE
             const loadedSchedule = daysOfWeek.map(day => {
@@ -165,7 +180,7 @@ export default function Calendario() {
                 const dayData = savedHours[dayKey];
 
                 const isOpen = Boolean(dayData && (dayData.open === true || dayData.is_open === true));
-                console.log(`📋 ${dayKey}: ${isOpen ? 'ABIERTO' : 'CERRADO'}`);
+                console.log(`📋 ${dayKey}: ${isOpen ? '✅ ABIERTO' : '❌ CERRADO'} | Datos:`, dayData);
 
                 return {
                     day_of_week: dayKey,
@@ -175,8 +190,12 @@ export default function Calendario() {
                 };
             });
 
+            console.log('\n📊 SCHEDULE FINAL CREADO:');
+            loadedSchedule.forEach(day => {
+                console.log(`  ${day.day_of_week}: ${day.is_open ? '✅ ABIERTO' : '❌ CERRADO'}`);
+            });
+
             setSchedule(loadedSchedule);
-            console.log('✅ SCHEDULE LISTO:', loadedSchedule.map(d => `${d.day_of_week}:${d.is_open}`).join(', '));
             
             // Calcular estadísticas
             calculateStats(loadedSchedule);
@@ -249,20 +268,23 @@ export default function Calendario() {
         const dayKey = DAY_KEYS[dayIndex];
         const dayName = SPANISH_DAYS[dayIndex];
 
-        console.log(`📅 ${format(date, 'dd/MM/yyyy')} = ${dayName} (${dayIndex}) -> ${dayKey}`);
+        console.log(`\n🗓️  RENDER DÍA: ${format(date, 'dd/MM/yyyy')} = ${dayName} (${dayIndex}) -> ${dayKey}`);
+
+        // VERIFICAR SCHEDULE ACTUAL
+        console.log('📊 SCHEDULE ACTUAL:', schedule.map(s => `${s.day_of_week}:${s.is_open ? 'ABIERTO' : 'CERRADO'}`).join(', '));
 
         // Buscar en schedule
         const daySchedule = schedule.find(s => s.day_of_week === dayKey);
 
         if (daySchedule) {
-            console.log(`✅ ${dayName}: ${daySchedule.is_open ? 'ABIERTO' : 'CERRADO'}`);
+            console.log(`✅ ${dayName}: ${daySchedule.is_open ? 'ABIERTO' : 'CERRADO'} | Configurado: ${daySchedule.day_of_week}`);
             return {
                 ...daySchedule,
                 day_name: dayName
             };
         }
 
-        console.error(`❌ No se encontró ${dayKey} en schedule`);
+        console.error(`❌ No se encontró ${dayKey} en schedule | Schedule disponible:`, schedule.map(s => s.day_of_week));
         return {
             day_of_week: dayKey,
             day_name: dayName,
@@ -273,17 +295,18 @@ export default function Calendario() {
 
     // Funciones de navegación del calendario
     const navigateMonth = (direction) => {
-        console.log(`🔄 Navegando al mes ${direction === 'next' ? 'siguiente' : 'anterior'}`);
-        console.log('Schedule antes de navegar:', schedule.map(s => `${s.day_of_week}: ${s.is_open ? 'ABIERTO' : 'CERRADO'}`).join(', '));
-        
+        console.log(`\n🔄 NAVEGANDO AL MES ${direction === 'next' ? 'SIGUIENTE' : 'ANTERIOR'}`);
+        console.log('📊 SCHEDULE ANTES DE NAVEGAR:', schedule.map(s => `${s.day_of_week}:${s.is_open ? '✅' : '❌'}`).join(', '));
+
         setCurrentDate(prev => {
             const newDate = direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1);
             console.log(`📅 Nueva fecha: ${format(newDate, 'MMMM yyyy', { locale: es })}`);
             return newDate;
         });
-        
-        // NO reinicializar schedule - mantener el estado
-        console.log('Schedule después de navegar:', schedule.map(s => `${s.day_of_week}: ${s.is_open ? 'ABIERTO' : 'CERRADO'}`).join(', '));
+
+        // El schedule se mantiene - NO se reinicializa
+        console.log('📊 SCHEDULE DESPUÉS DE NAVEGAR (mismo):', schedule.map(s => `${s.day_of_week}:${s.is_open ? '✅' : '❌'}`).join(', '));
+        console.log('🔄 El schedule NO cambia al navegar meses - se mantiene constante\n');
     };
 
     // Estados para eventos especiales
