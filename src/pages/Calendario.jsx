@@ -271,51 +271,51 @@ export default function Calendario() {
 
     // SOLUCIÓN DEFINITIVA: Lógica correcta de días
     const getDaySchedule = useCallback((date) => {
-        // CRÍTICO: Mapeo correcto de días
-        const dayOfWeekIndex = getDay(date); // 0 = domingo, 1 = lunes, etc.
-        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const dayNamesSpanish = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-        const dayName = dayNames[dayOfWeekIndex];
-        const dayNameSpanish = dayNamesSpanish[dayOfWeekIndex];
+        // MAPEO ROBUSTO - NUNCA MÁS FALLOS
+        const dayOfWeekIndex = getDay(date); // 0=domingo, 1=lunes, 2=martes, 3=miércoles, 4=jueves, 5=viernes, 6=sábado
         
-        // 🔍 DEBUG EXHAUSTIVO - Ver TODOS los días del mes actual
-        if (date.getDate() === 1) {
-            console.log('\n===========================================');
-            console.log(`📅 MES: ${format(date, 'MMMM yyyy', { locale: es })}`);
-            console.log('===========================================');
-            console.log('🔧 HORARIO CONFIGURADO:');
-            schedule.forEach(s => {
-                console.log(`  ${s.day_of_week}: ${s.is_open ? '✅ ABIERTO' : '❌ CERRADO'}`);
-            });
-            console.log('-------------------------------------------');
-            
-            // Mostrar qué día es cada fecha del mes
-            const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-            console.log('📆 DÍAS DEL MES:');
-            for (let d = 1; d <= Math.min(7, daysInMonth); d++) {
-                const testDate = new Date(date.getFullYear(), date.getMonth(), d);
-                const testDayIndex = getDay(testDate);
-                const testDayName = dayNames[testDayIndex];
-                const testDaySpanish = dayNamesSpanish[testDayIndex];
-                const testSchedule = schedule.find(s => s.day_of_week === testDayName);
-                console.log(`  Día ${d}: ${testDaySpanish} (${testDayName}) -> ${testSchedule?.is_open ? '✅ ABIERTO' : '❌ CERRADO'}`);
-            }
-            console.log('===========================================\n');
-        }
+        // MAPEO EXACTO - CADA ÍNDICE A SU DÍA CORRECTO
+        const DAY_MAPPING = {
+            0: 'sunday',    // Domingo
+            1: 'monday',    // Lunes  
+            2: 'tuesday',   // Martes
+            3: 'wednesday', // Miércoles
+            4: 'thursday',  // Jueves
+            5: 'friday',    // Viernes
+            6: 'saturday'   // Sábado
+        };
+        
+        const SPANISH_NAMES = {
+            0: 'Domingo',
+            1: 'Lunes',
+            2: 'Martes', 
+            3: 'Miércoles',
+            4: 'Jueves',
+            5: 'Viernes',
+            6: 'Sábado'
+        };
+        
+        const dayName = DAY_MAPPING[dayOfWeekIndex];
+        const dayNameSpanish = SPANISH_NAMES[dayOfWeekIndex];
+        
+        // DEBUG CRÍTICO - VERIFICAR QUE EL MAPEO ES CORRECTO
+        console.log(`🔍 FECHA: ${format(date, 'dd/MM/yyyy')} -> Día ${dayOfWeekIndex} -> ${dayNameSpanish} (${dayName})`);
         
         // Buscar en el schedule cargado
         const daySchedule = schedule.find(s => s.day_of_week === dayName);
         
         if (daySchedule) {
+            console.log(`✅ ENCONTRADO: ${dayNameSpanish} está ${daySchedule.is_open ? 'ABIERTO' : 'CERRADO'}`);
             return {
                 ...daySchedule,
-                day_name: dayNameSpanish // Asegurar nombre en español
+                day_name: dayNameSpanish
             };
         }
         
-        // ⚠️ FALLBACK: Si no encuentra el día (NO DEBERÍA PASAR)
-        console.warn(`⚠️ WARNING: No se encontró schedule para ${dayNameSpanish} (${dayName})`);
-        console.warn('Schedule actual:', schedule);
+        // ERROR - NO DEBERÍA PASAR NUNCA
+        console.error(`❌ ERROR: No se encontró ${dayNameSpanish} (${dayName}) en schedule`);
+        console.error('Schedule disponible:', schedule.map(s => `${s.day_of_week}: ${s.is_open ? 'ABIERTO' : 'CERRADO'}`));
+        
         return {
             day_of_week: dayName,
             day_name: dayNameSpanish,
