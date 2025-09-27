@@ -582,25 +582,20 @@ export default function Mesas() {
                     r.table_id === table.id || r.table_number === table.table_number
                 );
                 
-                // Calcular score basado en rotación y eficiencia
-                const score = tableReservations.length > 0 ? 
-                    Math.min(95, 50 + (tableReservations.length * 10)) : 
-                    40; // Score base si no hay reservas
-
-                let reason = "Sin datos suficientes";
-                if (tableReservations.length >= 3) {
-                    reason = "Alta rotación, muy solicitada";
-                } else if (tableReservations.length >= 1) {
-                    reason = "Rotación moderada, buena ubicación";
-                } else {
-                    reason = "Baja rotación, considerar promociones";
-                    realSuggestions.push({
-                        message: `Mesa ${table.name} tiene baja rotación. Considera promociones`,
-                        type: "optimization",
-                    });
-                }
-
-                preferences[table.id] = { score, reason };
+                // Solo calcular score si hay datos reales
+                if (tableReservations.length > 0) {
+                    const score = Math.min(95, 50 + (tableReservations.length * 10));
+                    
+                    let reason = "";
+                    if (tableReservations.length >= 3) {
+                        reason = "Alta rotación, muy solicitada";
+                    } else if (tableReservations.length >= 1) {
+                        reason = "Rotación moderada, buena ubicación";
+                    }
+                    
+                    preferences[table.id] = { score, reason };
+                } 
+                // NO mostrar porcentaje si no hay datos - es confuso y no aporta valor
             });
 
             setTablePreferences(preferences);
