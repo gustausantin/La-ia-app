@@ -913,6 +913,7 @@ export default function Calendario() {
 
                                                 {/* Estado del día */}
                                                 <div className="space-y-1">
+                                                    {/* ⚖️ PRIORIDAD: Eventos prevalecen sobre horarios base */}
                                                     {dayEvent ? (
                                                         <div className={`text-xs px-2 py-1 rounded ${
                                                             dayEvent.is_closed 
