@@ -2,41 +2,20 @@
 import { createClient } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
 import { log } from "../utils/logger.js";
-import { getSupabaseConfig } from "../config/supabase-config.js";
-
-// Obtener configuración garantizada
-const config = getSupabaseConfig();
-const supabaseUrl = config.url;
-const supabaseKey = config.anonKey;
+// Configuración directa y simple
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ktsqwvhqamedpmzkzjaz.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzY3NzEsImV4cCI6MjA2OTk1Mjc3MX0.Y-zMa2F5a7UVT-efldv0sZjLAgmCfeEmhxfP7kgGzNY';
 
 log.debug('🔍 Configuración Supabase:');
 log.debug('URL:', supabaseUrl ? '✅ Configurada' : '❌ Falta');
 log.debug('Key:', supabaseKey ? '✅ Configurada' : '❌ Falta');
 
-// Cliente con configuración enterprise y headers forzados
+// Cliente SIMPLE que funciona
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true,
-    // Configuración enterprise para tokens
-    storageKey: 'la-ia-auth-token',
-    flowType: 'pkce',
-    // Evitar errores de refresh en production
-    debug: true // Activamos debug para ver qué pasa
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
-  },
-  global: {
-    headers: {
-      'apikey': supabaseKey,
-      'Authorization': `Bearer ${supabaseKey}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
-    }
+    detectSessionInUrl: true
   }
 });
 
