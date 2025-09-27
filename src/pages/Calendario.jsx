@@ -123,16 +123,40 @@ export default function Calendario() {
     const [events, setEvents] = useState([]);
     const [selectedEvent, setSelectedEvent] = useState(null);
 
-    // Generar días del calendario
-    const calendarDays = eachDayOfInterval({
-        start: startOfMonth(currentDate),
-        end: endOfMonth(currentDate)
-    });
+    // Generar días del calendario CON ALINEACIÓN CORRECTA
+    const generateCalendarDays = () => {
+        const start = startOfMonth(currentDate);
+        const end = endOfMonth(currentDate);
+        const startWeek = startOfWeek(start, { weekStartsOn: 1 }); // Lunes como primer día
+        const endWeek = endOfWeek(end, { weekStartsOn: 1 });
+        
+        // Generar TODOS los días incluyendo los vacíos al principio y final
+        return eachDayOfInterval({
+            start: startWeek,
+            end: endWeek
+        });
+    };
+    
+    const calendarDays = generateCalendarDays();
 
     // Inicializar datos - SOLO UNA VEZ
     useEffect(() => {
         if (restaurantId) {
             console.log('🚀 INICIALIZANDO CALENDARIO - Restaurant ID:', restaurantId);
+            
+            // TEST DE VERIFICACIÓN DE DÍAS
+            console.log('🧪 TEST: Verificando getDay() con fechas conocidas:');
+            const testDates = [
+                new Date(2025, 9, 4),  // 4 Oct 2025 = Sábado
+                new Date(2025, 9, 5),  // 5 Oct 2025 = Domingo
+                new Date(2025, 9, 6),  // 6 Oct 2025 = Lunes
+            ];
+            testDates.forEach(date => {
+                const dayIndex = getDay(date);
+                const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                console.log(`   ${format(date, 'dd/MM/yyyy')} es ${format(date, 'EEEE', { locale: es })} | getDay()=${dayIndex} | mapped=${dayNames[dayIndex]}`);
+            });
+            
             initializeData();
             loadEvents();
         }
@@ -211,6 +235,14 @@ export default function Calendario() {
             ];
             
             console.log('📅 SCHEDULE CARGADO:', loadedSchedule.map(d => `${d.day_name}: ${d.is_open ? '✅' : '❌'}`).join(', '));
+            
+            // VERIFICACIÓN CRÍTICA: Mostrar exactamente qué está configurado
+            console.log('🔴 DÍAS ABIERTOS SEGÚN BD:');
+            loadedSchedule.forEach(day => {
+                if (day.is_open) {
+                    console.log(`   ✅ ${day.day_name} (${day.day_of_week}) está ABIERTO`);
+                }
+            });
 
             // Añadir horarios solo a días abiertos
             loadedSchedule.forEach(day => {
@@ -291,6 +323,7 @@ export default function Calendario() {
         const dayIndex = getDay(date);
         
         // Mapeo DIRECTO por índice - GARANTIZADO por la especificación de JavaScript
+        // IMPORTANTE: La semana empieza en DOMINGO (índice 0) según JavaScript
         const dayMapping = [
             'sunday',    // índice 0 = domingo
             'monday',    // índice 1 = lunes  
@@ -316,8 +349,11 @@ export default function Calendario() {
         const dayConfig = schedule.find(s => s.day_of_week === dayKey);
         const isOpen = dayConfig?.is_open === true;
 
-        // Log detallado para debugging
-        console.log(`📅 Fecha: ${format(date, 'dd/MM/yyyy')} | dayIndex: ${dayIndex} | dayKey: ${dayKey} | ${dayName} | ${isOpen ? '✅ ABIERTO' : '❌ CERRADO'}`);
+        // Log solo para los primeros días del mes para debug
+        const dayOfMonth = parseInt(format(date, 'd'));
+        if (dayOfMonth <= 7) {
+            console.log(`📅 ${format(date, 'EEEE dd/MM/yyyy', { locale: es })} | getDay()=${dayIndex} | mapped=${dayKey} | config=${isOpen ? '✅' : '❌'}`);
+        }
 
         return {
             day_of_week: dayKey,
@@ -941,40 +977,48 @@ export default function Calendario() {
                                     ))}
                                 </div>
 
-                                {/* Días del calendario */}
+                                {/* Días del calendario - CON ALINEACIÓN CORRECTA */}
                                 <div className="grid grid-cols-7">
                                     {calendarDays.map((day, index) => {
                                         const isToday = isSameDay(day, new Date());
                                         const isCurrentMonth = isSameMonth(day, currentDate);
                                         const daySchedule = getDaySchedule(day);
                                         const dayEvent = getDayEvent(day);
+                                        
+                                        // Debug para verificar alineación de la primera semana
+                                        if (index < 7) {
+                                            const columnDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                                            console.log(`Columna ${index} (${columnDays[index]}): ${format(day, 'EEEE dd/MM', { locale: es })} | getDaySchedule dice: ${daySchedule.day_name} ${daySchedule.is_open ? '✅' : '❌'}`);
+                                        }
 
                                         return (
                                             <div
                                                 key={index}
                                                 className={`min-h-[120px] p-2 border-b border-r border-gray-100 ${
                                                     isCurrentMonth ? 'bg-white' : 'bg-gray-50'
-                                                } ${isToday ? 'bg-blue-50' : ''} ${dayEvent ? 'bg-yellow-50' : ''} hover:bg-gray-50 cursor-pointer`}
-                                                onClick={() => handleDayClick(day)}
+                                                } ${isToday && isCurrentMonth ? 'bg-blue-50' : ''} ${dayEvent && isCurrentMonth ? 'bg-yellow-50' : ''} ${isCurrentMonth ? 'hover:bg-gray-50 cursor-pointer' : ''}`}
+                                                onClick={() => isCurrentMonth && handleDayClick(day)}
                                             >
                                                 <div className={`text-sm font-medium mb-1 ${
-                                                    isToday ? 'text-blue-600' : isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                                                    isToday && isCurrentMonth ? 'text-blue-600' : isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
                                                     }`}>
                                                         {format(day, 'd')}
                                                 </div>
 
-                                                {/* Estado del día - ULTRA SIMPLE */}
-                                                <div className="text-xs px-2 py-1 rounded">
-                                                    {daySchedule.is_open ? (
-                                                        <span className="text-green-600 bg-green-100 px-2 py-1 rounded">
-                                                            Abierto 09:00-22:00
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-red-600 bg-red-100 px-2 py-1 rounded">
-                                                            Cerrado
-                                                        </span>
-                                                    )}
-                                                </div>
+                                                {/* Estado del día - SOLO PARA DÍAS DEL MES ACTUAL */}
+                                                {isCurrentMonth && (
+                                                    <div className="text-xs px-2 py-1 rounded">
+                                                        {daySchedule.is_open ? (
+                                                            <span className="text-green-600 bg-green-100 px-2 py-1 rounded">
+                                                                Abierto 09:00-22:00
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-red-600 bg-red-100 px-2 py-1 rounded">
+                                                                Cerrado
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
 
                                                 {/* Eventos adicionales */}
                                                 {dayEvent && (
