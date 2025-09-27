@@ -46,6 +46,75 @@ import {
     Trash2
 } from "lucide-react";
 import toast from "react-hot-toast";
+
+// 📧 FUNCIÓN PARA ENVIAR MENSAJE NO-SHOW
+const sendNoShowMessage = async (reservation) => {
+    try {
+        // 1. Buscar plantilla de no-show
+        const { data: template, error: templateError } = await supabase
+            .from('message_templates')
+            .select('*')
+            .eq('restaurant_id', reservation.restaurant_id)
+            .eq('name', 'Seguimiento No-Show')
+            .eq('is_active', true)
+            .single();
+
+        if (templateError || !template) {
+            console.warn('No se encontró plantilla de no-show activa');
+            return;
+        }
+
+        // 2. Obtener datos del cliente y restaurante
+        const { data: customer } = await supabase
+            .from('customers')
+            .select('name, phone, email')
+            .eq('id', reservation.customer_id)
+            .single();
+
+        const { data: restaurant } = await supabase
+            .from('restaurants')
+            .select('name')
+            .eq('id', reservation.restaurant_id)
+            .single();
+
+        if (!customer || !restaurant) {
+            throw new Error('No se pudieron obtener datos del cliente o restaurante');
+        }
+
+        // 3. Reemplazar variables en el mensaje
+        let message = template.content_markdown;
+        message = message.replace(/\{\{customer_name\}\}/g, customer.name || 'Cliente');
+        message = message.replace(/\{\{restaurant_name\}\}/g, restaurant.name || 'Restaurante');
+        message = message.replace(/\{\{reservation_date\}\}/g, 
+            new Date(reservation.reservation_date).toLocaleDateString('es-ES'));
+
+        // 4. Programar mensaje (aquí podrías integrarlo con tu sistema de mensajería)
+        const { error: messageError } = await supabase
+            .from('scheduled_messages')
+            .insert({
+                restaurant_id: reservation.restaurant_id,
+                customer_id: reservation.customer_id,
+                template_id: template.id,
+                message_content: message,
+                channel_planned: template.channel,
+                scheduled_for: new Date().toISOString(), // Enviar inmediatamente
+                status: 'pending',
+                metadata: {
+                    reservation_id: reservation.id,
+                    trigger: 'no_show_manual'
+                }
+            });
+
+        if (messageError) throw messageError;
+
+        console.log('✅ Mensaje no-show programado correctamente');
+        return { success: true };
+
+    } catch (error) {
+        console.error('❌ Error enviando mensaje no-show:', error);
+        throw error;
+    }
+};
 import { processReservationCompletion } from "../services/CRMService";
 import AvailabilityManager from "../components/AvailabilityManager";
 import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
@@ -71,13 +140,13 @@ const RESERVATION_STATES = {
     confirmada: {
         label: "Confirmada",
         color: "bg-green-100 text-green-800 border-green-200",
-        actions: ["cancel", "edit"],
+        actions: ["cancel", "noshow", "edit"],
         icon: <CheckCircle2 className="w-4 h-4" />,
     },
     sentada: {
         label: "Sentada",
         color: "bg-blue-100 text-blue-800 border-blue-200",
-        actions: ["complete", "edit"],
+        actions: ["complete", "noshow", "edit"],
         icon: <Users className="w-4 h-4" />,
     },
     completada: {
@@ -393,6 +462,19 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                                 >
                                     <CheckSquare className="w-4 h-4" />
                                     Completar
+                                </button>
+                            )}
+
+                            {state.actions.includes("noshow") && (
+                                <button
+                                    onClick={() => {
+                                        onAction("noshow", reservation);
+                                        setShowActions(false);
+                                    }}
+                                    className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-orange-600"
+                                >
+                                    <AlertCircle className="w-4 h-4" />
+                                    Marcar No-Show
                                 </button>
                             )}
 
@@ -1239,6 +1321,13 @@ export default function Reservas() {
                     newStatus = "cancelled";
                     message = "Reserva cancelada";
                     break;
+                case "noshow":
+                    if (!window.confirm("¿Confirmas que el cliente no se presentó?")) {
+                        return;
+                    }
+                    newStatus = "no_show";
+                    message = "Marcado como No-Show";
+                    break;
                 case "delete":
                     if (!window.confirm("⚠️ ¿Estás seguro de ELIMINAR permanentemente esta reserva?\n\nEsta acción no se puede deshacer.")) {
                         return;
@@ -1284,7 +1373,20 @@ export default function Reservas() {
 
                 if (error) throw error;
                 
-                toast.success(`${message} exitosamente`);
+                // 📧 ENVIAR MENSAJE CRM AUTOMÁTICO PARA NO-SHOWS
+                if (action === "noshow") {
+                    try {
+                        await sendNoShowMessage(reservation);
+                        toast.success(`${message} - Mensaje enviado al cliente`);
+                    } catch (messageError) {
+                        console.error("Error enviando mensaje no-show:", messageError);
+                        toast.success(`${message} exitosamente`);
+                        // No fallar la actualización por error de mensaje
+                    }
+                } else {
+                    toast.success(`${message} exitosamente`);
+                }
+                
                 console.log("✅ CONFIRMACIÓN: Status actualizado a:", data.status);
 
                 await loadReservations();
