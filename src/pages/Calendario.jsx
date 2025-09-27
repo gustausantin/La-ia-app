@@ -964,7 +964,7 @@ export default function Calendario() {
                                 />
                             </div>
 
-                            <div>
+                            <div className="space-y-3">
                                 <label className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
@@ -974,7 +974,23 @@ export default function Calendario() {
                                     />
                                     <span className="text-sm text-gray-700">Restaurante cerrado este día</span>
                                 </label>
-                                <p className="text-xs text-gray-500 mt-1">
+                                
+                                <div className="pt-2 border-t border-gray-200">
+                                    <p className="text-xs text-gray-600 mb-2">Acceso rápido:</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEventForm(prev => ({ 
+                                            ...prev, 
+                                            title: 'Vacaciones',
+                                            closed: true 
+                                        }))}
+                                        className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors"
+                                    >
+                                        🏖️ VACACIONES
+                                    </button>
+                                </div>
+                                
+                                <p className="text-xs text-gray-500">
                                     Si no está marcado, es un evento especial con el restaurante abierto
                                 </p>
                             </div>
