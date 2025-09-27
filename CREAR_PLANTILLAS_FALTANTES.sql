@@ -7,6 +7,7 @@
 DO $$
 DECLARE
     target_restaurant_id UUID;
+    rec RECORD;
 BEGIN
     -- Obtener el primer restaurant_id disponible
     SELECT id INTO target_restaurant_id FROM restaurants LIMIT 1;
