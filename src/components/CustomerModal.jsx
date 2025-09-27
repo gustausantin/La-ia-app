@@ -7,7 +7,7 @@ import {
     Crown, AlertTriangle, CheckCircle2, Clock, Edit2, User,
     MapPin, Heart, Award, Target, Zap, MessageSquare, Shield,
     Eye, EyeOff, Tag, FileText, Settings, Sparkles, Brain,
-    Activity, BarChart3, Percent, Users, Gift
+    Activity, BarChart3, Percent, Users, Gift, Trash2, RefreshCw
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -108,7 +108,8 @@ const CustomerModal = ({
     customer, 
     isOpen, 
     onClose, 
-    onSave, 
+    onSave,
+    onDelete, 
     restaurantId,
     mode = 'view' // 'view', 'edit', 'create'
 }) => {
@@ -120,6 +121,7 @@ const CustomerModal = ({
         last_name2: '',
         email: '',
         phone: '',
+        birthday: '', // Campo de cumpleaños
         
         // Estadísticas (solo lectura)
         visits_count: 0,
@@ -149,6 +151,8 @@ const CustomerModal = ({
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(mode === 'edit' || mode === 'create');
     const [crmConfig, setCrmConfig] = useState({});
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     // Cargar configuración CRM para segmentación
     useEffect(() => {
@@ -194,6 +198,7 @@ const CustomerModal = ({
                 last_name2: customer.last_name2 || '',
                 email: customer.email || '',
                 phone: customer.phone || '',
+                birthday: customer.birthday || '',
                 visits_count: customer.visits_count || customer.total_visits || 0,
                 total_spent: customer.total_spent || 0,
                 avg_ticket: customer.avg_ticket || 0,
@@ -294,6 +299,9 @@ const CustomerModal = ({
             }
             if (formData.phone?.trim()) {
                 dataToSave.phone = formData.phone.trim();
+            }
+            if (formData.birthday?.trim()) {
+                dataToSave.birthday = formData.birthday.trim();
             }
             if (formData.notes?.trim()) {
                 dataToSave.notes = formData.notes.trim();
@@ -450,13 +458,22 @@ const CustomerModal = ({
                     </div>
                     <div className="flex items-center gap-2">
                         {!isEditing && mode !== 'create' && (
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                            >
-                                <Edit2 className="w-4 h-4" />
-                                Editar
-                            </button>
+                            <>
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                >
+                                    <Edit2 className="w-4 h-4" />
+                                    Editar
+                                </button>
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Eliminar
+                                </button>
+                            </>
                         )}
                         <button
                             onClick={onClose}
@@ -606,6 +623,19 @@ const CustomerModal = ({
                                             disabled={!isEditing}
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
                                             placeholder="+34 600 000 000"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            🎂 Fecha de Cumpleaños
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={formData.birthday}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, birthday: e.target.value }))}
+                                            disabled={!isEditing}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
                                         />
                                     </div>
 
@@ -840,6 +870,7 @@ const CustomerModal = ({
                                         last_name2: formData.last_name2 || null,
                                         email: formData.email || null,
                                         phone: formData.phone || null,
+                                        birthday: formData.birthday || null,
                                         notes: formData.notes || null,
                                         preferences: formData.preferences || null,
                                         consent_email: formData.consent_email || false,
@@ -891,6 +922,92 @@ const CustomerModal = ({
                     </div>
                 )}
             </div>
+
+            {/* Modal de confirmación de eliminación */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl shadow-xl p-6 max-w-md mx-4">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-red-100 rounded-lg">
+                                <Trash2 className="w-6 h-6 text-red-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    ¿Eliminar cliente?
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                    Esta acción no se puede deshacer
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-6">
+                            <p className="text-sm text-yellow-800">
+                                <strong>Cliente:</strong> {formData.first_name} {formData.last_name1}<br />
+                                {formData.email && <><strong>Email:</strong> {formData.email}<br /></>}
+                                {formData.phone && <><strong>Teléfono:</strong> {formData.phone}</>}
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={deleting}
+                                className="flex-1 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        setDeleting(true);
+                                        
+                                        // Eliminar de la base de datos
+                                        const { error } = await supabase
+                                            .from('customers')
+                                            .delete()
+                                            .eq('id', customer.id);
+                                        
+                                        if (error) throw error;
+                                        
+                                        // Llamar callback si existe
+                                        if (onDelete) {
+                                            onDelete(customer.id);
+                                        }
+                                        
+                                        // Cerrar modales
+                                        setShowDeleteConfirm(false);
+                                        onClose();
+                                        
+                                        // Mostrar mensaje de éxito
+                                        toast.success('✅ Cliente eliminado correctamente');
+                                        
+                                    } catch (error) {
+                                        console.error('Error eliminando cliente:', error);
+                                        toast.error('❌ Error al eliminar el cliente: ' + error.message);
+                                    } finally {
+                                        setDeleting(false);
+                                    }
+                                }}
+                                disabled={deleting}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {deleting ? (
+                                    <>
+                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                        Eliminando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="w-4 h-4" />
+                                        Eliminar definitivamente
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
