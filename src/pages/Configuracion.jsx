@@ -109,7 +109,12 @@ const Configuracion = () => {
             reservation_modified: false,
             // daily_digest eliminado para MVP
             agent_offline: true,
-            integration_errors: true
+            integration_errors: true,
+            // Nuevos errores del sistema
+            system_save_errors: true,
+            system_connection_errors: true,
+            system_reservation_conflicts: true,
+            system_config_incomplete: true
         }
     });
 
@@ -293,7 +298,12 @@ const Configuracion = () => {
                         reservation_modified: restaurant.notifications?.reservation_modified ?? false,
                         // daily_digest eliminado para MVP
                         agent_offline: restaurant.notifications?.agent_offline ?? true,
-                        integration_errors: restaurant.notifications?.integration_errors ?? true
+                        integration_errors: restaurant.notifications?.integration_errors ?? true,
+                        // Nuevos errores del sistema
+                        system_save_errors: restaurant.notifications?.system_save_errors ?? true,
+                        system_connection_errors: restaurant.notifications?.system_connection_errors ?? true,
+                        system_reservation_conflicts: restaurant.notifications?.system_reservation_conflicts ?? true,
+                        system_config_incomplete: restaurant.notifications?.system_config_incomplete ?? true
                     },
                 });
             }
@@ -424,7 +434,7 @@ const Configuracion = () => {
             } else if (section === "Configuración de notificaciones") {
                 // Validaciones previas para notificaciones
                 const n = settings.notifications || {};
-                const anyEnabled = (n.new_reservation || n.cancelled_reservation || n.reservation_modified || n.agent_offline || n.integration_errors) === true;
+                const anyEnabled = (n.new_reservation || n.cancelled_reservation || n.reservation_modified || n.agent_offline || n.integration_errors || n.system_save_errors || n.system_connection_errors || n.system_reservation_conflicts || n.system_config_incomplete) === true;
                 const hasRecipients = (Array.isArray(n.recipient_emails) && n.recipient_emails.length > 0) || (Array.isArray(n.recipient_whatsapps) && n.recipient_whatsapps.length > 0);
                 if (anyEnabled && !hasRecipients) {
                     toast.error('Añade al menos un destinatario (email o WhatsApp).');
@@ -1244,15 +1254,6 @@ const Configuracion = () => {
                                     </div>
                                 </div>
 
-                                <div className="bg-purple-50 p-6 rounded-xl border border-purple-200">
-                                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                                        <Users className="w-5 h-5 text-purple-600" />
-                                        Notificaciones CRM
-                                    </h4>
-                                    <div className="space-y-4">
-                                        {/* Resumen diario eliminado para MVP - demasiado complejo */}
-                                    </div>
-                                </div>
 
                                 <div className="bg-green-50 p-6 rounded-xl border border-green-200">
                                     <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
@@ -1291,6 +1292,80 @@ const Configuracion = () => {
                                                     }
                                                 }))}
                                             />
+                                        </div>
+                                        
+                                        {/* Nueva sección: Errores del Sistema */}
+                                        <div className="border-t border-green-200 pt-4 mt-4">
+                                            <h5 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                                                <AlertTriangle className="w-4 h-4 text-red-500" />
+                                                Errores del Sistema
+                                            </h5>
+                                            <div className="space-y-3 ml-6">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h6 className="font-medium text-gray-800">Fallo crítico al guardar</h6>
+                                                        <p className="text-xs text-gray-600">Reservas, configuración o datos de cliente no se guardan</p>
+                                                    </div>
+                                                    <ToggleSwitch
+                                                        enabled={settings.notifications?.system_save_errors ?? true}
+                                                        onChange={(enabled) => setSettings(prev => ({
+                                                            ...prev,
+                                                            notifications: {
+                                                                ...prev.notifications,
+                                                                system_save_errors: enabled
+                                                            }
+                                                        }))}
+                                                    />
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h6 className="font-medium text-gray-800">Problema de conexión</h6>
+                                                        <p className="text-xs text-gray-600">Fallos de red, autenticación o timeouts</p>
+                                                    </div>
+                                                    <ToggleSwitch
+                                                        enabled={settings.notifications?.system_connection_errors ?? true}
+                                                        onChange={(enabled) => setSettings(prev => ({
+                                                            ...prev,
+                                                            notifications: {
+                                                                ...prev.notifications,
+                                                                system_connection_errors: enabled
+                                                            }
+                                                        }))}
+                                                    />
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h6 className="font-medium text-gray-800">Conflicto de reservas</h6>
+                                                        <p className="text-xs text-gray-600">Mesa doble-asignada u horarios solapados</p>
+                                                    </div>
+                                                    <ToggleSwitch
+                                                        enabled={settings.notifications?.system_reservation_conflicts ?? true}
+                                                        onChange={(enabled) => setSettings(prev => ({
+                                                            ...prev,
+                                                            notifications: {
+                                                                ...prev.notifications,
+                                                                system_reservation_conflicts: enabled
+                                                            }
+                                                        }))}
+                                                    />
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h6 className="font-medium text-gray-800">Configuración incompleta</h6>
+                                                        <p className="text-xs text-gray-600">Sin mesas, horarios o setup básico</p>
+                                                    </div>
+                                                    <ToggleSwitch
+                                                        enabled={settings.notifications?.system_config_incomplete ?? true}
+                                                        onChange={(enabled) => setSettings(prev => ({
+                                                            ...prev,
+                                                            notifications: {
+                                                                ...prev.notifications,
+                                                                system_config_incomplete: enabled
+                                                            }
+                                                        }))}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
