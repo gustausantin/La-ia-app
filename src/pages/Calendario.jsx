@@ -288,7 +288,6 @@ export default function Calendario() {
     const [eventForm, setEventForm] = useState({
         title: '',
         description: '',
-        type: 'evento',
         start_time: '09:00',
         end_time: '22:00',
         closed: false
@@ -327,7 +326,7 @@ export default function Calendario() {
                 event_date: eventDate,
                 title: eventForm.title,
                 description: eventForm.description || '',
-                type: eventForm.type,
+                type: eventForm.closed ? 'cerrado' : 'evento',
                 start_time: eventForm.closed ? null : eventForm.start_time,
                 end_time: eventForm.closed ? null : eventForm.end_time,
                 is_closed: eventForm.closed
@@ -373,7 +372,6 @@ export default function Calendario() {
                 setEventForm({
                     title: existingEvent.title,
                     description: existingEvent.description || '',
-                    type: existingEvent.type,
                     start_time: existingEvent.start_time || '09:00',
                     end_time: existingEvent.end_time || '22:00',
                     closed: existingEvent.is_closed
@@ -382,7 +380,6 @@ export default function Calendario() {
                 setEventForm({
                     title: '',
                     description: '',
-                    type: 'evento',
                     start_time: '09:00',
                     end_time: '22:00',
                     closed: false
@@ -968,21 +965,6 @@ export default function Calendario() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Tipo de evento
-                                </label>
-                                <select
-                                    value={eventForm.type}
-                                    onChange={(e) => setEventForm(prev => ({ ...prev, type: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                                >
-                                    <option value="evento">Evento especial</option>
-                                    <option value="cerrado">Día cerrado</option>
-                                    <option value="vacaciones">Vacaciones</option>
-                                </select>
-                            </div>
-
-                            <div>
                                 <label className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
@@ -992,6 +974,9 @@ export default function Calendario() {
                                     />
                                     <span className="text-sm text-gray-700">Restaurante cerrado este día</span>
                                 </label>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Si no está marcado, es un evento especial con el restaurante abierto
+                                </p>
                             </div>
 
                             {!eventForm.closed && (
