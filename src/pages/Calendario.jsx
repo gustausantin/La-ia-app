@@ -106,13 +106,14 @@ export default function Calendario() {
         end: endOfMonth(currentDate)
     });
 
-    // Inicializar datos
+    // Inicializar datos - SOLO UNA VEZ
     useEffect(() => {
         if (restaurantId) {
+            console.log('🚀 INICIALIZANDO CALENDARIO - Restaurant ID:', restaurantId);
             initializeData();
             loadEvents();
         }
-    }, [restaurantId]);
+    }, [restaurantId]); // SOLO cuando cambia restaurantId, NO al navegar meses
 
     // Escuchar cambios de horarios desde Configuración
     useEffect(() => {
@@ -155,6 +156,9 @@ export default function Calendario() {
 
             const savedHours = restaurantData?.settings?.operating_hours || {};
             
+            console.log('\n🔄 CARGANDO HORARIOS DESDE BD...');
+            console.log('Datos raw:', savedHours);
+            
             // 🏗️ CONVERSIÓN ROBUSTA: operating_hours → schedule format
             const loadedSchedule = daysOfWeek.map(day => {
                 const dayKey = day.id; // monday, tuesday, etc.
@@ -165,6 +169,8 @@ export default function Calendario() {
                     dayHours && 
                     (dayHours.open === true || dayHours.is_open === true)
                 );
+                
+                console.log(`  ${dayKey}: ${isOpen ? '✅ ABIERTO' : '❌ CERRADO'} - data:`, dayHours);
                 
                 // Construir slots robustos
                 let slots = [];
@@ -198,6 +204,11 @@ export default function Calendario() {
 
             setSchedule(loadedSchedule);
             
+            console.log('✅ SCHEDULE CARGADO CORRECTAMENTE:');
+            loadedSchedule.forEach(day => {
+                console.log(`  ${day.day_of_week} (${day.day_name}): ${day.is_open ? 'ABIERTO' : 'CERRADO'}`);
+            });
+            console.log('\n');
             
             // Calcular estadísticas
             calculateStats(loadedSchedule);
@@ -260,33 +271,54 @@ export default function Calendario() {
 
     // SOLUCIÓN DEFINITIVA: Lógica correcta de días
     const getDaySchedule = useCallback((date) => {
+        // CRÍTICO: Mapeo correcto de días
         const dayOfWeekIndex = getDay(date); // 0 = domingo, 1 = lunes, etc.
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const dayNamesSpanish = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
         const dayName = dayNames[dayOfWeekIndex];
+        const dayNameSpanish = dayNamesSpanish[dayOfWeekIndex];
         
-        // DEBUG para el primer día de cada mes
+        // 🔍 DEBUG EXHAUSTIVO - Ver TODOS los días del mes actual
         if (date.getDate() === 1) {
-            console.log(`📅 ${format(date, 'MMMM yyyy')} - Día 1 es ${dayName} (index: ${dayOfWeekIndex})`);
-            console.log('Schedule actual:', schedule.map(s => `${s.day_of_week}: ${s.is_open ? 'ABIERTO' : 'cerrado'}`));
+            console.log('\n===========================================');
+            console.log(`📅 MES: ${format(date, 'MMMM yyyy', { locale: es })}`);
+            console.log('===========================================');
+            console.log('🔧 HORARIO CONFIGURADO:');
+            schedule.forEach(s => {
+                console.log(`  ${s.day_of_week}: ${s.is_open ? '✅ ABIERTO' : '❌ CERRADO'}`);
+            });
+            console.log('-------------------------------------------');
+            
+            // Mostrar qué día es cada fecha del mes
+            const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+            console.log('📆 DÍAS DEL MES:');
+            for (let d = 1; d <= Math.min(7, daysInMonth); d++) {
+                const testDate = new Date(date.getFullYear(), date.getMonth(), d);
+                const testDayIndex = getDay(testDate);
+                const testDayName = dayNames[testDayIndex];
+                const testDaySpanish = dayNamesSpanish[testDayIndex];
+                const testSchedule = schedule.find(s => s.day_of_week === testDayName);
+                console.log(`  Día ${d}: ${testDaySpanish} (${testDayName}) -> ${testSchedule?.is_open ? '✅ ABIERTO' : '❌ CERRADO'}`);
+            }
+            console.log('===========================================\n');
         }
         
         // Buscar en el schedule cargado
         const daySchedule = schedule.find(s => s.day_of_week === dayName);
         
         if (daySchedule) {
-            return daySchedule;
+            return {
+                ...daySchedule,
+                day_name: dayNameSpanish // Asegurar nombre en español
+            };
         }
         
-        // Fallback: día cerrado si no está en schedule
+        // ⚠️ FALLBACK: Si no encuentra el día (NO DEBERÍA PASAR)
+        console.warn(`⚠️ WARNING: No se encontró schedule para ${dayNameSpanish} (${dayName})`);
+        console.warn('Schedule actual:', schedule);
         return {
             day_of_week: dayName,
-            day_name: dayNames[dayOfWeekIndex] === 'sunday' ? 'Domingo' :
-                     dayNames[dayOfWeekIndex] === 'monday' ? 'Lunes' :
-                     dayNames[dayOfWeekIndex] === 'tuesday' ? 'Martes' :
-                     dayNames[dayOfWeekIndex] === 'wednesday' ? 'Miércoles' :
-                     dayNames[dayOfWeekIndex] === 'thursday' ? 'Jueves' :
-                     dayNames[dayOfWeekIndex] === 'friday' ? 'Viernes' :
-                     dayNames[dayOfWeekIndex] === 'saturday' ? 'Sábado' : dayName,
+            day_name: dayNameSpanish,
             is_open: false,
             slots: []
         };
@@ -294,9 +326,17 @@ export default function Calendario() {
 
     // Funciones de navegación del calendario
     const navigateMonth = (direction) => {
+        console.log(`🔄 Navegando al mes ${direction === 'next' ? 'siguiente' : 'anterior'}`);
+        console.log('Schedule antes de navegar:', schedule.map(s => `${s.day_of_week}: ${s.is_open ? 'ABIERTO' : 'CERRADO'}`).join(', '));
+        
         setCurrentDate(prev => {
-            return direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1);
+            const newDate = direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1);
+            console.log(`📅 Nueva fecha: ${format(newDate, 'MMMM yyyy', { locale: es })}`);
+            return newDate;
         });
+        
+        // NO reinicializar schedule - mantener el estado
+        console.log('Schedule después de navegar:', schedule.map(s => `${s.day_of_week}: ${s.is_open ? 'ABIERTO' : 'CERRADO'}`).join(', '));
     };
 
     // Estados para eventos especiales
