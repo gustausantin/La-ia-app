@@ -865,6 +865,8 @@ const CustomerModal = ({
                                 if (!formData.first_name?.trim()) return;
                                 
                                 try {
+                                    setSaving(true);
+                                    
                                     // GUARDADO COMPLETO - SIN ETIQUETAS - SIN RECARGA
                                     const dataToSave = {
                                         name: `${formData.first_name} ${formData.last_name1 || ''}`.trim(),
@@ -882,23 +884,35 @@ const CustomerModal = ({
                                         segment_manual: formData.segment_manual || null
                                     };
                                     
-                                    const { error } = await supabase
-                                        .from('customers')
-                                        .update(dataToSave)
-                                        .eq('id', customer?.id);
+                                    let result;
                                     
-                                    if (error) throw error;
-                                    
-                                    // ACTUALIZAR UI AUTOMÁTICAMENTE
-                                    const updatedCustomer = {
-                                        ...customer,
-                                        ...dataToSave
-                                    };
+                                    if (mode === 'create') {
+                                        // CREAR nuevo cliente
+                                        dataToSave.restaurant_id = restaurantId;
+                                        const { data, error } = await supabase
+                                            .from('customers')
+                                            .insert([dataToSave])
+                                            .select()
+                                            .single();
+                                        
+                                        if (error) throw error;
+                                        result = data;
+                                        
+                                    } else {
+                                        // ACTUALIZAR cliente existente
+                                        const { error } = await supabase
+                                            .from('customers')
+                                            .update(dataToSave)
+                                            .eq('id', customer?.id);
+                                        
+                                        if (error) throw error;
+                                        result = { ...customer, ...dataToSave };
+                                    }
                                     
                                     // Actualizar la lista local (esto actualiza la UI sin F5)
                                     if (onSave) {
                                         try {
-                                            onSave(updatedCustomer);
+                                            onSave(result);
                                         } catch (saveError) {
                                             console.error('Error en onSave:', saveError);
                                         }
@@ -908,8 +922,14 @@ const CustomerModal = ({
                                     setIsEditing(false);
                                     if (onClose) onClose();
                                     
+                                    // Mensaje de éxito
+                                    toast.success(mode === 'create' ? '✅ Cliente creado correctamente' : '✅ Cambios guardados');
+                                    
                                 } catch (error) {
-                                    alert('❌ ERROR: ' + error.message);
+                                    console.error('Error guardando cliente:', error);
+                                    toast.error('❌ ERROR: ' + error.message);
+                                } finally {
+                                    setSaving(false);
                                 }
                             }}
                             disabled={saving || !formData.first_name?.trim()}

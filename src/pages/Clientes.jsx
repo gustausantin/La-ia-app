@@ -631,6 +631,8 @@ export default function Clientes() {
                 <CustomerModal
                 customer={selectedCustomer}
                 isOpen={showCustomerModal}
+                restaurantId={restaurantId}
+                mode={modalMode}
                     onClose={() => {
                     setShowCustomerModal(false);
                     setSelectedCustomer(null);
