@@ -326,12 +326,11 @@ export default function Calendario() {
                 restaurant_id: restaurantId,
                 event_date: eventDate,
                 title: eventForm.title,
-                description: eventForm.description,
+                description: eventForm.description || '',
                 type: eventForm.type,
                 start_time: eventForm.closed ? null : eventForm.start_time,
                 end_time: eventForm.closed ? null : eventForm.end_time,
-                is_closed: eventForm.closed,
-                created_at: new Date().toISOString()
+                is_closed: eventForm.closed
             };
             
             const { data, error } = await supabase
@@ -1002,8 +1001,7 @@ export default function Calendario() {
                                 >
                                     <option value="evento">Evento especial</option>
                                     <option value="cerrado">Día cerrado</option>
-                                    <option value="festivo">Día festivo</option>
-                                    <option value="promocion">Promoción especial</option>
+                                    <option value="vacaciones">Vacaciones</option>
                                 </select>
                             </div>
 
