@@ -108,9 +108,11 @@ export default function Calendario() {
 
     // Inicializar datos
     useEffect(() => {
-        initializeData();
-        loadEvents();
-    }, [restaurantId, loadEvents]);
+        if (restaurantId) {
+            initializeData();
+            loadEvents();
+        }
+    }, [restaurantId]);
 
     // Escuchar cambios de horarios desde Configuración
     useEffect(() => {
@@ -293,7 +295,7 @@ export default function Calendario() {
     });
 
     // Cargar eventos especiales
-    const loadEvents = useCallback(async () => {
+    const loadEvents = async () => {
         if (!restaurantId) return;
         
         try {
@@ -310,7 +312,7 @@ export default function Calendario() {
         } catch (error) {
             console.error('❌ Error cargando eventos:', error);
         }
-    }, [restaurantId]);
+    };
 
     // Guardar evento especial
     const handleSaveEvent = async (e) => {
