@@ -29,8 +29,8 @@ El equipo de {restaurant_name}`,
         icon: "👋",
         color: "blue"
     },
-    activo: {
-        name: "Cliente Activo - Agradecimiento",
+    alto_valor: {
+        name: "Cliente Alto Valor - Agradecimiento",
         subject: "Gracias por ser parte de {restaurant_name}",
         content: `Hola {customer_name},
 
@@ -91,6 +91,26 @@ El equipo de {restaurant_name}`,
         icon: "⏰",
         color: "red"
     },
+    en_riesgo: {
+        name: "Cliente En Riesgo - Atención Especial",
+        subject: "¿Cómo podemos mejorar tu experiencia en {restaurant_name}?",
+        content: `Hola {customer_name},
+
+Hemos notado que ha pasado un tiempo desde tu última visita a {restaurant_name}, y queremos asegurarnos de que todo esté bien.
+
+Tu opinión es muy importante para nosotros. Si hubo algo en tu última experiencia que no cumplió con tus expectativas, nos encantaría saberlo para poder mejorarlo.
+
+Estamos comprometidos a ofrecerte el mejor servicio posible, y tu feedback nos ayuda a lograrlo.
+
+¿Te gustaría que te contactemos para hablar sobre cómo podemos hacer que tu próxima visita sea perfecta?
+
+Valoramos mucho tu confianza.
+
+Atentamente,
+El equipo de {restaurant_name}`,
+        icon: "⚠️",
+        color: "orange"
+    },
     inactivo: {
         name: "Reactivación Cliente Inactivo",
         subject: "Te echamos de menos en {restaurant_name}",
@@ -110,26 +130,6 @@ Con cariño,
 El equipo de {restaurant_name}`,
         icon: "😴",
         color: "gray"
-    },
-    riesgo: {
-        name: "Cliente en Riesgo - Atención Especial",
-        subject: "¿Cómo podemos mejorar tu experiencia en {restaurant_name}?",
-        content: `Hola {customer_name},
-
-Hemos notado que ha pasado un tiempo desde tu última visita a {restaurant_name}, y queremos asegurarnos de que todo esté bien.
-
-Tu opinión es muy importante para nosotros. Si hubo algo en tu última experiencia que no cumplió con tus expectativas, nos encantaría saberlo para poder mejorarlo.
-
-Estamos comprometidos a ofrecerte el mejor servicio posible, y tu feedback nos ayuda a lograrlo.
-
-¿Te gustaría que te contactemos para hablar sobre cómo podemos hacer que tu próxima visita sea perfecta?
-
-Valoramos mucho tu confianza.
-
-Atentamente,
-El equipo de {restaurant_name}`,
-        icon: "⚠️",
-        color: "orange"
     }
 };
 
