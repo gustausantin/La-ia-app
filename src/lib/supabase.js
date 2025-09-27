@@ -13,7 +13,7 @@ log.debug('🔍 Configuración Supabase:');
 log.debug('URL:', supabaseUrl ? '✅ Configurada' : '❌ Falta');
 log.debug('Key:', supabaseKey ? '✅ Configurada' : '❌ Falta');
 
-// Cliente con configuración enterprise
+// Cliente con configuración enterprise y headers forzados
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
@@ -23,7 +23,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     storageKey: 'la-ia-auth-token',
     flowType: 'pkce',
     // Evitar errores de refresh en production
-    debug: false
+    debug: true // Activamos debug para ver qué pasa
   },
   realtime: {
     params: {
@@ -32,8 +32,10 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
   global: {
     headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
     }
   }
 });
