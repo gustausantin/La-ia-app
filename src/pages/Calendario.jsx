@@ -129,23 +129,11 @@ export default function Calendario() {
         window.addEventListener('force-restaurant-reload', handleRestaurantReload);
         window.addEventListener('schedule-updated', handleScheduleUpdate);
         
-        // También recargar cuando se enfoca la página
-        const handleFocus = () => {
-            initializeData();
-        };
-        
-        window.addEventListener('focus', handleFocus);
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                initializeData();
-            }
-        });
+        // Nota: Removidos listeners de focus/visibility que causaban recargas innecesarias
 
         return () => {
             window.removeEventListener('force-restaurant-reload', handleRestaurantReload);
             window.removeEventListener('schedule-updated', handleScheduleUpdate);
-            window.removeEventListener('focus', handleFocus);
-            document.removeEventListener('visibilitychange', handleFocus);
         };
     }, []);
 
@@ -167,41 +155,49 @@ export default function Calendario() {
 
             const savedHours = restaurantData?.settings?.operating_hours || {};
             
-            // Convertir horarios de operating_hours a formato de calendario
+            // 🏗️ CONVERSIÓN ROBUSTA: operating_hours → schedule format
             const loadedSchedule = daysOfWeek.map(day => {
                 const dayKey = day.id; // monday, tuesday, etc.
                 const dayHours = savedHours[dayKey];
                 
-                // LÓGICA SIMPLE: si hay dayHours y open es true, está abierto
-                const isOpen = dayHours && dayHours.open === true;
+                // Lógica robusta: verificar múltiples campos
+                const isOpen = Boolean(
+                    dayHours && 
+                    (dayHours.open === true || dayHours.is_open === true)
+                );
+                
+                // Construir slots robustos
+                let slots = [];
+                if (isOpen) {
+                    if (dayHours?.shifts && Array.isArray(dayHours.shifts) && dayHours.shifts.length > 0) {
+                        // Usar turnos guardados
+                        slots = dayHours.shifts.map(shift => ({
+                            id: shift.id || Date.now() + Math.random(),
+                            name: shift.name || "Turno",
+                            start_time: shift.start_time || shift.start || "09:00",
+                            end_time: shift.end_time || shift.end || "22:00"
+                        }));
+                    } else {
+                        // Crear turno por defecto
+                        slots = [{
+                            id: 1,
+                            name: "Horario Principal",
+                            start_time: dayHours?.start_time || dayHours?.start || "09:00",
+                            end_time: dayHours?.end_time || dayHours?.end || "22:00"
+                        }];
+                    }
+                }
                 
                 return {
                     day_of_week: day.id,
                     day_name: day.name,
                     is_open: isOpen,
-                    slots: isOpen ? (
-                        // CARGAR TURNOS GUARDADOS o crear uno por defecto
-                        dayHours?.shifts && dayHours.shifts.length > 0 
-                            ? dayHours.shifts.map(shift => ({
-                                id: shift.id || Date.now() + Math.random(),
-                                name: shift.name || "Turno",
-                                start_time: shift.start_time,
-                                end_time: shift.end_time
-                            }))
-                            : [{
-                            id: 1,
-                            name: "Horario Principal",
-                                start_time: dayHours?.start || "09:00",
-                                end_time: dayHours?.end || "22:00"
-                            }]
-                    ) : []
+                    slots: slots
                 };
             });
 
             setSchedule(loadedSchedule);
             
-            // Log simple
-            console.log("✅ Calendario configurado: Solo sábados abiertos 09:00-22:00");
             
             // Calcular estadísticas
             calculateStats(loadedSchedule);
@@ -262,27 +258,33 @@ export default function Calendario() {
         }
     }, [restaurantId]);
 
-    // LÓGICA ULTRA SIMPLE: SOLO SÁBADOS ABIERTOS - PUNTO
+    // 🏗️ SOLUCIÓN ROBUSTA: Respeta configuración Y permite cambios
     const getDaySchedule = useCallback((date) => {
         const dayOfWeekIndex = getDay(date); // 0 = domingo, 1 = lunes, etc.
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const dayName = dayNames[dayOfWeekIndex];
         
-        // HARDCODED: Solo sábados abiertos (index 6)
-        const isSaturday = dayOfWeekIndex === 6;
+        // Buscar en el schedule cargado (estado local actualizado)
+        const daySchedule = schedule.find(s => s.day_of_week === dayName);
         
+        if (daySchedule) {
+            return daySchedule;
+        }
+        
+        // Fallback: día cerrado si no está en schedule
         return {
             day_of_week: dayName,
-            day_name: dayNames[dayOfWeekIndex],
-            is_open: isSaturday,
-            slots: isSaturday ? [{
-                id: 1,
-                name: "Horario Principal",
-                start_time: "09:00",
-                end_time: "22:00"
-            }] : []
+            day_name: dayNames[dayOfWeekIndex] === 'sunday' ? 'Domingo' :
+                     dayNames[dayOfWeekIndex] === 'monday' ? 'Lunes' :
+                     dayNames[dayOfWeekIndex] === 'tuesday' ? 'Martes' :
+                     dayNames[dayOfWeekIndex] === 'wednesday' ? 'Miércoles' :
+                     dayNames[dayOfWeekIndex] === 'thursday' ? 'Jueves' :
+                     dayNames[dayOfWeekIndex] === 'friday' ? 'Viernes' :
+                     dayNames[dayOfWeekIndex] === 'saturday' ? 'Sábado' : dayName,
+            is_open: false,
+            slots: []
         };
-    }, []);
+    }, [schedule]);
 
     // Funciones de navegación del calendario
     const navigateMonth = (direction) => {
