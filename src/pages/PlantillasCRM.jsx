@@ -338,7 +338,7 @@ export default function PlantillasCRM() {
                 </div>
 
                 {/* Estadísticas */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                         <div className="flex items-center">
                             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -372,35 +372,6 @@ export default function PlantillasCRM() {
                                 <p className="text-sm font-medium text-gray-600">Tipos</p>
                                 <p className="text-2xl font-bold text-gray-900">
                                     {new Set(templates.map(t => t.segment || t.type)).size}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                        <div className="flex items-center">
-                            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <Sparkles className="w-6 h-6 text-orange-600" />
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Variables</p>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    {(() => {
-                                        // Obtener variables únicas de todas las plantillas
-                                        const allVariables = new Set();
-                                        templates.forEach(t => {
-                                            if (t.variables && Array.isArray(t.variables)) {
-                                                t.variables.forEach(v => allVariables.add(v));
-                                            }
-                                        });
-                                        // Añadir variables estándar que siempre están disponibles
-                                        allVariables.add('restaurant_name');
-                                        allVariables.add('customer_name');
-                                        allVariables.add('last_visit_date');
-                                        allVariables.add('reservation_date');
-                                        allVariables.add('customer_phone');
-                                        allVariables.add('customer_email');
-                                        return allVariables.size;
-                                    })()}
                                 </p>
                             </div>
                         </div>
