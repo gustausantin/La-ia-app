@@ -47,14 +47,14 @@ El equipo de {restaurant_name}`,
         icon: "⭐",
         color: "green"
     },
-    bib: {
-        name: "Promoción a Cliente BIB",
-        subject: "¡Felicidades! Ahora eres cliente BIB de {restaurant_name}",
+    vip: {
+        name: "Promoción a Cliente VIP",
+        subject: "¡Felicidades! Ahora eres cliente VIP de {restaurant_name}",
         content: `¡Hola {customer_name}!
 
-Nos complace informarte que ahora formas parte de nuestro programa exclusivo BIB (Best In Business) en {restaurant_name}.
+Nos complace informarte que ahora formas parte de nuestro programa exclusivo VIP (Very Important Person) en {restaurant_name}.
 
-Como cliente BIB, disfrutarás de beneficios especiales:
+Como cliente VIP, disfrutarás de beneficios especiales:
 • Reservas prioritarias
 • Mesa preferencial cuando esté disponible
 • Atención personalizada de nuestro equipo
@@ -70,6 +70,26 @@ Con gratitud,
 El equipo de {restaurant_name}`,
         icon: "👑",
         color: "purple"
+    },
+    noshow: {
+        name: "Seguimiento No-Show",
+        subject: "Te echamos de menos en {restaurant_name}",
+        content: `Hola {customer_name},
+
+Notamos que tenías una reserva con nosotros el {reservation_date} y no pudiste acompañarnos.
+
+Entendemos que a veces surgen imprevistos. No hay problema, estas cosas pasan.
+
+¿Te gustaría hacer una nueva reserva? Estaremos encantados de recibirte cuando te venga bien.
+
+Si hubo algún inconveniente que podamos resolver, por favor háznoslo saber. Tu experiencia es muy importante para nosotros.
+
+¡Esperamos verte pronto!
+
+Un saludo cordial,
+El equipo de {restaurant_name}`,
+        icon: "⏰",
+        color: "red"
     },
     inactivo: {
         name: "Reactivación Cliente Inactivo",
@@ -128,10 +148,10 @@ export default function PlantillasCRM() {
         try {
             setLoading(true);
             const { data, error } = await supabase
-                .from("crm_templates")
+                .from("message_templates")
                 .select("*")
                 .eq("restaurant_id", restaurantId)
-                .order("type", { ascending: true })
+                .order("segment", { ascending: true })
                 .order("priority", { ascending: true });
 
             if (error) throw error;
