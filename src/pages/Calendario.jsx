@@ -200,9 +200,22 @@ export default function Calendario() {
 
             setSchedule(loadedSchedule);
             
-            // Log simple para verificar que funciona
+            // 🐛 DEBUG CRÍTICO: Verificar inconsistencias
             const openDays = loadedSchedule.filter(d => d.is_open).map(d => d.day_name);
+            console.log("🔍 HORARIOS CARGADOS DESDE BD:", savedHours);
+            console.log("📅 SCHEDULE PROCESADO:", loadedSchedule.map(d => ({ 
+                day: d.day_name, 
+                open: d.is_open,
+                raw_data: savedHours[d.day_of_week]
+            })));
             console.log("✅ Días abiertos configurados:", openDays.join(", "));
+            
+            // Verificar si hay inconsistencias
+            if (openDays.length === 0) {
+                console.error("❌ ERROR: No hay días abiertos - revisar configuración");
+            } else if (openDays.length !== 1 || !openDays.includes("Sábado")) {
+                console.error("❌ ERROR: Configuración incorrecta. Esperado: solo Sábado. Actual:", openDays);
+            }
             
             // Calcular estadísticas
             calculateStats(loadedSchedule);
