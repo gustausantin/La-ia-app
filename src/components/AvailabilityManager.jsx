@@ -88,7 +88,12 @@ const AvailabilityManager = () => {
     const loadAvailabilityStats = async () => {
         try {
             // MÉTODO MATEMÁTICO - Evitar límite de 1000 de Supabase
-            console.log('📊 Calculando estadísticas matemáticamente...');
+            console.log('📊 Calculando estadísticas para restaurant:', restaurantId);
+            
+            if (!restaurantId) {
+                console.warn('⚠️ No hay restaurantId para cargar estadísticas');
+                return;
+            }
 
             // 1. Obtener TOTAL usando count (no tiene límite)
             const { count: totalSlots, error: totalError } = await supabase
@@ -97,17 +102,40 @@ const AvailabilityManager = () => {
                 .eq('restaurant_id', restaurantId)
                 .gte('slot_date', format(new Date(), 'yyyy-MM-dd'));
 
-            if (totalError) throw totalError;
+            if (totalError) {
+                console.error('❌ Error obteniendo total slots:', totalError);
+                throw totalError;
+            }
+            
+            console.log(`📊 Total slots encontrados: ${totalSlots || 0}`);
 
             // 2. Obtener OCUPADOS/RESERVADOS usando count
-            const { count: occupiedSlots, error: occupiedError } = await supabase
+            // Intentar con status primero, luego con is_available
+            let occupiedSlots = 0;
+            
+            // Primero intentar con status
+            const { count: statusOccupied, error: statusError } = await supabase
                 .from('availability_slots')
                 .select('id', { count: 'exact', head: true })
                 .eq('restaurant_id', restaurantId)
                 .gte('slot_date', format(new Date(), 'yyyy-MM-dd'))
                 .in('status', ['occupied', 'reserved']);
 
-            if (occupiedError) throw occupiedError;
+            if (!statusError && statusOccupied !== null) {
+                occupiedSlots = statusOccupied;
+            } else {
+                // Si falla, intentar con is_available = false
+                const { count: notAvailable, error: availError } = await supabase
+                    .from('availability_slots')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('restaurant_id', restaurantId)
+                    .gte('slot_date', format(new Date(), 'yyyy-MM-dd'))
+                    .eq('is_available', false);
+                
+                if (!availError && notAvailable !== null) {
+                    occupiedSlots = notAvailable;
+                }
+            }
 
             // 3. Obtener BLOQUEADOS usando count
             const { count: blockedSlots, error: blockedError } = await supabase
@@ -347,6 +375,9 @@ const AvailabilityManager = () => {
             }
 
 
+            // MOSTRAR RESTAURANT ID PARA DEBUG
+            console.log('🏪 GENERANDO PARA RESTAURANT ID:', restaurantId);
+            
             // Generar disponibilidades
             const { data, error } = await supabase.rpc('generate_availability_slots', {
                 p_restaurant_id: restaurantId,
@@ -504,6 +535,16 @@ const AvailabilityManager = () => {
     const loadDayAvailability = async (date) => {
         try {
             setLoadingDayView(true);
+            
+            console.log('🔍 Buscando disponibilidades para:', {
+                restaurant_id: restaurantId,
+                date: date
+            });
+            
+            // MOSTRAR EL RESTAURANT ID PARA DEBUG
+            console.log('🏪 TU RESTAURANT ID ES:', restaurantId);
+            console.log('📋 Copia este ID para usar en SQL:', restaurantId);
+            
             const { data, error } = await supabase
                 .from('availability_slots')
                 .select(`
@@ -512,6 +553,8 @@ const AvailabilityManager = () => {
                     start_time,
                     end_time,
                     status,
+                    is_available,
+                    duration_minutes,
                     table_id,
                     metadata,
                     tables(name, capacity, zone)
@@ -521,7 +564,12 @@ const AvailabilityManager = () => {
                 .order('start_time', { ascending: true })
                 .order('table_id', { ascending: true });
 
-            if (error) throw error;
+            if (error) {
+                console.error('❌ Error en consulta:', error);
+                throw error;
+            }
+            
+            console.log(`📊 Slots encontrados: ${data?.length || 0}`, data);
 
             // Verificar si es un día cerrado
             const closedDaySlot = data?.find(slot => 
