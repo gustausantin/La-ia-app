@@ -225,6 +225,7 @@ const CustomerModal = ({
                 last_name2: '',
                 email: '',
                 phone: '',
+                birthday: '',
                 visits_count: 0,
                 total_spent: 0,
                 avg_ticket: 0,
@@ -241,6 +242,8 @@ const CustomerModal = ({
                 segment_manual: '',
                 segment_auto: 'nuevo'
             });
+            // IMPORTANTE: Habilitar edición para nuevo cliente
+            setIsEditing(true);
         }
     }, [customer, isOpen, mode]);
 
