@@ -19,11 +19,11 @@ BEGIN
     
     -- Verificar plantillas existentes
     RAISE NOTICE 'Plantillas existentes:';
-    FOR rec IN 
+    FOR rec IN (
         SELECT name, segment, is_active FROM message_templates 
         WHERE restaurant_id = target_restaurant_id
         ORDER BY segment
-    LOOP
+    ) LOOP
         RAISE NOTICE '- %: % (activa: %)', rec.segment, rec.name, rec.is_active;
     END LOOP;
 
@@ -103,13 +103,13 @@ El equipo de {{restaurant_name}}',
 
     -- 4. Verificar que se crearon correctamente
     RAISE NOTICE 'Plantillas creadas:';
-    FOR rec IN 
+    FOR rec IN (
         SELECT name, segment, subject, is_active, created_at
         FROM message_templates 
         WHERE restaurant_id = target_restaurant_id
         AND segment IN ('activo', 'riesgo')
         ORDER BY segment
-    LOOP
+    ) LOOP
         RAISE NOTICE '✅ %: % (activa: %)', rec.segment, rec.name, rec.is_active;
     END LOOP;
 
