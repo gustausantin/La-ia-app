@@ -167,17 +167,13 @@ export default function Calendario() {
 
             const savedHours = restaurantData?.settings?.operating_hours || {};
             
-            console.log("🔄 Horarios cargados desde BD:", savedHours);
-
             // Convertir horarios de operating_hours a formato de calendario
             const loadedSchedule = daysOfWeek.map(day => {
                 const dayKey = day.id; // monday, tuesday, etc.
                 const dayHours = savedHours[dayKey];
                 
-                console.log(`📅 ${day.name}:`, dayHours);
-                
-                // CORREGIDO: usar dayHours.open para determinar si está abierto
-                const isOpen = dayHours ? dayHours.open === true : false;
+                // LÓGICA SIMPLE: si hay dayHours y open es true, está abierto
+                const isOpen = dayHours && dayHours.open === true;
                 
                 return {
                     day_of_week: day.id,
@@ -203,6 +199,10 @@ export default function Calendario() {
             });
 
             setSchedule(loadedSchedule);
+            
+            // Log simple para verificar que funciona
+            const openDays = loadedSchedule.filter(d => d.is_open).map(d => d.day_name);
+            console.log("✅ Días abiertos configurados:", openDays.join(", "));
             
             // Calcular estadísticas
             calculateStats(loadedSchedule);
@@ -263,30 +263,25 @@ export default function Calendario() {
         }
     }, [restaurantId]);
 
-    // Obtener horario de un día específico
+    // Obtener horario de un día específico - LÓGICA SIMPLE Y DIRECTA
     const getDaySchedule = useCallback((date) => {
         const dayOfWeekIndex = getDay(date); // 0 = domingo, 1 = lunes, etc.
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const dayName = dayNames[dayOfWeekIndex];
         
-        const daySchedule = schedule.find(s => s.day_of_week === dayName) || {
+        // Buscar en el schedule cargado desde la BD
+        const daySchedule = schedule.find(s => s.day_of_week === dayName);
+        
+        if (daySchedule) {
+            return daySchedule;
+        }
+        
+        // Si no existe en schedule, devolver cerrado
+        return {
             day_of_week: dayName,
             is_open: false,
             slots: []
         };
-        
-        // 🐛 DEBUG: Log para detectar inconsistencias
-        if (format(date, 'dd') === '01') { // Solo log el día 1 de cada mes para no spam
-            console.log(`🔍 DEBUG ${format(date, 'MMM yyyy')} - ${dayName}:`, {
-                date: format(date, 'yyyy-MM-dd'),
-                dayName,
-                is_open: daySchedule.is_open,
-                schedule_length: schedule.length,
-                all_schedule: schedule.map(s => ({ day: s.day_of_week, open: s.is_open }))
-            });
-        }
-        
-        return daySchedule;
     }, [schedule]);
 
     // Funciones de navegación del calendario
@@ -375,7 +370,6 @@ export default function Calendario() {
     // Manejar click en día del calendario
     const handleDayClick = useCallback((date) => {
         try {
-            console.log("Día seleccionado:", format(date, 'yyyy-MM-dd'));
             setSelectedDay(date);
             
             // Verificar si ya hay un evento en este día
