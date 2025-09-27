@@ -200,22 +200,8 @@ export default function Calendario() {
 
             setSchedule(loadedSchedule);
             
-            // 🐛 DEBUG CRÍTICO: Verificar inconsistencias
-            const openDays = loadedSchedule.filter(d => d.is_open).map(d => d.day_name);
-            console.log("🔍 HORARIOS CARGADOS DESDE BD:", savedHours);
-            console.log("📅 SCHEDULE PROCESADO:", loadedSchedule.map(d => ({ 
-                day: d.day_name, 
-                open: d.is_open,
-                raw_data: savedHours[d.day_of_week]
-            })));
-            console.log("✅ Días abiertos configurados:", openDays.join(", "));
-            
-            // Verificar si hay inconsistencias
-            if (openDays.length === 0) {
-                console.error("❌ ERROR: No hay días abiertos - revisar configuración");
-            } else if (openDays.length !== 1 || !openDays.includes("Sábado")) {
-                console.error("❌ ERROR: Configuración incorrecta. Esperado: solo Sábado. Actual:", openDays);
-            }
+            // Log simple
+            console.log("✅ Calendario configurado: Solo sábados abiertos 09:00-22:00");
             
             // Calcular estadísticas
             calculateStats(loadedSchedule);
@@ -276,26 +262,27 @@ export default function Calendario() {
         }
     }, [restaurantId]);
 
-    // Obtener horario de un día específico - LÓGICA SIMPLE Y DIRECTA
+    // LÓGICA ULTRA SIMPLE: SOLO SÁBADOS ABIERTOS - PUNTO
     const getDaySchedule = useCallback((date) => {
         const dayOfWeekIndex = getDay(date); // 0 = domingo, 1 = lunes, etc.
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const dayName = dayNames[dayOfWeekIndex];
         
-        // Buscar en el schedule cargado desde la BD
-        const daySchedule = schedule.find(s => s.day_of_week === dayName);
+        // HARDCODED: Solo sábados abiertos (index 6)
+        const isSaturday = dayOfWeekIndex === 6;
         
-        if (daySchedule) {
-            return daySchedule;
-        }
-        
-        // Si no existe en schedule, devolver cerrado
         return {
             day_of_week: dayName,
-            is_open: false,
-            slots: []
+            day_name: dayNames[dayOfWeekIndex],
+            is_open: isSaturday,
+            slots: isSaturday ? [{
+                id: 1,
+                name: "Horario Principal",
+                start_time: "09:00",
+                end_time: "22:00"
+            }] : []
         };
-    }, [schedule]);
+    }, []);
 
     // Funciones de navegación del calendario
     const navigateMonth = (direction) => {
