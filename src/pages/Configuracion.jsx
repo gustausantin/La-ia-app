@@ -102,8 +102,8 @@ const Configuracion = () => {
             external: { thefork_url: "", google_reserve_url: "" }
         },
         notifications: {
-            recipient_emails: [],
-            recipient_whatsapps: [],
+            reservation_emails: [],
+            system_emails: [],
             quiet_hours: { start: "", end: "", mode: "mute" },
             new_reservation: false,
             cancelled_reservation: false,
@@ -291,8 +291,8 @@ const Configuracion = () => {
                         }
                     },
                     notifications: {
-                        recipient_emails: restaurant.notifications?.recipient_emails || [],
-                        recipient_whatsapps: restaurant.notifications?.recipient_whatsapps || [],
+                        reservation_emails: restaurant.notifications?.reservation_emails || [],
+                        system_emails: restaurant.notifications?.system_emails || [],
                         quiet_hours: restaurant.notifications?.quiet_hours || { start: "", end: "", mode: "mute" },
                         new_reservation: restaurant.notifications?.new_reservation ?? false,
                         cancelled_reservation: restaurant.notifications?.cancelled_reservation ?? false,
@@ -436,9 +436,9 @@ const Configuracion = () => {
                 // Validaciones previas para notificaciones
                 const n = settings.notifications || {};
                 const anyEnabled = (n.new_reservation || n.cancelled_reservation || n.reservation_modified || n.agent_offline || n.integration_errors || n.system_save_errors || n.system_connection_errors || n.system_reservation_conflicts || n.system_config_incomplete) === true;
-                const hasRecipients = (Array.isArray(n.recipient_emails) && n.recipient_emails.length > 0) || (Array.isArray(n.recipient_whatsapps) && n.recipient_whatsapps.length > 0);
+                const hasRecipients = (Array.isArray(n.reservation_emails) && n.reservation_emails.length > 0) || (Array.isArray(n.system_emails) && n.system_emails.length > 0);
                 if (anyEnabled && !hasRecipients) {
-                    toast.error('Añade al menos un destinatario (email o WhatsApp).');
+                    toast.error('Añade al menos un email destinatario para las notificaciones.');
                     return;
                 }
                 // Defaults de horario silencioso
@@ -1172,38 +1172,40 @@ const Configuracion = () => {
                                             />
                                         </div>
                                         {/* Destinatarios y horario silencioso */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                        <div className="space-y-4 pt-2">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Emails destinatarios</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">📧 Emails para notificaciones de reservas</label>
                                                 <input
                                                     type="text"
-                                                    value={(settings.notifications?.recipient_emails || []).join(", ")}
+                                                    value={(settings.notifications?.reservation_emails || []).join(", ")}
                                                     onChange={(e) => setSettings(prev => ({
                                                         ...prev,
                                                         notifications: {
                                                             ...prev.notifications,
-                                                            recipient_emails: e.target.value.split(',').map(x => x.trim()).filter(Boolean)
+                                                            reservation_emails: e.target.value.split(',').map(x => x.trim()).filter(Boolean)
                                                         }
                                                     }))}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="ops@restaurante.com, direccion@restaurante.com"
+                                                    placeholder="reservas@restaurante.com, gerente@restaurante.com"
                                                 />
+                                                <p className="text-xs text-gray-500 mt-1">Para nueva reserva, cancelada y modificada</p>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">WhatsApp destinatarios</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">⚙️ Emails para notificaciones del sistema</label>
                                                 <input
                                                     type="text"
-                                                    value={(settings.notifications?.recipient_whatsapps || []).join(", ")}
+                                                    value={(settings.notifications?.system_emails || []).join(", ")}
                                                     onChange={(e) => setSettings(prev => ({
                                                         ...prev,
                                                         notifications: {
                                                             ...prev.notifications,
-                                                            recipient_whatsapps: e.target.value.split(',').map(x => x.trim()).filter(Boolean)
+                                                            system_emails: e.target.value.split(',').map(x => x.trim()).filter(Boolean)
                                                         }
                                                     }))}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="+34 600 000 000, +34 600 000 001"
+                                                    placeholder="admin@restaurante.com, soporte@restaurante.com"
                                                 />
+                                                <p className="text-xs text-gray-500 mt-1">Para errores del sistema, agente offline e integraciones</p>
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Horario silencioso (inicio)</label>
