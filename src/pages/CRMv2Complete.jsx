@@ -1379,6 +1379,10 @@ El equipo del restaurante`}
                     setShowCustomerModal(false);
                     setSelectedCustomer(null);
                 }}
+                onDelete={(customerId) => {
+                    // Eliminar cliente de la lista
+                    setCustomerFeatures(prev => prev.filter(c => c.id !== customerId));
+                }}
                 onSave={(updatedCustomer) => {
                     // Actualizar cliente en la lista
                     setCustomerFeatures(prev => prev.map(c => 

@@ -636,6 +636,11 @@ export default function Clientes() {
                     setSelectedCustomer(null);
                     setModalMode('view');
                 }}
+                onDelete={(customerId) => {
+                    // Eliminar cliente de la lista
+                    setCustomers(prev => prev.filter(c => c.id !== customerId));
+                    setFilteredCustomers(prev => prev.filter(c => c.id !== customerId));
+                }}
                 onSave={(updatedCustomer) => {
                     try {
                         // Actualizar cliente en la lista
