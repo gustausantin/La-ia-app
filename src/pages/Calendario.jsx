@@ -258,13 +258,19 @@ export default function Calendario() {
         }
     }, [restaurantId]);
 
-    // 🏗️ SOLUCIÓN ROBUSTA: Respeta configuración Y permite cambios
+    // SOLUCIÓN DEFINITIVA: Lógica correcta de días
     const getDaySchedule = useCallback((date) => {
         const dayOfWeekIndex = getDay(date); // 0 = domingo, 1 = lunes, etc.
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const dayName = dayNames[dayOfWeekIndex];
         
-        // Buscar en el schedule cargado (estado local actualizado)
+        // DEBUG para el primer día de cada mes
+        if (date.getDate() === 1) {
+            console.log(`📅 ${format(date, 'MMMM yyyy')} - Día 1 es ${dayName} (index: ${dayOfWeekIndex})`);
+            console.log('Schedule actual:', schedule.map(s => `${s.day_of_week}: ${s.is_open ? 'ABIERTO' : 'cerrado'}`));
+        }
+        
+        // Buscar en el schedule cargado
         const daySchedule = schedule.find(s => s.day_of_week === dayName);
         
         if (daySchedule) {
