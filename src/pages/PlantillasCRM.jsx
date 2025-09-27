@@ -130,6 +130,26 @@ Con cariño,
 El equipo de {restaurant_name}`,
         icon: "😴",
         color: "gray"
+    },
+    noshow: {
+        name: "Seguimiento No-Show",
+        subject: "Te echamos de menos en {restaurant_name}",
+        content: `Hola {customer_name},
+
+Notamos que tenías una reserva con nosotros el {reservation_date} y no pudiste acompañarnos.
+
+Entendemos que a veces surgen imprevistos. No hay problema, estas cosas pasan.
+
+¿Te gustaría hacer una nueva reserva? Estaremos encantados de recibirte cuando te venga bien.
+
+Si hubo algún inconveniente que podamos resolver, por favor háznoslo saber. Tu experiencia es muy importante para nosotros.
+
+¡Esperamos verte pronto!
+
+Un saludo cordial,
+El equipo de {restaurant_name}`,
+        icon: "⏰",
+        color: "red"
     }
 };
 
