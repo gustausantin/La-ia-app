@@ -109,7 +109,8 @@ export default function Calendario() {
     // Inicializar datos
     useEffect(() => {
         initializeData();
-    }, [restaurantId]);
+        loadEvents();
+    }, [restaurantId, loadEvents]);
 
     // Escuchar cambios de horarios desde Configuración
     useEffect(() => {
@@ -291,25 +292,108 @@ export default function Calendario() {
         closed: false
     });
 
+    // Cargar eventos especiales
+    const loadEvents = useCallback(async () => {
+        if (!restaurantId) return;
+        
+        try {
+            const { data, error } = await supabase
+                .from('special_events')
+                .select('*')
+                .eq('restaurant_id', restaurantId)
+                .order('event_date');
+            
+            if (error) throw error;
+            
+            setEvents(data || []);
+            console.log('✅ Eventos cargados:', data?.length || 0);
+        } catch (error) {
+            console.error('❌ Error cargando eventos:', error);
+        }
+    }, [restaurantId]);
+
+    // Guardar evento especial
+    const handleSaveEvent = async (e) => {
+        e.preventDefault();
+        if (!selectedDay || !restaurantId) return;
+        
+        try {
+            const eventDate = format(selectedDay, 'yyyy-MM-dd');
+            
+            const eventData = {
+                restaurant_id: restaurantId,
+                event_date: eventDate,
+                title: eventForm.title,
+                description: eventForm.description,
+                type: eventForm.type,
+                start_time: eventForm.closed ? null : eventForm.start_time,
+                end_time: eventForm.closed ? null : eventForm.end_time,
+                is_closed: eventForm.closed,
+                created_at: new Date().toISOString()
+            };
+            
+            const { data, error } = await supabase
+                .from('special_events')
+                .insert([eventData])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            
+            // Actualizar estado local
+            setEvents(prev => [...prev, data]);
+            
+            toast.success(`✅ Evento "${eventForm.title}" creado para ${format(selectedDay, 'dd/MM/yyyy')}`);
+            setShowEventModal(false);
+            
+            console.log('✅ Evento guardado:', data);
+        } catch (error) {
+            console.error('❌ Error guardando evento:', error);
+            toast.error('Error al guardar el evento');
+        }
+    };
+
+    // Obtener evento de un día específico
+    const getDayEvent = useCallback((date) => {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        return events.find(event => event.event_date === dateStr);
+    }, [events]);
+
     // Manejar click en día del calendario
     const handleDayClick = useCallback((date) => {
         try {
             console.log("Día seleccionado:", format(date, 'yyyy-MM-dd'));
             setSelectedDay(date);
-            setEventForm({
-                title: '',
-                description: '',
-                type: 'evento',
-                start_time: '09:00',
-                end_time: '22:00',
-                closed: false
-            });
+            
+            // Verificar si ya hay un evento en este día
+            const existingEvent = getDayEvent(date);
+            
+            if (existingEvent) {
+                setEventForm({
+                    title: existingEvent.title,
+                    description: existingEvent.description || '',
+                    type: existingEvent.type,
+                    start_time: existingEvent.start_time || '09:00',
+                    end_time: existingEvent.end_time || '22:00',
+                    closed: existingEvent.is_closed
+                });
+            } else {
+                setEventForm({
+                    title: '',
+                    description: '',
+                    type: 'evento',
+                    start_time: '09:00',
+                    end_time: '22:00',
+                    closed: false
+                });
+            }
+            
             setShowEventModal(true);
         } catch (error) {
             console.error("Error en handleDayClick:", error);
             toast.error("Error al seleccionar el día");
         }
-    }, []);
+    }, [getDayEvent]);
 
     // Guardar horario semanal
     const saveWeeklySchedule = async () => {
@@ -805,13 +889,14 @@ export default function Calendario() {
                                         const isToday = isSameDay(day, new Date());
                                         const isCurrentMonth = isSameMonth(day, currentDate);
                                         const daySchedule = getDaySchedule(day);
+                                        const dayEvent = getDayEvent(day);
 
                                         return (
                                             <div
                                                 key={index}
                                                 className={`min-h-[120px] p-2 border-b border-r border-gray-100 ${
                                                     isCurrentMonth ? 'bg-white' : 'bg-gray-50'
-                                                } ${isToday ? 'bg-blue-50' : ''} hover:bg-gray-50 cursor-pointer`}
+                                                } ${isToday ? 'bg-blue-50' : ''} ${dayEvent ? 'bg-yellow-50' : ''} hover:bg-gray-50 cursor-pointer`}
                                                 onClick={() => handleDayClick(day)}
                                             >
                                                 <div className={`text-sm font-medium mb-1 ${
@@ -821,17 +906,25 @@ export default function Calendario() {
                                                 </div>
 
                                                 {/* Estado del día */}
-                                                    <div className="space-y-1">
-                                                    {daySchedule.is_open ? (
+                                                <div className="space-y-1">
+                                                    {dayEvent ? (
+                                                        <div className={`text-xs px-2 py-1 rounded ${
+                                                            dayEvent.is_closed 
+                                                                ? 'text-red-600 bg-red-100' 
+                                                                : 'text-orange-600 bg-orange-100'
+                                                        }`}>
+                                                            {dayEvent.is_closed ? '🔒 ' : '🎉 '}{dayEvent.title}
+                                                        </div>
+                                                    ) : daySchedule.is_open ? (
                                                         <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
                                                             Abierto {daySchedule.slots[0]?.start_time}-{daySchedule.slots[0]?.end_time}
                                                         </div>
                                                     ) : (
                                                         <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">
                                                             Cerrado
-                                                    </div>
-                                                )}
-                                                    </div>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         );
                                     })}
@@ -881,12 +974,7 @@ export default function Calendario() {
                             </button>
                         </div>
 
-                        <form onSubmit={(e) => {
-                            e.preventDefault();
-                            // Aquí iría la lógica para guardar el evento
-                            toast.success(`✅ Evento "${eventForm.title}" creado para ${format(selectedDay, 'dd/MM/yyyy')}`);
-                            setShowEventModal(false);
-                        }} className="space-y-4">
+                        <form onSubmit={handleSaveEvent} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Título del evento
