@@ -157,12 +157,15 @@ export default function Calendario() {
             const savedHours = restaurantData?.settings?.operating_hours || {};
             
             console.log('\n🔄 CARGANDO HORARIOS DESDE BD...');
-            console.log('Datos raw:', savedHours);
+            console.log('Datos raw completos:', JSON.stringify(savedHours, null, 2));
             
             // 🏗️ CONVERSIÓN ROBUSTA: operating_hours → schedule format
             const loadedSchedule = daysOfWeek.map(day => {
                 const dayKey = day.id; // monday, tuesday, etc.
                 const dayHours = savedHours[dayKey];
+                
+                console.log(`\n🔍 PROCESANDO ${dayKey.toUpperCase()}:`);
+                console.log('  - Datos raw:', JSON.stringify(dayHours, null, 2));
                 
                 // Lógica robusta: verificar múltiples campos
                 const isOpen = Boolean(
@@ -170,7 +173,8 @@ export default function Calendario() {
                     (dayHours.open === true || dayHours.is_open === true)
                 );
                 
-                console.log(`  ${dayKey}: ${isOpen ? '✅ ABIERTO' : '❌ CERRADO'} - data:`, dayHours);
+                console.log(`  - ¿Está abierto? ${isOpen ? '✅ SÍ' : '❌ NO'}`);
+                console.log(`  - Condición: dayHours=${!!dayHours}, open=${dayHours?.open}, is_open=${dayHours?.is_open}`);
                 
                 // Construir slots robustos
                 let slots = [];
