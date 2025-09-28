@@ -1231,8 +1231,8 @@ export default function Reservas() {
             setPolicySettings({
                 min_party_size: settings.min_party_size || 1,
                 max_party_size: settings.max_party_size || 20,
-                advance_booking_days: settings.horizon_days || 30,
-                reservation_duration: settings.turn_duration_minutes || 90,
+                advance_booking_days: settings.advance_booking_days || 30,
+                reservation_duration: settings.reservation_duration || 90,
                 min_advance_hours: settings.min_advance_hours || 2
             });
         } catch (error) {
