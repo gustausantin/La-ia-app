@@ -545,10 +545,10 @@ const AvailabilityManager = () => {
                 duration: duration,
                 buffer: 15, // Buffer por defecto en minutos
                 timestamp: new Date().toLocaleString(),
-                // 🔒 DATOS REALES: Calcular disponibles = creados (inicialmente todos disponibles)
-                totalAvailable: slotsCreated, // Todos los slots recién creados están disponibles
-                totalOccupied: 0, // Inicialmente ninguno ocupado
-                totalReserved: 0  // Inicialmente ninguno reservado
+                // 🔒 DATOS REALES: Se cargarán desde la base de datos
+                totalAvailable: null, // Se cargará con datos reales
+                totalOccupied: null,  // Se cargará con datos reales  
+                totalReserved: null   // Se cargará con datos reales
             };
             
             setGenerationSuccess(successData);
@@ -560,9 +560,9 @@ const AvailabilityManager = () => {
                 // Silencioso - no es crítico
             }
             
-            // 🔒 NO cargar estadísticas automáticamente - preservar generationSuccess
-            // Solo cargar el grid para mostrar los slots específicos
+            // 🔒 CARGAR ESTADÍSTICAS REALES INMEDIATAMENTE
             setTimeout(async () => {
+                await loadAvailabilityStats(); // Esto cargará los datos reales
                 await loadAvailabilityGrid();
             }, 500);
 
