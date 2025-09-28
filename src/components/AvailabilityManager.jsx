@@ -265,12 +265,10 @@ const AvailabilityManager = () => {
             const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
 
             console.log('🗑️ BORRAR DISPONIBILIDADES:');
-            console.log('   📅 Período:', today, 'hasta', endDate);
+            console.log('   🏪 Restaurante:', restaurantId);
 
-            const { data, error } = await supabase.rpc('smart_cleanup_availability', {
-                p_restaurant_id: restaurantId,
-                p_start_date: today,
-                p_end_date: endDate
+            const { data, error } = await supabase.rpc('borrar_disponibilidades_simple', {
+                p_restaurant_id: restaurantId
             });
 
             if (error) {
