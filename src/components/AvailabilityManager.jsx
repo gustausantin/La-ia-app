@@ -326,7 +326,7 @@ const AvailabilityManager = () => {
             toast.loading('Regeneración inteligente en proceso...', { id: 'smart-generating' });
             
             const today = format(new Date(), 'yyyy-MM-dd');
-            const advanceDays = restaurantSettings?.advance_booking_days || 90;
+            const advanceDays = restaurantSettings?.advance_booking_days || 30;
             const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
 
 
@@ -398,12 +398,10 @@ const AvailabilityManager = () => {
                 console.warn('No se pudo guardar en localStorage:', error);
             }
             
-            // Recargar estadísticas
+            // 🔒 NO cargar estadísticas automáticamente - preservar generationSuccess
+            // Solo cargar el grid para mostrar los slots específicos
             setTimeout(async () => {
-                await Promise.all([
-                    loadAvailabilityStats(),
-                    loadAvailabilityGrid()
-                ]);
+                await loadAvailabilityGrid();
             }, 500);
 
         } catch (error) {
@@ -463,6 +461,14 @@ const AvailabilityManager = () => {
             // MOSTRAR RESTAURANT ID PARA DEBUG
             console.log('🏪 GENERANDO PARA RESTAURANT ID:', restaurantId);
             
+            // 🔍 DEBUG: Logs críticos para investigar el problema
+            console.log('🔍 DEBUG GENERACIÓN:');
+            console.log('   📊 restaurantSettings:', restaurantSettings);
+            console.log('   📅 advance_booking_days configurado:', restaurantSettings?.advance_booking_days);
+            console.log('   📅 advanceDays calculado:', advanceDays);
+            console.log('   📅 Fecha inicio:', today);
+            console.log('   📅 Fecha fin:', endDate);
+            
             // Generar disponibilidades usando la duración configurada
             const duration = restaurantSettings?.reservation_duration || 90;
             console.log('🕒 Usando duración configurada:', duration, 'minutos');
@@ -479,6 +485,11 @@ const AvailabilityManager = () => {
                 throw error;
             }
             
+            // 🔍 DEBUG: Ver exactamente qué devuelve la función SQL
+            console.log('🔍 DEBUG RESULTADO SQL:');
+            console.log('   📊 data completo:', data);
+            console.log('   📊 slots_created:', data?.slots_created);
+            console.log('   📊 success:', data?.success);
 
             toast.dismiss('generating');
             
@@ -508,12 +519,18 @@ const AvailabilityManager = () => {
             });
 
             // Actualizar estado local inmediatamente para reflejar cambios
+            // 🔒 USAR SOLO DATOS REALES DE LA FUNCIÓN SQL - NO INVENTAR
+            const slotsCreated = data?.slots_created || 0;
             const successData = {
-                slotsCreated: data.slots_created || 0,
+                slotsCreated: slotsCreated,
                 dateRange: `HOY hasta ${endDateFormatted}`,
                 duration: duration,
                 buffer: 15, // Buffer por defecto en minutos
-                timestamp: new Date().toLocaleString()
+                timestamp: new Date().toLocaleString(),
+                // 🔒 DATOS REALES: Calcular disponibles = creados (inicialmente todos disponibles)
+                totalAvailable: slotsCreated, // Todos los slots recién creados están disponibles
+                totalOccupied: 0, // Inicialmente ninguno ocupado
+                totalReserved: 0  // Inicialmente ninguno reservado
             };
             
             setGenerationSuccess(successData);
@@ -525,12 +542,10 @@ const AvailabilityManager = () => {
                 // Silencioso - no es crítico
             }
             
-            // Recargar estadísticas con un pequeño delay para asegurar consistencia
+            // 🔒 NO cargar estadísticas automáticamente - preservar generationSuccess
+            // Solo cargar el grid para mostrar los slots específicos
             setTimeout(async () => {
-                await Promise.all([
-                    loadAvailabilityStats(),
-                    loadAvailabilityGrid()
-                ]);
+                await loadAvailabilityGrid();
             }, 500);
 
         } catch (error) {
@@ -543,31 +558,109 @@ const AvailabilityManager = () => {
     };
 
     // Limpiar disponibilidades
-    const clearAvailability = async () => {
-        if (!confirm('⚠️ ¿Estás seguro de eliminar TODA la tabla de disponibilidades?\n\nEsta acción no se puede deshacer.')) {
+    // 🧠 LIMPIEZA INTELIGENTE: Elimina slots sin reservas, preserva con reservas
+    const smartCleanupAndRegenerate = async () => {
+        if (!restaurantId || !restaurantSettings) {
+            toast.error('❌ Faltan datos de configuración');
             return;
         }
 
+        const confirmed = confirm(
+            '🧠 LIMPIEZA INTELIGENTE + REGENERACIÓN\n\n' +
+            '✅ ACCIONES SEGURAS:\n' +
+            '• Eliminará slots SIN reservas\n' +
+            '• Preservará slots CON reservas confirmadas\n' +
+            '• Generará nuevos slots según configuración actual\n\n' +
+            '🛡️ Las reservas confirmadas están 100% protegidas\n\n' +
+            '¿Continuar con la limpieza inteligente?'
+        );
+
+        if (!confirmed) return;
+
         try {
             setLoading(true);
-            toast.loading('Eliminando disponibilidades...', { id: 'clearing' });
+            toast.loading('🧠 Limpieza inteligente + regeneración...', { id: 'smart-cleanup' });
 
-            const { error } = await supabase
-                .from('availability_slots')
-                .delete()
-                .eq('restaurant_id', restaurantId);
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const advanceDays = restaurantSettings?.advance_booking_days || 30;
+            const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
+            const duration = restaurantSettings?.reservation_duration || 90;
 
-            if (error) throw error;
+            console.log('🧠 LIMPIEZA + REGENERACIÓN INTELIGENTE:');
+            console.log('   📅 Período:', today, 'hasta', endDate);
+            console.log('   🕒 Duración:', duration, 'minutos');
 
-            toast.dismiss('clearing');
-            toast.success('✅ Tabla de disponibilidades eliminada');
-            
-            await loadAvailabilityStats();
+            const { data, error } = await supabase.rpc('cleanup_and_regenerate_availability', {
+                p_restaurant_id: restaurantId,
+                p_start_date: today,
+                p_end_date: endDate,
+                p_slot_duration_minutes: duration
+            });
+
+            if (error) {
+                console.error('❌ Error en limpieza inteligente:', error);
+                throw error;
+            }
+
+            console.log('🧠 Resultado limpieza inteligente:', data);
+
+            toast.dismiss('smart-cleanup');
+
+            if (data?.success) {
+                const slotsCreated = data?.total_slots_created || 0;
+                const reservationsProtected = data?.reservations_protected || 0;
+
+                toast.success(
+                    `🧠 Limpieza Inteligente Completada:\n\n` +
+                    `✅ ${slotsCreated} slots generados\n` +
+                    `🛡️ ${reservationsProtected} reservas protegidas\n` +
+                    `🗑️ Slots sin reservas eliminados\n\n` +
+                    `¡Disponibilidades actualizadas correctamente!`,
+                    { 
+                        duration: 6000,
+                        style: { 
+                            minWidth: '400px',
+                            whiteSpace: 'pre-line',
+                            fontSize: '14px'
+                        }
+                    }
+                );
+
+                // Actualizar estado local con datos reales
+                const successData = {
+                    slotsCreated: slotsCreated,
+                    dateRange: `HOY hasta ${format(addDays(new Date(), advanceDays), 'dd/MM/yyyy')}`,
+                    duration: duration,
+                    buffer: 15,
+                    timestamp: new Date().toLocaleString(),
+                    totalAvailable: slotsCreated - reservationsProtected,
+                    totalOccupied: 0,
+                    totalReserved: reservationsProtected,
+                    smartCleanup: true
+                };
+
+                setGenerationSuccess(successData);
+
+                // Guardar en localStorage
+                try {
+                    localStorage.setItem(`generationSuccess_${restaurantId}`, JSON.stringify(successData));
+                } catch (error) {
+                    console.warn('No se pudo guardar en localStorage:', error);
+                }
+
+                // Solo cargar el grid
+                setTimeout(async () => {
+                    await loadAvailabilityGrid();
+                }, 500);
+
+            } else {
+                throw new Error(data?.error || 'Error desconocido en limpieza inteligente');
+            }
 
         } catch (error) {
-            console.error('Error eliminando disponibilidades:', error);
-            toast.dismiss('clearing');
-            toast.error('❌ Error: ' + error.message);
+            console.error('Error en limpieza inteligente:', error);
+            toast.dismiss('smart-cleanup');
+            toast.error('❌ Error en limpieza inteligente: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -809,25 +902,27 @@ const AvailabilityManager = () => {
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
                         <div className="text-center bg-white rounded-lg p-3 border border-green-200">
                             <div className="text-2xl font-bold text-green-700">
-                                {generationSuccess?.slotsCreated || availabilityStats?.total || 0}
+                                {generationSuccess ? generationSuccess.slotsCreated : (availabilityStats?.total || 0)}
                             </div>
-                            <div className="text-xs text-green-600">Slots Creados</div>
+                            <div className="text-xs text-green-600">
+                                {generationSuccess ? 'Slots Creados' : 'Total Slots'}
+                            </div>
                         </div>
                         <div className="text-center bg-white rounded-lg p-3 border border-green-200">
                             <div className="text-lg font-bold text-blue-700">
-                                {availabilityStats?.free || 0}
+                                {generationSuccess ? generationSuccess.totalAvailable : (availabilityStats?.free || 0)}
                             </div>
                             <div className="text-xs text-blue-600">Disponibles</div>
                         </div>
                         <div className="text-center bg-white rounded-lg p-3 border border-green-200">
                             <div className="text-lg font-bold text-red-700">
-                                {availabilityStats?.occupied || 0}
+                                {generationSuccess ? generationSuccess.totalOccupied : (availabilityStats?.occupied || 0)}
                             </div>
                             <div className="text-xs text-red-600">Ocupados</div>
                         </div>
                         <div className="text-center bg-white rounded-lg p-3 border border-green-200">
                             <div className="text-lg font-bold text-purple-700">
-                                {availabilityStats?.reservationsFound || 0}
+                                {generationSuccess ? generationSuccess.totalReserved : (availabilityStats?.reservationsFound || 0)}
                             </div>
                             <div className="text-xs text-purple-600">Con Reservas</div>
                         </div>
@@ -952,7 +1047,14 @@ const AvailabilityManager = () => {
                     {loading ? 'Generando...' : 'Generar Disponibilidades'}
                 </button>
 
-
+                <button
+                    onClick={smartCleanupAndRegenerate}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                >
+                    {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><span className="text-lg">🧠</span></>}
+                    {loading ? 'Limpiando...' : 'Limpieza Inteligente'}
+                </button>
             </div>
 
             {/* Selector de día específico */}
@@ -1058,7 +1160,7 @@ const AvailabilityManager = () => {
                         ) : (
                             <>
                                 {format(new Date(), 'dd/MM/yyyy', { locale: es })} - {' '}
-                                {format(addDays(new Date(), restaurantSettings?.advance_booking_days || 90), 'dd/MM/yyyy', { locale: es })}
+                                {format(addDays(new Date(), restaurantSettings?.advance_booking_days || 30), 'dd/MM/yyyy', { locale: es })}
                             </>
                         )}
                     </div>
