@@ -237,78 +237,98 @@ const AvailabilityManager = () => {
     // 🔒 REGLA SAGRADA: NUNCA ELIMINAR RESERVAS
     // Esta función SOLO limpia la UI - JAMÁS toca la tabla 'reservations'
     // Las reservas son SAGRADAS y solo se eliminan manualmente desde Reservas.jsx
+    // 🗑️ BORRAR DISPONIBILIDADES: Elimina slots sin reservas, preserva ocupados
     const handleSmartCleanup = async () => {
+        if (!restaurantId) {
+            toast.error('❌ Falta ID del restaurante');
+            return;
+        }
+
+        const confirmed = confirm(
+            '🗑️ BORRAR DISPONIBILIDADES\n\n' +
+            '✅ ACCIÓN:\n' +
+            '• Eliminará slots disponibles (sin reservas)\n' +
+            '• Mantendrá slots ocupados (con reservas)\n' +
+            '• Resultado: Solo quedarán las reservas confirmadas\n\n' +
+            '🛡️ Las reservas están 100% protegidas\n\n' +
+            '¿Continuar?'
+        );
+
+        if (!confirmed) return;
+
         try {
-            // 1. Verificar si hay reservas confirmadas
+            setLoading(true);
+            toast.loading('🗑️ Borrando disponibilidades...', { id: 'cleanup' });
+
             const today = format(new Date(), 'yyyy-MM-dd');
             const advanceDays = restaurantSettings?.advance_booking_days || 30;
             const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
-            
-            const conflicts = await detectConflicts(today, endDate);
-            
-            if (conflicts > 0) {
-                // Hay reservas confirmadas - solo limpiar UI, no tocar BD
-                const confirmed = confirm(
-                    `⚠️ LIMPIEZA INTELIGENTE\n\n` +
-                    `Se encontraron ${conflicts} reservas confirmadas.\n\n` +
-                    `✅ ACCIÓN SEGURA:\n` +
-                    `• Solo se limpiará la interfaz visual\n` +
-                    `• Las reservas confirmadas se mantendrán intactas\n` +
-                    `• Los slots ocupados permanecerán protegidos\n\n` +
-                    `¿Continuar con la limpieza segura?`
-                );
-                
-                if (confirmed) {
-                    // Solo limpiar UI - mantener datos críticos
-                    setGenerationSuccess(null);
-                    setAvailabilityStats(null);
-                    setAvailabilityGrid([]);
-                    try {
-                        localStorage.removeItem(`generationSuccess_${restaurantId}`);
-                    } catch (error) {
-                        // Silencioso
-                    }
-                    
-                    toast.success(
-                        `🛡️ Limpieza segura completada\n` +
-                        `• Interfaz limpiada\n` +
-                        `• ${conflicts} reservas protegidas\n` +
-                        `• Disponibilidades intactas`,
-                        { duration: 4000 }
-                    );
-                }
-            } else {
-                // No hay reservas - limpieza completa disponible
-                const confirmed = confirm(
-                    `🧹 LIMPIEZA COMPLETA DISPONIBLE\n\n` +
-                    `No se encontraron reservas confirmadas.\n\n` +
-                    `✅ OPCIONES DISPONIBLES:\n` +
-                    `• Limpiar solo la interfaz visual\n` +
-                    `• O regenerar completamente las disponibilidades\n\n` +
-                    `¿Quieres solo limpiar la interfaz?`
-                );
-                
-                if (confirmed) {
-                    setGenerationSuccess(null);
-                    setAvailabilityStats(null);
-                    setAvailabilityGrid([]);
-                    try {
-                        localStorage.removeItem(`generationSuccess_${restaurantId}`);
-                    } catch (error) {
-                        // Silencioso
-                    }
-                    
-                    toast.success(
-                        `✅ Interfaz limpiada correctamente\n` +
-                        `💡 Tip: Puedes regenerar disponibilidades si lo necesitas`,
-                        { duration: 3000 }
-                    );
-                }
+
+            console.log('🗑️ BORRAR DISPONIBILIDADES:');
+            console.log('   📅 Período:', today, 'hasta', endDate);
+
+            const { data, error } = await supabase.rpc('smart_cleanup_availability', {
+                p_restaurant_id: restaurantId,
+                p_start_date: today,
+                p_end_date: endDate
+            });
+
+            if (error) {
+                console.error('❌ Error borrando:', error);
+                throw error;
             }
-            
+
+            console.log('🗑️ Resultado borrado:', data);
+
+            toast.dismiss('cleanup');
+
+            if (data?.success) {
+                const slotsDeleted = data?.slots_deleted || 0;
+                const slotsPreserved = data?.slots_preserved || 0;
+                const slotsAfter = data?.slots_after || 0;
+
+                toast.success(
+                    `🗑️ Disponibilidades Borradas:\n\n` +
+                    `🗑️ ${slotsDeleted} slots eliminados\n` +
+                    `🛡️ ${slotsPreserved} reservas mantenidas\n` +
+                    `📊 Total restante: ${slotsAfter}\n\n` +
+                    `${slotsAfter === 0 ? '✅ Sin disponibilidades - Solo reservas' : '✅ Solo quedan las reservas confirmadas'}`,
+                    { 
+                        duration: 5000,
+                        style: { 
+                            minWidth: '350px',
+                            whiteSpace: 'pre-line',
+                            fontSize: '14px'
+                        }
+                    }
+                );
+
+                // Limpiar estado local y recargar
+                setGenerationSuccess(null);
+                setAvailabilityStats(null);
+                setAvailabilityGrid([]);
+                
+                try {
+                    localStorage.removeItem(`generationSuccess_${restaurantId}`);
+                } catch (error) {
+                    console.warn('No se pudo limpiar localStorage:', error);
+                }
+
+                // Recargar datos reales
+                setTimeout(async () => {
+                    await loadAvailabilityStats();
+                }, 500);
+
+            } else {
+                throw new Error(data?.error || 'Error desconocido');
+            }
+
         } catch (error) {
-            console.error('Error en limpieza inteligente:', error);
-            toast.error('Error al verificar reservas. Limpieza cancelada por seguridad.');
+            console.error('Error borrando disponibilidades:', error);
+            toast.dismiss('cleanup');
+            toast.error('❌ Error: ' + error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -558,7 +578,104 @@ const AvailabilityManager = () => {
     };
 
     // Limpiar disponibilidades
-    // 🧠 LIMPIEZA INTELIGENTE: Elimina slots sin reservas, preserva con reservas
+    // 🧹 SOLO LIMPIEZA: Elimina slots sin reservas, preserva con reservas, NO regenera
+    const smartCleanupOnly = async () => {
+        if (!restaurantId) {
+            toast.error('❌ Falta ID del restaurante');
+            return;
+        }
+
+        const confirmed = confirm(
+            '🧹 SOLO LIMPIEZA INTELIGENTE\n\n' +
+            '✅ ACCIONES:\n' +
+            '• Eliminará slots SIN reservas\n' +
+            '• Preservará slots CON reservas confirmadas\n' +
+            '• NO generará slots nuevos\n\n' +
+            '🛡️ Las reservas confirmadas están 100% protegidas\n' +
+            '📊 Resultado: Si no hay reservas → 0 slots\n\n' +
+            '¿Continuar con la limpieza?'
+        );
+
+        if (!confirmed) return;
+
+        try {
+            setLoading(true);
+            toast.loading('🧹 Limpieza inteligente...', { id: 'smart-cleanup-only' });
+
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const advanceDays = restaurantSettings?.advance_booking_days || 30;
+            const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
+
+            console.log('🧹 SOLO LIMPIEZA INTELIGENTE:');
+            console.log('   📅 Período:', today, 'hasta', endDate);
+
+            const { data, error } = await supabase.rpc('smart_cleanup_availability', {
+                p_restaurant_id: restaurantId,
+                p_start_date: today,
+                p_end_date: endDate
+            });
+
+            if (error) {
+                console.error('❌ Error en limpieza:', error);
+                throw error;
+            }
+
+            console.log('🧹 Resultado limpieza:', data);
+
+            toast.dismiss('smart-cleanup-only');
+
+            if (data?.success) {
+                const slotsDeleted = data?.slots_deleted || 0;
+                const slotsPreserved = data?.slots_preserved || 0;
+                const slotsAfter = data?.slots_after || 0;
+
+                toast.success(
+                    `🧹 Limpieza Completada:\n\n` +
+                    `🗑️ ${slotsDeleted} slots eliminados (sin reservas)\n` +
+                    `🛡️ ${slotsPreserved} slots preservados (con reservas)\n` +
+                    `📊 Total restante: ${slotsAfter} slots\n\n` +
+                    `${slotsAfter === 0 ? '✅ Tabla limpia - Sin disponibilidades' : '✅ Solo reservas confirmadas preservadas'}`,
+                    { 
+                        duration: 6000,
+                        style: { 
+                            minWidth: '400px',
+                            whiteSpace: 'pre-line',
+                            fontSize: '14px'
+                        }
+                    }
+                );
+
+                // Limpiar estado local completamente
+                setGenerationSuccess(null);
+                setAvailabilityStats(null);
+                setAvailabilityGrid([]);
+                
+                // Limpiar localStorage
+                try {
+                    localStorage.removeItem(`generationSuccess_${restaurantId}`);
+                } catch (error) {
+                    console.warn('No se pudo limpiar localStorage:', error);
+                }
+
+                // Recargar stats reales
+                setTimeout(async () => {
+                    await loadAvailabilityStats();
+                }, 500);
+
+            } else {
+                throw new Error(data?.error || 'Error desconocido en limpieza');
+            }
+
+        } catch (error) {
+            console.error('Error en limpieza:', error);
+            toast.dismiss('smart-cleanup-only');
+            toast.error('❌ Error en limpieza: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 🔄 LIMPIEZA + REGENERACIÓN: Elimina slots sin reservas, preserva con reservas, regenera nuevos
     const smartCleanupAndRegenerate = async () => {
         if (!restaurantId || !restaurantSettings) {
             toast.error('❌ Faltan datos de configuración');
@@ -958,7 +1075,7 @@ const AvailabilityManager = () => {
                         onClick={handleSmartCleanup}
                         className="text-xs text-green-600 hover:text-green-800 underline ml-4"
                     >
-                        🧠 Limpiar estado inteligente
+                        🗑️ Borrar Disponibilidades
                     </button>
                     </div>
                 </div>
@@ -1047,14 +1164,6 @@ const AvailabilityManager = () => {
                     {loading ? 'Generando...' : 'Generar Disponibilidades'}
                 </button>
 
-                <button
-                    onClick={smartCleanupAndRegenerate}
-                    disabled={loading}
-                    className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
-                >
-                    {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><span className="text-lg">🧠</span></>}
-                    {loading ? 'Limpiando...' : 'Limpieza Inteligente'}
-                </button>
             </div>
 
             {/* Selector de día específico */}
