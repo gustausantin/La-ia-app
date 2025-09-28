@@ -1,4 +1,0 @@
-Deploy trigger file
-Timestamp: 2025-02-23 14:45:00
-Purpose: Force Vercel to detect all commits including opus 4 and opus 5
-This file can be deleted after successful deployment.
