@@ -491,7 +491,7 @@ const AvailabilityManager = () => {
             const duration = restaurantSettings?.reservation_duration || 90;
             console.log('🕒 Usando duración configurada:', duration, 'minutos');
             
-            const { data, error } = await supabase.rpc('generate_availability_slots', {
+            const { data, error } = await supabase.rpc('generate_availability_slots_smart_check', {
                 p_restaurant_id: restaurantId,
                 p_start_date: today,
                 p_end_date: endDate,
@@ -511,30 +511,60 @@ const AvailabilityManager = () => {
 
             toast.dismiss('generating');
             
-            // Crear mensaje de resumen inteligente ANTES de recargar
-            // duration ya está declarado arriba (línea 467)
+            // Crear mensaje inteligente basado en la acción
             const endDateFormatted = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
             
-            // Mostrar mensaje de éxito inmediato
-            const summaryMessage = `✅ Disponibilidades generadas exitosamente:
+            let summaryMessage = '';
             
+            if (data.action === 'no_changes_detected') {
+                // No había cambios - mostrar mensaje informativo
+                summaryMessage = `ℹ️ No hay disponibilidades nuevas que generar:
+
+📊 ESTADO ACTUAL:
+• ${data.current_slots || 0} slots ya existentes
+• Período: HOY hasta ${endDateFormatted} (${advanceDays} días)
+• Duración: ${duration} min por reserva
+• Última generación: ${data.last_generation ? new Date(data.last_generation).toLocaleString() : 'No disponible'}
+
+✅ Motivo: ${data.reason}
+
+🎯 Las disponibilidades están actualizadas.`;
+                
+                toast.info(summaryMessage, { 
+                    duration: 6000,
+                    style: { 
+                        minWidth: '450px',
+                        whiteSpace: 'pre-line',
+                        fontSize: '14px'
+                    }
+                });
+            } else {
+                // Hubo regeneración - mostrar mensaje de éxito
+                const changesDetected = data.changes_detected ? data.changes_detected.join(', ') : 'Cambios detectados';
+                
+                summaryMessage = `✅ Disponibilidades regeneradas exitosamente:
+
 📊 RESUMEN:
-• ${data.slots_created || 0} slots creados
+• ${data.slots_created || 0} slots nuevos creados
+• ${data.slots_updated || 0} slots actualizados
+• ${data.slots_preserved || 0} reservas preservadas
 • Desde HOY hasta ${endDateFormatted} (${advanceDays} días)
 • Duración por reserva: ${duration} min
-• Slots consecutivos cada hora
-• Para todas las mesas activas
-            
+
+🔍 CAMBIOS DETECTADOS:
+• ${changesDetected}
+
 🎯 Las disponibilidades están listas para recibir reservas.`;
-            
-            toast.success(summaryMessage, { 
-                duration: 8000,
-                style: { 
-                    minWidth: '450px',
-                    whiteSpace: 'pre-line',
-                    fontSize: '14px'
-                }
-            });
+                
+                toast.success(summaryMessage, { 
+                    duration: 8000,
+                    style: { 
+                        minWidth: '450px',
+                        whiteSpace: 'pre-line',
+                        fontSize: '14px'
+                    }
+                });
+            }
 
             // Actualizar estado local inmediatamente para reflejar cambios
             // 🔒 USAR SOLO DATOS REALES DE LA FUNCIÓN SQL - NO INVENTAR
@@ -657,7 +687,7 @@ const AvailabilityManager = () => {
 
                 // Recargar stats reales
                 setTimeout(async () => {
-                    await loadAvailabilityStats();
+            await loadAvailabilityStats();
                 }, 500);
 
             } else {

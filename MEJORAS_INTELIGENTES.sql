@@ -122,7 +122,7 @@ BEGIN
 END;
 $$;
 
--- 2. FUNCIÓN PARA AUTOMATIZACIÓN DIARIA
+-- 2. FUNCIÓN PARA AUTOMATIZACIÓN DIARIA SIMPLE
 CREATE OR REPLACE FUNCTION daily_availability_maintenance(
     p_restaurant_id uuid DEFAULT NULL
 )
@@ -137,10 +137,13 @@ DECLARE
     v_advance_days integer;
     v_current_max_date date;
     v_target_end_date date;
-    v_missing_days integer;
+    v_missing_date date;
     v_generation_result jsonb;
+    v_duration integer;
 BEGIN
-    -- Si no se especifica restaurante, procesar todos los activos
+    RAISE NOTICE '🕐 MANTENIMIENTO DIARIO: Añadir solo el día que falta';
+    
+    -- Procesar restaurantes activos
     FOR v_restaurant_record IN 
         SELECT id, name 
         FROM restaurants 
@@ -148,15 +151,15 @@ BEGIN
         AND active = true
         ORDER BY name
     LOOP
-        -- Obtener configuración de días de antelación
-        SELECT COALESCE(
-            (settings->'reservation_policy'->>'advance_booking_days')::integer, 
-            30
-        ) INTO v_advance_days
+        -- Obtener configuración
+        SELECT 
+            COALESCE((settings->'reservation_policy'->>'advance_booking_days')::integer, 30),
+            COALESCE((settings->'reservation_policy'->>'reservation_duration')::integer, 90)
+        INTO v_advance_days, v_duration
         FROM restaurants 
         WHERE id = v_restaurant_record.id;
         
-        -- Calcular fecha objetivo
+        -- Calcular fecha objetivo (SIEMPRE X días desde hoy)
         v_target_end_date := CURRENT_DATE + v_advance_days;
         
         -- Obtener fecha máxima actual
@@ -164,42 +167,41 @@ BEGIN
         FROM availability_slots
         WHERE restaurant_id = v_restaurant_record.id;
         
-        -- Calcular días faltantes
-        v_missing_days := v_target_end_date - v_current_max_date;
-        
-        IF v_missing_days > 0 THEN
-            -- Generar disponibilidades para los días faltantes
+        IF v_current_max_date < v_target_end_date THEN
+            -- FALTA AL MENOS 1 DÍA - Añadir solo lo que falta
+            v_missing_date := v_current_max_date + 1;
+            
+            RAISE NOTICE '➕ AÑADIENDO desde % hasta % para %', 
+                v_missing_date, v_target_end_date, v_restaurant_record.name;
+            
+            -- Generar solo los días faltantes
             SELECT generate_availability_slots(
                 v_restaurant_record.id,
-                v_current_max_date + 1,
+                v_missing_date,
                 v_target_end_date,
-                COALESCE(
-                    (SELECT (settings->'reservation_policy'->>'reservation_duration')::integer 
-                     FROM restaurants WHERE id = v_restaurant_record.id), 
-                    90
-                )
+                v_duration
             ) INTO v_generation_result;
             
             v_restaurant_result := jsonb_build_object(
                 'restaurant_id', v_restaurant_record.id,
                 'restaurant_name', v_restaurant_record.name,
                 'advance_days_config', v_advance_days,
-                'missing_days', v_missing_days,
-                'date_range', jsonb_build_object(
-                    'from', v_current_max_date + 1,
+                'days_added', v_target_end_date - v_current_max_date,
+                'date_range_added', jsonb_build_object(
+                    'from', v_missing_date,
                     'to', v_target_end_date
                 ),
                 'generation_result', v_generation_result,
-                'status', 'completed'
+                'status', 'days_added'
             );
         ELSE
+            -- YA ESTÁ AL DÍA
             v_restaurant_result := jsonb_build_object(
                 'restaurant_id', v_restaurant_record.id,
                 'restaurant_name', v_restaurant_record.name,
                 'advance_days_config', v_advance_days,
-                'missing_days', 0,
-                'status', 'no_action_needed',
-                'message', 'Disponibilidades al día'
+                'status', 'up_to_date',
+                'message', format('Ya tiene disponibilidades hasta %s', v_current_max_date)
             );
         END IF;
         
