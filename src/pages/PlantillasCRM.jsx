@@ -131,8 +131,8 @@ El equipo de {restaurant_name}`,
         icon: "😴",
         color: "gray"
     },
-    noshow: {
-        name: "Clientes No-Show",
+    noshow_followup: {
+        name: "Clientes No-Show - Seguimiento",
         subject: "Te echamos de menos en {restaurant_name}",
         content: `Hola {customer_name},
 
