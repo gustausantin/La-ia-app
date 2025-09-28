@@ -32,19 +32,8 @@ import { es } from 'date-fns/locale';
 
 // TEST INLINE - VERIFICAR LÓGICA
 console.log('🧪 TEST CALENDAR LOGIC:');
-const testData = { tuesday: { open: true }, monday: { open: false }, wednesday: { open: false } };
-const testSchedule = [
-    { day_of_week: 'sunday', is_open: false },
-    { day_of_week: 'monday', is_open: false },
-    { day_of_week: 'tuesday', is_open: true },
-    { day_of_week: 'wednesday', is_open: false },
-    { day_of_week: 'thursday', is_open: false },
-    { day_of_week: 'friday', is_open: false },
-    { day_of_week: 'saturday', is_open: false }
-];
-
-console.log('✅ SCHEDULE TEST:', testSchedule.map(d => `${d.day_of_week}:${d.is_open}`).join(', '));
-console.log('🎯 MARTES ABIERTO:', testSchedule.find(d => d.day_of_week === 'tuesday')?.is_open ? '✅' : '❌');
+// 🔒 REGLA ORO #2: testData eliminado - PROHIBIDO usar datos falsos
+// Todos los datos deben venir de la base de datos real
 
 // ALERTA VISUAL PARA DEBUG
 setTimeout(() => {

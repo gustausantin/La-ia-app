@@ -977,9 +977,9 @@ export default function Reservas() {
             // Estadísticas reales del agente
             setAgentStats((prev) => ({
                 ...prev,
-                avgResponseTime: iaReservations > 0 ? "2s" : "N/A",
-                peakChannel: "WhatsApp",
-                satisfaction: iaReservations > 0 ? 95 : 0,
+                avgResponseTime: "N/A", // 🔒 REGLA ORO #2: Sin datos reales de tiempo de respuesta
+                peakChannel: "N/A", // 🔒 REGLA ORO #2: Sin datos reales de canal principal
+                satisfaction: 0, // 🔒 REGLA ORO #2: Sin datos reales de satisfacción - mostrar 0
                 agentReservations: iaReservations,
                 conversionRate: iaReservations > 0 ? Math.round((iaReservations / (iaReservations + manualReservations)) * 100) : 0
             }));

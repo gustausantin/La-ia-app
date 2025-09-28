@@ -174,7 +174,11 @@ export default function Clientes() {
 
         // Filtro por VIP
         if (filters.vip) {
-            const isVip = customer.total_spent >= 500; // Consideramos VIP si ha gastado más de €500
+            // 🔒 REGLA ORO #2: Usar criterio VIP REAL del sistema CRM
+            // VIP = ≥5 visitas en 90 días O gasto total ≥€500
+            const recentVisits = customer.visits_count || 0;
+            const totalSpent = customer.total_spent || 0;
+            const isVip = recentVisits >= 5 || totalSpent >= 500;
             if (filters.vip === 'vip' && !isVip) return false;
             if (filters.vip === 'regular' && isVip) return false;
         }
@@ -183,7 +187,7 @@ export default function Clientes() {
         if (filters.visitCount) {
             const visits = customer.visits_count || 0;
             if (filters.visitCount === 'new' && visits > 1) return false;
-            if (filters.visitCount === 'frequent' && visits < 5) return false;
+            if (filters.visitCount === 'frequent' && visits < 3) return false; // 🔒 REGLA ORO #2: Criterio más realista
             if (filters.visitCount === 'loyal' && visits < 10) return false;
         }
 
