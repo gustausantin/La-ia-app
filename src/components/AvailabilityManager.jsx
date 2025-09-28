@@ -483,7 +483,7 @@ const AvailabilityManager = () => {
             toast.dismiss('generating');
             
             // Crear mensaje de resumen inteligente ANTES de recargar
-            const duration = restaurantSettings?.reservation_duration || 90;
+            // duration ya está declarado arriba (línea 467)
             const endDateFormatted = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
             
             // Mostrar mensaje de éxito inmediato

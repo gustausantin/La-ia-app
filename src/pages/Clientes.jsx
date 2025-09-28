@@ -668,8 +668,6 @@ export default function Clientes() {
                         }, 1000);
                     }
                 }}
-                restaurantId={restaurantId}
-                mode={modalMode}
             />
         </div>
     );
