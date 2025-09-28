@@ -2269,8 +2269,7 @@ export default function Reservas() {
                                     const { error } = await supabase
                                         .from('restaurants')
                                         .update({ 
-                                            settings: updatedSettings,
-                                            updated_at: new Date().toISOString()
+                                            settings: updatedSettings
                                         })
                                         .eq('id', restaurantId);
                                     
