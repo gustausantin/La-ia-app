@@ -64,10 +64,10 @@ const AvailabilityManager = () => {
             const settings = data?.settings || {};
             
             const processedSettings = {
-                advance_booking_days: settings.horizon_days || 30,
+                advance_booking_days: settings.advance_booking_days || 30,
                 min_party_size: settings.min_party_size || 1,
                 max_party_size: settings.max_party_size || 20,
-                reservation_duration: settings.turn_duration_minutes || 90
+                reservation_duration: settings.reservation_duration || 90
             };
             
             setRestaurantSettings(processedSettings);
@@ -234,7 +234,83 @@ const AvailabilityManager = () => {
         }
     };
 
-    // Regeneración inteligente de disponibilidades
+    // 🔒 REGLA SAGRADA: NUNCA ELIMINAR RESERVAS
+    // Esta función SOLO limpia la UI - JAMÁS toca la tabla 'reservations'
+    // Las reservas son SAGRADAS y solo se eliminan manualmente desde Reservas.jsx
+    const handleSmartCleanup = async () => {
+        try {
+            // 1. Verificar si hay reservas confirmadas
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const advanceDays = restaurantSettings?.advance_booking_days || 30;
+            const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
+            
+            const conflicts = await detectConflicts(today, endDate);
+            
+            if (conflicts > 0) {
+                // Hay reservas confirmadas - solo limpiar UI, no tocar BD
+                const confirmed = confirm(
+                    `⚠️ LIMPIEZA INTELIGENTE\n\n` +
+                    `Se encontraron ${conflicts} reservas confirmadas.\n\n` +
+                    `✅ ACCIÓN SEGURA:\n` +
+                    `• Solo se limpiará la interfaz visual\n` +
+                    `• Las reservas confirmadas se mantendrán intactas\n` +
+                    `• Los slots ocupados permanecerán protegidos\n\n` +
+                    `¿Continuar con la limpieza segura?`
+                );
+                
+                if (confirmed) {
+                    // Solo limpiar UI - mantener datos críticos
+                    setGenerationSuccess(null);
+                    try {
+                        localStorage.removeItem(`generationSuccess_${restaurantId}`);
+                    } catch (error) {
+                        // Silencioso
+                    }
+                    
+                    toast.success(
+                        `🛡️ Limpieza segura completada\n` +
+                        `• Interfaz limpiada\n` +
+                        `• ${conflicts} reservas protegidas\n` +
+                        `• Disponibilidades intactas`,
+                        { duration: 4000 }
+                    );
+                }
+            } else {
+                // No hay reservas - limpieza completa disponible
+                const confirmed = confirm(
+                    `🧹 LIMPIEZA COMPLETA DISPONIBLE\n\n` +
+                    `No se encontraron reservas confirmadas.\n\n` +
+                    `✅ OPCIONES DISPONIBLES:\n` +
+                    `• Limpiar solo la interfaz visual\n` +
+                    `• O regenerar completamente las disponibilidades\n\n` +
+                    `¿Quieres solo limpiar la interfaz?`
+                );
+                
+                if (confirmed) {
+                    setGenerationSuccess(null);
+                    try {
+                        localStorage.removeItem(`generationSuccess_${restaurantId}`);
+                    } catch (error) {
+                        // Silencioso
+                    }
+                    
+                    toast.success(
+                        `✅ Interfaz limpiada correctamente\n` +
+                        `💡 Tip: Puedes regenerar disponibilidades si lo necesitas`,
+                        { duration: 3000 }
+                    );
+                }
+            }
+            
+        } catch (error) {
+            console.error('Error en limpieza inteligente:', error);
+            toast.error('Error al verificar reservas. Limpieza cancelada por seguridad.');
+        }
+    };
+
+    // 🔒 REGLA SAGRADA: NUNCA ELIMINAR RESERVAS
+    // Esta función SOLO regenera availability_slots PROTEGIENDO reservas existentes
+    // Las reservas son SAGRADAS y solo se eliminan manualmente desde Reservas.jsx
     const smartRegeneration = async (changeType = 'general', changeData = {}) => {
         if (!restaurantId) {
             toast.error('❌ No se encontró el ID del restaurante');
@@ -267,16 +343,18 @@ const AvailabilityManager = () => {
             toast.dismiss('smart-generating');
             
             // Mostrar resultados detallados
-            const results = data[0];
+            const results = data; // RPC devuelve objeto directo, no array
             const duration = restaurantSettings?.reservation_duration || 90;
             const endDateFormatted = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
+            
+            console.log('🔍 Resultado de regeneración:', results);
             
             const smartMessage = `🧠 Regeneración Inteligente Completada:
             
 📊 RESULTADO:
-• Acción: ${results.action}
-• Slots afectados: ${results.affected_count}
-• Detalle: ${results.message}
+• Acción: ${results?.action || 'regeneración_completada'}
+• Slots afectados: ${results?.affected_count || results?.slots_after || 0}
+• Detalle: ${results?.message || 'Regeneración completada correctamente'}
 
 ⚙️ CONFIGURACIÓN:
 • Período: HOY hasta ${endDateFormatted} (${advanceDays} días)
@@ -296,14 +374,14 @@ const AvailabilityManager = () => {
 
             // Actualizar estado local
             const successData = {
-                slotsCreated: results.affected_count,
+                slotsCreated: results?.affected_count || results?.slots_after || 0,
                 dateRange: `HOY hasta ${endDateFormatted}`,
                 duration: duration,
                 buffer: 15, // Buffer por defecto en minutos
                 timestamp: new Date().toLocaleString(),
                 smartRegeneration: true,
-                action: results.action,
-                message: results.message
+                action: results?.action || 'regeneración_completada',
+                message: results?.message || 'Regeneración completada correctamente'
             };
             
             setGenerationSuccess(successData);
@@ -332,7 +410,9 @@ const AvailabilityManager = () => {
         }
     };
 
-    // Generar tabla de disponibilidades (función original)
+    // 🔒 REGLA SAGRADA: NUNCA ELIMINAR RESERVAS
+    // Esta función SOLO genera availability_slots - JAMÁS toca la tabla 'reservations'
+    // Las reservas son SAGRADAS y solo se eliminan manualmente desde Reservas.jsx
     const generateAvailability = async () => {
         try {
             setLoading(true);
@@ -771,17 +851,10 @@ const AvailabilityManager = () => {
                             🕒 <strong>Última generación:</strong> {generationSuccess?.timestamp || 'Disponibilidades cargadas del sistema'}
                         </span>
                     <button 
-                        onClick={() => {
-                            setGenerationSuccess(null);
-                            try {
-                                localStorage.removeItem(`generationSuccess_${restaurantId}`);
-                            } catch (error) {
-                                // Silencioso - no es crítico
-                            }
-                        }}
+                        onClick={handleSmartCleanup}
                         className="text-xs text-green-600 hover:text-green-800 underline ml-4"
                     >
-                        Limpiar estado
+                        🧠 Limpiar estado inteligente
                     </button>
                     </div>
                 </div>

@@ -1329,10 +1329,12 @@ export default function Reservas() {
                     message = "Marcado como No-Show";
                     break;
                 case "delete":
-                    if (!window.confirm("⚠️ ¿Estás seguro de ELIMINAR permanentemente esta reserva?\n\nEsta acción no se puede deshacer.")) {
+                    // 🔒 REGLA SAGRADA: Esta es la ÚNICA función que puede eliminar reservas
+                    // ⚠️ NUNCA eliminar esta confirmación - las reservas son SAGRADAS
+                    if (!window.confirm("⚠️ ¿Estás seguro de ELIMINAR permanentemente esta reserva?\n\nEsta acción no se puede deshacer.\n\n🔒 ADVERTENCIA: Esta es la única forma de eliminar reservas.")) {
                         return;
                     }
-                    // Eliminar permanentemente de la base de datos
+                    // Eliminar permanentemente de la base de datos (ÚNICA FUNCIÓN AUTORIZADA)
                     try {
                         const { error } = await supabase
                             .from('reservations')
