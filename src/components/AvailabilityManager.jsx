@@ -261,6 +261,8 @@ const AvailabilityManager = () => {
                 if (confirmed) {
                     // Solo limpiar UI - mantener datos críticos
                     setGenerationSuccess(null);
+                    setAvailabilityStats(null);
+                    setAvailabilityGrid([]);
                     try {
                         localStorage.removeItem(`generationSuccess_${restaurantId}`);
                     } catch (error) {
@@ -288,6 +290,8 @@ const AvailabilityManager = () => {
                 
                 if (confirmed) {
                     setGenerationSuccess(null);
+                    setAvailabilityStats(null);
+                    setAvailabilityGrid([]);
                     try {
                         localStorage.removeItem(`generationSuccess_${restaurantId}`);
                     } catch (error) {
@@ -372,9 +376,10 @@ const AvailabilityManager = () => {
                 }
             });
 
-            // Actualizar estado local
+            // Actualizar estado local con datos correctos
+            const slotsCreated = results?.slots_created || results?.affected_count || 0;
             const successData = {
-                slotsCreated: results?.affected_count || results?.slots_after || 0,
+                slotsCreated: slotsCreated,
                 dateRange: `HOY hasta ${endDateFormatted}`,
                 duration: duration,
                 buffer: 15, // Buffer por defecto en minutos
@@ -458,11 +463,15 @@ const AvailabilityManager = () => {
             // MOSTRAR RESTAURANT ID PARA DEBUG
             console.log('🏪 GENERANDO PARA RESTAURANT ID:', restaurantId);
             
-            // Generar disponibilidades
+            // Generar disponibilidades usando la duración configurada
+            const duration = restaurantSettings?.reservation_duration || 90;
+            console.log('🕒 Usando duración configurada:', duration, 'minutos');
+            
             const { data, error } = await supabase.rpc('generate_availability_slots', {
                 p_restaurant_id: restaurantId,
                 p_start_date: today,
-                p_end_date: endDate
+                p_end_date: endDate,
+                p_slot_duration_minutes: duration
             });
 
             if (error) {
