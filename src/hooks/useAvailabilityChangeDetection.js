@@ -1,14 +1,48 @@
 // Hook para detectar cambios que requieren regenerar disponibilidades
 import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
 
 export const useAvailabilityChangeDetection = (restaurantId) => {
     const [needsRegeneration, setNeedsRegeneration] = useState(false);
     const [lastChangeTimestamp, setLastChangeTimestamp] = useState(null);
     const [changeType, setChangeType] = useState(null);
     const [changeDetails, setChangeDetails] = useState(null);
+    const [hasExistingSlots, setHasExistingSlots] = useState(false);
 
-    // Función para marcar que se necesita regeneración
-    const markNeedsRegeneration = useCallback((type, details = null) => {
+    // Función para verificar si existen slots de disponibilidad
+    const checkExistingSlots = useCallback(async () => {
+        if (!restaurantId) return false;
+        
+        try {
+            const { data, error } = await supabase
+                .from('availability_slots')
+                .select('id')
+                .eq('restaurant_id', restaurantId)
+                .limit(1);
+            
+            if (error) {
+                console.warn('Error verificando slots existentes:', error);
+                return false;
+            }
+            
+            const exists = (data && data.length > 0);
+            setHasExistingSlots(exists);
+            return exists;
+        } catch (error) {
+            console.warn('Error verificando slots existentes:', error);
+            return false;
+        }
+    }, [restaurantId]);
+
+    // Función para marcar que se necesita regeneración (SOLO si ya existen slots)
+    const markNeedsRegeneration = useCallback(async (type, details = null) => {
+        // 🔍 VERIFICAR SI EXISTEN DISPONIBILIDADES ANTES DE MOSTRAR AVISO
+        const slotsExist = await checkExistingSlots();
+        
+        if (!slotsExist) {
+            console.log(`🚧 No se muestra aviso de regeneración: no existen slots previos (cambio: ${type})`);
+            return; // NO mostrar aviso si nunca se han generado slots
+        }
         const timestamp = new Date().toISOString();
         
         setNeedsRegeneration(true);
@@ -43,46 +77,57 @@ export const useAvailabilityChangeDetection = (restaurantId) => {
         }
     }, [restaurantId]);
 
-    // Cargar estado persistente al inicializar
+    // Cargar estado persistente al inicializar Y verificar slots existentes
     useEffect(() => {
         if (restaurantId) {
+            // Verificar si existen slots
+            checkExistingSlots();
+            
             try {
                 const saved = localStorage.getItem(`needsRegeneration_${restaurantId}`);
                 if (saved) {
                     const data = JSON.parse(saved);
-                    setNeedsRegeneration(data.needsRegeneration || false);
-                    setLastChangeTimestamp(data.lastChangeTimestamp);
-                    setChangeType(data.changeType);
-                    setChangeDetails(data.changeDetails);
+                    // Solo restaurar el estado si realmente existen slots
+                    checkExistingSlots().then(slotsExist => {
+                        if (slotsExist) {
+                            setNeedsRegeneration(data.needsRegeneration || false);
+                            setLastChangeTimestamp(data.lastChangeTimestamp);
+                            setChangeType(data.changeType);
+                            setChangeDetails(data.changeDetails);
+                        } else {
+                            // Limpiar estado si no hay slots
+                            localStorage.removeItem(`needsRegeneration_${restaurantId}`);
+                        }
+                    });
                 }
             } catch (error) {
                 console.warn('Error cargando estado de regeneración:', error);
             }
         }
-    }, [restaurantId]);
+    }, [restaurantId, checkExistingSlots]);
 
     // Funciones específicas para diferentes tipos de cambios
-    const onTableChange = useCallback((action, tableData) => {
-        markNeedsRegeneration('table_change', {
+    const onTableChange = useCallback(async (action, tableData) => {
+        await markNeedsRegeneration('table_change', {
             action, // 'added', 'removed', 'modified', 'status_changed'
             table: tableData
         });
     }, [markNeedsRegeneration]);
 
-    const onScheduleChange = useCallback((scheduleData) => {
-        markNeedsRegeneration('schedule_change', {
+    const onScheduleChange = useCallback(async (scheduleData) => {
+        await markNeedsRegeneration('schedule_change', {
             schedule: scheduleData
         });
     }, [markNeedsRegeneration]);
 
-    const onPolicyChange = useCallback((policyData) => {
-        markNeedsRegeneration('policy_change', {
+    const onPolicyChange = useCallback(async (policyData) => {
+        await markNeedsRegeneration('policy_change', {
             policy: policyData
         });
     }, [markNeedsRegeneration]);
 
-    const onSpecialEventChange = useCallback((action, eventData) => {
-        markNeedsRegeneration('special_event_change', {
+    const onSpecialEventChange = useCallback(async (action, eventData) => {
+        await markNeedsRegeneration('special_event_change', {
             action, // 'added', 'removed', 'modified'
             event: eventData
         });
@@ -123,8 +168,10 @@ export const useAvailabilityChangeDetection = (restaurantId) => {
         lastChangeTimestamp,
         changeType,
         changeDetails,
+        hasExistingSlots,
         markNeedsRegeneration,
         clearRegenerationFlag,
+        checkExistingSlots,
         onTableChange,
         onScheduleChange,
         onPolicyChange,
