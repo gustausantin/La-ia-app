@@ -21,10 +21,10 @@ const NoShowManagerSimple = () => {
     const { restaurant } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({
-        todayRisk: 2,
-        weeklyPrevented: 14,
-        riskLevel: 'medium',
-        successRate: 73
+        todayRisk: 0, // 🔒 REGLA ORO #2: Sin datos reales - mostrar 0
+        weeklyPrevented: 0, // 🔒 REGLA ORO #2: Sin datos reales - mostrar 0  
+        riskLevel: 'low', // 🔒 REGLA ORO #2: Valor por defecto real
+        successRate: 0 // 🔒 REGLA ORO #2: Sin datos reales - mostrar 0
     });
 
     // Cargar datos
