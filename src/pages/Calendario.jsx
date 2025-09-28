@@ -408,6 +408,82 @@ export default function Calendario() {
         try {
             const eventDate = format(selectedDay, 'yyyy-MM-dd');
             
+            // 🔒 VALIDACIÓN ANTES DE CERRAR DÍAS
+            if (eventForm.closed) {
+                console.log(`🔒 Validando cierre del día ${eventDate}...`);
+                
+                try {
+                    const { data: validationData, error: validationError } = await supabase.rpc('validar_cierre_dia', {
+                        p_restaurant_id: restaurantId,
+                        p_date: eventDate,
+                        p_closure_type: 'special_event'
+                    });
+                    
+                    if (validationError) {
+                        console.warn("⚠️ No se pudo validar el cierre:", validationError);
+                    } else if (validationData?.validation_result === 'BLOCKED') {
+                        // Hay reservas confirmadas - BLOQUEAR
+                        const reservations = validationData.reservation_details || [];
+                        const reservationList = reservations.map(r => 
+                            `• ${r.customer_name} - ${r.reservation_time} (${r.party_size} personas)`
+                        ).join('\n');
+                        
+                        toast.error(
+                            `❌ NO SE PUEDE CERRAR EL DÍA\n\n` +
+                            `📅 ${eventDate} tiene ${validationData.existing_reservations} reservas confirmadas:\n\n` +
+                            `${reservationList}\n\n` +
+                            `🔧 SOLUCIÓN: Ve a "Reservas" y cancela/reprograma estas reservas primero.`,
+                            { 
+                                duration: 8000,
+                                style: { 
+                                    minWidth: '400px',
+                                    whiteSpace: 'pre-line',
+                                    fontSize: '13px'
+                                }
+                            }
+                        );
+                        return; // BLOQUEAR creación del evento
+                        
+                    } else if (validationData?.validation_result === 'WARNING') {
+                        // Solo hay disponibilidades - ADVERTIR pero permitir
+                        const userConfirmed = confirm(
+                            `⚠️ ADVERTENCIA DE CIERRE\n\n` +
+                            `📅 ${eventDate} tiene ${validationData.existing_slots} slots disponibles activos.\n\n` +
+                            `✅ ACCIÓN AUTOMÁTICA:\n` +
+                            `• Los slots disponibles serán eliminados\n` +
+                            `• No hay reservas confirmadas afectadas\n\n` +
+                            `¿Continuar con el cierre del día?`
+                        );
+                        
+                        if (!userConfirmed) {
+                            toast.info("Cierre cancelado por el usuario");
+                            return;
+                        }
+                        
+                        toast.info(
+                            `🔄 Cierre programado\n\n` +
+                            `Se eliminarán ${validationData.existing_slots} slots disponibles.\n` +
+                            `Regenera disponibilidades después.`,
+                            { duration: 4000 }
+                        );
+                    }
+                } catch (validationCheckError) {
+                    console.warn("⚠️ Error validando cierre:", validationCheckError);
+                    // Continuar con advertencia general
+                    const userConfirmed = confirm(
+                        `⚠️ NO SE PUDO VALIDAR EL CIERRE\n\n` +
+                        `No se pudo verificar si hay reservas confirmadas en ${eventDate}.\n\n` +
+                        `🚨 RIESGO: Podrías estar cerrando un día con reservas.\n\n` +
+                        `¿Quieres continuar bajo tu responsabilidad?`
+                    );
+                    
+                    if (!userConfirmed) {
+                        toast.error("Cierre cancelado por seguridad");
+                        return;
+                    }
+                }
+            }
+            
             const eventData = {
                 restaurant_id: restaurantId,
                 event_date: eventDate,
@@ -434,6 +510,28 @@ export default function Calendario() {
             setShowEventModal(false);
             
             console.log('✅ Evento guardado:', data);
+            
+            // 🔄 AVISO DE REGENERACIÓN PARA EVENTOS DE CIERRE
+            if (eventForm.closed) {
+                setTimeout(() => {
+                    toast.info(
+                        `🔄 REGENERACIÓN RECOMENDADA\n\n` +
+                        `Has cerrado el día ${format(selectedDay, 'dd/MM/yyyy')}.\n\n` +
+                        `📍 Ve a "Gestión de Disponibilidades"\n` +
+                        `🗑️ Usa "Borrar Disponibilidades" para limpiar\n` +
+                        `🎯 Luego "Generar Disponibilidades" para actualizar\n\n` +
+                        `Esto elimina slots del día cerrado.`,
+                        { 
+                            duration: 8000,
+                            style: { 
+                                minWidth: '350px',
+                                whiteSpace: 'pre-line',
+                                fontSize: '14px'
+                            }
+                        }
+                    );
+                }, 1500);
+            }
         } catch (error) {
             console.error('❌ Error guardando evento:', error);
             toast.error('Error al guardar el evento');
@@ -508,6 +606,64 @@ export default function Calendario() {
         setSaving(true);
         try {
             console.log("🔄 Guardando horarios con múltiples turnos...", schedule);
+            
+            // 🔍 DETECCIÓN DE CONFLICTOS CALENDARIO vs DISPONIBILIDADES
+            console.log("🔍 Verificando conflictos calendario vs disponibilidades...");
+            
+            try {
+                const { data: conflictData, error: conflictError } = await supabase.rpc('detectar_conflictos_calendario', {
+                    p_restaurant_id: restaurantId
+                });
+                
+                if (conflictError) {
+                    console.warn("⚠️ No se pudo verificar conflictos:", conflictError);
+                } else if (conflictData?.conflicts_found > 0) {
+                    const conflicts = conflictData.conflicts;
+                    const criticalConflicts = conflicts.filter(c => c.severity === 'CRITICAL');
+                    
+                    if (criticalConflicts.length > 0) {
+                        // Hay reservas confirmadas en días que se van a cerrar
+                        const conflictMessage = criticalConflicts.map(c => 
+                            `📅 ${c.conflict_date}: ${c.confirmed_reservations} reservas confirmadas`
+                        ).join('\n');
+                        
+                        const userConfirmed = confirm(
+                            `⚠️ CONFLICTO CRÍTICO DETECTADO\n\n` +
+                            `Los siguientes días tienen RESERVAS CONFIRMADAS pero van a cerrarse:\n\n` +
+                            `${conflictMessage}\n\n` +
+                            `🚨 IMPACTO: Los clientes podrían llegar a un restaurante cerrado\n\n` +
+                            `OPCIONES:\n` +
+                            `✅ Cancelar guardado y revisar reservas\n` +
+                            `❌ Continuar (RIESGO: Clientes afectados)\n\n` +
+                            `¿Quieres CANCELAR el guardado para revisar las reservas?`
+                        );
+                        
+                        if (userConfirmed) {
+                            toast.error(
+                                `❌ Guardado cancelado\n\n` +
+                                `Revisa las ${criticalConflicts.length} reservas confirmadas\n` +
+                                `antes de cerrar esos días.`,
+                                { duration: 6000 }
+                            );
+                            setSaving(false);
+                            return;
+                        }
+                    } else {
+                        // Solo conflictos de disponibilidades (no críticos)
+                        const warningMessage = `Se detectaron ${conflictData.conflicts_found} días con disponibilidades que serán corregidas automáticamente.`;
+                        
+                        toast.info(
+                            `🔄 Regeneración Requerida\n\n` +
+                            `${warningMessage}\n\n` +
+                            `Regenera disponibilidades después de guardar.`,
+                            { duration: 5000 }
+                        );
+                    }
+                }
+            } catch (conflictCheckError) {
+                console.warn("⚠️ Error verificando conflictos:", conflictCheckError);
+                // Continuar con el guardado aunque falle la verificación
+            }
             
             // CONVERSIÓN ROBUSTA A FORMATO SUPABASE
             const operating_hours = {};
@@ -619,6 +775,25 @@ export default function Calendario() {
 
             toast.success("✅ Turnos guardados correctamente en Supabase");
             console.log("✅ Guardado exitoso con múltiples turnos");
+            
+            // 🔄 AVISO AUTOMÁTICO DE REGENERACIÓN
+            setTimeout(() => {
+                toast.info(
+                    `🔄 REGENERACIÓN REQUERIDA\n\n` +
+                    `Los horarios han cambiado.\n\n` +
+                    `📍 Ve a "Gestión de Disponibilidades"\n` +
+                    `🎯 Haz clic en "Generar Disponibilidades"\n\n` +
+                    `Esto asegura coherencia entre calendario y reservas.`,
+                    { 
+                        duration: 8000,
+                        style: { 
+                            minWidth: '350px',
+                            whiteSpace: 'pre-line',
+                            fontSize: '14px'
+                        }
+                    }
+                );
+            }, 1500); // Esperar un poco para que se vea después del éxito
             
         } catch (error) {
             console.error("❌ Error guardando turnos:", error);
