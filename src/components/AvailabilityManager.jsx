@@ -1286,22 +1286,22 @@ const AvailabilityManager = () => {
                                         </div>
                                     ) : (
                                         /* Slots normales */
-                                        <div className="flex flex-wrap gap-2">
-                                            {slots.map((slot) => (
-                                                <span
-                                                    key={slot.id}
-                                                    className={`px-2 py-1 text-xs rounded ${
-                                                        slot.hasReservation 
-                                                            ? 'bg-purple-100 text-purple-700 border border-purple-300' 
-                                                            : slot.status === 'free'
-                                                            ? 'bg-green-100 text-green-700 border border-green-300'
-                                                            : 'bg-gray-100 text-gray-700 border border-gray-300'
-                                                    }`}
-                                                >
-                                                    {slot.start_time} {slot.hasReservation ? '📋' : '✅'}
-                                                </span>
-                                            ))}
-                                        </div>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {slots.map((slot) => (
+                                                                <span
+                                                                    key={slot.id}
+                                                                    className={`px-2 py-1 text-xs rounded ${
+                                                                        slot.hasReservation 
+                                                                            ? 'bg-purple-100 text-purple-700 border border-purple-300' 
+                                                                            : slot.status === 'free'
+                                                                            ? 'bg-green-100 text-green-700 border border-green-300'
+                                                                            : 'bg-gray-100 text-gray-700 border border-gray-300'
+                                                                    }`}
+                                                                >
+                                                                    {slot.start_time.slice(0, 5)} {slot.hasReservation ? '📋' : '✅'}
+                                                                </span>
+                                                            ))}
+                                                        </div>
                                     )}
                                 </div>
                             ))}
@@ -1379,7 +1379,7 @@ const AvailabilityManager = () => {
                                                                     ? 'bg-red-100 text-red-700'
                                                                     : 'bg-gray-100 text-gray-700'
                                                             }`}
-                                                            title={`${slot.start_time} - ${slot.end_time} (${slot.status})${
+                                                            title={`${slot.start_time.slice(0, 5)} - ${slot.end_time.slice(0, 5)} (${slot.status})${
                                                                 slot.metadata?.reservation_id ? ' - Con reserva' : ''
                                                             }`}
                                                         >
