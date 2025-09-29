@@ -41,6 +41,7 @@ DECLARE
     v_table_record RECORD;
     v_existing_reservation_count integer;
     v_special_event RECORD;
+    v_existing_slot RECORD;
     v_is_special_event boolean;
     v_event_closed boolean;
 BEGIN
@@ -267,11 +268,19 @@ BEGIN
         v_day_shifts := v_day_config->'shifts';
         
         IF v_day_shifts IS NOT NULL AND jsonb_array_length(v_day_shifts) > 0 THEN
-            -- HAY TURNOS DEFINIDOS - USAR SOLO LOS TURNOS
+            -- HAY TURNOS DEFINIDOS - DEDUPLICAR AUTOMÁTICAMENTE
             RAISE NOTICE '🔄 TURNOS ENCONTRADOS: % turnos para %', 
                 jsonb_array_length(v_day_shifts), v_day_name;
             
-            -- Procesar cada turno
+            -- CREAR TABLA TEMPORAL PARA DEDUPLICAR HORARIOS
+            CREATE TEMP TABLE IF NOT EXISTS temp_time_slots (
+                start_time time,
+                end_time time,
+                context text
+            );
+            DELETE FROM temp_time_slots;
+            
+            -- Procesar cada turno y recopilar horarios únicos
             FOR i IN 0..jsonb_array_length(v_day_shifts) - 1 LOOP
                 v_shift_record := v_day_shifts->i;
                 
@@ -288,17 +297,78 @@ BEGIN
                     i + 1, v_shift_start_time, v_shift_end_time, 
                     COALESCE(v_shift_record->>'name', 'Sin nombre');
                 
-                -- Generar slots para este turno
-                PERFORM generate_slots_for_timerange(
-                    p_restaurant_id,
-                    v_current_date,
-                    v_shift_start_time,
-                    v_shift_end_time,
-                    p_slot_duration_minutes,
-                    format('Turno %s', COALESCE(v_shift_record->>'name', (i + 1)::text))
-                );
-                
+                -- Añadir horarios únicos a la tabla temporal
+                v_slot_start_time := v_shift_start_time;
+                WHILE v_slot_start_time <= v_shift_end_time LOOP
+                    v_slot_end_time := v_slot_start_time + (p_slot_duration_minutes || ' minutes')::interval;
+                    
+                    -- Solo insertar si no existe ya
+                    INSERT INTO temp_time_slots (start_time, end_time, context)
+                    SELECT v_slot_start_time, v_slot_end_time, 
+                           format('Turno %s', COALESCE(v_shift_record->>'name', (i + 1)::text))
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM temp_time_slots 
+                        WHERE start_time = v_slot_start_time
+                    );
+                    
+                    v_slot_start_time := v_slot_start_time + interval '60 minutes';
+                END LOOP;
             END LOOP;
+            
+            -- Generar slots únicos desde la tabla temporal
+            FOR v_existing_slot IN 
+                SELECT start_time, end_time, context FROM temp_time_slots ORDER BY start_time
+            LOOP
+                -- Generar slots para cada mesa activa
+                FOR v_table_record IN 
+                    SELECT * FROM tables 
+                    WHERE restaurant_id = p_restaurant_id AND is_active = true
+                LOOP
+                    -- Verificar si ya existe slot con reserva
+                    IF NOT EXISTS (
+                        SELECT 1 FROM availability_slots a
+                        INNER JOIN reservations r ON r.table_id = a.table_id 
+                            AND r.reservation_date = a.slot_date 
+                            AND r.reservation_time = a.start_time
+                        WHERE a.restaurant_id = p_restaurant_id
+                        AND a.table_id = v_table_record.id
+                        AND a.slot_date = v_current_date
+                        AND a.start_time = v_existing_slot.start_time
+                        AND r.status IN ('confirmed', 'pending')
+                    ) THEN
+                        -- Crear nuevo slot
+                        INSERT INTO availability_slots (
+                            restaurant_id, 
+                            table_id, 
+                            slot_date, 
+                            start_time, 
+                            end_time,
+                            is_available,
+                            metadata,
+                            created_at
+                        ) VALUES (
+                            p_restaurant_id,
+                            v_table_record.id,
+                            v_current_date,
+                            v_existing_slot.start_time,
+                            v_existing_slot.end_time,
+                            true,
+                            jsonb_build_object(
+                                'duration_minutes', p_slot_duration_minutes,
+                                'table_capacity', v_table_record.capacity,
+                                'context', v_existing_slot.context,
+                                'is_protected', false
+                            ),
+                            NOW()
+                        ) ON CONFLICT (restaurant_id, table_id, slot_date, start_time) DO NOTHING;
+                        
+                        v_slots_created := v_slots_created + 1;
+                    END IF;
+                END LOOP;
+            END LOOP;
+            
+            -- Limpiar tabla temporal
+            DROP TABLE IF EXISTS temp_time_slots;
             
         ELSE
             -- NO HAY TURNOS - USAR HORARIO GENERAL COMPLETO
