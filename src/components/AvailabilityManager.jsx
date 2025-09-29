@@ -396,6 +396,9 @@ const AvailabilityManager = () => {
 
             // Actualizar estado local con datos correctos
             const slotsCreated = results?.slots_created || results?.affected_count || 0;
+            const slotsUpdated = results?.slots_updated || 0;
+            const slotsPreserved = results?.slots_preserved || 0;
+            
             const successData = {
                 slotsCreated: slotsCreated,
                 dateRange: `HOY hasta ${endDateFormatted}`,
@@ -404,7 +407,11 @@ const AvailabilityManager = () => {
                 timestamp: new Date().toLocaleString(),
                 smartRegeneration: true,
                 action: results?.action || 'regeneración_completada',
-                message: results?.message || 'Regeneración completada correctamente'
+                message: results?.message || 'Regeneración completada correctamente',
+                // 🔒 DATOS REALES CALCULADOS DE LA RESPUESTA SQL
+                totalAvailable: slotsCreated - slotsPreserved, // Nuevos slots disponibles
+                totalOccupied: 0,  // Los ocupados se cargarán con stats reales
+                totalReserved: slotsPreserved // Slots con reservas preservadas
             };
             
             setGenerationSuccess(successData);
@@ -569,16 +576,19 @@ const AvailabilityManager = () => {
             // Actualizar estado local inmediatamente para reflejar cambios
             // 🔒 USAR SOLO DATOS REALES DE LA FUNCIÓN SQL - NO INVENTAR
             const slotsCreated = data?.slots_created || 0;
+            const slotsUpdated = data?.slots_updated || 0;
+            const slotsPreserved = data?.slots_preserved || 0;
+            
             const successData = {
                 slotsCreated: slotsCreated,
                 dateRange: `HOY hasta ${endDateFormatted}`,
                 duration: duration,
                 buffer: 15, // Buffer por defecto en minutos
                 timestamp: new Date().toLocaleString(),
-                // 🔒 DATOS REALES: Se cargarán desde la base de datos
-                totalAvailable: null, // Se cargará con datos reales
-                totalOccupied: null,  // Se cargará con datos reales  
-                totalReserved: null   // Se cargará con datos reales
+                // 🔒 DATOS REALES CALCULADOS DE LA RESPUESTA SQL
+                totalAvailable: slotsCreated - slotsPreserved, // Nuevos slots disponibles
+                totalOccupied: 0,  // Los ocupados se cargarán con stats reales
+                totalReserved: slotsPreserved // Slots con reservas preservadas
             };
             
             setGenerationSuccess(successData);
@@ -969,6 +979,38 @@ const AvailabilityManager = () => {
         }
     }, [restaurantId]);
 
+    // Actualizar generationSuccess cuando cambien las estadísticas reales
+    useEffect(() => {
+        if (availabilityStats && generationSuccess && (
+            generationSuccess.totalAvailable === null || 
+            generationSuccess.totalAvailable === undefined ||
+            generationSuccess.totalOccupied === null || 
+            generationSuccess.totalOccupied === undefined ||
+            generationSuccess.totalReserved === null || 
+            generationSuccess.totalReserved === undefined
+        )) {
+            setGenerationSuccess(prev => ({
+                ...prev,
+                totalAvailable: availabilityStats.free || 0,
+                totalOccupied: availabilityStats.occupied || 0,
+                totalReserved: availabilityStats.occupied || 0 // occupied incluye reservas
+            }));
+            
+            // Actualizar localStorage también
+            try {
+                const updatedData = {
+                    ...generationSuccess,
+                    totalAvailable: availabilityStats.free || 0,
+                    totalOccupied: availabilityStats.occupied || 0,
+                    totalReserved: availabilityStats.occupied || 0
+                };
+                localStorage.setItem(`generationSuccess_${restaurantId}`, JSON.stringify(updatedData));
+            } catch (error) {
+                // Silencioso - no es crítico
+            }
+        }
+    }, [availabilityStats, generationSuccess, restaurantId]);
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
@@ -982,28 +1024,6 @@ const AvailabilityManager = () => {
                     </p>
                 </div>
                 
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setShowDetails(!showDetails)}
-                        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-                    >
-                        {showDetails ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        {showDetails ? 'Ocultar detalles' : 'Ver detalles'}
-                    </button>
-                    
-                    <button
-                        onClick={async () => {
-                            setShowAvailabilityGrid(!showAvailabilityGrid);
-                            if (!showAvailabilityGrid) {
-                                await loadAvailabilityGrid();
-                            }
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-                    >
-                        <Calendar className="w-4 h-4" />
-                        {showAvailabilityGrid ? 'Ocultar calendario' : 'Ver calendario'}
-                    </button>
-                </div>
             </div>
 
 
@@ -1055,19 +1075,25 @@ const AvailabilityManager = () => {
                         </div>
                         <div className="text-center bg-white rounded-lg p-3 border border-green-200">
                             <div className="text-lg font-bold text-blue-700">
-                                {generationSuccess ? generationSuccess.totalAvailable : (availabilityStats?.free || 0)}
+                                {generationSuccess?.totalAvailable !== null && generationSuccess?.totalAvailable !== undefined 
+                                    ? generationSuccess.totalAvailable 
+                                    : (availabilityStats?.free || 0)}
                             </div>
                             <div className="text-xs text-blue-600">Disponibles</div>
                         </div>
                         <div className="text-center bg-white rounded-lg p-3 border border-green-200">
                             <div className="text-lg font-bold text-red-700">
-                                {generationSuccess ? generationSuccess.totalOccupied : (availabilityStats?.occupied || 0)}
+                                {generationSuccess?.totalOccupied !== null && generationSuccess?.totalOccupied !== undefined 
+                                    ? generationSuccess.totalOccupied 
+                                    : (availabilityStats?.occupied || 0)}
                             </div>
                             <div className="text-xs text-red-600">Ocupados</div>
                         </div>
                         <div className="text-center bg-white rounded-lg p-3 border border-green-200">
                             <div className="text-lg font-bold text-purple-700">
-                                {generationSuccess ? generationSuccess.totalReserved : (availabilityStats?.reservationsFound || 0)}
+                                {generationSuccess?.totalReserved !== null && generationSuccess?.totalReserved !== undefined 
+                                    ? generationSuccess.totalReserved 
+                                    : (availabilityStats?.occupied || 0)}
                             </div>
                             <div className="text-xs text-purple-600">Con Reservas</div>
                         </div>
