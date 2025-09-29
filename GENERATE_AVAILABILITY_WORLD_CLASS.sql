@@ -209,16 +209,17 @@ BEGIN
                 v_start_value text;
                 v_end_value text;
             BEGIN
-                -- Probar diferentes nombres de campos para inicio
+                -- Probar diferentes nombres de campos para inicio (solo strings)
                 v_start_value := COALESCE(
                     v_day_config->>'start',
-                    v_day_config->>'open',
+                    v_day_config->>'start_time',
                     '09:00'
                 );
                 
-                -- Probar diferentes nombres de campos para fin
+                -- Probar diferentes nombres de campos para fin (solo strings)
                 v_end_value := COALESCE(
                     v_day_config->>'end',
+                    v_day_config->>'end_time',
                     v_day_config->>'close',
                     '22:00'
                 );
@@ -294,7 +295,7 @@ BEGIN
                     v_shift_start_time,
                     v_shift_end_time,
                     p_slot_duration_minutes,
-                    format('Turno %s', COALESCE(v_shift_record->>'name', i + 1))
+                    format('Turno %s', COALESCE(v_shift_record->>'name', (i + 1)::text))
                 );
                 
             END LOOP;
