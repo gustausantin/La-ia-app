@@ -76,7 +76,7 @@ BEGIN
     
     -- Verificar mesas activas
     SELECT COUNT(*) INTO v_tables_processed
-    FROM restaurant_tables
+    FROM tables
     WHERE restaurant_id = p_restaurant_id AND is_active = true;
     
     IF v_tables_processed = 0 THEN
@@ -175,7 +175,11 @@ BEGIN
         END IF;
         
         -- Verificar si el día está abierto según configuración general
-        v_is_day_open := COALESCE((v_day_config->>'open')::boolean, false);
+        -- Verificar tanto 'open' como 'closed' (negado) para compatibilidad
+        v_is_day_open := COALESCE(
+            (v_day_config->>'open')::boolean, 
+            NOT COALESCE((v_day_config->>'closed')::boolean, true)
+        );
         
         IF NOT v_is_day_open THEN
             RAISE NOTICE '🚫 DÍA CERRADO SEGÚN CONFIGURACIÓN: %', v_current_date;
@@ -200,18 +204,38 @@ BEGIN
         
         -- Obtener horario general del día (horario público de atención)
         BEGIN
-            -- Conversión segura de horarios
-            IF (v_day_config->>'start') IS NOT NULL AND (v_day_config->>'start') != 'false' THEN
-                v_general_start_time := (v_day_config->>'start')::time;
-            ELSE
-                v_general_start_time := '09:00'::time;
-            END IF;
-            
-            IF (v_day_config->>'end') IS NOT NULL AND (v_day_config->>'end') != 'false' THEN
-                v_general_end_time := (v_day_config->>'end')::time;
-            ELSE
-                v_general_end_time := '22:00'::time;
-            END IF;
+            -- Conversión segura de horarios - probar diferentes campos
+            DECLARE
+                v_start_value text;
+                v_end_value text;
+            BEGIN
+                -- Probar diferentes nombres de campos para inicio
+                v_start_value := COALESCE(
+                    v_day_config->>'start',
+                    v_day_config->>'open',
+                    '09:00'
+                );
+                
+                -- Probar diferentes nombres de campos para fin
+                v_end_value := COALESCE(
+                    v_day_config->>'end',
+                    v_day_config->>'close',
+                    '22:00'
+                );
+                
+                -- Validar y convertir
+                IF v_start_value IS NOT NULL AND v_start_value != 'false' AND v_start_value != 'true' THEN
+                    v_general_start_time := v_start_value::time;
+                ELSE
+                    v_general_start_time := '09:00'::time;
+                END IF;
+                
+                IF v_end_value IS NOT NULL AND v_end_value != 'false' AND v_end_value != 'true' THEN
+                    v_general_end_time := v_end_value::time;
+                ELSE
+                    v_general_end_time := '22:00'::time;
+                END IF;
+            END;
         EXCEPTION WHEN OTHERS THEN
             RAISE NOTICE '⚠️ Error parseando horarios para %, usando por defecto', v_day_name;
             v_general_start_time := '09:00'::time;
@@ -358,7 +382,7 @@ BEGIN
     
     -- Generar slots para cada mesa activa
     FOR v_table_record IN 
-        SELECT * FROM restaurant_tables 
+        SELECT * FROM tables 
         WHERE restaurant_id = p_restaurant_id AND is_active = true
     LOOP
         
