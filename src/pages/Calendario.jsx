@@ -212,31 +212,60 @@ export default function Calendario() {
             console.log('  - viernes:', savedHours.friday?.open, '→', savedHours.friday?.open === true);
             console.log('  - sábado:', savedHours.saturday?.open, '→', savedHours.saturday?.open === true);
 
-            // CREAR SCHEDULE DEFINITIVO - VERIFICACIÓN ESTRICTA DEL CAMPO 'open'
+            // CREAR SCHEDULE DEFINITIVO - CARGAR TURNOS REALES
             const loadedSchedule = [
-                { day_of_week: 'sunday', day_name: 'Domingo', is_open: savedHours.sunday?.open === true, slots: [] },
-                { day_of_week: 'monday', day_name: 'Lunes', is_open: savedHours.monday?.open === true, slots: [] },
-                { day_of_week: 'tuesday', day_name: 'Martes', is_open: savedHours.tuesday?.open === true, slots: [] },
-                { day_of_week: 'wednesday', day_name: 'Miércoles', is_open: savedHours.wednesday?.open === true, slots: [] },
-                { day_of_week: 'thursday', day_name: 'Jueves', is_open: savedHours.thursday?.open === true, slots: [] },
-                { day_of_week: 'friday', day_name: 'Viernes', is_open: savedHours.friday?.open === true, slots: [] },
-                { day_of_week: 'saturday', day_name: 'Sábado', is_open: savedHours.saturday?.open === true, slots: [] }
-            ];
-            
-            console.log('📅 SCHEDULE CARGADO:', loadedSchedule.map(d => `${d.day_name}: ${d.is_open ? '✅' : '❌'}`).join(', '));
-            
-            // VERIFICACIÓN CRÍTICA: Mostrar exactamente qué está configurado
-            console.log('🔴 DÍAS ABIERTOS SEGÚN BD:');
-            loadedSchedule.forEach(day => {
-                if (day.is_open) {
-                    console.log(`   ✅ ${day.day_name} (${day.day_of_week}) está ABIERTO`);
+                { day_of_week: 'sunday', day_name: 'Domingo' },
+                { day_of_week: 'monday', day_name: 'Lunes' },
+                { day_of_week: 'tuesday', day_name: 'Martes' },
+                { day_of_week: 'wednesday', day_name: 'Miércoles' },
+                { day_of_week: 'thursday', day_name: 'Jueves' },
+                { day_of_week: 'friday', day_name: 'Viernes' },
+                { day_of_week: 'saturday', day_name: 'Sábado' }
+            ].map(day => {
+                const dayConfig = savedHours[day.day_of_week] || {};
+                const isOpen = dayConfig.open === true;
+                
+                // 🔧 CARGAR TURNOS REALES DESDE SHIFTS
+                let slots = [];
+                if (isOpen && dayConfig.shifts && Array.isArray(dayConfig.shifts)) {
+                    // Cargar turnos guardados
+                    slots = dayConfig.shifts.map(shift => ({
+                        id: shift.id || Date.now() + Math.random(),
+                        name: shift.name || "Turno",
+                        start_time: shift.start_time || shift.start || "09:00",
+                        end_time: shift.end_time || shift.end || "22:00"
+                    }));
+                    console.log(`🔄 ${day.day_name}: Cargados ${slots.length} turnos desde BD`);
+                } else if (isOpen) {
+                    // Día abierto sin turnos específicos - usar horario básico
+                    slots = [{
+                        id: Date.now(),
+                        name: "Turno Principal",
+                        start_time: dayConfig.start || "09:00",
+                        end_time: dayConfig.end || "22:00"
+                    }];
+                    console.log(`🔄 ${day.day_name}: Creado turno básico desde horario general`);
                 }
+                
+                return {
+                    ...day,
+                    is_open: isOpen,
+                    slots: slots
+                };
             });
-
-            // Añadir horarios solo a días abiertos
+            
+            console.log('📅 SCHEDULE CARGADO CON TURNOS:', loadedSchedule.map(d => 
+                `${d.day_name}: ${d.is_open ? `✅ (${d.slots.length} turnos)` : '❌'}`
+            ).join(', '));
+            
+            // VERIFICACIÓN CRÍTICA: Mostrar turnos cargados
+            console.log('🔴 TURNOS CARGADOS DESDE BD:');
             loadedSchedule.forEach(day => {
-                if (day.is_open) {
-                    day.slots = [{ start_time: "09:00", end_time: "22:00" }];
+                if (day.is_open && day.slots.length > 0) {
+                    console.log(`   ✅ ${day.day_name}:`);
+                    day.slots.forEach((slot, i) => {
+                        console.log(`      Turno ${i+1}: ${slot.start_time} - ${slot.end_time} (${slot.name})`);
+                    });
                 }
             });
 
@@ -455,15 +484,15 @@ export default function Calendario() {
                         );
                         
                         if (!userConfirmed) {
-                            toast.info("Cierre cancelado por el usuario");
+                            toast("Cierre cancelado por el usuario", { icon: 'ℹ️' });
                             return;
                         }
                         
-                        toast.info(
+                        toast(
                             `🔄 Cierre programado\n\n` +
                             `Se eliminarán ${validationData.existing_slots} slots disponibles.\n` +
                             `Regenera disponibilidades después.`,
-                            { duration: 4000 }
+                            { icon: '🔄', duration: 4000 }
                         );
                     }
                 } catch (validationCheckError) {
@@ -513,7 +542,7 @@ export default function Calendario() {
             // 🔄 AVISO DE REGENERACIÓN PARA EVENTOS DE CIERRE
             if (eventForm.closed) {
                 setTimeout(() => {
-                    toast.info(
+                    toast(
                         `🔄 REGENERACIÓN RECOMENDADA\n\n` +
                         `Has cerrado el día ${format(selectedDay, 'dd/MM/yyyy')}.\n\n` +
                         `📍 Ve a "Gestión de Disponibilidades"\n` +
@@ -521,6 +550,7 @@ export default function Calendario() {
                         `🎯 Luego "Generar Disponibilidades" para actualizar\n\n` +
                         `Esto elimina slots del día cerrado.`,
                         { 
+                            icon: '🔄',
                             duration: 8000,
                             style: { 
                                 minWidth: '350px',
@@ -652,11 +682,11 @@ export default function Calendario() {
                         // Solo conflictos de disponibilidades (no críticos)
                         const warningMessage = `Se detectaron ${conflictData.conflicts_found} días con disponibilidades que serán corregidas automáticamente.`;
                         
-                        toast.info(
+                        toast(
                             `🔄 Regeneración Requerida\n\n` +
                             `${warningMessage}\n\n` +
                             `Regenera disponibilidades después de guardar.`,
-                            { duration: 5000 }
+                            { icon: '🔄', duration: 5000 }
                         );
                     }
                 }
@@ -778,13 +808,14 @@ export default function Calendario() {
             
             // 🔄 AVISO AUTOMÁTICO DE REGENERACIÓN
             setTimeout(() => {
-                toast.info(
+                toast(
                     `🔄 REGENERACIÓN REQUERIDA\n\n` +
                     `Los horarios han cambiado.\n\n` +
                     `📍 Ve a "Gestión de Disponibilidades"\n` +
                     `🎯 Haz clic en "Generar Disponibilidades"\n\n` +
                     `Esto asegura coherencia entre calendario y reservas.`,
                     { 
+                        icon: '🔄',
                         duration: 8000,
                         style: { 
                             minWidth: '350px',
