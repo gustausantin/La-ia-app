@@ -351,3 +351,4 @@ CREATE POLICY "shifts_tenant_isolation" ON restaurant_shifts
 ---
 
 > **💡 Esta documentación refleja el estado OPTIMIZADO V3 de la base de datos tras el rediseño completo del sistema de disponibilidades. El sistema ahora es más rápido, escalable y mantenible, con validaciones automáticas y arquitectura relacional pura.**
+
