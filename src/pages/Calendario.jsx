@@ -419,6 +419,43 @@ export default function Calendario() {
         }
     };
 
+    // Eliminar evento especial
+    const handleDeleteEvent = useCallback(async (event) => {
+        if (!event || !event.id) return;
+        
+        const confirmed = window.confirm(
+            `¿Estás seguro de que quieres eliminar el evento "${event.title}"?\n\n` +
+            `📅 Fecha: ${format(parseISO(event.event_date), 'dd/MM/yyyy')}\n` +
+            `${event.is_closed ? '🔒 Este día dejará de estar cerrado' : '🎉 Se eliminará el evento especial'}`
+        );
+        
+        if (!confirmed) return;
+        
+        try {
+            const { error } = await supabase
+                .from('special_events')
+                .delete()
+                .eq('id', event.id);
+            
+            if (error) throw error;
+            
+            // Actualizar estado local
+            setEvents(prev => prev.filter(e => e.id !== event.id));
+            
+            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN
+            changeDetection.onSpecialEventChange('removed', event.title);
+            showRegenerationModal(
+                'special_event_deleted', 
+                `Evento "${event.title}" eliminado (${format(parseISO(event.event_date), 'dd/MM/yyyy')})`
+            );
+            
+            toast.success(`✅ Evento "${event.title}" eliminado correctamente`);
+        } catch (error) {
+            console.error('❌ Error eliminando evento:', error);
+            toast.error('Error al eliminar el evento');
+        }
+    }, [changeDetection, showRegenerationModal]);
+
     // Guardar evento especial
     const handleSaveEvent = async (e) => {
         e.preventDefault();
@@ -1118,9 +1155,19 @@ export default function Calendario() {
                                                                 <span className="text-red-600 bg-red-100 px-2 py-1 rounded block mb-1">
                                                                     Cerrado
                                                                 </span>
-                                                                <span className="text-orange-600 bg-orange-100 px-2 py-1 rounded block">
-                                                                    🔒 {dayEvent.title}
-                                                                </span>
+                                                                <div className="flex items-center justify-between text-orange-600 bg-orange-100 px-2 py-1 rounded mb-1">
+                                                                    <span className="text-xs">🔒 {dayEvent.title}</span>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleDeleteEvent(dayEvent);
+                                                                        }}
+                                                                        className="text-red-600 hover:text-red-800 ml-1"
+                                                                        title="Eliminar evento"
+                                                                    >
+                                                                        <X className="w-3 h-3" />
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         ) : dayEvent ? (
                                                             // Si hay evento pero NO está cerrado, mostrar evento especial
@@ -1128,9 +1175,19 @@ export default function Calendario() {
                                                                 <span className="text-green-600 bg-green-100 px-2 py-1 rounded block mb-1">
                                                                     Abierto 09:00-22:00
                                                                 </span>
-                                                                <span className="text-orange-600 bg-orange-100 px-2 py-1 rounded block">
-                                                                    🎉 {dayEvent.title}
-                                                                </span>
+                                                                <div className="flex items-center justify-between text-orange-600 bg-orange-100 px-2 py-1 rounded">
+                                                                    <span className="text-xs">🎉 {dayEvent.title}</span>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleDeleteEvent(dayEvent);
+                                                                        }}
+                                                                        className="text-red-600 hover:text-red-800 ml-1"
+                                                                        title="Eliminar evento"
+                                                                    >
+                                                                        <X className="w-3 h-3" />
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         ) : (
                                                             // Si NO hay evento, mostrar horario regular
