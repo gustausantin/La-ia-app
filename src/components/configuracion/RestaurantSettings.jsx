@@ -18,8 +18,12 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAvailabilityChangeDetection } from '../../hooks/useAvailabilityChangeDetection';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
+  const { restaurantId } = useAuthContext();
+  const changeDetection = useAvailabilityChangeDetection(restaurantId);
   const [settings, setSettings] = useState({
     name: restaurant?.name || '',
     description: restaurant?.description || '',
@@ -71,15 +75,35 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
 
   const handleSave = useCallback(async () => {
     setIsLoading(true);
+    
+    // 🔍 Detectar cambios en configuración crítica
+    const previousSettings = {
+      opening_hours: restaurant?.opening_hours,
+      booking_settings: restaurant?.booking_settings
+    };
+    
     try {
       await onUpdate(settings);
+      
+      // 🚨 CRÍTICO: Detectar cambios en parámetros de disponibilidad
+      const hoursChanged = JSON.stringify(previousSettings.opening_hours) !== JSON.stringify(settings.opening_hours);
+      const policyChanged = JSON.stringify(previousSettings.booking_settings) !== JSON.stringify(settings.booking_settings);
+      
+      if (hoursChanged) {
+        changeDetection.onScheduleChange('operating_hours');
+      }
+      
+      if (policyChanged) {
+        changeDetection.onPolicyChange('booking_settings');
+      }
+      
       toast.success('Configuración guardada correctamente');
     } catch (error) {
       toast.error('Error al guardar la configuración');
     } finally {
       setIsLoading(false);
     }
-  }, [settings, onUpdate]);
+  }, [settings, onUpdate, restaurant, changeDetection]);
 
   const InputField = ({ label, value, onChange, type = 'text', placeholder, required = false, help }) => (
     <div className="space-y-2">

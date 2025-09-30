@@ -4,6 +4,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useChannelStats } from '../hooks/useChannelStats';
 import { useOccupancy } from '../hooks/useOccupancy';
+import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
 import CalendarioErrorBoundary from '../components/CalendarioErrorBoundary';
 import { 
     format, 
@@ -90,6 +91,7 @@ export default function Calendario() {
     const { restaurant, restaurantId, isReady, addNotification } = useAuthContext();
     const { channelStats } = useChannelStats();
     const { occupancy: occupancyData } = useOccupancy(7);
+    const changeDetection = useAvailabilityChangeDetection(restaurantId);
 
     // Estados principales
     const [loading, setLoading] = useState(true);
@@ -518,6 +520,12 @@ export default function Calendario() {
             
             // Actualizar estado local
             setEvents(prev => [...prev, data]);
+            
+            // 🚨 CRÍTICO: Avisar que DEBE regenerar disponibilidades
+            changeDetection.onSpecialEventChange(
+                eventForm.closed ? 'closed' : 'special_hours',
+                format(selectedDay, 'dd/MM/yyyy')
+            );
             
             toast.success(`✅ Evento "${eventForm.title}" creado para ${format(selectedDay, 'dd/MM/yyyy')}`);
             setShowEventModal(false);
