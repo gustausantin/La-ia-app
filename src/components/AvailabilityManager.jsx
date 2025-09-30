@@ -372,21 +372,24 @@ const AvailabilityManager = () => {
             console.log('📋 Cargando política de reservas REAL...');
             const { useReservationStore } = await import('../stores/reservationStore.js');
             
+            // Declarar variables fuera del try para usarlas después
+            let advanceDays, duration, today, endDate;
+            
             try {
                 await useReservationStore.getState().loadReservationPolicy(restaurantId);
                 const settings = useReservationStore.getState().settings;
                 console.log('✅ Política cargada:', settings);
                 
                 // Usar valores REALES de la política
-                const advanceDays = settings.maxAdvanceBooking;
-                const duration = settings.slotDuration;
+                advanceDays = settings.maxAdvanceBooking;
+                duration = settings.slotDuration;
                 
                 if (!advanceDays || !duration) {
                     throw new Error('Política de reservas incompleta - faltan datos obligatorios');
                 }
                 
-                const today = format(new Date(), 'yyyy-MM-dd');
-                const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
+                today = format(new Date(), 'yyyy-MM-dd');
+                endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
                 
                 console.log('🎯 Usando política REAL:', {
                     advanceDays,
