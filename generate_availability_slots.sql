@@ -120,15 +120,21 @@ BEGIN
                         restaurant_id,
                         slot_date,
                         start_time,
-                        duration_minutes,
+                        end_time,
                         table_id,
+                        status,
+                        source,
+                        duration_minutes,
                         is_available
                     ) VALUES (
                         v_restaurant_id,
                         v_current_date,
                         v_current_time,
-                        v_duration,
+                        (v_current_time + (v_duration || ' minutes')::INTERVAL)::TIME,
                         v_table.id,
+                        'free',
+                        'system',
+                        v_duration,
                         true
                     );
                     v_slots_created := v_slots_created + 1;
