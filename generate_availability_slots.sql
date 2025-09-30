@@ -122,20 +122,14 @@ BEGIN
                         start_time,
                         duration_minutes,
                         table_id,
-                        is_available,
-                        max_party_size,
-                        created_at,
-                        updated_at
+                        is_available
                     ) VALUES (
                         v_restaurant_id,
                         v_current_date,
                         v_current_time,
                         v_duration,
                         v_table.id,
-                        true,
-                        v_table.capacity,
-                        NOW(),
-                        NOW()
+                        true
                     );
                     v_slots_created := v_slots_created + 1;
                 EXCEPTION 
