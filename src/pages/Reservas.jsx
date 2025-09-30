@@ -1563,7 +1563,7 @@ export default function Reservas() {
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                             >
-                                🗓️ Disponibilidades
+                                🗓️ Horarios de Reserva
                             </button>
                             <button
                                 onClick={() => setActiveTab('politica')}
@@ -2098,7 +2098,7 @@ export default function Reservas() {
                 </>
             )}
 
-            {/* Pestaña de Disponibilidades */}
+            {/* Pestaña de Horarios de Reserva */}
             {activeTab === 'disponibilidades' && (
                 <div className="space-y-6">
                     <AvailabilityManager />
