@@ -1123,42 +1123,61 @@ const AvailabilityManager = () => {
                 </div>
             )}
 
-            {/* Aviso de regeneración necesaria */}
+            {/* Aviso de regeneración necesaria - BANNER CRÍTICO */}
             {changeDetection.needsRegeneration && (
-                <div className="border border-orange-200 rounded-lg p-4 mb-6 bg-orange-50">
-                    <h3 className="font-medium text-orange-900 mb-3 flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5" />
-                        ⚠️ Regeneración de Disponibilidades Requerida
-                    </h3>
+                <div className="border-2 border-red-500 rounded-lg p-6 mb-6 bg-red-50 shadow-lg animate-pulse">
+                    <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
+                                <AlertCircle className="w-7 h-7 text-white" />
+                            </div>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-bold text-red-900 text-lg mb-2 flex items-center gap-2">
+                                🚨 REGENERACIÓN REQUERIDA - ACCIÓN NECESARIA
+                            </h3>
                     
-                    <div className="text-sm text-orange-800 mb-3">
-                        <p className="mb-2">
-                            <strong>Motivo:</strong> {changeDetection.getChangeMessage()}
-                        </p>
-                        <p className="text-xs text-orange-600">
-                            🕒 Cambio detectado: {changeDetection.lastChangeTimestamp ? new Date(changeDetection.lastChangeTimestamp).toLocaleString() : 'Recientemente'}
-                        </p>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={async () => {
-                                await smartRegeneration(changeDetection.changeType, changeDetection.changeDetails);
-                                changeDetection.clearRegenerationFlag();
-                            }}
-                            disabled={loading}
-                            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
-                        >
-                            {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                            Regenerar Disponibilidades
-                        </button>
-                        
-                        <button
-                            onClick={() => changeDetection.clearRegenerationFlag()}
-                            className="text-sm text-orange-600 hover:text-orange-800 underline"
-                        >
-                            Ignorar por ahora
-                        </button>
+                            <div className="text-red-800 mb-4 space-y-2">
+                                <p className="font-semibold text-base">
+                                    ⚠️ {changeDetection.getChangeMessage()}
+                                </p>
+                                <p className="text-sm">
+                                    <strong>⚡ IMPORTANTE:</strong> Las disponibilidades actuales NO reflejan los cambios. 
+                                    Los clientes podrían ver horarios incorrectos.
+                                </p>
+                                <div className="bg-white border-l-4 border-red-500 p-3 rounded">
+                                    <p className="text-sm font-medium text-red-900">
+                                        📍 Acción requerida:
+                                    </p>
+                                    <ol className="text-sm text-red-800 mt-2 ml-4 list-decimal space-y-1">
+                                        <li>Haz clic en "🔄 Regenerar Ahora"</li>
+                                        <li>Espera a que se complete el proceso</li>
+                                        <li>Verifica las nuevas disponibilidades</li>
+                                    </ol>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={async () => {
+                                        await smartRegeneration(changeDetection.changeType, changeDetection.changeDetails);
+                                        changeDetection.clearRegenerationFlag();
+                                    }}
+                                    disabled={loading}
+                                    className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all shadow-md font-semibold text-base"
+                                >
+                                    {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+                                    🔄 Regenerar Ahora
+                                </button>
+                                
+                                <button
+                                    onClick={() => changeDetection.clearRegenerationFlag()}
+                                    className="text-sm text-red-700 hover:text-red-900 underline font-medium"
+                                >
+                                    Ignorar (no recomendado)
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
