@@ -461,17 +461,17 @@ const AvailabilityManager = () => {
                 return;
             }
             
-            // Extraer estadísticas y configuración
-            const stats = data.stats || {};
-            const config = data.config || {};
-            const dateRange = data.date_range || {};
+            // Extraer estadísticas directamente de la respuesta SQL
+            const slotsCreated = data.slots_created || 0;
+            const tableCount = data.table_count || 0;
+            const policyApplied = data.policy_applied || {};
+            const durationMinutes = policyApplied.reservation_duration || 90;
             
-            const slotsCreated = stats.slots_created || 0;
-            const slotsSkipped = stats.slots_skipped || 0;
-            const daysProcessed = stats.days_processed || 0;
-            const daysClosed = stats.days_closed || 0;
-            const tableCount = stats.table_count || 0;
-            const durationMinutes = config.duration_minutes || 90;
+            // Valores por defecto para campos que la función SQL no devuelve
+            const slotsSkipped = 0;
+            const daysProcessed = advanceDays || 7;
+            const daysClosed = 0;
+            const dateRange = { end: endDate };
             
             const endDateFormatted = dateRange.end ? format(new Date(dateRange.end), 'dd/MM/yyyy') : format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
             
