@@ -2,6 +2,17 @@
 -- FUNCIÓN DE DISPONIBILIDADES PARA LA-IA APP
 -- Sistema Multi-Tenant Profesional
 -- Fecha: 30 Septiembre 2025
+-- 
+-- LÓGICA IMPLEMENTADA (5 PASOS):
+-- 1. Política de Reservas: Lee datos reales de restaurants.settings
+--    - advance_booking_days, reservation_duration, min/max_party_size, min_advance_hours
+-- 2. Calendario del Restaurante: Solo genera slots en días abiertos
+--    - Si closed=true → NO genera slots
+-- 3. Horario General: Respeta horarios de apertura/cierre reales
+--    - Última reserva = close_time - reservation_duration
+-- 4. Generación de Slots: Intervalos según duración real de reserva
+--    - Formato HH:MM (sin segundos)
+-- 5. Reglas Clave: Prioridad Calendario > Política de Reservas
 -- ============================================
 
 -- LIMPIAR FUNCIONES ANTERIORES
@@ -28,8 +39,22 @@ DECLARE
     v_slots_created INTEGER := 0;
     v_table_count INTEGER;
     v_restaurant_name TEXT;
-    v_duration INTEGER := 90;
     v_settings JSONB;
+    
+    -- Política de Reservas (DATOS REALES)
+    v_advance_booking_days INTEGER;
+    v_reservation_duration INTEGER;
+    v_min_party_size INTEGER;
+    v_max_party_size INTEGER;
+    v_min_advance_hours INTEGER;
+    
+    -- Horarios del día actual
+    v_day_name TEXT;
+    v_operating_hours JSONB;
+    v_open_time TIME;
+    v_close_time TIME;
+    v_is_closed BOOLEAN;
+    v_last_slot_time TIME;
 BEGIN
     -- ============================================
     -- DETERMINAR RESTAURANT_ID
@@ -64,11 +89,6 @@ BEGIN
         INTO v_restaurant_name, v_settings
         FROM restaurants
         WHERE id = v_restaurant_id;
-        
-        -- Obtener duración de las settings si existe
-        IF v_settings IS NOT NULL THEN
-            v_duration := COALESCE((v_settings->>'reservation_duration')::INTEGER, 90);
-        END IF;
     END IF;
     
     -- Validación: debe haber un restaurant_id
@@ -79,6 +99,15 @@ BEGIN
             'hint', 'Proporcione restaurant_id o asegúrese de estar autenticado'
         );
     END IF;
+    
+    -- ============================================
+    -- PASO 1: CARGAR POLÍTICA DE RESERVAS (DATOS REALES)
+    -- ============================================
+    v_advance_booking_days := COALESCE((v_settings->'booking_settings'->>'advance_booking_days')::INTEGER, 30);
+    v_reservation_duration := COALESCE((v_settings->>'reservation_duration')::INTEGER, 90);
+    v_min_party_size := COALESCE((v_settings->'booking_settings'->>'min_party_size')::INTEGER, 1);
+    v_max_party_size := COALESCE((v_settings->'booking_settings'->>'max_party_size')::INTEGER, 12);
+    v_min_advance_hours := COALESCE((v_settings->'booking_settings'->>'min_booking_hours')::INTEGER, 2);
     
     -- ============================================
     -- VERIFICAR MESAS DEL RESTAURANTE
@@ -104,6 +133,39 @@ BEGIN
     v_current_date := p_start_date;
     
     WHILE v_current_date <= p_end_date LOOP
+        -- PASO 2: OBTENER NOMBRE DEL DÍA
+        v_day_name := LOWER(TO_CHAR(v_current_date, 'Day'));
+        v_day_name := TRIM(v_day_name);
+        
+        -- Convertir día en inglés si es necesario
+        v_day_name := CASE v_day_name
+            WHEN 'lunes' THEN 'monday'
+            WHEN 'martes' THEN 'tuesday'
+            WHEN 'miércoles' THEN 'wednesday'
+            WHEN 'jueves' THEN 'thursday'
+            WHEN 'viernes' THEN 'friday'
+            WHEN 'sábado' THEN 'saturday'
+            WHEN 'domingo' THEN 'sunday'
+            ELSE v_day_name
+        END;
+        
+        -- PASO 2: OBTENER HORARIOS DEL DÍA (DATOS REALES)
+        v_operating_hours := v_settings->'operating_hours'->v_day_name;
+        v_is_closed := COALESCE((v_operating_hours->>'closed')::BOOLEAN, false);
+        
+        -- PASO 2: Si el día está cerrado, NO generar slots
+        IF v_is_closed THEN
+            v_current_date := v_current_date + INTERVAL '1 day';
+            CONTINUE;
+        END IF;
+        
+        -- PASO 3: OBTENER HORARIOS DE APERTURA Y CIERRE
+        v_open_time := COALESCE((v_operating_hours->>'open')::TIME, '12:00:00'::TIME);
+        v_close_time := COALESCE((v_operating_hours->>'close')::TIME, '22:00:00'::TIME);
+        
+        -- PASO 3: Calcular última hora de reserva (respetando duración)
+        v_last_slot_time := v_close_time - (v_reservation_duration || ' minutes')::INTERVAL;
+        
         -- Para cada mesa del restaurante
         FOR v_table IN 
             SELECT id, capacity, name
@@ -111,10 +173,10 @@ BEGIN
             WHERE restaurant_id = v_restaurant_id 
             AND is_active = true
         LOOP
-            -- Generar slots del día (12:00 a 22:00)
-            v_current_time := '12:00:00'::TIME;
+            -- PASO 4: GENERAR SLOTS según horarios reales
+            v_current_time := v_open_time;
             
-            WHILE v_current_time <= '20:30:00'::TIME LOOP
+            WHILE v_current_time <= v_last_slot_time LOOP
                 BEGIN
                     INSERT INTO availability_slots (
                         restaurant_id,
@@ -130,11 +192,11 @@ BEGIN
                         v_restaurant_id,
                         v_current_date,
                         v_current_time,
-                        (v_current_time + (v_duration || ' minutes')::INTERVAL)::TIME,
+                        (v_current_time + (v_reservation_duration || ' minutes')::INTERVAL)::TIME,
                         v_table.id,
                         'free',
                         'system',
-                        v_duration,
+                        v_reservation_duration,
                         true
                     );
                     v_slots_created := v_slots_created + 1;
@@ -143,7 +205,8 @@ BEGIN
                         NULL; -- Slot ya existe, continuar
                 END;
                 
-                v_current_time := v_current_time + (v_duration || ' minutes')::INTERVAL;
+                -- PASO 4: Avanzar según la duración de reserva
+                v_current_time := v_current_time + (v_reservation_duration || ' minutes')::INTERVAL;
             END LOOP;
         END LOOP;
         
@@ -151,7 +214,7 @@ BEGIN
     END LOOP;
     
     -- ============================================
-    -- RETORNAR RESULTADO
+    -- RETORNAR RESULTADO CON POLÍTICA APLICADA
     -- ============================================
     RETURN jsonb_build_object(
         'success', true,
@@ -160,7 +223,13 @@ BEGIN
         'table_count', v_table_count,
         'restaurant_id', v_restaurant_id,
         'restaurant_name', v_restaurant_name,
-        'duration_minutes', v_duration
+        'policy_applied', jsonb_build_object(
+            'advance_booking_days', v_advance_booking_days,
+            'reservation_duration', v_reservation_duration,
+            'min_party_size', v_min_party_size,
+            'max_party_size', v_max_party_size,
+            'min_advance_hours', v_min_advance_hours
+        )
     );
 END;
 $$;
