@@ -80,29 +80,45 @@ export const useAvailabilityChangeDetection = (restaurantId) => {
     // Cargar estado persistente al inicializar Y verificar slots existentes
     useEffect(() => {
         if (restaurantId) {
-            // Verificar si existen slots
-            checkExistingSlots();
-            
+            // 🚨 CARGAR INMEDIATAMENTE desde localStorage
             try {
                 const saved = localStorage.getItem(`needsRegeneration_${restaurantId}`);
+                console.log('🔍 Hook: Leyendo localStorage ->', saved);
+                
                 if (saved) {
                     const data = JSON.parse(saved);
-                    // Solo restaurar el estado si realmente existen slots
+                    console.log('🔍 Hook: Datos parseados ->', data);
+                    
+                    // 🎯 RESTAURAR ESTADO INMEDIATAMENTE (no esperar verificación)
+                    setNeedsRegeneration(data.needsRegeneration || false);
+                    setLastChangeTimestamp(data.lastChangeTimestamp);
+                    setChangeType(data.changeType);
+                    setChangeDetails(data.changeDetails);
+                    
+                    console.log('✅ Hook: Estado restaurado - needsRegeneration:', data.needsRegeneration);
+                    
+                    // Verificar slots en segundo plano (por si acaso)
                     checkExistingSlots().then(slotsExist => {
-                        if (slotsExist) {
-                            setNeedsRegeneration(data.needsRegeneration || false);
-                            setLastChangeTimestamp(data.lastChangeTimestamp);
-                            setChangeType(data.changeType);
-                            setChangeDetails(data.changeDetails);
-                        } else {
-                            // Limpiar estado si no hay slots
+                        console.log('🔍 Hook: Verificación asíncrona - slotsExist:', slotsExist);
+                        if (!slotsExist) {
+                            // Limpiar estado si no hay slots (protección)
+                            console.log('⚠️ Hook: No hay slots, limpiando estado...');
                             localStorage.removeItem(`needsRegeneration_${restaurantId}`);
+                            setNeedsRegeneration(false);
+                            setLastChangeTimestamp(null);
+                            setChangeType(null);
+                            setChangeDetails(null);
                         }
                     });
+                } else {
+                    console.log('ℹ️ Hook: No hay estado guardado en localStorage');
                 }
             } catch (error) {
-                console.warn('Error cargando estado de regeneración:', error);
+                console.warn('❌ Hook: Error cargando estado de regeneración:', error);
             }
+            
+            // Verificar si existen slots (independiente del localStorage)
+            checkExistingSlots();
         }
     }, [restaurantId, checkExistingSlots]);
 
