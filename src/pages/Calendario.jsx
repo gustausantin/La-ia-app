@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase';
 import { useChannelStats } from '../hooks/useChannelStats';
 import { useOccupancy } from '../hooks/useOccupancy';
 import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
+import { useRegenerationModal } from '../hooks/useRegenerationModal';
+import RegenerationRequiredModal from '../components/RegenerationRequiredModal';
 import CalendarioErrorBoundary from '../components/CalendarioErrorBoundary';
 import { 
     format, 
@@ -92,6 +94,7 @@ export default function Calendario() {
     const { channelStats } = useChannelStats();
     const { occupancy: occupancyData } = useOccupancy(7);
     const changeDetection = useAvailabilityChangeDetection(restaurantId);
+    const { isModalOpen, modalChangeReason, modalChangeDetails, showRegenerationModal, closeModal } = useRegenerationModal();
 
     // Estados principales
     const [loading, setLoading] = useState(true);
@@ -521,11 +524,18 @@ export default function Calendario() {
             // Actualizar estado local
             setEvents(prev => [...prev, data]);
             
-            // 🚨 CRÍTICO: Avisar que DEBE regenerar disponibilidades
+            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN
             changeDetection.onSpecialEventChange(
                 eventForm.closed ? 'closed' : 'special_hours',
                 format(selectedDay, 'dd/MM/yyyy')
             );
+            
+            // MOSTRAR MODAL INMEDIATAMENTE
+            if (eventForm.closed) {
+                showRegenerationModal('special_event_closed', `Día ${format(selectedDay, 'dd/MM/yyyy')} cerrado`);
+            } else {
+                showRegenerationModal('special_event_created', `Evento "${eventForm.title}" en ${format(selectedDay, 'dd/MM/yyyy')}`);
+            }
             
             toast.success(`✅ Evento "${eventForm.title}" creado para ${format(selectedDay, 'dd/MM/yyyy')}`);
             setShowEventModal(false);
@@ -1309,6 +1319,14 @@ export default function Calendario() {
                     </div>
                 </div>
             )}
+
+            {/* 🚨 MODAL BLOQUEANTE DE REGENERACIÓN */}
+            <RegenerationRequiredModal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                changeReason={modalChangeReason}
+                changeDetails={modalChangeDetails}
+            />
         </div>
         </CalendarioErrorBoundary>
     );
