@@ -331,6 +331,7 @@ export const useReservationStore = create()(
         }
       },
       
+      // === GENERAR SLOTS SIMPLIFICADOS (SIN TURNOS) ===
       generateTimeSlots: async (date, restaurantId) => {
         try {
           const { settings } = get();
@@ -340,17 +341,9 @@ export const useReservationStore = create()(
             throw new Error('POLICY NOT LOADED - Must call loadReservationPolicy first');
           }
           
-          log.info('🎯 Generating REAL time slots for:', date, 'with duration:', settings.slotDuration);
+          log.info('🎯 Generating SIMPLE time slots for:', date, 'with duration:', settings.slotDuration);
           
-          // 1. OBTENER HORARIOS Y TURNOS REALES desde Supabase
-          const { data: scheduleData, error: scheduleError } = await supabase
-            .from('restaurant_schedule')
-            .select('*')
-            .eq('restaurant_id', restaurantId);
-            
-          if (scheduleError) throw scheduleError;
-          
-          // 2. OBTENER CALENDARIO REAL (eventos especiales)
+          // 1. OBTENER CALENDARIO REAL (eventos especiales)
           const { data: eventsData, error: eventsError } = await supabase
             .from('special_events')
             .select('*')
@@ -359,115 +352,97 @@ export const useReservationStore = create()(
             
           if (eventsError) throw eventsError;
           
-          // 3. DETERMINAR HORARIOS REALES PARA EL DÍA
-          const dayOfWeek = new Date(date).toLocaleDateString('en', { weekday: 'lowercase' });
-          const daySchedule = scheduleData.find(s => s.day_of_week === dayOfWeek);
+          // 2. VERIFICAR SI EL DÍA ESTÁ CERRADO
           const specialEvent = eventsData?.[0];
-          
-          // Si hay evento especial cerrado, NO generar slots
           if (specialEvent?.is_closed) {
             log.info('🚫 Day is CLOSED due to special event');
             set(state => ({ timeSlots: [] }));
             return;
           }
           
-          // Si no está abierto según horario, NO generar slots
-          if (!daySchedule?.is_open) {
-            log.info('🚫 Day is CLOSED according to schedule');
+          // 3. OBTENER HORARIO GENERAL DEL RESTAURANTE (SIMPLIFICADO)
+          const { data: restaurantData, error: restaurantError } = await supabase
+            .from('restaurants')
+            .select('settings')
+            .eq('id', restaurantId)
+            .single();
+            
+          if (restaurantError) throw restaurantError;
+          
+          let operatingHours = restaurantData?.settings?.operating_hours;
+          if (!operatingHours) {
+            log.error('❌ No operating hours configured - using defaults');
+            // Usar horarios por defecto si no están configurados
+            const defaultHours = {
+              monday: { open: '09:00', close: '22:00', closed: false },
+              tuesday: { open: '09:00', close: '22:00', closed: false },
+              wednesday: { open: '09:00', close: '22:00', closed: false },
+              thursday: { open: '09:00', close: '22:00', closed: false },
+              friday: { open: '09:00', close: '22:00', closed: false },
+              saturday: { open: '09:00', close: '22:00', closed: false },
+              sunday: { open: '10:00', close: '21:00', closed: false }
+            };
+            
+            // Guardar horarios por defecto
+            await supabase
+              .from('restaurants')
+              .update({ 
+                settings: { 
+                  ...restaurantData?.settings, 
+                  operating_hours: defaultHours 
+                } 
+              })
+              .eq('id', restaurantId);
+              
+            log.info('✅ Default operating hours created and saved');
+            operatingHours = defaultHours;
+          }
+          
+          // 4. DETERMINAR HORARIO SIMPLE PARA EL DÍA
+          const dayOfWeek = new Date(date).toLocaleDateString('en', { weekday: 'lowercase' });
+          const dayHours = operatingHours[dayOfWeek];
+          
+          if (!dayHours || dayHours.closed) {
+            log.info('🚫 Day is CLOSED according to operating hours');
             set(state => ({ timeSlots: [] }));
             return;
           }
           
-          // 4. USAR TURNOS SI EXISTEN, sino horario general
-          const timeRanges = [];
+          // 5. GENERAR SLOTS SIMPLES DENTRO DEL HORARIO
+          const slots = [];
+          const [startHour, startMin] = dayHours.open.split(':').map(Number);
+          const [endHour, endMin] = dayHours.close.split(':').map(Number);
           
-          if (daySchedule.slots && daySchedule.slots.length > 0) {
-            // PRIORIDAD: TURNOS (shifts)
-            log.info('📍 Using SHIFTS from schedule');
-            daySchedule.slots.forEach(slot => {
-              if (slot.start_time && slot.end_time) {
-                timeRanges.push({
-                  start: slot.start_time,
-                  end: slot.end_time,
-                  name: slot.name || 'Turno'
-                });
-              }
+          let currentTime = startHour * 60 + startMin; // minutos desde medianoche
+          const endTime = endHour * 60 + endMin;
+          
+          // Generar slots cada X minutos según política
+          while (currentTime + settings.slotDuration <= endTime) {
+            const hour = Math.floor(currentTime / 60);
+            const minute = currentTime % 60;
+            const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            
+            slots.push({
+              time: timeString,
+              available: true, // Se calculará con disponibilidad real
+              duration: settings.slotDuration
             });
-          } else {
-            // FALLBACK: Horario general (solo si NO hay turnos)
-            log.info('📍 Using GENERAL hours from schedule');
-            timeRanges.push({
-              start: daySchedule.open_time || '09:00',
-              end: daySchedule.close_time || '22:00',
-              name: 'Horario General'
-            });
+            
+            currentTime += settings.slotDuration;
           }
           
-          // 5. GENERAR SLOTS REALES con duración de política
-          const slots = [];
-          
-          timeRanges.forEach(range => {
-            const [startHour, startMin] = range.start.split(':').map(Number);
-            const [endHour, endMin] = range.end.split(':').map(Number);
-            
-            let currentTime = startHour * 60 + startMin; // minutos desde medianoche
-            const endTime = endHour * 60 + endMin;
-            
-            while (currentTime + settings.slotDuration <= endTime) {
-              const hour = Math.floor(currentTime / 60);
-              const minute = currentTime % 60;
-              const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-              
-              slots.push({
-                time: timeString,
-                available: true, // Se calculará con disponibilidad real
-                range: range.name
-              });
-              
-              currentTime += settings.slotDuration;
-            }
-          });
-          
-          log.info('✅ Generated REAL slots:', slots.length, 'slots with', settings.slotDuration, 'min duration');
+          log.info('✅ Generated SIMPLE slots:', slots.length, 'slots with', settings.slotDuration, 'min duration');
+          log.info('📅 Operating hours:', `${dayHours.open} - ${dayHours.close}`);
           
           set(state => ({ timeSlots: slots }));
           
         } catch (error) {
-          log.error('❌ Failed to generate REAL time slots:', error);
+          log.error('❌ Failed to generate SIMPLE time slots:', error);
           // NO generar slots falsos - mostrar error
           set(state => ({ timeSlots: [], error: error.message }));
         }
       },
       
-      // FUNCIÓN LEGACY - ELIMINAR después de migración
-      generateTimeSlotsLegacy: (date) => {
-        const { settings, availability } = get();
-        const dayAvailability = availability[date] || [];
-        
-        const slots = [];
-        const startHour = 12; // 12:00 PM
-        const endHour = 23; // 11:00 PM
-        
-        for (let hour = startHour; hour <= endHour; hour++) {
-          for (let minute = 0; minute < 60; minute += (settings.slotDuration || 30)) {
-            const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-            
-            // Verificar disponibilidad
-            const availableTables = dayAvailability.filter(table => 
-              table.available_times.includes(time)
-            );
-            
-            slots.push({
-              time,
-              available: availableTables.length > 0,
-              availableTables: availableTables.length,
-              tables: availableTables,
-            });
-          }
-        }
-        
-        set({ timeSlots: slots });
-      },
       
       // === BÚSQUEDA DE MESAS ===
       findAvailableTables: async (date, time, partySize) => {

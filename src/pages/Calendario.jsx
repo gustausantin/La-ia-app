@@ -61,7 +61,6 @@ import {
     TrendingUp,
     Info,
     Edit2,
-    Trash2,
     Copy,
     Star,
     Activity,
@@ -197,20 +196,34 @@ export default function Calendario() {
                 console.error("❌ Error cargando horarios:", scheduleError);
             }
 
-            const savedHours = restaurantData?.settings?.operating_hours || {};
+            let savedHours = restaurantData?.settings?.operating_hours || {};
+            
+            // Si no hay horarios guardados, inicializar con valores por defecto
+            if (Object.keys(savedHours).length === 0) {
+                console.log('⚠️ No hay horarios guardados, inicializando por defecto...');
+                savedHours = {
+                    monday: { open: '09:00', close: '22:00', closed: true },
+                    tuesday: { open: '09:00', close: '22:00', closed: true },
+                    wednesday: { open: '09:00', close: '22:00', closed: true },
+                    thursday: { open: '09:00', close: '22:00', closed: true },
+                    friday: { open: '09:00', close: '22:00', closed: true },
+                    saturday: { open: '09:00', close: '22:00', closed: true },
+                    sunday: { open: '10:00', close: '21:00', closed: true }
+                };
+            }
             
             console.log('\n🔄 CARGANDO HORARIOS DESDE BD...');
             console.log('📊 DATOS RAW:', JSON.stringify(savedHours, null, 2));
             
-            // Debug detallado de cada día
-            console.log('🔍 VERIFICANDO CADA DÍA:');
-            console.log('  - domingo:', savedHours.sunday?.open, '→', savedHours.sunday?.open === true);
-            console.log('  - lunes:', savedHours.monday?.open, '→', savedHours.monday?.open === true);
-            console.log('  - martes:', savedHours.tuesday?.open, '→', savedHours.tuesday?.open === true);
-            console.log('  - miércoles:', savedHours.wednesday?.open, '→', savedHours.wednesday?.open === true);
-            console.log('  - jueves:', savedHours.thursday?.open, '→', savedHours.thursday?.open === true);
-            console.log('  - viernes:', savedHours.friday?.open, '→', savedHours.friday?.open === true);
-            console.log('  - sábado:', savedHours.saturday?.open, '→', savedHours.saturday?.open === true);
+            // Debug detallado de cada día - FORMATO CORRECTO
+            console.log('🔍 VERIFICANDO CADA DÍA (formato closed):');
+            console.log('  - domingo:', savedHours.sunday?.closed, '→ abierto:', !savedHours.sunday?.closed);
+            console.log('  - lunes:', savedHours.monday?.closed, '→ abierto:', !savedHours.monday?.closed);
+            console.log('  - martes:', savedHours.tuesday?.closed, '→ abierto:', !savedHours.tuesday?.closed);
+            console.log('  - miércoles:', savedHours.wednesday?.closed, '→ abierto:', !savedHours.wednesday?.closed);
+            console.log('  - jueves:', savedHours.thursday?.closed, '→ abierto:', !savedHours.thursday?.closed);
+            console.log('  - viernes:', savedHours.friday?.closed, '→ abierto:', !savedHours.friday?.closed);
+            console.log('  - sábado:', savedHours.saturday?.closed, '→ abierto:', !savedHours.saturday?.closed);
 
             // CREAR SCHEDULE DEFINITIVO - CARGAR TURNOS REALES
             const loadedSchedule = [
@@ -223,51 +236,26 @@ export default function Calendario() {
                 { day_of_week: 'saturday', day_name: 'Sábado' }
             ].map(day => {
                 const dayConfig = savedHours[day.day_of_week] || {};
-                const isOpen = dayConfig.open === true;
+                // FORMATO CORRECTO: usar !closed en lugar de open
+                const isOpen = !dayConfig.closed;
                 
-                // 🔧 CARGAR TURNOS REALES DESDE SHIFTS
-                let slots = [];
-                if (isOpen && dayConfig.shifts && Array.isArray(dayConfig.shifts)) {
-                    // Cargar turnos guardados
-                    slots = dayConfig.shifts.map(shift => ({
-                        id: shift.id || Date.now() + Math.random(),
-                        name: shift.name || "Turno",
-                        start_time: shift.start_time || shift.start || "09:00",
-                        end_time: shift.end_time || shift.end || "22:00"
-                    }));
-                    console.log(`🔄 ${day.day_name}: Cargados ${slots.length} turnos desde BD`);
-                } else if (isOpen) {
-                    // Día abierto sin turnos específicos - usar horario básico
-                    slots = [{
-                        id: Date.now(),
-                        name: "Turno Principal",
-                        start_time: dayConfig.start || "09:00",
-                        end_time: dayConfig.end || "22:00"
-                    }];
-                    console.log(`🔄 ${day.day_name}: Creado turno básico desde horario general`);
-                }
+                // 🔧 HORARIO SIMPLE (SIN TURNOS) - CAMPOS CORRECTOS
+                const openTime = dayConfig.open || "09:00";
+                const closeTime = dayConfig.close || "22:00";
+                
+                console.log(`🔄 ${day.day_name}: ${isOpen ? `✅ ${openTime}-${closeTime}` : '❌ Cerrado'}`);
                 
                 return {
                     ...day,
                     is_open: isOpen,
-                    slots: slots
+                    open_time: openTime,
+                    close_time: closeTime
                 };
             });
             
-            console.log('📅 SCHEDULE CARGADO CON TURNOS:', loadedSchedule.map(d => 
-                `${d.day_name}: ${d.is_open ? `✅ (${d.slots.length} turnos)` : '❌'}`
+            console.log('📅 SCHEDULE CARGADO SIMPLE:', loadedSchedule.map(d => 
+                `${d.day_name}: ${d.is_open ? `✅ ${d.open_time}-${d.close_time}` : '❌'}`
             ).join(', '));
-            
-            // VERIFICACIÓN CRÍTICA: Mostrar turnos cargados
-            console.log('🔴 TURNOS CARGADOS DESDE BD:');
-            loadedSchedule.forEach(day => {
-                if (day.is_open && day.slots.length > 0) {
-                    console.log(`   ✅ ${day.day_name}:`);
-                    day.slots.forEach((slot, i) => {
-                        console.log(`      Turno ${i+1}: ${slot.start_time} - ${slot.end_time} (${slot.name})`);
-                    });
-                }
-            });
 
             console.log('📊 SCHEDULE CREADO:');
             loadedSchedule.forEach(day => {
@@ -295,11 +283,9 @@ export default function Calendario() {
             
             // 2. Horas semanales
             const weeklyHours = scheduleData.reduce((total, day) => {
-                if (!day.is_open || !day.slots[0]) return total;
-                const start = day.slots[0].start_time;
-                const end = day.slots[0].end_time;
-                const startHour = parseInt(start.split(':')[0]);
-                const endHour = parseInt(end.split(':')[0]);
+                if (!day.is_open || !day.open_time || !day.close_time) return total;
+                const startHour = parseInt(day.open_time.split(':')[0]);
+                const endHour = parseInt(day.close_time.split(':')[0]);
                 const hours = endHour - startHour;
                 return total + hours;
             }, 0);
@@ -377,9 +363,8 @@ export default function Calendario() {
             day_of_week: dayKey,
             day_name: dayName,
             is_open: isOpen,
-            slots: isOpen && dayConfig?.slots?.length > 0 
-                ? dayConfig.slots 
-                : (isOpen ? [{ start_time: "09:00", end_time: "22:00" }] : [])
+            open_time: isOpen ? (dayConfig?.open_time || "09:00") : null,
+            close_time: isOpen ? (dayConfig?.close_time || "22:00") : null
         };
     }, [schedule]);
 
@@ -613,18 +598,13 @@ export default function Calendario() {
             return;
         }
 
-        // VALIDACIONES MEJORADAS PARA MÚLTIPLES TURNOS
+        // VALIDACIONES SIMPLES (SIN TURNOS)
         const invalidDays = schedule.filter(day => {
             if (!day.is_open) return false;
             
-            // Verificar que tenga slots y que todos los slots tengan horarios válidos
-            if (!day.slots || day.slots.length === 0) return true;
-            
-            // Verificar cada slot individualmente
-            return day.slots.some(slot => 
-                !slot.start_time || !slot.end_time || 
-                slot.start_time === "" || slot.end_time === ""
-            );
+            // Verificar que tenga horarios válidos
+            return !day.open_time || !day.close_time || 
+                   day.open_time === "" || day.close_time === "";
         });
 
         if (invalidDays.length > 0) {
@@ -634,7 +614,7 @@ export default function Calendario() {
 
         setSaving(true);
         try {
-            console.log("🔄 Guardando horarios con múltiples turnos...", schedule);
+            console.log("🔄 Guardando horarios simplificados...", schedule);
             
             // 🔍 DETECCIÓN DE CONFLICTOS CALENDARIO vs DISPONIBILIDADES
             console.log("🔍 Verificando conflictos calendario vs disponibilidades...");
@@ -702,54 +682,32 @@ export default function Calendario() {
             schedule.forEach(day => {
                 const dayName = day.day_of_week;
                 
-                if (!day.is_open || !day.slots || day.slots.length === 0) {
-                    // Día cerrado
+                if (!day.is_open) {
+                    // Día cerrado - formato simple
                     operating_hours[dayName] = {
-                        start: "09:00",
-                        end: "22:00",
-                        open: false
+                        open: "09:00",
+                        close: "22:00",
+                        closed: true
                     };
                     calendar_schedule.push({
                         day_of_week: dayName,
                         day_name: day.day_name,
-                        is_open: false,
-                        slots: []
+                        is_open: false
                     });
                 } else {
-                    // Día abierto con turnos
-                    const validSlots = day.slots.filter(slot => 
-                        slot.start_time && slot.end_time && 
-                        slot.start_time !== "" && slot.end_time !== ""
-                    );
-                    
-                    if (validSlots.length > 0) {
-                        // Usar el primer turno válido para operating_hours (compatibilidad)
-                        const firstSlot = validSlots[0];
+                    // Día abierto - horario simple (SIN TURNOS)
                     operating_hours[dayName] = {
-                            start: firstSlot.start_time,
-                            end: firstSlot.end_time,
-                        open: true,
-                            // GUARDAR TODOS LOS TURNOS
-                            shifts: validSlots.map(slot => ({
-                                id: slot.id || Date.now() + Math.random(),
-                                name: slot.name || "Turno",
-                            start_time: slot.start_time,
-                                end_time: slot.end_time
-                        }))
+                        open: day.open_time || "09:00",
+                        close: day.close_time || "22:00",
+                        closed: false
                     };
-                        
-                        calendar_schedule.push({
-                            day_of_week: dayName,
-                            day_name: day.day_name,
-                            is_open: true,
-                            slots: validSlots.map(slot => ({
-                                id: slot.id || Date.now() + Math.random(),
-                                name: slot.name || "Turno",
-                                start_time: slot.start_time,
-                                end_time: slot.end_time
-                            }))
-                        });
-                    }
+                    calendar_schedule.push({
+                        day_of_week: dayName,
+                        day_name: day.day_name,
+                        is_open: true,
+                        open_time: day.open_time || "09:00",
+                        close_time: day.close_time || "22:00"
+                    });
                 }
             });
 
@@ -803,8 +761,8 @@ export default function Calendario() {
                 console.warn("Error disparando evento:", eventError);
             }
 
-            toast.success("✅ Turnos guardados correctamente en Supabase");
-            console.log("✅ Guardado exitoso con múltiples turnos");
+            toast.success("✅ Horarios guardados correctamente");
+            console.log("✅ Guardado exitoso - horarios simples");
             
             // 🔄 AVISO AUTOMÁTICO DE REGENERACIÓN
             setTimeout(() => {
@@ -827,10 +785,10 @@ export default function Calendario() {
             }, 1500); // Esperar un poco para que se vea después del éxito
             
         } catch (error) {
-            console.error("❌ Error guardando turnos:", error);
+            console.error("❌ Error guardando horarios:", error);
             
             // MENSAJES DE ERROR ESPECÍFICOS
-            let errorMessage = "Error al guardar los turnos";
+            let errorMessage = "Error al guardar los horarios";
             
             if (error.code === 'PGRST301') {
                 errorMessage = "Sin permisos para actualizar horarios";
@@ -974,13 +932,9 @@ export default function Calendario() {
                                                 onClick={() => {
                                                     const newSchedule = [...schedule];
                                                     newSchedule[index].is_open = !newSchedule[index].is_open;
-                                                    if (newSchedule[index].is_open && newSchedule[index].slots.length === 0) {
-                                                        newSchedule[index].slots = [{
-                                                            id: 1,
-                                                            name: "Horario Principal",
-                                                            start_time: "09:00",
-                                                            end_time: "22:00"
-                                                        }];
+                                                    if (newSchedule[index].is_open && !newSchedule[index].open_time) {
+                                                        newSchedule[index].open_time = "09:00";
+                                                        newSchedule[index].close_time = "22:00";
                                                     }
                                                     setSchedule(newSchedule);
                                                 }}
@@ -996,100 +950,37 @@ export default function Calendario() {
                                                 
                                         {day.is_open && (
                                             <div className="space-y-3">
-                                                {/* Mostrar TODOS los turnos */}
-                                                {day.slots && day.slots.map((slot, slotIndex) => (
-                                                    <div key={slot.id || slotIndex} className="bg-gray-50 p-3 rounded-lg">
-                                                        <div className="flex items-center justify-between mb-2">
-                                                            <input
-                                                                type="text"
-                                                                value={slot.name || `Turno ${slotIndex + 1}`}
-                                                                onChange={(e) => {
-                                                                    const newSchedule = [...schedule];
-                                                                    newSchedule[index].slots[slotIndex].name = e.target.value;
-                                                                    setSchedule(newSchedule);
-                                                                }}
-                                                                className="text-sm font-medium bg-transparent border-none outline-none text-gray-800"
-                                                                placeholder="Nombre del turno"
-                                                            />
-                                                            {day.slots.length > 1 && (
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const newSchedule = [...schedule];
-                                                                        newSchedule[index].slots.splice(slotIndex, 1);
-                                                                        setSchedule(newSchedule);
-                                                                        toast.success("Turno eliminado");
-                                                                    }}
-                                                                    className="text-red-500 hover:text-red-700 text-xs"
-                                                                >
-                                                                    <Trash2 className="w-3 h-3" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                                <div className="flex items-center gap-2">
-                                                                <input
-                                                                        type="time"
-                                                                value={slot.start_time}
-                                                        onChange={(e) => {
-                                                            const newSchedule = [...schedule];
-                                                                    newSchedule[index].slots[slotIndex].start_time = e.target.value;
-                                                            setSchedule(newSchedule);
-                                                        }}
-                                                                className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                    />
-                                                            <span className="text-gray-500 text-xs">a</span>
-                                                                    <input
-                                                                        type="time"
-                                                                value={slot.end_time}
-                                                        onChange={(e) => {
-                                                            const newSchedule = [...schedule];
-                                                                    newSchedule[index].slots[slotIndex].end_time = e.target.value;
-                                                            setSchedule(newSchedule);
-                                                        }}
-                                                                className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
-                                                                    />
-                                                                </div>
+                                                {/* Horario Simple (SIN TURNOS) */}
+                                                <div className="bg-gray-50 p-3 rounded-lg">
+                                                    <div className="text-sm font-medium text-gray-800 mb-2">
+                                                        Horario de Apertura
                                                     </div>
-                                                ))}
-                                                
-                                                {/* Botón para añadir NUEVO turno */}
-                                                                                                <button
-                                                    className="w-full text-sm text-purple-600 hover:text-purple-800 py-2 border border-dashed border-purple-300 rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        
-                                                            const newSchedule = [...schedule];
-                                                        const currentSlots = newSchedule[index].slots || [];
-                                                        
-                                                        // Sugerir horarios diferentes según el número de turno
-                                                        const turnosSugeridos = [
-                                                            { start: "09:00", end: "22:00", name: "Horario Principal" },
-                                                            { start: "12:00", end: "14:00", name: "Turno Mañana" },
-                                                            { start: "19:00", end: "21:00", name: "Turno Noche" },
-                                                            { start: "15:00", end: "17:00", name: "Turno Tarde" },
-                                                            { start: "21:00", end: "23:00", name: "Turno Nocturno" }
-                                                        ];
-                                                        
-                                                        const nextTurno = turnosSugeridos[currentSlots.length] || turnosSugeridos[1];
-                                                        
-                                                            const newSlot = {
-                                                            id: Date.now(),
-                                                            name: nextTurno.name,
-                                                            start_time: nextTurno.start,
-                                                            end_time: nextTurno.end
-                                                        };
-                                                        
-                                                        newSchedule[index].slots.push(newSlot);
-                                                            setSchedule(newSchedule);
-                                                            
-                                                        toast.success(`✅ ${nextTurno.name} añadido para ${day.day_name}`);
-                                                    }}
-                                                >
-                                                    <Plus className="w-4 h-4" />
-                                                    Añadir turno
-                                </button>
-                        </div>
-                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="time"
+                                                            value={day.open_time || "09:00"}
+                                                            onChange={(e) => {
+                                                                const newSchedule = [...schedule];
+                                                                newSchedule[index].open_time = e.target.value;
+                                                                setSchedule(newSchedule);
+                                                            }}
+                                                            className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                        />
+                                                        <span className="text-gray-500 text-xs">a</span>
+                                                        <input
+                                                            type="time"
+                                                            value={day.close_time || "22:00"}
+                                                            onChange={(e) => {
+                                                                const newSchedule = [...schedule];
+                                                                newSchedule[index].close_time = e.target.value;
+                                                                setSchedule(newSchedule);
+                                                            }}
+                                                            className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                                         </div>
                                 ))}
                                                     </div>
