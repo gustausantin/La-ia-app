@@ -1010,12 +1010,18 @@ export default function Mesas() {
                 // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN
                 const deletedTable = tables.find(t => t.id === tableId);
                 if (deletedTable) {
+                    // Registrar el cambio para el sistema
                     changeDetection.onTableChange('removed', deletedTable);
-                    // MOSTRAR MODAL INMEDIATAMENTE
-                    showRegenerationModal('table_deleted', `Mesa "${deletedTable.name}" eliminada`);
                 }
-
+                
                 loadTables();
+                
+                // MOSTRAR MODAL SIEMPRE (después de loadTables para que se vea bien)
+                if (deletedTable) {
+                    setTimeout(() => {
+                        showRegenerationModal('table_deleted', `Mesa "${deletedTable.name}" eliminada`);
+                    }, 100);
+                }
             } catch (error) {
                 toast.error("Error al eliminar la mesa");
             }
