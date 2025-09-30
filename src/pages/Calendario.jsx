@@ -895,7 +895,7 @@ export default function Calendario() {
 
         return (
         <CalendarioErrorBoundary>
-        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+        <div className="min-h-screen bg-gray-50 p-3 md:p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-6">
@@ -933,11 +933,11 @@ export default function Calendario() {
 
                                     {/* Estadísticas rápidas - Diseño vertical mejorado */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
                         <Activity className="w-5 h-5 text-blue-600" />
                         Resumen de actividad
                     </h2>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="text-center">
                             <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-3">
                                 <CheckCircle className="w-6 h-6 text-green-600" />
@@ -1006,7 +1006,7 @@ export default function Calendario() {
                     {/* Tab: Horarios del restaurante */}
                     {activeTab === 'horarios' && (
                         <div className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                                 {schedule.map((day, index) => (
                                     <div key={day.day_of_week} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                                         <div className="flex items-center justify-between mb-3">
@@ -1095,7 +1095,7 @@ export default function Calendario() {
                         <div className="p-6">
                             {/* Controles del calendario */}
                             <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => navigateMonth('prev')}
                                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -1244,7 +1244,7 @@ export default function Calendario() {
             {showEventModal && selectedDay && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-3">
                             <h3 className="text-lg font-semibold text-gray-900">
                                 Crear evento - {format(selectedDay, 'dd/MM/yyyy')}
                             </h3>
@@ -1258,7 +1258,7 @@ export default function Calendario() {
 
                         <form onSubmit={handleSaveEvent} className="space-y-4">
                             {/* Aviso importante */}
-                            <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4">
+                            <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-3">
                                 <p className="text-sm text-blue-700">
                                     <strong>📌 Importante:</strong> Los eventos tienen prioridad sobre el horario regular. 
                                     Si marcas este día como cerrado, anulará el horario habitual.
@@ -1346,7 +1346,7 @@ export default function Calendario() {
                             </div>
 
                             {!eventForm.closed && (
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Hora apertura
@@ -1409,7 +1409,7 @@ export default function Calendario() {
             {showEventDetailModal && selectedEvent && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-3">
                             <h3 className="text-lg font-semibold text-gray-900">
                                 Evento: {selectedEvent.title}
                             </h3>
@@ -1426,13 +1426,13 @@ export default function Calendario() {
 
                         {/* Información del evento */}
                         <div className="space-y-4 mb-6">
-                            <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                            <div className="bg-blue-50 border-l-4 border-blue-400 p-3">
                                 <p className="text-sm text-blue-900 font-medium">
                                     📅 {format(parseISO(selectedEvent.event_date), 'EEEE, dd MMMM yyyy', { locale: es })}
                                 </p>
                             </div>
 
-                            <div className="bg-gray-50 p-4 rounded-lg">
+                            <div className="bg-gray-50 p-3 rounded-lg">
                                 <p className="text-sm text-gray-600 mb-2">Estado:</p>
                                 {selectedEvent.is_closed ? (
                                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
@@ -1446,7 +1446,7 @@ export default function Calendario() {
                             </div>
 
                             {!selectedEvent.is_closed && (selectedEvent.start_time || selectedEvent.end_time) && (
-                                <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="bg-gray-50 p-3 rounded-lg">
                                     <p className="text-sm text-gray-600 mb-2">Horario especial:</p>
                                     <p className="text-base font-medium text-gray-900">
                                         {selectedEvent.start_time || '09:00'} - {selectedEvent.end_time || '22:00'}
@@ -1455,7 +1455,7 @@ export default function Calendario() {
                             )}
 
                             {selectedEvent.description && (
-                                <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="bg-gray-50 p-3 rounded-lg">
                                     <p className="text-sm text-gray-600 mb-2">Descripción:</p>
                                     <p className="text-sm text-gray-900">{selectedEvent.description}</p>
                                 </div>

@@ -558,7 +558,7 @@ const Consumos = () => {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         {/* Pestañas */}
                         <div className="flex bg-gray-100 rounded-lg p-1">
                             <button
@@ -629,8 +629,8 @@ const Consumos = () => {
                 </div>
 
                 {/* Estadísticas */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                         <div className="flex items-center gap-2 mb-1">
                             <Users className="w-4 h-4 text-blue-600" />
                             <span className="text-sm text-blue-600 font-medium">Reservas</span>
@@ -638,7 +638,7 @@ const Consumos = () => {
                         <div className="text-2xl font-bold text-blue-900">{stats.totalReservations}</div>
                     </div>
 
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                         <div className="flex items-center gap-2 mb-1">
                             <Link2 className="w-4 h-4 text-green-600" />
                             <span className="text-sm text-green-600 font-medium">Vinculadas</span>
@@ -646,7 +646,7 @@ const Consumos = () => {
                         <div className="text-2xl font-bold text-green-900">{stats.linkedReservations}</div>
                     </div>
 
-                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
                         <div className="flex items-center gap-2 mb-1">
                             <AlertTriangle className="w-4 h-4 text-yellow-600" />
                             <span className="text-sm text-yellow-600 font-medium">Pendientes</span>
@@ -654,7 +654,7 @@ const Consumos = () => {
                         <div className="text-2xl font-bold text-yellow-900">{stats.pendingMatches}</div>
                     </div>
 
-                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
                         <div className="flex items-center gap-2 mb-1">
                             <DollarSign className="w-4 h-4 text-purple-600" />
                             <span className="text-sm text-purple-600 font-medium">Facturación</span>
@@ -662,7 +662,7 @@ const Consumos = () => {
                         <div className="text-2xl font-bold text-purple-900">{stats.totalRevenue.toFixed(0)}€</div>
                     </div>
 
-                    <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                    <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
                         <div className="flex items-center gap-2 mb-1">
                             <BarChart3 className="w-4 h-4 text-indigo-600" />
                             <span className="text-sm text-indigo-600 font-medium">Ticket Medio</span>
@@ -745,9 +745,9 @@ const Consumos = () => {
 
                                     {/* Ticket vinculado */}
                                     {receipt && (
-                                        <div className="mt-4 bg-gray-50 rounded-lg p-4">
+                                        <div className="mt-4 bg-gray-50 rounded-lg p-3">
                                             <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-3">
                                                     <div>
                                                         <div className="font-medium text-gray-900">
                                                             Ticket #{receipt.ticket_number || receipt.id.slice(0, 8)}
@@ -838,7 +838,7 @@ const Consumos = () => {
                             <ChefHat className="w-5 h-5 text-orange-600" />
                             Platos Más Vendidos
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {analytics.topDishes.slice(0, 8).map((dish, index) => (
                                 <div key={dish.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                     <div className="flex items-center gap-3">
