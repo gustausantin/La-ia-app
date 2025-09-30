@@ -1019,7 +1019,15 @@ export default function Mesas() {
                 console.log('🔍 ¿Existen slots?', slotsExist);
                 
                 if (slotsExist) {
-                    console.log('🚨 HAY SLOTS - Mostrando modal...');
+                    console.log('🚨 HAY SLOTS - Guardando estado y mostrando modal...');
+                    
+                    // 🎯 GUARDAR ESTADO EN LOCALSTORAGE (igual que Calendario)
+                    await changeDetection.onTableChange('removed', {
+                        id: tableId,
+                        name: tableName
+                    });
+                    
+                    // Mostrar modal
                     setTimeout(() => {
                         showRegenerationModal('table_deleted', `Mesa "${tableName}" eliminada`);
                     }, 500);
