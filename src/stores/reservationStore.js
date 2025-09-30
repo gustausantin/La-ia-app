@@ -668,42 +668,73 @@ export const useReservationStore = create()(
             .eq('restaurant_id', restaurantId)
             .gte('slot_date', new Date().toISOString().split('T')[0]); // Solo futuros
             
-          if (slotsError) throw slotsError;
+          if (slotsError) {
+            log.error('❌ Slots query failed:', slotsError);
+            throw slotsError;
+          }
           
-          // Consultar reservas REALES
-          const { data: reservationsData, error: reservationsError } = await supabase
-            .from('reservations')
-            .select('slot_id, status')
-            .eq('restaurant_id', restaurantId)
-            .gte('reservation_date', new Date().toISOString().split('T')[0])
-            .in('status', ['confirmada', 'sentada']);
+          log.info('✅ Slots loaded:', slotsData?.length || 0);
+          
+          // Consultar reservas REALES - versión más robusta
+          let reservationsData = [];
+          try {
+            log.info('🔍 Querying reservations...');
             
-          if (reservationsError) throw reservationsError;
+            const { data, error: reservationsError } = await supabase
+              .from('reservations')
+              .select('id, slot_id, status, reservation_date')
+              .eq('restaurant_id', restaurantId)
+              .gte('reservation_date', new Date().toISOString().split('T')[0]);
+              
+            if (reservationsError) {
+              log.error('❌ Reservations query failed:', reservationsError);
+              // Continuar sin reservas si hay error
+              reservationsData = [];
+            } else {
+              // Filtrar solo status activos
+              reservationsData = (data || []).filter(r => 
+                ['pending', 'confirmed', 'completed', 'seated', 'confirmada', 'sentada'].includes(r.status)
+              );
+              log.info('✅ Active reservations loaded:', reservationsData.length);
+            }
+          } catch (reservationError) {
+            log.warn('⚠️ Could not load reservations, continuing with slots only:', reservationError);
+            reservationsData = [];
+          }
           
           // Calcular estadísticas REALES
-          const totalSlots = slotsData.length;
+          const totalSlots = slotsData?.length || 0;
           const reservedSlotIds = new Set(reservationsData.map(r => r.slot_id).filter(Boolean));
-          const occupiedSlots = slotsData.filter(slot => reservedSlotIds.has(slot.id)).length;
-          const availableSlots = totalSlots - occupiedSlots;
+          const occupiedSlots = slotsData?.filter(slot => reservedSlotIds.has(slot.id)).length || 0;
+          const availableSlots = Math.max(0, totalSlots - occupiedSlots);
           
           // Consultar mesas REALES
-          const { data: tablesData, error: tablesError } = await supabase
-            .from('tables')
-            .select('id')
-            .eq('restaurant_id', restaurantId)
-            .eq('is_active', true);
-            
-          if (tablesError) throw tablesError;
+          let tablesCount = 0;
+          try {
+            const { data: tablesData, error: tablesError } = await supabase
+              .from('tables')
+              .select('id')
+              .eq('restaurant_id', restaurantId)
+              .eq('is_active', true);
+              
+            if (tablesError) {
+              log.warn('⚠️ Could not load tables count:', tablesError);
+            } else {
+              tablesCount = tablesData?.length || 0;
+            }
+          } catch (tablesError) {
+            log.warn('⚠️ Tables query failed, using 0:', tablesError);
+          }
           
           const stats = {
             total: totalSlots,
             free: availableSlots,
             occupied: occupiedSlots,
             reserved: occupiedSlots, // Mismo valor por ahora
-            tablesCount: tablesData.length
+            tablesCount: tablesCount
           };
           
-          log.info('✅ REAL availability stats loaded:', stats);
+          log.info('✅ REAL availability stats calculated:', stats);
           return stats;
           
         } catch (error) {
