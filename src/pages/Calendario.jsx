@@ -819,25 +819,9 @@ export default function Calendario() {
             toast.success("✅ Horarios guardados correctamente");
             console.log("✅ Guardado exitoso - horarios simples");
             
-            // 🔄 AVISO AUTOMÁTICO DE REGENERACIÓN
-            setTimeout(() => {
-                toast(
-                    `🔄 REGENERACIÓN REQUERIDA\n\n` +
-                    `Los horarios han cambiado.\n\n` +
-                    `📍 Ve a "Gestión de Disponibilidades"\n` +
-                    `🎯 Haz clic en "Generar Disponibilidades"\n\n` +
-                    `Esto asegura coherencia entre calendario y reservas.`,
-                    { 
-                        icon: '🔄',
-                        duration: 8000,
-                        style: { 
-                            minWidth: '350px',
-                            whiteSpace: 'pre-line',
-                            fontSize: '14px'
-                        }
-                    }
-                );
-            }, 1500); // Esperar un poco para que se vea después del éxito
+            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN
+            changeDetection.onScheduleChange('weekly_schedule');
+            showRegenerationModal('schedule_changed', 'Horarios semanales del restaurante modificados');
             
         } catch (error) {
             console.error("❌ Error guardando horarios:", error);
