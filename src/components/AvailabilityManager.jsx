@@ -25,6 +25,8 @@ const AvailabilityManager = () => {
     const { restaurantId } = useAuthContext();
     const changeDetection = useAvailabilityChangeDetection(restaurantId);
     const [loading, setLoading] = useState(false);
+    const [showNoSlotsModal, setShowNoSlotsModal] = useState(false);
+    const [noSlotsReason, setNoSlotsReason] = useState(null);
     
     // 🚨 Forzar verificación del estado cuando se monta el componente
     useEffect(() => {
@@ -540,38 +542,19 @@ const AvailabilityManager = () => {
             let summaryMessage = '';
             
             if (slotsCreated === 0 && slotsSkipped === 0) {
-                // No se generaron slots
-                if (daysClosed === daysProcessed) {
-                    summaryMessage = `⚠️ No se generaron disponibilidades:
-
-📊 ANÁLISIS:
-• Días procesados: ${daysProcessed}
-• Días cerrados: ${daysClosed}
-• Mesas disponibles: ${tableCount}
-
-❌ Todos los días están cerrados en el período seleccionado.
-🎯 Verifica los horarios de apertura en Configuración.`;
-                } else {
-                    summaryMessage = `ℹ️ No se generaron nuevos slots:
-
-📊 ESTADO:
-• Slots existentes preservados: ${slotsSkipped}
-• Días procesados: ${daysProcessed}
-• Días cerrados: ${daysClosed}
-• Período: HOY hasta ${endDateFormatted}
-
-✅ Las disponibilidades ya estaban actualizadas.`;
-                }
+                // 🚨 NO SE GENERARON SLOTS - MOSTRAR MODAL DE ADVERTENCIA
+                const reasonData = {
+                    daysProcessed,
+                    daysClosed,
+                    tableCount,
+                    slotsSkipped,
+                    endDate: endDateFormatted,
+                    allClosed: daysClosed === daysProcessed
+                };
                 
-                toast(summaryMessage, { 
-                    duration: 6000,
-                    icon: 'ℹ️',
-                    style: { 
-                        minWidth: '450px',
-                        whiteSpace: 'pre-line',
-                        fontSize: '14px'
-                    }
-                });
+                setNoSlotsReason(reasonData);
+                setShowNoSlotsModal(true);
+                toast.dismiss('generating');
             } else {
                 // Se generaron slots exitosamente
                 summaryMessage = `✅ ${slotsCreated} slots creados | ${tableCount} mesas | Hasta ${endDateFormatted}`;
@@ -1475,7 +1458,118 @@ const AvailabilityManager = () => {
                     )}
                 </div>
             )}
+
+            {/* 🚨 MODAL DE ADVERTENCIA: NO SE GENERARON SLOTS */}
+            {showNoSlotsModal && noSlotsReason && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
+                    <div 
+                        className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center relative border-4 border-orange-500"
+                        style={{
+                            animation: 'bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
+                        }}
+                    >
+                        {/* Icono de alerta */}
+                        <div className="mb-6 flex justify-center">
+                            <AlertTriangle className="w-20 h-20 text-orange-600 animate-pulse" />
+                        </div>
+
+                        {/* Título */}
+                        <h2 className="text-3xl font-extrabold text-gray-900 mb-4 leading-tight">
+                            ⚠️ NO SE GENERARON HORARIOS DE RESERVA
+                        </h2>
+
+                        {/* Mensaje principal */}
+                        {noSlotsReason.allClosed ? (
+                            <div className="mb-6">
+                                <p className="text-lg text-gray-700 mb-4">
+                                    <strong>Motivo:</strong> Todos los días están cerrados en el período seleccionado
+                                </p>
+                                <div className="p-6 bg-red-50 border-l-4 border-red-400 rounded text-left">
+                                    <p className="text-gray-800 font-semibold mb-3">📊 Análisis del período:</p>
+                                    <ul className="list-disc list-inside text-gray-700 space-y-2">
+                                        <li>Días procesados: <strong>{noSlotsReason.daysProcessed}</strong></li>
+                                        <li>Días cerrados: <strong className="text-red-600">{noSlotsReason.daysClosed}</strong></li>
+                                        <li>Mesas disponibles: <strong>{noSlotsReason.tableCount}</strong></li>
+                                        <li>Período: <strong>HOY hasta {noSlotsReason.endDate}</strong></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="mb-6">
+                                <p className="text-lg text-gray-700 mb-4">
+                                    <strong>Motivo:</strong> No se encontraron días con horarios configurados
+                                </p>
+                                <div className="p-6 bg-orange-50 border-l-4 border-orange-400 rounded text-left">
+                                    <p className="text-gray-800 font-semibold mb-3">📊 Estado actual:</p>
+                                    <ul className="list-disc list-inside text-gray-700 space-y-2">
+                                        <li>Slots existentes preservados: <strong>{noSlotsReason.slotsSkipped}</strong></li>
+                                        <li>Días procesados: <strong>{noSlotsReason.daysProcessed}</strong></li>
+                                        <li>Días cerrados: <strong>{noSlotsReason.daysClosed}</strong></li>
+                                        <li>Mesas disponibles: <strong>{noSlotsReason.tableCount}</strong></li>
+                                        <li>Período: <strong>HOY hasta {noSlotsReason.endDate}</strong></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Solución */}
+                        <div className="mb-6 p-6 bg-blue-50 border-l-4 border-blue-500 rounded text-left">
+                            <p className="text-gray-800 font-medium text-lg mb-3">
+                                🔧 <strong>¿QUÉ DEBES HACER?</strong>
+                            </p>
+                            <ol className="list-decimal list-inside text-gray-700 space-y-2">
+                                {noSlotsReason.allClosed ? (
+                                    <>
+                                        <li>Ve a <strong>Calendario</strong> y abre algunos días</li>
+                                        <li>O ve a <strong>Configuración → Horarios</strong> y configura días abiertos</li>
+                                        <li>Vuelve aquí y genera los horarios de nuevo</li>
+                                    </>
+                                ) : (
+                                    <>
+                                        <li>Ve a <strong>Configuración → Horarios</strong> y verifica los horarios de apertura</li>
+                                        <li>Ve a <strong>Calendario</strong> y asegúrate de tener días abiertos</li>
+                                        <li>Verifica que tu <strong>Política de Reservas</strong> esté correctamente configurada</li>
+                                        <li>Vuelve aquí y genera los horarios de nuevo</li>
+                                    </>
+                                )}
+                            </ol>
+                        </div>
+
+                        {/* Botón de cerrar */}
+                        <button
+                            onClick={() => {
+                                setShowNoSlotsModal(false);
+                                setNoSlotsReason(null);
+                            }}
+                            className="w-full bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                        >
+                            Entendido - Voy a configurar
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
+
+        {/* Estilos de animación */}
+        <style jsx>{`
+            @keyframes bounceIn {
+                0% {
+                    transform: scale(0.3);
+                    opacity: 0;
+                }
+                50% {
+                    transform: scale(1.05);
+                    opacity: 1;
+                }
+                70% {
+                    transform: scale(0.9);
+                }
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+        `}</style>
     );
 };
 
