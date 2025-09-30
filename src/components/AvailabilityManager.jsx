@@ -470,7 +470,7 @@ const AvailabilityManager = () => {
             const daysProcessed = stats.days_processed || 0;
             const daysClosed = stats.days_closed || 0;
             const tableCount = stats.table_count || 0;
-            const duration = config.duration_minutes || 90;
+            const durationMinutes = config.duration_minutes || 90;
             
             const endDateFormatted = dateRange.end ? format(new Date(dateRange.end), 'dd/MM/yyyy') : format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
             
@@ -519,7 +519,7 @@ const AvailabilityManager = () => {
 • ${daysProcessed} días analizados
 • ${daysClosed} días cerrados excluidos
 • Desde HOY hasta ${endDateFormatted}
-• Duración por reserva: ${duration} min
+• Duración por reserva: ${durationMinutes} min
 
 🎯 Las disponibilidades están listas para recibir reservas.`;
                 
