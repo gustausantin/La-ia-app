@@ -41,6 +41,8 @@ import toast from "react-hot-toast";
 import ConflictDetectionService from '../services/ConflictDetectionService';
 import ConflictWarning from '../components/ConflictWarning';
 import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
+import { useRegenerationModal } from '../hooks/useRegenerationModal';
+import RegenerationRequiredModal from '../components/RegenerationRequiredModal';
 
 // DATOS NECESARIOS DE SUPABASE:
 // - tabla: tables (id, restaurant_id, table_number, name, zone, min_capacity, max_capacity, status, notes)
@@ -462,6 +464,7 @@ export default function Mesas() {
     const { restaurant, restaurantId, isReady, addNotification } =
         useAuthContext();
     const changeDetection = useAvailabilityChangeDetection(restaurantId);
+    const { isModalOpen, modalChangeReason, modalChangeDetails, showRegenerationModal, closeModal } = useRegenerationModal();
 
     // Estados principales
     const [loading, setLoading] = useState(true);
@@ -1004,14 +1007,12 @@ export default function Mesas() {
                     });
                 }
 
-                // 🚨 NOTIFICAR CAMBIO PARA REGENERAR DISPONIBILIDADES
+                // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN
                 const deletedTable = tables.find(t => t.id === tableId);
                 if (deletedTable) {
                     changeDetection.onTableChange('removed', deletedTable);
-                    toast('⚠️ Se requiere regenerar disponibilidades tras eliminar la mesa', {
-                        icon: '⚠️',
-                        duration: 4000
-                    });
+                    // MOSTRAR MODAL INMEDIATAMENTE
+                    showRegenerationModal('table_deleted', `Mesa "${deletedTable.name}" eliminada`);
                 }
 
                 loadTables();
@@ -1019,7 +1020,7 @@ export default function Mesas() {
                 toast.error("Error al eliminar la mesa");
             }
         },
-        [loadTables, addNotification, tables, changeDetection],
+        [loadTables, addNotification, tables, changeDetection, showRegenerationModal],
     );
 
     // Función para confirmar acción con conflictos
@@ -1394,21 +1395,16 @@ export default function Mesas() {
                         setShowEditModal(false);
                         setSelectedTable(null);
                     }}
-                    onSave={() => {
-                        // 🚨 NOTIFICAR CAMBIO PARA REGENERAR DISPONIBILIDADES
+                    onSave={(savedTable) => {
+                        // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN
                         const isNew = !selectedTable;
                         if (isNew) {
-                            changeDetection.onTableChange('added', { name: 'Nueva mesa' });
-                            toast('⚠️ Nueva mesa añadida - Se recomienda regenerar disponibilidades', {
-                                icon: '⚠️',
-                                duration: 4000
-                            });
+                            changeDetection.onTableChange('added', savedTable || { name: 'Nueva mesa' });
+                            // MOSTRAR MODAL INMEDIATAMENTE
+                            showRegenerationModal('table_created', `Mesa "${savedTable?.name || 'nueva'}" creada`);
                         } else {
                             changeDetection.onTableChange('modified', selectedTable);
-                            toast('⚠️ Mesa modificada - Verifica si necesitas regenerar disponibilidades', {
-                                icon: '⚠️',
-                                duration: 4000
-                            });
+                            showRegenerationModal('table_modified', `Mesa "${selectedTable?.name}" modificada`);
                         }
 
                         setShowCreateModal(false);
@@ -1471,6 +1467,14 @@ export default function Mesas() {
                     restaurantId={restaurantId}
                 />
             )}
+
+            {/* 🚨 MODAL BLOQUEANTE DE REGENERACIÓN */}
+            <RegenerationRequiredModal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                changeReason={modalChangeReason}
+                changeDetails={modalChangeDetails}
+            />
         </div>
     );
 }

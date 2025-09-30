@@ -19,11 +19,14 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAvailabilityChangeDetection } from '../../hooks/useAvailabilityChangeDetection';
+import { useRegenerationModal } from '../../hooks/useRegenerationModal';
+import RegenerationRequiredModal from '../RegenerationRequiredModal';
 import { useAuthContext } from '../../contexts/AuthContext';
 
 const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
   const { restaurantId } = useAuthContext();
   const changeDetection = useAvailabilityChangeDetection(restaurantId);
+  const { isModalOpen, modalChangeReason, modalChangeDetails, showRegenerationModal, closeModal } = useRegenerationModal();
   const [settings, setSettings] = useState({
     name: restaurant?.name || '',
     description: restaurant?.description || '',
@@ -91,10 +94,14 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
       
       if (hoursChanged) {
         changeDetection.onScheduleChange('operating_hours');
+        // MOSTRAR MODAL INMEDIATAMENTE
+        showRegenerationModal('schedule_changed', 'Horarios del restaurante modificados');
       }
       
       if (policyChanged) {
         changeDetection.onPolicyChange('booking_settings');
+        // MOSTRAR MODAL INMEDIATAMENTE
+        showRegenerationModal('policy_changed', 'Política de reservas modificada');
       }
       
       toast.success('Configuración guardada correctamente');
@@ -103,7 +110,7 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [settings, onUpdate, restaurant, changeDetection]);
+  }, [settings, onUpdate, restaurant, changeDetection, showRegenerationModal]);
 
   const InputField = ({ label, value, onChange, type = 'text', placeholder, required = false, help }) => (
     <div className="space-y-2">
@@ -458,6 +465,14 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
           </button>
         </div>
       </div>
+
+      {/* 🚨 MODAL BLOQUEANTE DE REGENERACIÓN */}
+      <RegenerationRequiredModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        changeReason={modalChangeReason}
+        changeDetails={modalChangeDetails}
+      />
     </div>
   );
 });
