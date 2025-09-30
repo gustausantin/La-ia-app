@@ -511,26 +511,10 @@ const AvailabilityManager = () => {
                 });
             } else {
                 // Se generaron slots exitosamente
-                summaryMessage = `✅ Disponibilidades generadas exitosamente:
-
-📊 RESUMEN:
-• ${slotsCreated} slots nuevos creados
-• ${slotsSkipped} slots existentes preservados
-• ${tableCount} mesas procesadas
-• ${daysProcessed} días analizados
-• ${daysClosed} días cerrados excluidos
-• Desde HOY hasta ${endDateFormatted}
-• Duración por reserva: ${durationMinutes} min
-
-🎯 Las disponibilidades están listas para recibir reservas.`;
+                summaryMessage = `✅ ${slotsCreated} slots creados | ${tableCount} mesas | Hasta ${endDateFormatted}`;
                 
                 toast.success(summaryMessage, { 
-                    duration: 8000,
-                    style: { 
-                        minWidth: '450px',
-                        whiteSpace: 'pre-line',
-                        fontSize: '14px'
-                    }
+                    duration: 4000
                 });
             }
 
@@ -565,17 +549,7 @@ const AvailabilityManager = () => {
             setGenerationSuccess(successData);
             localStorage.setItem(`generationSuccess_${restaurantId}`, JSON.stringify(successData));
             
-            // Actualizar el mensaje de éxito final
-            if (slotsCreated > 0) {
-                toast.success(`✅ ¡Generación completa!\n\n📊 SLOTS CREADOS: ${slotsCreated}\n🏪 MESAS: ${tableCount}\n📅 PERÍODO: ${successData.dateRange}`, {
-                    duration: 6000,
-                    style: { 
-                        minWidth: '350px',
-                        whiteSpace: 'pre-line',
-                        fontSize: '14px'
-                    }
-                });
-            }
+            // NO mostrar toast adicional - ya se mostró arriba
             
             setGenerationSuccess(successData);
             
