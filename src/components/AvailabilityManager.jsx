@@ -563,8 +563,9 @@ const AvailabilityManager = () => {
 ✅ Las disponibilidades ya estaban actualizadas.`;
                 }
                 
-                toast.info(summaryMessage, { 
+                toast(summaryMessage, { 
                     duration: 6000,
+                    icon: 'ℹ️',
                     style: { 
                         minWidth: '450px',
                         whiteSpace: 'pre-line',
