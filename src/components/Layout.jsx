@@ -72,6 +72,13 @@ export default function Layout() {
             icon: MessageSquare,
             badge: null, // TODO: Implementar contador de mensajes no leídos
         },
+        {
+            name: "Calendario",
+            path: "/calendario",
+            icon: Calendar,
+            badge: null,
+        },
+        { name: "Mesas", path: "/mesas", icon: Briefcase, badge: null },
         { name: "Clientes", path: "/clientes", icon: Users, badge: null },
         {
             name: "CRM Inteligente",
@@ -83,19 +90,6 @@ export default function Layout() {
             name: "Consumos",
             path: "/consumos",
             icon: Receipt,
-            badge: null,
-        },
-        {
-            name: "Plantillas CRM",
-            path: "/plantillas",
-            icon: Mail,
-            badge: null, // TODO: Implementar contador de plantillas
-        },
-        { name: "Mesas", path: "/mesas", icon: Briefcase, badge: null },
-        {
-            name: "Calendario",
-            path: "/calendario",
-            icon: Calendar,
             badge: null,
         },
         { name: "Analytics", path: "/analytics", icon: BarChart2, badge: null },
