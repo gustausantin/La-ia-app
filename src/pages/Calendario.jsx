@@ -116,7 +116,6 @@ export default function Calendario() {
 
     // Estados para eventos especiales
     const [events, setEvents] = useState([]);
-    const [selectedEvent, setSelectedEvent] = useState(null);
 
     // Generar días del calendario CON ALINEACIÓN CORRECTA
     const generateCalendarDays = () => {
