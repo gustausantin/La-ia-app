@@ -282,7 +282,7 @@ export default function Clientes() {
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Estado de la Base de Clientes</h2>
 
                     {/* Desglose por segmentos con porcentajes */}
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
                         {Object.entries(CUSTOMER_SEGMENTS).map(([key, segment]) => {
                             const count = customers.filter(c => (c.segment_manual || c.segment_auto) === key).length;
                             const percentage = customers.length > 0 ? Math.round((count / customers.length) * 100) : 0;
@@ -290,7 +290,7 @@ export default function Clientes() {
                             return (
                                 <div 
                                     key={key} 
-                                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
                                         filters.segment === key 
                                             ? `border-${segment.color}-500 bg-${segment.color}-50` 
                                             : 'border-gray-200 hover:border-gray-300'
@@ -298,12 +298,12 @@ export default function Clientes() {
                                     onClick={() => setFilters({...filters, segment: filters.segment === key ? '' : key})}
                                 >
                                     <div className="text-center">
-                                        <div className="text-2xl mb-2">{segment.icon}</div>
-                                        <div className="text-xl font-bold text-gray-900">{count}</div>
-                                        <div className={`text-sm font-medium text-${segment.color}-700`}>
+                                        <div className="text-xl mb-1">{segment.icon}</div>
+                                        <div className="text-lg font-bold text-gray-900">{count}</div>
+                                        <div className={`text-xs font-medium text-${segment.color}-700`}>
                                             {segment.label}
                                         </div>
-                                        <div className="text-xs text-gray-500 mt-1">
+                                        <div className="text-xs text-gray-500 mt-0.5">
                                             {percentage}% del total
                                         </div>
                             </div>

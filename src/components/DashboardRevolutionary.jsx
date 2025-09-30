@@ -97,8 +97,8 @@ const SystemStatus = ({ status, metrics }) => {
                         <StatusIcon className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h2 className={`text-xl font-bold ${config.textColor}`}>{config.title}</h2>
-                        <p className="text-gray-600">{config.message}</p>
+                        <h2 className={`text-lg font-bold ${config.textColor}`}>{config.title}</h2>
+                        <p className="text-sm text-gray-600">{config.message}</p>
                     </div>
                 </div>
                 
@@ -112,19 +112,19 @@ const SystemStatus = ({ status, metrics }) => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-200">
                 <div className="text-center">
                     <div className="text-lg font-bold">{metrics.noShowsToday || 0}</div>
-                    <div className="text-xs text-gray-600">No-shows hoy</div>
+                    <div className="text-sm text-gray-600">No-shows hoy</div>
                 </div>
                 <div className="text-center">
                     <div className="text-lg font-bold">{metrics.reservationsToday || 0}</div>
-                    <div className="text-xs text-gray-600">Reservas hoy</div>
+                    <div className="text-sm text-gray-600">Reservas hoy</div>
                 </div>
                 <div className="text-center">
                     <div className="text-lg font-bold">{metrics.activeCustomers || 0}</div>
-                    <div className="text-xs text-gray-600">Clientes activos</div>
+                    <div className="text-sm text-gray-600">Clientes activos</div>
                 </div>
                 <div className="text-center">
                     <div className="text-lg font-bold">{metrics.crmOpportunities || 0}</div>
-                    <div className="text-xs text-gray-600">Oportunidades CRM</div>
+                    <div className="text-sm text-gray-600">Oportunidades CRM</div>
                 </div>
             </div>
         </div>
@@ -172,7 +172,7 @@ const NoShowWidget = ({ data, onViewDetails }) => {
             {/* Métricas principales */}
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="text-center bg-blue-50 rounded-lg p-3">
-                    <div className="text-2xl font-bold text-blue-600 mb-1">
+                    <div className="text-xl font-bold text-blue-600 mb-1">
                         {data.weeklyPrevented || 0}
                     </div>
                     <div className="text-sm text-gray-600">Evitados esta semana</div>
@@ -185,7 +185,7 @@ const NoShowWidget = ({ data, onViewDetails }) => {
                         {data.todayRisk > 0 && (
                             <AlertTriangle className="w-5 h-5 text-red-600" />
                         )}
-                        <div className={`text-2xl font-bold ${
+                        <div className={`text-xl font-bold ${
                             data.todayRisk > 0 ? 'text-red-600' : 'text-gray-700'
                         }`}>
                             {data.todayRisk || 0}
@@ -314,14 +314,14 @@ const ReturningCustomersWidget = ({ data }) => {
             {/* Métricas de valor */}
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="text-center bg-purple-50 rounded-lg p-3">
-                    <div className="text-2xl font-bold text-purple-600 mb-1">{data.returningThisWeek || 0}</div>
+                    <div className="text-xl font-bold text-purple-600 mb-1">{data.returningThisWeek || 0}</div>
                     <div className="text-sm text-gray-600">Regresaron</div>
-                    <div className="text-xs text-purple-600 font-medium">~{(data.returningThisWeek || 0) * avgTicket}€ generados</div>
+                    <div className="text-sm text-purple-600 font-medium">~{(data.returningThisWeek || 0) * avgTicket}€ generados</div>
                 </div>
                 <div className="text-center bg-green-50 rounded-lg p-3">
-                    <div className="text-2xl font-bold text-green-600 mb-1">{data.loyalCustomers || 0}</div>
+                    <div className="text-xl font-bold text-green-600 mb-1">{data.loyalCustomers || 0}</div>
                     <div className="text-sm text-gray-600">VIP (5+ visitas)</div>
-                    <div className="text-xs text-green-600 font-medium">Valor alto</div>
+                    <div className="text-sm text-green-600 font-medium">Valor alto</div>
                 </div>
             </div>
 
@@ -548,13 +548,13 @@ const TotalValueWidget = ({ data }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="p-3 bg-green-50 rounded-lg">
                             <div className="text-sm font-medium text-green-700">Valor Generado</div>
-                            <div className="text-2xl font-bold text-green-600">{totalValue}€</div>
-                            <div className="text-xs text-green-600">esta semana</div>
+                            <div className="text-xl font-bold text-green-600">{totalValue}€</div>
+                            <div className="text-sm text-green-600">esta semana</div>
                         </div>
                         <div className="p-3 bg-blue-50 rounded-lg">
                             <div className="text-sm font-medium text-blue-700">Costo Mensual</div>
-                            <div className="text-2xl font-bold text-blue-600">{data.monthlyCost || 0}€</div>
-                            <div className="text-xs text-blue-600">suscripción</div>
+                            <div className="text-xl font-bold text-blue-600">{data.monthlyCost || 0}€</div>
+                            <div className="text-sm text-blue-600">suscripción</div>
                         </div>
                     </div>
 
