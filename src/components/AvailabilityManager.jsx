@@ -493,9 +493,23 @@ const AvailabilityManager = () => {
                 });
             }
 
-            // Actualizar estado local inmediatamente para reflejar cambios
-            // 🔒 USAR SOLO DATOS REALES DE LA FUNCIÓN SQL - NO INVENTAR
-            const slotsCreated = data?.slots_created || 0;
+            // 🔒 CONSULTAR DATOS REALES POST-GENERACIÓN
+            console.log('📊 Consultando slots reales creados...');
+            
+            // Contar slots reales creados en los últimos 5 minutos
+            const { count: recentSlotsCount, error: countError } = await supabase
+                .from('availability_slots')
+                .select('id', { count: 'exact', head: true })
+                .eq('restaurant_id', restaurantId)
+                .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
+            
+            const actualSlotsCreated = countError ? 0 : (recentSlotsCount || 0);
+            
+            console.log('📊 Slots realmente creados en los últimos 5 min:', actualSlotsCreated);
+            console.log('📊 Respuesta de función SQL:', data);
+            
+            // Usar datos reales o fallback a la respuesta SQL
+            const slotsCreated = actualSlotsCreated > 0 ? actualSlotsCreated : (data?.slots_created || 0);
             const slotsUpdated = data?.slots_updated || 0;
             const slotsPreserved = data?.slots_preserved || 0;
             
@@ -505,11 +519,24 @@ const AvailabilityManager = () => {
                 duration: duration,
                 buffer: 15, // Buffer por defecto en minutos
                 timestamp: new Date().toLocaleString(),
-                // 🔒 DATOS REALES CALCULADOS DE LA RESPUESTA SQL
-                totalAvailable: slotsCreated - slotsPreserved, // Nuevos slots disponibles
+                // 🔒 DATOS REALES CALCULADOS
+                totalAvailable: Math.max(0, slotsCreated - slotsPreserved), // Nuevos slots disponibles
                 totalOccupied: 0,  // Los ocupados se cargarán con stats reales
-                totalReserved: slotsPreserved // Slots con reservas preservadas
+                totalReserved: slotsPreserved, // Slots con reservas preservadas
+                actuallyCreated: actualSlotsCreated // Slots realmente creados según consulta directa
             };
+            
+            // Actualizar el mensaje de éxito con datos reales
+            if (actualSlotsCreated > 0) {
+                toast.success(`✅ ¡Generación exitosa!\n\n📊 SLOTS CREADOS: ${actualSlotsCreated}\n🕒 Duración: ${duration} min\n📅 Período: ${successData.dateRange}`, {
+                    duration: 6000,
+                    style: { 
+                        minWidth: '350px',
+                        whiteSpace: 'pre-line',
+                        fontSize: '14px'
+                    }
+                });
+            }
             
             setGenerationSuccess(successData);
             
@@ -521,10 +548,25 @@ const AvailabilityManager = () => {
             }
             
             // 🔒 CARGAR ESTADÍSTICAS REALES INMEDIATAMENTE
-            setTimeout(async () => {
+            console.log('🔄 Recargando estadísticas después de generar...');
+            
+            // Forzar recarga inmediata
+            try {
                 await loadAvailabilityStats(); // Esto cargará los datos reales
-                await loadAvailabilityGrid();
-            }, 500);
+                console.log('✅ Estadísticas recargadas');
+            } catch (statsError) {
+                console.error('❌ Error recargando estadísticas:', statsError);
+            }
+            
+            // Recargar grid también
+            setTimeout(async () => {
+                try {
+                    await loadAvailabilityGrid();
+                    console.log('✅ Grid recargado');
+                } catch (gridError) {
+                    console.error('❌ Error recargando grid:', gridError);
+                }
+            }, 1000);
 
         } catch (error) {
             console.error('Error generando disponibilidades:', error);
