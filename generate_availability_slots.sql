@@ -6,13 +6,15 @@
 -- LÓGICA IMPLEMENTADA (5 PASOS):
 -- 1. Política de Reservas: Lee datos reales de restaurants.settings
 --    - advance_booking_days, reservation_duration, min/max_party_size, min_advance_hours
--- 2. Calendario del Restaurante: Solo genera slots en días abiertos
+-- 2. Calendario del Restaurante: PRIORIDAD 1 - special_events, PRIORIDAD 2 - calendar_schedule
+--    - Primero verifica special_events (festivos, vacaciones específicas)
+--    - Si no hay evento, usa calendar_schedule (horario semanal)
 --    - Si closed=true → NO genera slots
 -- 3. Horario General: Respeta horarios de apertura/cierre reales
---    - Última reserva = close_time - reservation_duration
+--    - Última reserva = close_time (el cliente puede reservar hasta la hora de cierre)
 -- 4. Generación de Slots: Intervalos según duración real de reserva
 --    - Formato HH:MM (sin segundos)
--- 5. Reglas Clave: Prioridad Calendario > Política de Reservas
+-- 5. Reglas Clave: Prioridad special_events > calendar_schedule > Política de Reservas
 -- ============================================
 
 -- LIMPIAR FUNCIONES ANTERIORES
@@ -150,22 +152,42 @@ BEGIN
             ELSE v_day_name
         END;
         
-        -- PASO 2: OBTENER HORARIOS DEL DÍA (DATOS REALES)
-        v_operating_hours := v_settings->'operating_hours'->v_day_name;
-        v_is_closed := COALESCE((v_operating_hours->>'closed')::BOOLEAN, false);
+        -- PASO 2A: VERIFICAR SI HAY EVENTO ESPECIAL PARA ESTE DÍA (festivos, vacaciones)
+        SELECT is_closed, start_time, end_time
+        INTO v_is_closed, v_open_time, v_close_time
+        FROM special_events
+        WHERE restaurant_id = v_restaurant_id
+        AND event_date = v_current_date
+        LIMIT 1;
         
-        -- PASO 2: Si el día está cerrado, NO generar slots
-        IF v_is_closed THEN
+        -- PASO 2B: Si hay evento especial y está cerrado, saltar día
+        IF FOUND AND v_is_closed THEN
             v_current_date := v_current_date + INTERVAL '1 day';
             CONTINUE;
         END IF;
         
-        -- PASO 3: OBTENER HORARIOS DE APERTURA Y CIERRE
-        v_open_time := COALESCE((v_operating_hours->>'open')::TIME, '12:00:00'::TIME);
-        v_close_time := COALESCE((v_operating_hours->>'close')::TIME, '22:00:00'::TIME);
+        -- PASO 2C: Si NO hay evento especial, usar calendar_schedule
+        IF NOT FOUND THEN
+            -- Buscar en calendar_schedule (JSON array)
+            SELECT 
+                NOT COALESCE((day_config->>'is_open')::BOOLEAN, false),
+                (day_config->>'open_time')::TIME,
+                (day_config->>'close_time')::TIME
+            INTO v_is_closed, v_open_time, v_close_time
+            FROM jsonb_array_elements(v_settings->'calendar_schedule') AS day_config
+            WHERE day_config->>'day_of_week' = v_day_name
+            LIMIT 1;
+            
+            -- Si el día está cerrado en calendar_schedule, saltar
+            IF v_is_closed OR v_open_time IS NULL OR v_close_time IS NULL THEN
+                v_current_date := v_current_date + INTERVAL '1 day';
+                CONTINUE;
+            END IF;
+        END IF;
         
-        -- PASO 3: Calcular última hora de reserva (respetando duración)
-        v_last_slot_time := v_close_time - (v_reservation_duration || ' minutes')::INTERVAL;
+        -- PASO 3: Última reserva = hora de cierre (sin restar duración)
+        -- El cliente puede reservar hasta la hora de cierre
+        v_last_slot_time := v_close_time;
         
         -- Para cada mesa del restaurante
         FOR v_table IN 
