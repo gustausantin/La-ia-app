@@ -558,7 +558,7 @@ const Consumos = () => {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         {/* Pestañas */}
                         <div className="flex bg-gray-100 rounded-lg p-1">
                             <button
@@ -629,8 +629,8 @@ const Consumos = () => {
                 </div>
 
                 {/* Estadísticas */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
                         <div className="flex items-center gap-2 mb-1">
                             <Users className="w-4 h-4 text-blue-600" />
                             <span className="text-sm text-blue-600 font-medium">Reservas</span>
@@ -638,7 +638,7 @@ const Consumos = () => {
                         <div className="text-2xl font-bold text-blue-900">{stats.totalReservations}</div>
                     </div>
 
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                    <div className="bg-green-50 p-2 rounded-lg border border-green-200">
                         <div className="flex items-center gap-2 mb-1">
                             <Link2 className="w-4 h-4 text-green-600" />
                             <span className="text-sm text-green-600 font-medium">Vinculadas</span>
@@ -646,7 +646,7 @@ const Consumos = () => {
                         <div className="text-2xl font-bold text-green-900">{stats.linkedReservations}</div>
                     </div>
 
-                    <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                    <div className="bg-yellow-50 p-2 rounded-lg border border-yellow-200">
                         <div className="flex items-center gap-2 mb-1">
                             <AlertTriangle className="w-4 h-4 text-yellow-600" />
                             <span className="text-sm text-yellow-600 font-medium">Pendientes</span>
@@ -654,7 +654,7 @@ const Consumos = () => {
                         <div className="text-2xl font-bold text-yellow-900">{stats.pendingMatches}</div>
                     </div>
 
-                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                    <div className="bg-purple-50 p-2 rounded-lg border border-purple-200">
                         <div className="flex items-center gap-2 mb-1">
                             <DollarSign className="w-4 h-4 text-purple-600" />
                             <span className="text-sm text-purple-600 font-medium">Facturación</span>
@@ -662,7 +662,7 @@ const Consumos = () => {
                         <div className="text-2xl font-bold text-purple-900">{stats.totalRevenue.toFixed(0)}€</div>
                     </div>
 
-                    <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
+                    <div className="bg-indigo-50 p-2 rounded-lg border border-indigo-200">
                         <div className="flex items-center gap-2 mb-1">
                             <BarChart3 className="w-4 h-4 text-indigo-600" />
                             <span className="text-sm text-indigo-600 font-medium">Ticket Medio</span>
@@ -677,7 +677,7 @@ const Consumos = () => {
                 /* Vista de Vinculación */
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                     <div className="p-6 border-b border-gray-200">
-                        <h2 className="text-lg font-semibold text-gray-900">
+                        <h2 className="text-sm font-semibold text-gray-900">
                             Reservas del {format(parseISO(selectedDate), 'dd MMMM yyyy', { locale: es })}
                         </h2>
                     </div>
@@ -693,7 +693,7 @@ const Consumos = () => {
                                     <div className="flex items-start justify-between">
                                         {/* Info de la reserva */}
                                         <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
+                                            <div className="flex items-center gap-2 mb-2">
                                                 <h3 className="font-semibold text-gray-900">
                                                     {reservation.customer_name}
                                                 </h3>
@@ -716,7 +716,7 @@ const Consumos = () => {
                                         </div>
 
                                         {/* Estado del vínculo */}
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
                                             {match ? (
                                                 <>
                                                     <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(match.status, match.confidence)}`}>
@@ -745,9 +745,9 @@ const Consumos = () => {
 
                                     {/* Ticket vinculado */}
                                     {receipt && (
-                                        <div className="mt-4 bg-gray-50 rounded-lg p-3">
+                                        <div className="mt-4 bg-gray-50 rounded-lg p-2">
                                             <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-2">
                                                     <div>
                                                         <div className="font-medium text-gray-900">
                                                             Ticket #{receipt.ticket_number || receipt.id.slice(0, 8)}
@@ -834,14 +834,14 @@ const Consumos = () => {
                 <div className="space-y-6">
                     {/* Top Dishes */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
                             <ChefHat className="w-5 h-5 text-orange-600" />
                             Platos Más Vendidos
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {analytics.topDishes.slice(0, 8).map((dish, index) => (
-                                <div key={dish.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center gap-3">
+                                <div key={dish.name} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center gap-2">
                                         <div className="flex items-center justify-center w-8 h-8 bg-orange-100 text-orange-600 rounded-full text-sm font-bold">
                                             {index + 1}
                                         </div>
@@ -869,14 +869,14 @@ const Consumos = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Top Categories */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                 <PieChart className="w-5 h-5 text-blue-600" />
                                 Categorías Más Populares
                             </h3>
                             <div className="space-y-3">
                                 {analytics.topCategories.map((category, index) => (
                                     <div key={category.name} className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
                                             <div className="w-3 h-3 rounded-full" style={{
                                                 backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'][index % 8]
                                             }}></div>
@@ -890,7 +890,7 @@ const Consumos = () => {
 
                         {/* Payment Methods */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                 <DollarSign className="w-5 h-5 text-green-600" />
                                 Métodos de Pago
                             </h3>
@@ -909,7 +909,7 @@ const Consumos = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Hourly Distribution */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                 <Clock className="w-5 h-5 text-purple-600" />
                                 Distribución Horaria
                             </h3>
@@ -935,7 +935,7 @@ const Consumos = () => {
 
                         {/* Daily Revenue */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5 text-green-600" />
                                 Ingresos Diarios (Últimos 14 días)
                             </h3>
