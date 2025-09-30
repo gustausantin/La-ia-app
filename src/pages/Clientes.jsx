@@ -256,7 +256,7 @@ export default function Clientes() {
                 {/* Header */}
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Gestión de Clientes</h1>
+                        <h1 className="text-lg font-bold text-gray-900">Gestión de Clientes</h1>
                         <p className="text-gray-600">Sistema CRM para tu restaurante</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -672,3 +672,4 @@ export default function Clientes() {
         </div>
     );
 };
+

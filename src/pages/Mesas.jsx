@@ -101,25 +101,25 @@ const AgentInsightsPanel = ({ stats, suggestions }) => {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
                 <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-lg font-bold">
                         {stats.agentAssignments || 0}
                     </p>
                     <p className="text-sm text-purple-100">Asignaciones hoy</p>
                 </div>
                 <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-lg font-bold">
                         {stats.efficiency || 0}%
                     </p>
                     <p className="text-sm text-purple-100">Eficiencia</p>
                 </div>
                 <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-lg font-bold">
                         {stats.avgTurnover || "0h"}
                     </p>
                     <p className="text-sm text-purple-100">Rotación promedio</p>
                 </div>
                 <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-lg font-bold">
                         {stats.optimization || 0}%
                     </p>
                     <p className="text-sm text-purple-100">
@@ -222,7 +222,7 @@ const TableCard = ({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div
-                            className={`w-12 h-12 ${stateInfo.bgColor} rounded-lg flex items-center justify-center text-2xl border relative`}
+                            className={`w-12 h-12 ${stateInfo.bgColor} rounded-lg flex items-center justify-center text-lg border relative`}
                         >
                             {stateInfo.icon}
                             {isAgentAssigned && (
@@ -1080,7 +1080,7 @@ export default function Mesas() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                             Gestión de Mesas
                             <Bot className="w-6 h-6 text-purple-600" />
                         </h1>
@@ -1129,7 +1129,7 @@ export default function Mesas() {
                     <div className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-2xl font-bold text-gray-900">
+                                <p className="text-lg font-bold text-gray-900">
                                     {stats.available}
                                 </p>
                                 <p className="text-sm text-gray-600">
@@ -1143,7 +1143,7 @@ export default function Mesas() {
                     <div className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-2xl font-bold text-gray-900">
+                                <p className="text-lg font-bold text-gray-900">
                                     {stats.reserved}
                                 </p>
                                 <p className="text-sm text-gray-600">
@@ -1157,7 +1157,7 @@ export default function Mesas() {
                     <div className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-2xl font-bold text-gray-900">
+                                <p className="text-lg font-bold text-gray-900">
                                     {stats.occupied}
                                 </p>
                                 <p className="text-sm text-gray-600">
@@ -1171,7 +1171,7 @@ export default function Mesas() {
                     <div className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-2xl font-bold text-gray-900">
+                                <p className="text-lg font-bold text-gray-900">
                                     {agentStats.agentAssignments}
                                 </p>
                                 <p className="text-sm text-gray-600">Por IA</p>
@@ -1183,7 +1183,7 @@ export default function Mesas() {
                     <div className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-2xl font-bold text-gray-900">
+                                <p className="text-lg font-bold text-gray-900">
                                     {stats.active > 0
                                         ? Math.round(
                                               ((stats.occupied +
@@ -1999,7 +1999,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                                 <div className="bg-gray-50 rounded-lg p-2">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-2xl font-bold text-gray-900">
+                                            <p className="text-lg font-bold text-gray-900">
                                                 {stats.totalReservations}
                                             </p>
                                             <p className="text-sm text-gray-600">
@@ -2013,7 +2013,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                                 <div className="bg-gray-50 rounded-lg p-2">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-2xl font-bold text-gray-900">
+                                            <p className="text-lg font-bold text-gray-900">
                                                 {stats.avgOccupancy}%
                                             </p>
                                             <p className="text-sm text-gray-600">
@@ -2027,7 +2027,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                                 <div className="bg-gray-50 rounded-lg p-2">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-2xl font-bold text-gray-900">
+                                            <p className="text-lg font-bold text-gray-900">
                                                 {stats.avgTurnover}
                                             </p>
                                             <p className="text-sm text-gray-600">
@@ -2041,7 +2041,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                                 <div className="bg-gray-50 rounded-lg p-2">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-2xl font-bold text-gray-900">
+                                            <p className="text-lg font-bold text-gray-900">
                                                 €{stats.revenue}
                                             </p>
                                             <p className="text-sm text-gray-600">
@@ -2144,3 +2144,4 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
         </div>
     );
 };
+

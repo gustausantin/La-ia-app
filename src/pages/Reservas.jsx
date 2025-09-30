@@ -1536,7 +1536,7 @@ export default function Reservas() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                             Gestión de Reservas
                             <Bot className="w-6 h-6 text-purple-600" />
                         </h1>
@@ -1806,7 +1806,7 @@ export default function Reservas() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Total</p>
-                            <p className="text-2xl font-bold text-gray-900">
+                            <p className="text-lg font-bold text-gray-900">
                                 {stats.total}
                             </p>
                         </div>
@@ -1828,7 +1828,7 @@ export default function Reservas() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Por IA</p>
-                            <p className="text-2xl font-bold text-purple-600">
+                            <p className="text-lg font-bold text-purple-600">
                                 {stats.agentCount}
                             </p>
                         </div>
@@ -1850,7 +1850,7 @@ export default function Reservas() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Manual</p>
-                            <p className="text-2xl font-bold text-gray-600">
+                            <p className="text-lg font-bold text-gray-600">
                                 {stats.manualCount}
                             </p>
                         </div>
@@ -1872,7 +1872,7 @@ export default function Reservas() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Confirmadas</p>
-                            <p className="text-2xl font-bold text-green-600">
+                            <p className="text-lg font-bold text-green-600">
                                 {stats.confirmed}
                             </p>
                         </div>
@@ -1894,7 +1894,7 @@ export default function Reservas() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Pendientes</p>
-                            <p className="text-2xl font-bold text-yellow-600">
+                            <p className="text-lg font-bold text-yellow-600">
                                 {stats.pending}
                             </p>
                         </div>
@@ -1906,7 +1906,7 @@ export default function Reservas() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Comensales</p>
-                            <p className="text-2xl font-bold text-purple-600">
+                            <p className="text-lg font-bold text-purple-600">
                                 {stats.covers}
                             </p>
                         </div>
@@ -3446,7 +3446,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         <div className="bg-purple-50 rounded-lg p-2 text-center">
                             <Bot className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                            <p className="text-2xl font-bold text-purple-900">
+                            <p className="text-lg font-bold text-purple-900">
                                 {stats.agentReservations}
                             </p>
                             <p className="text-sm text-purple-700">
@@ -3456,7 +3456,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
 
                         <div className="bg-green-50 rounded-lg p-2 text-center">
                             <Target className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                            <p className="text-2xl font-bold text-green-900">
+                            <p className="text-lg font-bold text-green-900">
                                 {stats.conversionRate}%
                             </p>
                             <p className="text-sm text-green-700">
@@ -3466,7 +3466,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
 
                         <div className="bg-orange-50 rounded-lg p-2 text-center">
                             <Zap className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-                            <p className="text-2xl font-bold text-orange-900">
+                            <p className="text-lg font-bold text-orange-900">
                                 {stats.avgResponseTime}
                             </p>
                             <p className="text-sm text-orange-700">
@@ -3476,7 +3476,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
 
                         <div className="bg-blue-50 rounded-lg p-2 text-center">
                             <Award className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                            <p className="text-2xl font-bold text-blue-900">
+                            <p className="text-lg font-bold text-blue-900">
                                 {stats.satisfaction}%
                             </p>
                             <p className="text-sm text-blue-700">
@@ -3574,3 +3574,4 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
         </div>
     );
 };
+

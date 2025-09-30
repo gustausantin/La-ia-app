@@ -482,7 +482,7 @@ export default function Analytics() {
             <div className="bg-white rounded-xl shadow-sm border p-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                        <h1 className="text-lg font-bold text-gray-900 mb-2">
                             Analytics Inteligente
                         </h1>
                         <p className="text-gray-600">
@@ -515,15 +515,15 @@ export default function Analytics() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
                     <div className="bg-white/20 rounded-lg p-2">
                         <p className="text-green-100 text-sm">Beneficio mensual</p>
-                        <p className="text-2xl font-bold">€{roiAnalysis.desglose?.beneficioNeto.toLocaleString() || '0'}</p>
+                        <p className="text-lg font-bold">€{roiAnalysis.desglose?.beneficioNeto.toLocaleString() || '0'}</p>
                     </div>
                     <div className="bg-white/20 rounded-lg p-2">
                         <p className="text-green-100 text-sm">ROI mensual</p>
-                        <p className="text-2xl font-bold">{roiAnalysis.roiMensual || 0}%</p>
+                        <p className="text-lg font-bold">{roiAnalysis.roiMensual || 0}%</p>
                     </div>
                     <div className="bg-white/20 rounded-lg p-2">
                         <p className="text-green-100 text-sm">Recuperación</p>
-                        <p className="text-2xl font-bold">{roiAnalysis.paybackSemanas || 0} semanas</p>
+                        <p className="text-lg font-bold">{roiAnalysis.paybackSemanas || 0} semanas</p>
                     </div>
                 </div>
                 
@@ -758,7 +758,7 @@ export default function Analytics() {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-2">
                                         <h4 className="font-bold text-gray-900">{insight.title}</h4>
-                                        <span className="text-2xl font-bold text-blue-600">{insight.metric}</span>
+                                        <span className="text-lg font-bold text-blue-600">{insight.metric}</span>
                                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                                             insight.priority === 'alta' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
                                         }`}>
@@ -792,3 +792,4 @@ export default function Analytics() {
         </div>
     );
 }
+
