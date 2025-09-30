@@ -202,13 +202,13 @@ export default function Calendario() {
             if (Object.keys(savedHours).length === 0) {
                 console.log('⚠️ No hay horarios guardados, inicializando por defecto...');
                 savedHours = {
-                    monday: { open: '09:00', close: '22:00', closed: true },
-                    tuesday: { open: '09:00', close: '22:00', closed: true },
-                    wednesday: { open: '09:00', close: '22:00', closed: true },
-                    thursday: { open: '09:00', close: '22:00', closed: true },
-                    friday: { open: '09:00', close: '22:00', closed: true },
-                    saturday: { open: '09:00', close: '22:00', closed: true },
-                    sunday: { open: '10:00', close: '21:00', closed: true }
+                    monday: { open: '09:00', close: '22:00', closed: false },    // ✅ ABIERTO
+                    tuesday: { open: '09:00', close: '22:00', closed: false },   // ✅ ABIERTO
+                    wednesday: { open: '09:00', close: '22:00', closed: false }, // ✅ ABIERTO
+                    thursday: { open: '09:00', close: '22:00', closed: false },  // ✅ ABIERTO
+                    friday: { open: '09:00', close: '22:00', closed: false },    // ✅ ABIERTO
+                    saturday: { open: '09:00', close: '22:00', closed: true },   // ❌ CERRADO
+                    sunday: { open: '10:00', close: '21:00', closed: true }      // ❌ CERRADO
                 };
             }
             
