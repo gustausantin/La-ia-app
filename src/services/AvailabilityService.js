@@ -139,7 +139,7 @@ export class AvailabilityService {
      */
     static async generateAvailabilitySlots(restaurantId, startDate, endDate = null) {
         try {
-            const { data, error } = await supabase.rpc('generate_availability_slots', {
+            const { data, error } = await supabase.rpc('generate_availability_slots_simple', {
                 p_restaurant_id: restaurantId,
                 p_start_date: startDate,
                 p_end_date: endDate
