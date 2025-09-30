@@ -20,15 +20,15 @@ import {
 
 // Componente de feature card REDISEÑADO - Layout horizontal optimizado
 const FeatureCard = ({ icon, title, description }) => (
-  <div className="group relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+  <div className="group relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-3 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-    <div className="relative z-10 flex items-start gap-3">
-      <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+    <div className="relative z-10 flex items-start gap-2">
+      <div className="w-9 h-9 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
         {icon}
       </div>
       <div className="flex-1">
-        <h4 className="font-bold text-white text-lg mb-1">{title}</h4>
-        <p className="text-white/90 text-sm leading-relaxed font-medium">{description}</p>
+        <h4 className="font-bold text-white text-sm mb-0.5">{title}</h4>
+        <p className="text-white/90 text-xs leading-relaxed font-medium">{description}</p>
       </div>
     </div>
   </div>
@@ -36,24 +36,24 @@ const FeatureCard = ({ icon, title, description }) => (
 
 // Componente de testimonial REDISEÑADO
 const TestimonialCard = ({ quote, author, restaurant, savings }) => (
-  <div className="relative overflow-hidden bg-white/15 backdrop-blur-xl border border-white/30 rounded-2xl p-4 hover:bg-white/20 transition-all duration-300 group">
+  <div className="relative overflow-hidden bg-white/15 backdrop-blur-xl border border-white/30 rounded-xl p-3 hover:bg-white/20 transition-all duration-300 group">
     <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     <div className="relative z-10">
-      <div className="flex gap-1 mb-3">
+      <div className="flex gap-0.5 mb-2">
       {[...Array(5)].map((_, i) => (
-          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400 animate-pulse" style={{animationDelay: `${i * 0.1}s`}} />
+          <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400 animate-pulse" style={{animationDelay: `${i * 0.1}s`}} />
       ))}
     </div>
-      <p className="text-white/95 text-sm italic mb-4 font-medium leading-relaxed">"{quote}"</p>
+      <p className="text-white/95 text-xs italic mb-3 font-medium leading-relaxed">"{quote}"</p>
     <div className="flex items-center justify-between">
       <div>
-          <p className="font-bold text-white text-sm">{author}</p>
+          <p className="font-bold text-white text-xs">{author}</p>
           <p className="text-white/70 text-xs">{restaurant}</p>
       </div>
       {savings && (
-          <div className="text-right bg-green-500/20 backdrop-blur rounded-lg px-3 py-1">
+          <div className="text-right bg-green-500/20 backdrop-blur rounded-lg px-2 py-0.5">
             <p className="text-white/70 text-xs">Ahorro mensual</p>
-            <p className="font-bold text-green-300 text-sm">€{savings}</p>
+            <p className="font-bold text-green-300 text-xs">€{savings}</p>
         </div>
       )}
       </div>
@@ -243,7 +243,7 @@ export default function Login() {
   // Componente principal de beneficios - COMPLETAMENTE REDISEÑADO
   const AgentBenefits = () => (
     <div className="lg:block hidden relative">
-      <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 p-4 rounded-3xl text-white h-full min-h-screen">
+      <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 p-3 rounded-2xl text-white h-full min-h-screen">
         {/* Elementos decorativos de fondo */}
         <div className="absolute inset-0 opacity-30">
           <div className="w-full h-full bg-white/5" style={{
@@ -265,7 +265,7 @@ export default function Login() {
               </div>
             </div>
           <div>
-              <h2 className="text-2xl font-black bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
+              <h2 className="text-xl font-black bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
                 Tu Agente IA 24/7
               </h2>
               <p className="text-white/90 font-semibold text-lg">Recepcionista virtual inteligente</p>
@@ -324,7 +324,7 @@ export default function Login() {
                 <Sparkles className="w-6 h-6 text-yellow-300" />
                 <p className="text-yellow-100 font-bold text-lg">🎁 Oferta especial</p>
               </div>
-              <p className="text-3xl font-black text-white mb-2">14 días GRATIS</p>
+              <p className="text-2xl font-black text-white mb-1">14 días GRATIS</p>
               <p className="text-white/90 font-semibold">Sin tarjeta de crédito</p>
             </div>
           </div>
@@ -341,7 +341,7 @@ export default function Login() {
       }} />
       
       {/* Panel izquierdo - Formularios REDISEÑADO */}
-      <div className="flex-1 flex items-center justify-center p-4 relative z-10">
+      <div className="flex-1 flex items-center justify-center p-3 relative z-10">
         <div className="max-w-md w-full space-y-8">
           {/* Header principal rediseñado */}
           <div className="text-center">
@@ -355,7 +355,7 @@ export default function Login() {
                 </div>
               </div>
               <div className="text-left">
-                <h1 className="text-3xl font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   La-IA
                 </h1>
                 <p className="text-gray-600 text-sm font-semibold">Powered by AI</p>
@@ -376,7 +376,7 @@ export default function Login() {
           </div>
 
           {/* Contenedor principal del formulario */}
-          <div className="relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl p-6">
+          <div className="relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl p-4">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-blue-50/30" />
             <div className="relative z-10">
               
