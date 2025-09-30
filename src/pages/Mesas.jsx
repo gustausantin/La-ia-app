@@ -1014,10 +1014,14 @@ export default function Mesas() {
                 
                 // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
                 if (deletedTable) {
+                    console.log('🔍 Mesa eliminada:', deletedTable.name);
                     // Verificar slots y mostrar modal
                     setTimeout(async () => {
+                        console.log('🔍 Verificando si existen slots...');
                         const slotsExist = await changeDetection.checkExistingSlots();
+                        console.log('🔍 ¿Existen slots?', slotsExist);
                         if (slotsExist) {
+                            console.log('🚨 Mostrando modal de regeneración...');
                             changeDetection.onTableChange('removed', deletedTable);
                             showRegenerationModal('table_deleted', `Mesa "${deletedTable.name}" eliminada`);
                         } else {
@@ -1611,7 +1615,7 @@ const TableModal = ({
             }
 
             onSave();
-            toast.success(table ? "Mesa actualizada correctamente" : "Mesa creada correctamente");
+            // Toast movido al componente principal para evitar duplicados
         } catch (error) {
             console.error("Error saving table:", error);
             toast.error(`Error al guardar la mesa: ${error.message || error.hint || 'Error desconocido'}`);
