@@ -258,6 +258,57 @@ END;
 $$;
 
 -- ============================================
+-- FUNCIÓN PARA REGENERAR INTELIGENTEMENTE
+-- (Borra solo slots disponibles, protege reservas)
+-- ============================================
+CREATE OR REPLACE FUNCTION cleanup_and_regenerate_availability(
+    p_restaurant_id UUID,
+    p_start_date DATE,
+    p_end_date DATE
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_deleted_count INTEGER;
+    v_protected_count INTEGER;
+    v_result JSONB;
+BEGIN
+    -- Contar slots con reservas (PROTEGIDOS)
+    SELECT COUNT(*)
+    INTO v_protected_count
+    FROM availability_slots
+    WHERE restaurant_id = p_restaurant_id
+    AND slot_date BETWEEN p_start_date AND p_end_date
+    AND status IN ('reserved', 'occupied');
+    
+    -- Borrar SOLO slots disponibles (sin reservas)
+    DELETE FROM availability_slots
+    WHERE restaurant_id = p_restaurant_id
+    AND slot_date BETWEEN p_start_date AND p_end_date
+    AND status = 'free';
+    
+    GET DIAGNOSTICS v_deleted_count = ROW_COUNT;
+    
+    -- Regenerar con la función principal
+    v_result := generate_availability_slots_simple(
+        p_restaurant_id,
+        p_start_date,
+        p_end_date
+    );
+    
+    -- Agregar información de protección
+    v_result := v_result || jsonb_build_object(
+        'deleted_free_slots', v_deleted_count,
+        'protected_reservations', v_protected_count
+    );
+    
+    RETURN v_result;
+END;
+$$;
+
+-- ============================================
 -- FUNCIÓN PARA BORRAR DISPONIBILIDADES
 -- ============================================
 CREATE OR REPLACE FUNCTION borrar_disponibilidades_simple(
@@ -331,6 +382,8 @@ $$;
 -- ============================================
 GRANT EXECUTE ON FUNCTION generate_availability_slots_simple TO authenticated;
 GRANT EXECUTE ON FUNCTION generate_availability_slots_simple TO anon;
+GRANT EXECUTE ON FUNCTION cleanup_and_regenerate_availability TO authenticated;
+GRANT EXECUTE ON FUNCTION cleanup_and_regenerate_availability TO anon;
 GRANT EXECUTE ON FUNCTION borrar_disponibilidades_simple TO authenticated;
 GRANT EXECUTE ON FUNCTION borrar_disponibilidades_simple TO anon;
 
