@@ -118,7 +118,6 @@ const sendNoShowMessage = async (reservation) => {
 import { processReservationCompletion } from "../services/CRMService";
 import AvailabilityManager from "../components/AvailabilityManager";
 import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
-import AvailabilityChangeDemo from "../components/AvailabilityChangeDemo";
 
 // DATOS NECESARIOS DE SUPABASE:
 // - tabla: reservations (con campos 'source' y 'channel')
@@ -2093,9 +2092,6 @@ export default function Reservas() {
             {activeTab === 'disponibilidades' && (
                 <div className="space-y-6">
                     <AvailabilityManager />
-                    
-                    {/* Componente de demostración */}
-                    <AvailabilityChangeDemo />
                 </div>
             )}
 
