@@ -90,14 +90,14 @@ const SystemStatus = ({ status, metrics }) => {
     const StatusIcon = config.icon;
 
     return (
-        <div className={`${config.bgColor} ${config.borderColor} border rounded-xl p-3 mb-3`}>
+        <div className={`${config.bgColor} ${config.borderColor} border rounded-xl p-2 mb-2`}>
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     <div className={`w-10 h-10 ${config.color} rounded-full flex items-center justify-center`}>
                         <StatusIcon className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h2 className={`text-base font-bold ${config.textColor}`}>{config.title}</h2>
+                        <h2 className={`text-sm font-bold ${config.textColor}`}>{config.title}</h2>
                         <p className="text-sm text-gray-600">{config.message}</p>
                     </div>
                 </div>
@@ -109,21 +109,21 @@ const SystemStatus = ({ status, metrics }) => {
             </div>
             
             {/* Métricas rápidas */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-gray-200">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 pt-3 border-t border-gray-200">
                 <div className="text-center">
-                    <div className="text-lg font-bold">{metrics.noShowsToday || 0}</div>
+                    <div className="text-sm font-bold">{metrics.noShowsToday || 0}</div>
                     <div className="text-sm text-gray-600">No-shows hoy</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-lg font-bold">{metrics.reservationsToday || 0}</div>
+                    <div className="text-sm font-bold">{metrics.reservationsToday || 0}</div>
                     <div className="text-sm text-gray-600">Reservas hoy</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-lg font-bold">{metrics.activeCustomers || 0}</div>
+                    <div className="text-sm font-bold">{metrics.activeCustomers || 0}</div>
                     <div className="text-sm text-gray-600">Clientes activos</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-lg font-bold">{metrics.crmOpportunities || 0}</div>
+                    <div className="text-sm font-bold">{metrics.crmOpportunities || 0}</div>
                     <div className="text-sm text-gray-600">Oportunidades CRM</div>
                 </div>
             </div>
@@ -153,13 +153,13 @@ const NoShowWidget = ({ data, onViewDetails }) => {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border p-3">
-            <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
+        <div className="bg-white rounded-xl shadow-sm border p-2">
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                         <Shield className="w-5 h-5 text-blue-600" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Control No-Shows</h3>
+                    <h3 className="text-sm font-semibold text-gray-900">Control No-Shows</h3>
                 </div>
                 <button 
                     onClick={onViewDetails}
@@ -170,22 +170,22 @@ const NoShowWidget = ({ data, onViewDetails }) => {
             </div>
 
             {/* Métricas principales */}
-            <div className="grid grid-cols-2 gap-3 mb-3">
-                <div className="text-center bg-blue-50 rounded-lg p-3">
-                    <div className="text-xl font-bold text-blue-600 mb-1">
+            <div className="grid grid-cols-2 gap-2 mb-2">
+                <div className="text-center bg-blue-50 rounded-lg p-2">
+                    <div className="text-base font-bold text-blue-600 mb-1">
                         {data.weeklyPrevented || 0}
                     </div>
                     <div className="text-sm text-gray-600">Evitados esta semana</div>
                 </div>
                 
-                <div className={`text-center rounded-lg p-3 ${
+                <div className={`text-center rounded-lg p-2 ${
                     data.todayRisk > 0 ? 'bg-red-50' : 'bg-gray-50'
                 }`}>
                     <div className="flex items-center justify-center gap-2 mb-1">
                         {data.todayRisk > 0 && (
                             <AlertTriangle className="w-5 h-5 text-red-600" />
                         )}
-                        <div className={`text-xl font-bold ${
+                        <div className={`text-base font-bold ${
                             data.todayRisk > 0 ? 'text-red-600' : 'text-gray-700'
                         }`}>
                             {data.todayRisk || 0}
@@ -218,7 +218,7 @@ const NoShowWidget = ({ data, onViewDetails }) => {
             </div>
 
             {data.nextAction && (
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                <div className="mt-3 p-2 bg-blue-50 rounded-lg border-l-4 border-blue-400">
                     <div className="text-sm text-blue-800">
                         <strong>💡 Recomendación:</strong> {data.nextAction}
                     </div>
@@ -228,7 +228,7 @@ const NoShowWidget = ({ data, onViewDetails }) => {
             {/* Detalles expandibles */}
             {isExpanded && (
                 <div className="mt-4 pt-4 border-t border-gray-200 space-y-3 style={fadeInStyle}">
-                    <div className="text-sm font-medium text-gray-700 mb-3">📊 Análisis Detallado:</div>
+                    <div className="text-sm font-medium text-gray-700 mb-2">📊 Análisis Detallado:</div>
                     
                     {/* Próximas reservas de riesgo */}
                     <div className="flex items-center justify-between text-sm p-2 bg-yellow-50 rounded">
@@ -286,13 +286,13 @@ const ReturningCustomersWidget = ({ data }) => {
     const getCustomerValue = (visits) => visits * avgTicket;
     
     return (
-        <div className="bg-white rounded-xl shadow-sm border p-3">
-            <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
+        <div className="bg-white rounded-xl shadow-sm border p-2">
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
                     <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                         <Users className="w-5 h-5 text-purple-600" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Clientes Fidelizados</h3>
+                    <h3 className="text-sm font-semibold text-gray-900">Clientes Fidelizados</h3>
                 </div>
                 <div className="flex items-center gap-2">
                     <button 
@@ -312,14 +312,14 @@ const ReturningCustomersWidget = ({ data }) => {
             </div>
 
             {/* Métricas de valor */}
-            <div className="grid grid-cols-2 gap-3 mb-3">
-                <div className="text-center bg-purple-50 rounded-lg p-3">
-                    <div className="text-xl font-bold text-purple-600 mb-1">{data.returningThisWeek || 0}</div>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+                <div className="text-center bg-purple-50 rounded-lg p-2">
+                    <div className="text-base font-bold text-purple-600 mb-1">{data.returningThisWeek || 0}</div>
                     <div className="text-sm text-gray-600">Regresaron</div>
                     <div className="text-sm text-purple-600 font-medium">~{(data.returningThisWeek || 0) * avgTicket}€ generados</div>
                 </div>
-                <div className="text-center bg-green-50 rounded-lg p-3">
-                    <div className="text-xl font-bold text-green-600 mb-1">{data.loyalCustomers || 0}</div>
+                <div className="text-center bg-green-50 rounded-lg p-2">
+                    <div className="text-base font-bold text-green-600 mb-1">{data.loyalCustomers || 0}</div>
                     <div className="text-sm text-gray-600">VIP (5+ visitas)</div>
                     <div className="text-sm text-green-600 font-medium">Valor alto</div>
                 </div>
@@ -333,10 +333,10 @@ const ReturningCustomersWidget = ({ data }) => {
                     const isVIP = customer.visits >= 5;
                     
                     return (
-                        <div key={customer.id} className={`flex items-center justify-between p-3 rounded-lg border ${
+                        <div key={customer.id} className={`flex items-center justify-between p-2 rounded-lg border ${
                             isVIP ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'
                         }`}>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                                     index === 0 ? 'bg-yellow-400 text-yellow-900' :
                                     index === 1 ? 'bg-gray-300 text-gray-700' :
@@ -374,18 +374,18 @@ const ReturningCustomersWidget = ({ data }) => {
             {/* Detalles expandibles */}
             {isExpanded && (
                 <div className="mt-4 pt-4 border-t border-gray-200 space-y-3 style={fadeInStyle}">
-                    <div className="text-sm font-medium text-gray-700 mb-3">📈 Análisis de Fidelización:</div>
+                    <div className="text-sm font-medium text-gray-700 mb-2">📈 Análisis de Fidelización:</div>
                     
                     {/* Segmentación de clientes */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 bg-yellow-50 rounded-lg">
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="p-2 bg-yellow-50 rounded-lg">
                             <div className="text-sm font-medium text-yellow-700">VIP (5+ visitas)</div>
-                            <div className="text-lg font-bold text-yellow-600">{data.vipCount || 0} clientes</div>
+                            <div className="text-sm font-bold text-yellow-600">{data.vipCount || 0} clientes</div>
                             <div className="text-xs text-yellow-600">~{((data.vipCount || 0) * (data.avgTicket || 0) * 5).toLocaleString()}€ valor total</div>
                         </div>
-                        <div className="p-3 bg-green-50 rounded-lg">
+                        <div className="p-2 bg-green-50 rounded-lg">
                             <div className="text-sm font-medium text-green-700">Regulares (2-4)</div>
-                            <div className="text-lg font-bold text-green-600">{data.regularCount || 0} clientes</div>
+                            <div className="text-sm font-bold text-green-600">{data.regularCount || 0} clientes</div>
                             <div className="text-xs text-green-600">~{((data.regularCount || 0) * (data.avgTicket || 0) * 3).toLocaleString()}€ valor total</div>
                         </div>
                     </div>
@@ -408,7 +408,7 @@ const ReturningCustomersWidget = ({ data }) => {
 
                     {/* Acciones recomendadas */}
                     {data.nearVipCount > 0 && (
-                        <div className="p-3 bg-orange-50 rounded-lg border-l-4 border-orange-400">
+                        <div className="p-2 bg-orange-50 rounded-lg border-l-4 border-orange-400">
                             <div className="text-sm text-orange-800">
                                 <strong>💡 Oportunidad:</strong> {data.nearVipCount} clientes regulares cerca de ser VIP
                             </div>
@@ -423,13 +423,13 @@ const ReturningCustomersWidget = ({ data }) => {
 // Widget de CRM Oportunidades
 const CRMOpportunitiesWidget = ({ data, onReviewAction }) => {
     return (
-        <div className="bg-white rounded-xl shadow-sm border p-3">
-            <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
+        <div className="bg-white rounded-xl shadow-sm border p-2">
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
                     <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
                         <Target className="w-5 h-5 text-orange-600" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Alertas CRM</h3>
+                    <h3 className="text-sm font-semibold text-gray-900">Alertas CRM</h3>
                 </div>
                 <div className="text-sm text-gray-500 bg-orange-100 px-2 py-1 rounded">
                     {data.opportunities?.length || 0} pendientes
@@ -439,7 +439,7 @@ const CRMOpportunitiesWidget = ({ data, onReviewAction }) => {
             {data.opportunities?.length > 0 ? (
                 <div className="space-y-3">
                     {data.opportunities.slice(0, 3).map((opportunity, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border border-orange-200 rounded-lg bg-orange-50">
+                        <div key={index} className="flex items-center justify-between p-2 border border-orange-200 rounded-lg bg-orange-50">
                             <div className="flex-1">
                                 <div className="font-medium text-sm text-gray-900">{opportunity.title}</div>
                                 <div className="text-xs text-gray-600 mt-1">{opportunity.description}</div>
@@ -481,13 +481,13 @@ const TotalValueWidget = ({ data }) => {
     const totalValue = (data.noShowsRecovered || 0) + (data.crmGenerated || 0) + (data.automationSavings || 0);
     
     return (
-        <div className="bg-white border-2 border-blue-200 rounded-xl shadow-sm p-3">
-            <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
+        <div className="bg-white border-2 border-blue-200 rounded-xl shadow-sm p-2">
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
                     <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                         <DollarSign className="w-5 h-5 text-white" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Valor Generado Esta Semana</h3>
+                    <h3 className="text-sm font-semibold text-gray-900">Valor Generado Esta Semana</h3>
                 </div>
                 <button 
                     onClick={() => setIsExpanded(!isExpanded)}
@@ -502,38 +502,38 @@ const TotalValueWidget = ({ data }) => {
             </div>
 
             {/* Total destacado arriba */}
-            <div className="mb-3 text-center bg-blue-50 rounded-lg p-3">
+            <div className="mb-2 text-center bg-blue-50 rounded-lg p-2">
                 <div className="text-4xl font-bold text-blue-600">{totalValue}€</div>
-                <div className="text-base text-gray-600 font-medium">generados esta semana</div>
+                <div className="text-sm text-gray-600 font-medium">generados esta semana</div>
             </div>
 
             {/* Desglose de valor */}
             <div className="space-y-2">
                 {data.noShowsRecovered > 0 && (
                     <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600 flex items-center gap-2 text-base">
+                        <span className="text-gray-600 flex items-center gap-2 text-sm">
                             <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                             No-shows evitados
                         </span>
-                        <span className="font-semibold text-blue-600 text-lg">+{data.noShowsRecovered}€</span>
+                        <span className="font-semibold text-blue-600 text-sm">+{data.noShowsRecovered}€</span>
                     </div>
                 )}
                 {data.crmGenerated > 0 && (
                     <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600 flex items-center gap-2 text-base">
+                        <span className="text-gray-600 flex items-center gap-2 text-sm">
                             <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                             Clientes recuperados CRM
                         </span>
-                        <span className="font-semibold text-purple-600 text-lg">+{data.crmGenerated}€</span>
+                        <span className="font-semibold text-purple-600 text-sm">+{data.crmGenerated}€</span>
                     </div>
                 )}
                 {data.automationSavings > 0 && (
                     <div className="flex items-center justify-between py-2">
-                        <span className="text-gray-600 flex items-center gap-2 text-base">
+                        <span className="text-gray-600 flex items-center gap-2 text-sm">
                             <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                             Tiempo ahorrado
                         </span>
-                        <span className="font-semibold text-orange-600 text-lg">+{data.automationSavings}€</span>
+                        <span className="font-semibold text-orange-600 text-sm">+{data.automationSavings}€</span>
                     </div>
                 )}
             </div>
@@ -542,18 +542,18 @@ const TotalValueWidget = ({ data }) => {
             {/* Análisis expandible */}
             {isExpanded && (
                 <div className="mt-4 pt-4 border-t border-gray-200 space-y-4" style={fadeInStyle}>
-                    <div className="text-sm font-medium text-gray-700 mb-3">📊 Análisis de ROI Detallado:</div>
+                    <div className="text-sm font-medium text-gray-700 mb-2">📊 Análisis de ROI Detallado:</div>
                     
                     {/* Comparación con costos */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 bg-green-50 rounded-lg">
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="p-2 bg-green-50 rounded-lg">
                             <div className="text-sm font-medium text-green-700">Valor Generado</div>
-                            <div className="text-xl font-bold text-green-600">{totalValue}€</div>
+                            <div className="text-base font-bold text-green-600">{totalValue}€</div>
                             <div className="text-sm text-green-600">esta semana</div>
                         </div>
-                        <div className="p-3 bg-blue-50 rounded-lg">
+                        <div className="p-2 bg-blue-50 rounded-lg">
                             <div className="text-sm font-medium text-blue-700">Costo Mensual</div>
-                            <div className="text-xl font-bold text-blue-600">{data.monthlyCost || 0}€</div>
+                            <div className="text-base font-bold text-blue-600">{data.monthlyCost || 0}€</div>
                             <div className="text-sm text-blue-600">suscripción</div>
                         </div>
                     </div>
@@ -575,7 +575,7 @@ const TotalValueWidget = ({ data }) => {
                     </div>
 
                     {/* Desglose por fuente */}
-                    <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="p-2 bg-blue-50 rounded-lg">
                         <div className="text-sm font-medium text-blue-700 mb-2">💎 Fuentes de valor principales:</div>
                         <div className="space-y-1 text-xs">
                             <div>• Prevención no-shows: {Math.round((data.noShowsRecovered / totalValue) * 100)}% del valor</div>
@@ -585,7 +585,7 @@ const TotalValueWidget = ({ data }) => {
                     </div>
 
                     {/* Call to action */}
-                    <div className="p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border-l-4 border-green-400">
+                    <div className="p-2 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border-l-4 border-green-400">
                         <div className="text-sm text-green-800">
                             <strong>🚀 Resultado:</strong> Cada euro invertido te devuelve <strong>{Math.round(totalValue / 129)}€</strong>
                         </div>
@@ -819,7 +819,7 @@ const DashboardRevolutionary = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-3"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-2"></div>
                     <p className="text-gray-600">Cargando dashboard revolucionario...</p>
                 </div>
             </div>
@@ -827,10 +827,10 @@ const DashboardRevolutionary = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-3">
+        <div className="min-h-screen bg-gray-50 p-2">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="mb-3">
+                <div className="mb-2">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
                         Dashboard Ejecutivo
                     </h1>
@@ -846,7 +846,7 @@ const DashboardRevolutionary = () => {
                 />
 
                 {/* Widgets Principales */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
                     <NoShowWidget 
                         data={dashboardData.noShowData}
                         onViewDetails={() => navigate('/no-shows')}
@@ -855,7 +855,7 @@ const DashboardRevolutionary = () => {
                 </div>
 
                 {/* Widget de Valor - Debajo de Clientes como solicitaste */}
-                <div className="mb-3">
+                <div className="mb-2">
                     <TotalValueWidget data={dashboardData.totalValue} />
                 </div>
 
@@ -871,7 +871,7 @@ const DashboardRevolutionary = () => {
                 <div className="fixed bottom-6 right-6">
                     <button
                         onClick={loadDashboardData}
-                        className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-lg transition-colors"
+                        className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-full shadow-lg transition-colors"
                         title="Actualizar datos"
                     >
                         <RefreshCw className="w-5 h-5" />

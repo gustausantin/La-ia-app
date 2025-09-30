@@ -24,7 +24,7 @@ import toast from "react-hot-toast";
 
 const ToggleSwitch = ({ enabled, onChange, label }) => {
     return (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
             <button
                 onClick={() => onChange(!enabled)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
@@ -47,12 +47,12 @@ const SettingSection = ({ title, description, icon, children }) => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="border-b border-gray-100 p-6">
                 <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         <div className="p-2 bg-purple-100 rounded-lg">
                             {icon}
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
+                            <h3 className="text-sm font-semibold text-gray-900">
                                 {title}
                             </h3>
                             <p className="text-sm text-gray-600">{description}</p>
@@ -487,7 +487,7 @@ const Configuracion = () => {
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="mb-8 text-center">
-                    <div className="flex items-center justify-center gap-3 mb-4">
+                    <div className="flex items-center justify-center gap-2 mb-4">
                         <SettingsIcon className="w-8 h-8 text-purple-600" />
                         <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
                     </div>
@@ -745,7 +745,7 @@ const Configuracion = () => {
                                 {/* Teléfono principal (llamadas) */}
                                 <div className="bg-purple-50 p-6 rounded-xl border border-purple-200">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
                                                 <Phone className="w-4 h-4 text-white" />
                                             </div>
@@ -766,7 +766,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {settings.channels?.voice?.enabled && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Número de teléfono</label>
                                                 <input
@@ -788,7 +788,7 @@ const Configuracion = () => {
                                 </div>
                                 <div className="bg-green-50 p-6 rounded-xl border border-green-200">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                                                 <MessageSquare className="w-4 h-4 text-white" />
                                             </div>
@@ -812,7 +812,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {showHelpWA && (
-                                        <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-gray-700">
+                                        <div className="mb-4 p-2 rounded-lg bg-green-50 border border-green-200 text-sm text-gray-700">
                                             <p className="font-medium mb-1">¿Dónde consigo esto?</p>
                                             <ol className="list-decimal ml-5 space-y-1">
                                                 <li>Indica el número que ya usas con tus clientes.</li>
@@ -822,8 +822,8 @@ const Configuracion = () => {
                                         </div>
                                     )}
                                     {settings.channels?.whatsapp?.enabled && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            <div className="flex items-center gap-3">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            <div className="flex items-center gap-2">
                                                 <input
                                                     id="wa-same-number"
                                                     type="checkbox"
@@ -860,7 +860,7 @@ const Configuracion = () => {
                                 
                                 <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                                                 <MessageSquare className="w-4 h-4 text-white" />
                                             </div>
@@ -881,7 +881,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {settings.channels?.webchat?.enabled !== false && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Dominio del sitio</label>
                                                 <input
@@ -920,7 +920,7 @@ const Configuracion = () => {
 
                                 <div className="bg-pink-50 p-6 rounded-xl border border-pink-200">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center">
                                                 <Instagram className="w-4 h-4 text-white" />
                                             </div>
@@ -944,7 +944,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {showHelpIG && (
-                                        <div className="mb-4 p-3 rounded-lg bg-pink-50 border border-pink-200 text-sm text-gray-700">
+                                        <div className="mb-4 p-2 rounded-lg bg-pink-50 border border-pink-200 text-sm text-gray-700">
                                             <p className="font-medium mb-1">¿Cómo conectarlo?</p>
                                             <ol className="list-decimal ml-5 space-y-1">
                                                 <li>Escribe tu @usuario o URL de Instagram.</li>
@@ -954,7 +954,7 @@ const Configuracion = () => {
                                         </div>
                                     )}
                                     {settings.channels?.instagram?.enabled && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Usuario o URL de Instagram</label>
                                                 <input
@@ -993,7 +993,7 @@ const Configuracion = () => {
 
                                 <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center">
                                                 <Facebook className="w-4 h-4 text-white" />
                                             </div>
@@ -1017,7 +1017,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {showHelpFB && (
-                                        <div className="mb-4 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-gray-700">
+                                        <div className="mb-4 p-2 rounded-lg bg-blue-50 border border-blue-200 text-sm text-gray-700">
                                             <p className="font-medium mb-1">¿Cómo conectarlo?</p>
                                             <ol className="list-decimal ml-5 space-y-1">
                                                 <li>Pega la URL de tu página de Facebook.</li>
@@ -1027,7 +1027,7 @@ const Configuracion = () => {
                                         </div>
                                     )}
                                     {settings.channels?.facebook?.enabled && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">URL de la página</label>
                                                 <input
@@ -1066,7 +1066,7 @@ const Configuracion = () => {
 
                                 <div className="bg-purple-50 p-6 rounded-xl border border-purple-200">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
                                                 <Phone className="w-4 h-4 text-white" />
                                             </div>
@@ -1087,7 +1087,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {settings.channels?.vapi?.enabled && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Número para el asistente (voz)</label>
                                                 <input
@@ -1300,7 +1300,7 @@ const Configuracion = () => {
                                         
                                         {/* Nueva sección: Errores del Sistema */}
                                         <div className="border-t border-green-200 pt-4 mt-4">
-                                            <h5 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                                            <h5 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
                                                 <AlertTriangle className="w-4 h-4 text-red-500" />
                                                 Errores del Sistema
                                             </h5>

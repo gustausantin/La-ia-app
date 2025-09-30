@@ -207,9 +207,9 @@ const CHANNELS = {
 // Componente de estadísticas del agente
 const AgentStatsPanel = ({ stats, insights }) => {
     return (
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-3 text-white">
-            <div className="flex items-center justify-between mb-3">
-                <h3 className="text-base font-semibold flex items-center gap-2">
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-2 text-white">
+            <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
                     <Brain className="w-5 h-5" />
                     Rendimiento del Agente IA
                 </h3>
@@ -218,33 +218,33 @@ const AgentStatsPanel = ({ stats, insights }) => {
                 </span>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-2">
                 <div>
-                    <p className="text-xl font-bold">
+                    <p className="text-base font-bold">
                         {stats.agentReservations || 0}
                     </p>
                     <p className="text-xs text-purple-100">Reservas IA</p>
                 </div>
                 <div>
-                    <p className="text-xl font-bold">
+                    <p className="text-base font-bold">
                         {stats.conversionRate || 0}%
                     </p>
                     <p className="text-xs text-purple-100">Conversión</p>
                 </div>
                 <div>
-                    <p className="text-xl font-bold">
+                    <p className="text-base font-bold">
                         {stats.avgResponseTime || "0s"}
                     </p>
                     <p className="text-xs text-purple-100">Tiempo respuesta</p>
                 </div>
                 <div>
-                    <p className="text-xl font-bold">
+                    <p className="text-base font-bold">
                         {stats.peakChannel || "WhatsApp"}
                     </p>
                     <p className="text-xs text-purple-100">Canal principal</p>
                 </div>
                 <div>
-                    <p className="text-xl font-bold">
+                    <p className="text-base font-bold">
                         {stats.satisfaction || 0}%
                     </p>
                     <p className="text-xs text-purple-100">Satisfacción</p>
@@ -252,7 +252,7 @@ const AgentStatsPanel = ({ stats, insights }) => {
             </div>
 
             {insights && insights.length > 0 && (
-                <div className="mt-4 p-3 bg-white/10 rounded-lg">
+                <div className="mt-4 p-2 bg-white/10 rounded-lg">
                     <p className="text-sm font-medium mb-2 flex items-center gap-2">
                         <Sparkles className="w-4 h-4" />
                         Insights del día
@@ -293,14 +293,14 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
 
     return (
         <div
-            className={`bg-white border rounded-lg p-3 hover:shadow-md transition-all duration-200 ${
+            className={`bg-white border rounded-lg p-2 hover:shadow-md transition-all duration-200 ${
                 isSelected
                     ? "ring-2 ring-blue-500 border-blue-200"
                     : "border-gray-200"
             } ${isAgentReservation ? "border-l-4 border-l-purple-500" : ""}`}
         >
             <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3 flex-1">
+                <div className="flex items-start gap-2 flex-1">
                     <input
                         type="checkbox"
                         checked={isSelected}
@@ -312,8 +312,8 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
 
                     <div className="flex-1">
                         {/* 🎯 MESA Y ZONA PRIMERO - MÁS VISIBLE */}
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-900 rounded-lg font-bold text-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-900 rounded-lg font-bold text-sm">
                                 <Shield className="w-5 h-5" />
                                 <span>
                                     {reservation.tables?.name || `Mesa ${reservation.table_number}` || 'Sin asignar'}
@@ -1523,7 +1523,7 @@ export default function Reservas() {
         return (
             <div className="p-6 flex items-center justify-center min-h-[400px]">
                 <div className="text-center">
-                    <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-3" />
+                    <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-2" />
                     <p className="text-gray-600">Cargando reservas...</p>
                 </div>
             </div>
@@ -1534,9 +1534,9 @@ export default function Reservas() {
         <div className="max-w-7xl mx-auto space-y-6">
             {/* Header con estadísticas */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                             Gestión de Reservas
                             <Bot className="w-6 h-6 text-purple-600" />
                         </h1>
@@ -1550,7 +1550,7 @@ export default function Reservas() {
                         <div className="flex gap-2 mt-4">
                             <button
                                 onClick={() => setActiveTab('reservas')}
-                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-lg ${
+                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-sm ${
                                     activeTab === 'reservas'
                                         ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1560,7 +1560,7 @@ export default function Reservas() {
                             </button>
                             <button
                                 onClick={() => setActiveTab('disponibilidades')}
-                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-lg ${
+                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-sm ${
                                     activeTab === 'disponibilidades'
                                         ? 'bg-purple-100 text-purple-700 border-2 border-purple-200'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1570,7 +1570,7 @@ export default function Reservas() {
                             </button>
                             <button
                                 onClick={() => setActiveTab('politica')}
-                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-lg ${
+                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-sm ${
                                     activeTab === 'politica'
                                         ? 'bg-green-100 text-green-700 border-2 border-green-200'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1581,7 +1581,7 @@ export default function Reservas() {
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-2">
                         <button
                             onClick={() => setShowInsightsModal(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
@@ -1625,8 +1625,8 @@ export default function Reservas() {
             <AgentStatsPanel stats={agentStats} insights={agentInsights} />
 
                     {/* Filtros rápidos por fecha */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-3">
-                        <h3 className="text-sm font-medium text-gray-700 mb-3">🚀 Filtros Rápidos</h3>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 mb-2">
+                        <h3 className="text-sm font-medium text-gray-700 mb-2">🚀 Filtros Rápidos</h3>
                         <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={() => setFilters(prev => ({
@@ -1703,8 +1703,8 @@ export default function Reservas() {
                     </div>
 
             {/* Filtros */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
-                <div className="flex flex-col lg:flex-row gap-3">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+                <div className="flex flex-col lg:flex-row gap-2">
                     {/* Búsqueda */}
                     <div className="flex-1 relative">
                         <Search
@@ -1801,8 +1801,8 @@ export default function Reservas() {
             </div>
 
             {/* Estadísticas mejoradas */}
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-                <div className="bg-white p-3 rounded-lg border border-gray-200">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+                <div className="bg-white p-2 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Total</p>
@@ -1819,7 +1819,7 @@ export default function Reservas() {
                         ...prev, 
                         source: prev.source === 'agent' ? '' : 'agent' 
                     }))}
-                    className={`p-3 rounded-lg border transition-colors w-full text-left ${
+                    className={`p-2 rounded-lg border transition-colors w-full text-left ${
                         filters.source === 'agent' 
                             ? 'bg-purple-100 border-purple-400 shadow-md' 
                             : 'bg-white border-purple-200 hover:bg-purple-50'
@@ -1841,7 +1841,7 @@ export default function Reservas() {
                         ...prev, 
                         source: prev.source === 'manual' ? '' : 'manual' 
                     }))}
-                    className={`p-3 rounded-lg border transition-colors w-full text-left ${
+                    className={`p-2 rounded-lg border transition-colors w-full text-left ${
                         filters.source === 'manual' 
                             ? 'bg-gray-100 border-gray-400 shadow-md' 
                             : 'bg-white border-gray-200 hover:bg-gray-50'
@@ -1863,7 +1863,7 @@ export default function Reservas() {
                         ...prev, 
                         status: prev.status === 'confirmada' ? '' : 'confirmada' 
                     }))}
-                    className={`p-3 rounded-lg border transition-colors w-full text-left ${
+                    className={`p-2 rounded-lg border transition-colors w-full text-left ${
                         filters.status === 'confirmada' 
                             ? 'bg-green-100 border-green-400 shadow-md' 
                             : 'bg-white border-green-200 hover:bg-green-50'
@@ -1885,7 +1885,7 @@ export default function Reservas() {
                         ...prev, 
                         status: prev.status === 'pendiente' ? '' : 'pendiente' 
                     }))}
-                    className={`p-3 rounded-lg border transition-colors w-full text-left ${
+                    className={`p-2 rounded-lg border transition-colors w-full text-left ${
                         filters.status === 'pendiente' 
                             ? 'bg-yellow-100 border-yellow-400 shadow-md' 
                             : 'bg-white border-yellow-200 hover:bg-yellow-50'
@@ -1902,7 +1902,7 @@ export default function Reservas() {
                     </div>
                 </button>
 
-                <div className="bg-white p-3 rounded-lg border border-purple-200">
+                <div className="bg-white p-2 rounded-lg border border-purple-200">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Comensales</p>
@@ -1936,7 +1936,7 @@ export default function Reservas() {
 
             {/* Controles de selección */}
             <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
                         <input
                             type="checkbox"
@@ -1954,7 +1954,7 @@ export default function Reservas() {
                     </div>
 
                     {/* Leyenda de orígenes */}
-                    <div className="flex items-center gap-3 text-sm">
+                    <div className="flex items-center gap-2 text-sm">
                         <div className="flex items-center gap-1">
                             <div className="w-1 h-4 bg-purple-500 rounded"></div>
                             <Bot className="w-3 h-3 text-purple-600" />
@@ -1995,9 +1995,9 @@ export default function Reservas() {
                         {[...Array(5)].map((_, i) => (
                             <div
                                 key={i}
-                                className="bg-white border border-gray-200 rounded-lg p-3 animate-pulse"
+                                className="bg-white border border-gray-200 rounded-lg p-2 animate-pulse"
                             >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
                                     <div className="w-4 h-4 bg-gray-200 rounded"></div>
                                     <div className="flex-1 space-y-2">
                                         <div className="h-4 bg-gray-200 rounded w-1/4"></div>
@@ -2022,8 +2022,8 @@ export default function Reservas() {
                     ))
                 ) : (
                     <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
-                        <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-3" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-2" />
+                        <h3 className="text-sm font-medium text-gray-900 mb-2">
                             No hay reservas
                         </h3>
                         <p className="text-gray-600 mb-6">
@@ -2111,12 +2111,12 @@ export default function Reservas() {
             {/* Pestaña de Política de Reservas */}
             {activeTab === 'politica' && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-green-100 rounded-lg">
+                    <div className="flex items-center gap-2 mb-6">
+                        <div className="p-2 bg-green-100 rounded-lg">
                             <Settings className="w-6 h-6 text-green-600" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-900">
+                            <h2 className="text-base font-semibold text-gray-900">
                                 Política de Reservas
                             </h2>
                             <p className="text-gray-600">
@@ -2235,8 +2235,8 @@ export default function Reservas() {
                         </div>
                     </div>
 
-                    <div className="mt-6 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div className="flex items-start gap-3">
+                    <div className="mt-6 p-2 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-start gap-2">
                             <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
                             <div>
                                 <div className="font-medium text-green-900">
@@ -2897,10 +2897,10 @@ const ReservationFormModal = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-50">
             <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6 border-b border-gray-200">
-                    <h3 className="text-xl font-semibold text-gray-900">
+                    <h3 className="text-base font-semibold text-gray-900">
                         {reservation
                             ? "Editar Reserva"
                             : "Nueva Reserva Manual"}
@@ -2909,8 +2909,8 @@ const ReservationFormModal = ({
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {/* 🎯 FLUJO MEJORADO: Información sobre el matching inteligente */}
-                    <div className="bg-gradient-to-r from-blue-50 to-green-50 p-3 rounded-lg border border-blue-200">
-                        <div className="flex items-start gap-3">
+                    <div className="bg-gradient-to-r from-blue-50 to-green-50 p-2 rounded-lg border border-blue-200">
+                        <div className="flex items-start gap-2">
                             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                                 <Search className="w-4 h-4 text-blue-600" />
                             </div>
@@ -2934,13 +2934,13 @@ const ReservationFormModal = ({
                     </div>
 
                     {/* 📞 SECCIÓN: INFORMACIÓN DE CONTACTO (PRIMERO PARA BÚSQUEDA) */}
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                    <div className="bg-green-50 p-2 rounded-lg border border-green-200">
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
                             <MessageSquare className="w-4 h-4 text-green-600" />
                             🔍 Información de Contacto (para búsqueda automática)
                         </h4>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             <div className="relative">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Teléfono *
@@ -2993,7 +2993,7 @@ const ReservationFormModal = ({
                                                 key={customer.id}
                                 type="button"
                                                 onClick={() => handleSelectExistingCustomer(customer)}
-                                                className="w-full p-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                                                className="w-full p-2 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <div>
@@ -3051,13 +3051,13 @@ const ReservationFormModal = ({
                     </div>
 
                     {/* 👤 SECCIÓN: DATOS PERSONALES DEL CLIENTE (DESPUÉS DE CONTACTO) */}
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                    <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
                             <User className="w-4 h-4 text-blue-600" />
                             Información Personal del Cliente
                         </h4>
                         
-                        <div className="grid grid-cols-1 gap-3">
+                        <div className="grid grid-cols-1 gap-2">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Nombre *
@@ -3088,7 +3088,7 @@ const ReservationFormModal = ({
                             )}
                         </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-2">
                         <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Primer apellido
@@ -3134,13 +3134,13 @@ const ReservationFormModal = ({
                     </div>
 
                     {/* 📅 SECCIÓN: FECHA Y HORA DE LA RESERVA (PRIORIDAD ALTA) */}
-                    <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
-                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                    <div className="bg-orange-50 p-2 rounded-lg border border-orange-200">
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
                             <CalendarIcon className="w-4 h-4 text-orange-600" />
                             Fecha y Hora de la Reserva
                         </h4>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Fecha
@@ -3215,7 +3215,7 @@ const ReservationFormModal = ({
                         </div>
                     </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Mesa (opcional)
@@ -3266,8 +3266,8 @@ const ReservationFormModal = ({
                     </div>
 
                     {/* 🎯 SECCIÓN: SOLICITUDES ESPECIALES */}
-                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                    <div className="bg-purple-50 p-2 rounded-lg border border-purple-200">
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
                             <MessageSquare className="w-4 h-4 text-purple-600" />
                             Solicitudes Especiales
                         </h4>
@@ -3291,8 +3291,8 @@ const ReservationFormModal = ({
                     </div>
 
                     {/* 📝 SECCIÓN: NOTAS ADICIONALES */}
-                    <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                    <div className="bg-yellow-50 p-2 rounded-lg border border-yellow-200">
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
                             <FileText className="w-4 h-4 text-yellow-600" />
                             Notas del Cliente
                         </h4>
@@ -3314,15 +3314,15 @@ const ReservationFormModal = ({
                     </div>
 
                     {/* 🔐 SECCIÓN: PERMISOS GDPR (UNIFICADO CON CustomerModal) */}
-                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                        <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                    <div className="bg-purple-50 p-2 rounded-lg border border-purple-200">
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
                             <Shield className="w-4 h-4 text-purple-600" />
                             Gestión de Consentimientos (GDPR)
                         </h4>
                         
                         <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-between p-2 bg-blue-50 rounded-lg border border-blue-200">
+                                <div className="flex items-center gap-2">
                                     <Mail className="w-4 h-4 text-blue-600" />
                                     <div>
                                         <h5 className="text-sm font-medium text-gray-900">Comunicación por Email</h5>
@@ -3345,8 +3345,8 @@ const ReservationFormModal = ({
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                                <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200">
+                                <div className="flex items-center gap-2">
                                     <MessageSquare className="w-4 h-4 text-green-600" />
                                     <div>
                                         <h5 className="text-sm font-medium text-gray-900">Comunicación por SMS</h5>
@@ -3369,8 +3369,8 @@ const ReservationFormModal = ({
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                                <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-between p-2 bg-emerald-50 rounded-lg border border-emerald-200">
+                                <div className="flex items-center gap-2">
                                     <Phone className="w-4 h-4 text-emerald-600" />
                                     <div>
                                         <h5 className="text-sm font-medium text-gray-900">Comunicación por WhatsApp</h5>
@@ -3396,14 +3396,14 @@ const ReservationFormModal = ({
                     </div>
 
 
-                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div className="p-2 bg-gray-50 border border-gray-200 rounded-lg">
                         <p className="text-sm text-gray-600 flex items-center gap-2">
                             <Edit className="w-4 h-4" />
                             Esta reserva se marcará como creada manualmente
                         </p>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex justify-end gap-2 pt-4">
                         <button
                             type="button"
                             onClick={onClose}
@@ -3433,18 +3433,18 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-50">
             <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6 border-b border-gray-200">
-                    <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                         <Brain className="w-6 h-6 text-purple-600" />
                         Insights del Agente IA
                     </h3>
                 </div>
 
                 <div className="p-6 space-y-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="bg-purple-50 rounded-lg p-3 text-center">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div className="bg-purple-50 rounded-lg p-2 text-center">
                             <Bot className="w-8 h-8 text-purple-600 mx-auto mb-2" />
                             <p className="text-2xl font-bold text-purple-900">
                                 {stats.agentReservations}
@@ -3454,7 +3454,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                             </p>
                         </div>
 
-                        <div className="bg-green-50 rounded-lg p-3 text-center">
+                        <div className="bg-green-50 rounded-lg p-2 text-center">
                             <Target className="w-8 h-8 text-green-600 mx-auto mb-2" />
                             <p className="text-2xl font-bold text-green-900">
                                 {stats.conversionRate}%
@@ -3464,7 +3464,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                             </p>
                         </div>
 
-                        <div className="bg-orange-50 rounded-lg p-3 text-center">
+                        <div className="bg-orange-50 rounded-lg p-2 text-center">
                             <Zap className="w-8 h-8 text-orange-600 mx-auto mb-2" />
                             <p className="text-2xl font-bold text-orange-900">
                                 {stats.avgResponseTime}
@@ -3474,7 +3474,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                             </p>
                         </div>
 
-                        <div className="bg-blue-50 rounded-lg p-3 text-center">
+                        <div className="bg-blue-50 rounded-lg p-2 text-center">
                             <Award className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                             <p className="text-2xl font-bold text-blue-900">
                                 {stats.satisfaction}%
@@ -3486,7 +3486,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                     </div>
 
                     <div>
-                        <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                             <Sparkles className="w-5 h-5 text-purple-600" />
                             Patrones Detectados
                         </h4>
@@ -3494,7 +3494,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                             {insights.map((insight, idx) => (
                                 <div
                                     key={idx}
-                                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
+                                    className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg"
                                 >
                                     <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                                         <span className="text-xs font-bold text-purple-600">
@@ -3509,7 +3509,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                         </div>
                     </div>
 
-                    <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                    <div className="p-2 bg-purple-50 border border-purple-200 rounded-lg">
                         <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
                             <Target className="w-5 h-5" />
                             Recomendaciones para optimizar
@@ -3520,7 +3520,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                     </div>
 
                     <div>
-                        <h4 className="font-semibold text-gray-900 mb-3">
+                        <h4 className="font-semibold text-gray-900 mb-2">
                             Rendimiento por Canal
                         </h4>
                         <div className="space-y-2">
@@ -3532,7 +3532,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                                     return (
                                         <div
                                             key={key}
-                                            className="flex items-center gap-3"
+                                            className="flex items-center gap-2"
                                         >
                                             <div className="w-10">
                                                 {channel.icon}

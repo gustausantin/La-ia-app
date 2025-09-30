@@ -265,8 +265,8 @@ const CRMSimple = () => {
             <div>
 
             {/* MINI DASHBOARD */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-                <div className="bg-blue-50 p-3 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-6">
+                <div className="bg-blue-50 p-2 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div>
                             <div className="text-2xl font-bold text-blue-600">{stats.mensajesEnviados}</div>
@@ -276,7 +276,7 @@ const CRMSimple = () => {
                     </div>
                 </div>
                 
-                <div className="bg-green-50 p-3 rounded-lg">
+                <div className="bg-green-50 p-2 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div>
                             <div className="text-2xl font-bold text-green-600">{stats.clientesRecuperados}</div>
@@ -286,7 +286,7 @@ const CRMSimple = () => {
                     </div>
                 </div>
                 
-                <div className="bg-purple-50 p-3 rounded-lg">
+                <div className="bg-purple-50 p-2 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div>
                             <div className="text-2xl font-bold text-purple-600">€{stats.valorGenerado}</div>
@@ -310,7 +310,7 @@ const CRMSimple = () => {
 
             {/* INFO EXPANDIBLE */}
             {mostrarInfo && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-6">
                     <h3 className="font-semibold text-blue-900 mb-2">📊 Las alertas aparecen automáticamente cuando:</h3>
                     <ul className="space-y-2 text-sm text-blue-800">
                         <li>• <strong>Bienvenida:</strong> Cliente nuevo hace su primera reserva</li>
@@ -327,8 +327,8 @@ const CRMSimple = () => {
 
             {/* ALERTAS */}
             <div className="bg-white rounded-xl shadow-sm border">
-                <div className="p-3 border-b bg-gradient-to-r from-purple-50 to-blue-50">
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <div className="p-2 border-b bg-gradient-to-r from-purple-50 to-blue-50">
+                    <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                         <Bell className="w-5 h-5 text-purple-600" />
                         Alertas CRM - Acciones Pendientes ({alertas.length})
                     </h2>
@@ -336,32 +336,32 @@ const CRMSimple = () => {
 
                 {alertas.length === 0 ? (
                     <div className="p-8 text-center text-gray-500">
-                        <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
+                        <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-500" />
                         <p>¡Todo al día! No hay alertas pendientes.</p>
                     </div>
                 ) : (
                     <div className="divide-y">
                         {alertas.map((alerta) => (
-                            <div key={alerta.id} className="p-3 hover:bg-gray-50">
-                                <div className="flex items-start justify-between gap-3">
+                            <div key={alerta.id} className="p-2 hover:bg-gray-50">
+                                <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1">
                                         {/* Título y descripción */}
                                         <h3 className="font-semibold text-gray-900 mb-1">
                                             {alerta.titulo}
                                         </h3>
-                                        <p className="text-sm text-gray-600 mb-3">
+                                        <p className="text-sm text-gray-600 mb-2">
                                             {alerta.descripcion}
                                         </p>
                                         
                                         {/* Mensaje pre-generado */}
-                                        <div className="bg-gray-50 p-3 rounded-lg mb-3">
+                                        <div className="bg-gray-50 p-2 rounded-lg mb-2">
                                             <p className="text-sm text-gray-700">
                                                 <strong>Mensaje:</strong> {alerta.mensaje}
                                             </p>
                                         </div>
 
                                         {/* Info del cliente */}
-                                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                                        <div className="flex items-center gap-2 text-xs text-gray-500">
                                             {alerta.telefono && (
                                                 <span>📱 {alerta.telefono}</span>
                                             )}

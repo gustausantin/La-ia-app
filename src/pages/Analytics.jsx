@@ -450,7 +450,7 @@ export default function Analytics() {
             <div className="min-h-[400px] flex items-center justify-center">
                 <div className="text-center">
                     <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
-                    <p className="text-lg font-medium text-gray-900">Analizando datos...</p>
+                    <p className="text-sm font-medium text-gray-900">Analizando datos...</p>
                     <p className="text-sm text-gray-500">Procesando métricas y generando insights</p>
                 </div>
             </div>
@@ -462,7 +462,7 @@ export default function Analytics() {
             <div className="min-h-[400px] flex items-center justify-center">
                 <div className="text-center max-w-md">
                     <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    <h3 className="text-base font-bold text-gray-900 mb-2">
                         Analytics en preparación
                     </h3>
                     <p className="text-gray-600 mb-4">
@@ -504,31 +504,31 @@ export default function Analytics() {
             
             {/* ROI con transparencia total */}
             <div className="bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl shadow-lg text-white p-6">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-2 mb-4">
                     <Calculator className="w-8 h-8" />
                     <div>
-                        <h3 className="text-xl font-bold">Retorno de Inversión (ROI)</h3>
+                        <h3 className="text-base font-bold">Retorno de Inversión (ROI)</h3>
                         <p className="text-green-100">Cálculo transparente basado en datos reales</p>
                     </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                    <div className="bg-white/20 rounded-lg p-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
+                    <div className="bg-white/20 rounded-lg p-2">
                         <p className="text-green-100 text-sm">Beneficio mensual</p>
                         <p className="text-2xl font-bold">€{roiAnalysis.desglose?.beneficioNeto.toLocaleString() || '0'}</p>
                     </div>
-                    <div className="bg-white/20 rounded-lg p-3">
+                    <div className="bg-white/20 rounded-lg p-2">
                         <p className="text-green-100 text-sm">ROI mensual</p>
                         <p className="text-2xl font-bold">{roiAnalysis.roiMensual || 0}%</p>
                     </div>
-                    <div className="bg-white/20 rounded-lg p-3">
+                    <div className="bg-white/20 rounded-lg p-2">
                         <p className="text-green-100 text-sm">Recuperación</p>
                         <p className="text-2xl font-bold">{roiAnalysis.paybackSemanas || 0} semanas</p>
                     </div>
                 </div>
                 
                 {/* Desglose transparente */}
-                <div className="bg-white/10 rounded-lg p-3 text-sm">
+                <div className="bg-white/10 rounded-lg p-2 text-sm">
                     <p className="font-medium mb-2">📊 Cálculo detallado:</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         <div>+ Ingresos base: €{roiAnalysis.desglose?.ingresoBase.toLocaleString() || '0'}</div>
@@ -617,7 +617,7 @@ export default function Analytics() {
             {/* Contenido por tab */}
             {activeTab === 'overview' && (
                 <div className="bg-white rounded-xl shadow-sm border p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4">
                         📈 Evolución de Conversaciones y Reservas
                     </h3>
                     <div className="h-80">
@@ -655,7 +655,7 @@ export default function Analytics() {
             {activeTab === 'forecast' && (
                 <div className="space-y-6">
                     <div className="bg-white rounded-xl shadow-sm border p-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">
+                        <h3 className="text-sm font-bold text-gray-900 mb-4">
                             🔮 Predicción Próximos 7 Días
                         </h3>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -678,7 +678,7 @@ export default function Analytics() {
                                 </ResponsiveContainer>
                             </div>
                             <div className="space-y-4">
-                                <div className="bg-purple-50 rounded-lg p-3">
+                                <div className="bg-purple-50 rounded-lg p-2">
                                     <h4 className="font-semibold text-purple-900 mb-2">Metodología</h4>
                                     <p className="text-sm text-purple-700">{forecastData.methodology}</p>
                                     <p className="text-xs text-purple-600 mt-1">
@@ -701,7 +701,7 @@ export default function Analytics() {
             
             {activeTab === 'satisfaction' && (
                 <div className="bg-white rounded-xl shadow-sm border p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4">
                         ⭐ Análisis de Satisfacción del Cliente
                     </h3>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -723,7 +723,7 @@ export default function Analytics() {
                         <div className="space-y-4">
                             <h4 className="font-semibold text-gray-900">Distribución de puntuaciones</h4>
                             {satisfactionAnalysis.breakdown && Object.entries(satisfactionAnalysis.breakdown).reverse().map(([stars, count]) => (
-                                <div key={stars} className="flex items-center gap-3">
+                                <div key={stars} className="flex items-center gap-2">
                                     <span className="text-sm w-8">{stars}★</span>
                                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                                         <div 
@@ -745,7 +745,7 @@ export default function Analytics() {
                 <div className="space-y-4">
                     {actionableInsights.map((insight, idx) => (
                         <div key={idx} className="bg-white rounded-xl shadow-sm border p-6">
-                            <div className="flex items-start gap-3">
+                            <div className="flex items-start gap-2">
                                 <div className={`p-2 rounded-lg ${
                                     insight.type === 'success' ? 'bg-green-100' :
                                     insight.type === 'warning' ? 'bg-yellow-100' :
@@ -756,7 +756,7 @@ export default function Analytics() {
                                     {insight.type === 'opportunity' && <TrendingUp className="w-6 h-6 text-blue-600" />}
                                 </div>
                                 <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-2">
+                                    <div className="flex items-center gap-2 mb-2">
                                         <h4 className="font-bold text-gray-900">{insight.title}</h4>
                                         <span className="text-2xl font-bold text-blue-600">{insight.metric}</span>
                                         <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -765,8 +765,8 @@ export default function Analytics() {
                                             Prioridad {insight.priority}
                                         </span>
                                     </div>
-                                    <p className="text-gray-700 mb-3">{insight.analysis}</p>
-                                    <div className="bg-blue-50 rounded-lg p-3">
+                                    <p className="text-gray-700 mb-2">{insight.analysis}</p>
+                                    <div className="bg-blue-50 rounded-lg p-2">
                                         <p className="text-sm font-medium text-blue-900 mb-1">🎯 Acción recomendada:</p>
                                         <p className="text-sm text-blue-700">{insight.action}</p>
                                     </div>

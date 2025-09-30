@@ -20,7 +20,7 @@ import {
 
 // Componente de feature card REDISEÑADO - Layout horizontal optimizado
 const FeatureCard = ({ icon, title, description }) => (
-  <div className="group relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-3 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+  <div className="group relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-2 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     <div className="relative z-10 flex items-start gap-2">
       <div className="w-9 h-9 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
@@ -36,7 +36,7 @@ const FeatureCard = ({ icon, title, description }) => (
 
 // Componente de testimonial REDISEÑADO
 const TestimonialCard = ({ quote, author, restaurant, savings }) => (
-  <div className="relative overflow-hidden bg-white/15 backdrop-blur-xl border border-white/30 rounded-xl p-3 hover:bg-white/20 transition-all duration-300 group">
+  <div className="relative overflow-hidden bg-white/15 backdrop-blur-xl border border-white/30 rounded-xl p-2 hover:bg-white/20 transition-all duration-300 group">
     <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     <div className="relative z-10">
       <div className="flex gap-0.5 mb-2">
@@ -44,7 +44,7 @@ const TestimonialCard = ({ quote, author, restaurant, savings }) => (
           <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400 animate-pulse" style={{animationDelay: `${i * 0.1}s`}} />
       ))}
     </div>
-      <p className="text-white/95 text-xs italic mb-3 font-medium leading-relaxed">"{quote}"</p>
+      <p className="text-white/95 text-xs italic mb-2 font-medium leading-relaxed">"{quote}"</p>
     <div className="flex items-center justify-between">
       <div>
           <p className="font-bold text-white text-xs">{author}</p>
@@ -243,7 +243,7 @@ export default function Login() {
   // Componente principal de beneficios - COMPLETAMENTE REDISEÑADO
   const AgentBenefits = () => (
     <div className="lg:block hidden relative">
-      <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 p-3 rounded-2xl text-white h-full min-h-screen">
+      <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 p-2 rounded-2xl text-white h-full min-h-screen">
         {/* Elementos decorativos de fondo */}
         <div className="absolute inset-0 opacity-30">
           <div className="w-full h-full bg-white/5" style={{
@@ -265,15 +265,15 @@ export default function Login() {
               </div>
             </div>
           <div>
-              <h2 className="text-xl font-black bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
+              <h2 className="text-base font-black bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
                 Tu Agente IA 24/7
               </h2>
-              <p className="text-white/90 font-semibold text-lg">Recepcionista virtual inteligente</p>
+              <p className="text-white/90 font-semibold text-sm">Recepcionista virtual inteligente</p>
             </div>
         </div>
 
           {/* Features grid rediseñado */}
-          <div className="grid grid-cols-1 gap-3 mb-6">
+          <div className="grid grid-cols-1 gap-2 mb-6">
           <FeatureCard
               icon={<MessageCircle className="w-6 h-6 text-white" />}
             title="Multi-Canal"
@@ -298,7 +298,7 @@ export default function Login() {
 
           {/* Testimonials rediseñados */}
           <div className="space-y-3 mb-6">
-            <h3 className="font-black text-xl mb-4 flex items-center gap-2">
+            <h3 className="font-black text-base mb-4 flex items-center gap-2">
               <Heart className="w-5 h-5 text-pink-300 fill-pink-300" />
             Lo que dicen nuestros clientes
           </h3>
@@ -320,9 +320,9 @@ export default function Login() {
           <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400/20 to-orange-400/20 backdrop-blur-xl border border-yellow-300/30 rounded-2xl p-4">
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-300/10 to-transparent" />
             <div className="relative z-10 text-center">
-              <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="flex items-center justify-center gap-2 mb-2">
                 <Sparkles className="w-6 h-6 text-yellow-300" />
-                <p className="text-yellow-100 font-bold text-lg">🎁 Oferta especial</p>
+                <p className="text-yellow-100 font-bold text-sm">🎁 Oferta especial</p>
               </div>
               <p className="text-2xl font-black text-white mb-1">14 días GRATIS</p>
               <p className="text-white/90 font-semibold">Sin tarjeta de crédito</p>
@@ -341,7 +341,7 @@ export default function Login() {
       }} />
       
       {/* Panel izquierdo - Formularios REDISEÑADO */}
-      <div className="flex-1 flex items-center justify-center p-3 relative z-10">
+      <div className="flex-1 flex items-center justify-center p-2 relative z-10">
         <div className="max-w-md w-full space-y-8">
           {/* Header principal rediseñado */}
           <div className="text-center">
@@ -361,7 +361,7 @@ export default function Login() {
                 <p className="text-gray-600 text-sm font-semibold">Powered by AI</p>
               </div>
             </div>
-            <p className="text-gray-700 text-xl font-bold mb-2">
+            <p className="text-gray-700 text-base font-bold mb-2">
               Sistema Inteligente de Reservas
             </p>
             <p className="text-gray-500 text-sm font-medium">
@@ -501,7 +501,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={loading}
-                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-105"
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-bold text-sm shadow-xl hover:shadow-2xl transform hover:scale-105"
                 >
                   {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
                 </button>
@@ -548,7 +548,7 @@ export default function Login() {
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2">
                         <div>
                             <label htmlFor="phone" className="block text-sm font-bold text-gray-700 mb-2">
                             Teléfono
@@ -592,7 +592,7 @@ export default function Login() {
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2">
                         <div>
                             <label htmlFor="postal-code" className="block text-sm font-bold text-gray-700 mb-2">
                             Código Postal
@@ -666,7 +666,7 @@ export default function Login() {
 
                     <button
                       type="submit"
-                        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 transition-all duration-300 font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-3"
+                        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-purple-500/20 transition-all duration-300 font-bold text-sm shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-2"
                     >
                       Siguiente: Configurar Agente
                         <ArrowRight className="w-5 h-5" />
@@ -676,9 +676,9 @@ export default function Login() {
                     /* Step 2: Configuración del Agente REDISEÑADO */
                     <form onSubmit={handleRegister} className="space-y-6">
                       <div className="mb-6 text-center">
-                        <div className="flex items-center justify-center gap-3 mb-3">
+                        <div className="flex items-center justify-center gap-2 mb-2">
                           <Sparkles className="w-6 h-6 text-purple-600" />
-                          <h3 className="font-black text-gray-900 text-xl">
+                          <h3 className="font-black text-gray-900 text-base">
                           Personaliza tu Agente IA
                         </h3>
                       </div>
@@ -705,7 +705,7 @@ export default function Login() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-3">
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
                         Canal Principal
                       </label>
                         <div className="grid grid-cols-2 gap-4">
@@ -765,7 +765,7 @@ export default function Login() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-3">
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
                         Horario del Restaurante
                       </label>
                         <div className="grid grid-cols-2 gap-4">
