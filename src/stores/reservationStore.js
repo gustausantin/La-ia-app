@@ -10,6 +10,7 @@ export const useReservationStore = create()(
       // === ESTADO DE RESERVAS ===
       isLoading: false,
       error: null,
+      restaurantId: null, // ID del restaurante - REQUERIDO para datos reales
       
       // === RESERVAS ===
       reservations: [],
@@ -28,13 +29,15 @@ export const useReservationStore = create()(
         party_size: 'all',
       },
       
-      // === CONFIGURACIÓN ===
+      // === CONFIGURACIÓN DINÁMICA - SOLO DATOS REALES ===
       settings: {
-        slotDuration: 30, // minutos
-        maxAdvanceBooking: 90, // días
-        minAdvanceBooking: 1, // horas
-        maxPartySize: 12,
-        bufferTime: 15, // minutos entre reservas
+        // NUNCA valores por defecto - SIEMPRE desde Supabase
+        slotDuration: null, // se obtiene OBLIGATORIAMENTE de restaurants.settings.reservation_duration
+        maxAdvanceBooking: null, // se obtiene OBLIGATORIAMENTE de restaurants.settings.advance_booking_days
+        minAdvanceBooking: null, // se obtiene OBLIGATORIAMENTE de restaurants.settings.min_advance_hours
+        maxPartySize: null, // se obtiene OBLIGATORIAMENTE de restaurants.settings.max_party_size
+        minPartySize: null, // se obtiene OBLIGATORIAMENTE de restaurants.settings.min_party_size
+        bufferTime: 15, // único valor técnico permitido
       },
       
       // === MÉTRICAS ===
@@ -48,6 +51,81 @@ export const useReservationStore = create()(
       },
       
       // === ACCIONES PRINCIPALES ===
+      
+      // === INICIALIZACIÓN CON DATOS REALES ===
+      initialize: async (restaurantId) => {
+        try {
+          log.info('🚀 Initializing reservation store with REAL data for restaurant:', restaurantId);
+          
+          if (!restaurantId) {
+            throw new Error('Restaurant ID is REQUIRED for initialization');
+          }
+          
+          set({ restaurantId, isLoading: true, error: null });
+          
+          // Cargar política de reservas REAL
+          await get().loadReservationPolicy(restaurantId);
+          
+          log.info('✅ Reservation store initialized with REAL data');
+          
+        } catch (error) {
+          log.error('❌ Failed to initialize reservation store:', error);
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+      
+      // === CARGAR POLÍTICA DE RESERVAS - SOLO DATOS REALES ===
+      loadReservationPolicy: async (restaurantId) => {
+        try {
+          log.info('⚙️ Loading REAL reservation policy for restaurant:', restaurantId);
+          
+          if (!restaurantId) {
+            throw new Error('Restaurant ID is required - NO DEFAULTS ALLOWED');
+          }
+          
+          const { data, error } = await supabase
+            .from('restaurants')
+            .select('settings')
+            .eq('id', restaurantId)
+            .single();
+          
+          if (error) throw error;
+          
+          const policy = data?.settings || {};
+          
+          // VALIDAR que existan los datos REALES - NO defaults
+          if (!policy.reservation_duration || !policy.advance_booking_days || 
+              !policy.min_advance_hours || !policy.max_party_size || !policy.min_party_size) {
+            throw new Error('INCOMPLETE RESERVATION POLICY - All fields required in restaurants.settings');
+          }
+          
+          // Actualizar SOLO con datos REALES de Supabase
+          set((state) => ({
+            settings: {
+              ...state.settings,
+              slotDuration: policy.reservation_duration,
+              maxAdvanceBooking: policy.advance_booking_days,
+              minAdvanceBooking: policy.min_advance_hours,
+              maxPartySize: policy.max_party_size,
+              minPartySize: policy.min_party_size,
+            }
+          }));
+          
+          log.info('✅ REAL reservation policy loaded:', {
+            duration: policy.reservation_duration,
+            advanceDays: policy.advance_booking_days,
+            minHours: policy.min_advance_hours,
+            partySize: `${policy.min_party_size}-${policy.max_party_size}`
+          });
+          
+        } catch (error) {
+          log.error('❌ Failed to load REAL reservation policy:', error);
+          // NO defaults - la aplicación debe mostrar error si no hay datos reales
+          throw error;
+        }
+      },
+      
       loadReservations: async (date = null) => {
         set({ isLoading: true, error: null });
         
@@ -239,15 +317,130 @@ export const useReservationStore = create()(
             },
           }));
           
-          // Generar slots de tiempo disponibles
-          get().generateTimeSlots(date);
+          // Generar slots de tiempo disponibles con datos REALES
+          // Necesitamos el restaurantId - obtenerlo del contexto o parámetro
+          const restaurantId = get().restaurantId; // Agregar al estado si no existe
+          if (restaurantId) {
+            await get().generateTimeSlots(date, restaurantId);
+          } else {
+            log.error('❌ Restaurant ID required for generating REAL time slots');
+          }
           
         } catch (error) {
           log.error('❌ Failed to load availability:', error);
         }
       },
       
-      generateTimeSlots: (date) => {
+      generateTimeSlots: async (date, restaurantId) => {
+        try {
+          const { settings } = get();
+          
+          // VALIDAR que tengamos la política REAL cargada
+          if (!settings.slotDuration) {
+            throw new Error('POLICY NOT LOADED - Must call loadReservationPolicy first');
+          }
+          
+          log.info('🎯 Generating REAL time slots for:', date, 'with duration:', settings.slotDuration);
+          
+          // 1. OBTENER HORARIOS Y TURNOS REALES desde Supabase
+          const { data: scheduleData, error: scheduleError } = await supabase
+            .from('restaurant_schedule')
+            .select('*')
+            .eq('restaurant_id', restaurantId);
+            
+          if (scheduleError) throw scheduleError;
+          
+          // 2. OBTENER CALENDARIO REAL (eventos especiales)
+          const { data: eventsData, error: eventsError } = await supabase
+            .from('special_events')
+            .select('*')
+            .eq('restaurant_id', restaurantId)
+            .eq('event_date', date);
+            
+          if (eventsError) throw eventsError;
+          
+          // 3. DETERMINAR HORARIOS REALES PARA EL DÍA
+          const dayOfWeek = new Date(date).toLocaleDateString('en', { weekday: 'lowercase' });
+          const daySchedule = scheduleData.find(s => s.day_of_week === dayOfWeek);
+          const specialEvent = eventsData?.[0];
+          
+          // Si hay evento especial cerrado, NO generar slots
+          if (specialEvent?.is_closed) {
+            log.info('🚫 Day is CLOSED due to special event');
+            set(state => ({ timeSlots: [] }));
+            return;
+          }
+          
+          // Si no está abierto según horario, NO generar slots
+          if (!daySchedule?.is_open) {
+            log.info('🚫 Day is CLOSED according to schedule');
+            set(state => ({ timeSlots: [] }));
+            return;
+          }
+          
+          // 4. USAR TURNOS SI EXISTEN, sino horario general
+          const timeRanges = [];
+          
+          if (daySchedule.slots && daySchedule.slots.length > 0) {
+            // PRIORIDAD: TURNOS (shifts)
+            log.info('📍 Using SHIFTS from schedule');
+            daySchedule.slots.forEach(slot => {
+              if (slot.start_time && slot.end_time) {
+                timeRanges.push({
+                  start: slot.start_time,
+                  end: slot.end_time,
+                  name: slot.name || 'Turno'
+                });
+              }
+            });
+          } else {
+            // FALLBACK: Horario general (solo si NO hay turnos)
+            log.info('📍 Using GENERAL hours from schedule');
+            timeRanges.push({
+              start: daySchedule.open_time || '09:00',
+              end: daySchedule.close_time || '22:00',
+              name: 'Horario General'
+            });
+          }
+          
+          // 5. GENERAR SLOTS REALES con duración de política
+          const slots = [];
+          
+          timeRanges.forEach(range => {
+            const [startHour, startMin] = range.start.split(':').map(Number);
+            const [endHour, endMin] = range.end.split(':').map(Number);
+            
+            let currentTime = startHour * 60 + startMin; // minutos desde medianoche
+            const endTime = endHour * 60 + endMin;
+            
+            while (currentTime + settings.slotDuration <= endTime) {
+              const hour = Math.floor(currentTime / 60);
+              const minute = currentTime % 60;
+              const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+              
+              slots.push({
+                time: timeString,
+                available: true, // Se calculará con disponibilidad real
+                range: range.name
+              });
+              
+              currentTime += settings.slotDuration;
+            }
+          });
+          
+          log.info('✅ Generated REAL slots:', slots.length, 'slots with', settings.slotDuration, 'min duration');
+          
+          set(state => ({ timeSlots: slots }));
+          
+        } catch (error) {
+          log.error('❌ Failed to generate REAL time slots:', error);
+          // NO generar slots falsos - mostrar error
+          set(state => ({ timeSlots: [], error: error.message }));
+        }
+      },
+      
+      // FUNCIÓN LEGACY - ELIMINAR después de migración
+      generateTimeSlotsLegacy: (date) => {
         const { settings, availability } = get();
         const dayAvailability = availability[date] || [];
         
@@ -256,7 +449,7 @@ export const useReservationStore = create()(
         const endHour = 23; // 11:00 PM
         
         for (let hour = startHour; hour <= endHour; hour++) {
-          for (let minute = 0; minute < 60; minute += settings.slotDuration) {
+          for (let minute = 0; minute < 60; minute += (settings.slotDuration || 30)) {
             const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
             
             // Verificar disponibilidad
@@ -459,6 +652,67 @@ export const useReservationStore = create()(
         }
       },
       
+      // === OBTENER ESTADÍSTICAS REALES DE DISPONIBILIDADES ===
+      getAvailabilityStats: async (restaurantId) => {
+        try {
+          log.info('📊 Loading REAL availability stats for restaurant:', restaurantId);
+          
+          if (!restaurantId) {
+            throw new Error('Restaurant ID is REQUIRED for REAL stats');
+          }
+          
+          // Consultar slots REALES desde Supabase
+          const { data: slotsData, error: slotsError } = await supabase
+            .from('availability_slots')
+            .select('*')
+            .eq('restaurant_id', restaurantId)
+            .gte('slot_date', new Date().toISOString().split('T')[0]); // Solo futuros
+            
+          if (slotsError) throw slotsError;
+          
+          // Consultar reservas REALES
+          const { data: reservationsData, error: reservationsError } = await supabase
+            .from('reservations')
+            .select('slot_id, status')
+            .eq('restaurant_id', restaurantId)
+            .gte('reservation_date', new Date().toISOString().split('T')[0])
+            .in('status', ['confirmada', 'sentada']);
+            
+          if (reservationsError) throw reservationsError;
+          
+          // Calcular estadísticas REALES
+          const totalSlots = slotsData.length;
+          const reservedSlotIds = new Set(reservationsData.map(r => r.slot_id).filter(Boolean));
+          const occupiedSlots = slotsData.filter(slot => reservedSlotIds.has(slot.id)).length;
+          const availableSlots = totalSlots - occupiedSlots;
+          
+          // Consultar mesas REALES
+          const { data: tablesData, error: tablesError } = await supabase
+            .from('tables')
+            .select('id')
+            .eq('restaurant_id', restaurantId)
+            .eq('is_active', true);
+            
+          if (tablesError) throw tablesError;
+          
+          const stats = {
+            total: totalSlots,
+            free: availableSlots,
+            occupied: occupiedSlots,
+            reserved: occupiedSlots, // Mismo valor por ahora
+            tablesCount: tablesData.length
+          };
+          
+          log.info('✅ REAL availability stats loaded:', stats);
+          return stats;
+          
+        } catch (error) {
+          log.error('❌ Failed to load REAL availability stats:', error);
+          // NO retornar stats falsas
+          throw error;
+        }
+      },
+      
       // === RESET ===
       reset: () => {
         set({
@@ -467,6 +721,7 @@ export const useReservationStore = create()(
           availability: {},
           timeSlots: [],
           selectedDate: new Date().toISOString().split('T')[0],
+          restaurantId: null, // Reset restaurant ID también
           filters: {
             status: 'all',
             timeRange: 'today',

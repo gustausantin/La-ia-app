@@ -84,122 +84,27 @@ const AvailabilityManager = () => {
         }
     };
 
-    // Cargar estadísticas de disponibilidad
+    // Cargar estadísticas de disponibilidad - SOLO DATOS REALES
     const loadAvailabilityStats = async () => {
         try {
-            // MÉTODO MATEMÁTICO - Evitar límite de 1000 de Supabase
-            console.log('📊 Calculando estadísticas para restaurant:', restaurantId);
+            console.log('📊 Loading REAL availability stats for restaurant:', restaurantId);
             
             if (!restaurantId) {
-                console.warn('⚠️ No hay restaurantId para cargar estadísticas');
+                console.warn('⚠️ Restaurant ID required for REAL stats');
                 return;
             }
 
-            // 1. Obtener TOTAL usando count (no tiene límite)
-            const { count: totalSlots, error: totalError } = await supabase
-                .from('availability_slots')
-                .select('id', { count: 'exact', head: true })
-                .eq('restaurant_id', restaurantId)
-                .gte('slot_date', format(new Date(), 'yyyy-MM-dd'));
-
-            if (totalError) {
-                console.error('❌ Error obteniendo total slots:', totalError);
-                throw totalError;
-            }
+            // Usar la nueva función del store que garantiza datos REALES
+            const { useReservationStore } = await import('../stores/reservationStore.js');
+            const stats = await useReservationStore.getState().getAvailabilityStats(restaurantId);
             
-            console.log(`📊 Total slots encontrados: ${totalSlots || 0}`);
-
-            // 2. Obtener OCUPADOS/RESERVADOS usando count
-            // Intentar con status primero, luego con is_available
-            let occupiedSlots = 0;
-            
-            // Primero intentar con status
-            const { count: statusOccupied, error: statusError } = await supabase
-                .from('availability_slots')
-                .select('id', { count: 'exact', head: true })
-                .eq('restaurant_id', restaurantId)
-                .gte('slot_date', format(new Date(), 'yyyy-MM-dd'))
-                .in('status', ['occupied', 'reserved']);
-
-            if (!statusError && statusOccupied !== null) {
-                occupiedSlots = statusOccupied;
-            } else {
-                // Si falla, intentar con is_available = false
-                const { count: notAvailable, error: availError } = await supabase
-                    .from('availability_slots')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('restaurant_id', restaurantId)
-                    .gte('slot_date', format(new Date(), 'yyyy-MM-dd'))
-                    .eq('is_available', false);
-                
-                if (!availError && notAvailable !== null) {
-                    occupiedSlots = notAvailable;
-                }
-            }
-
-            // 3. Obtener BLOQUEADOS usando count
-            const { count: blockedSlots, error: blockedError } = await supabase
-                .from('availability_slots')
-                .select('id', { count: 'exact', head: true })
-                .eq('restaurant_id', restaurantId)
-                .gte('slot_date', format(new Date(), 'yyyy-MM-dd'))
-                .eq('status', 'blocked');
-
-            if (blockedError) throw blockedError;
-
-            // 4. CALCULAR DISPONIBLES MATEMÁTICAMENTE (¡SIN LÍMITE!)
-            const freeSlots = (totalSlots || 0) - (occupiedSlots || 0) - (blockedSlots || 0);
-
-            // 5. Obtener rango de fechas (solo una muestra pequeña)
-            const { data: dateRangeData, error: dateError } = await supabase
-                .from('availability_slots')
-                .select('slot_date')
-                .eq('restaurant_id', restaurantId)
-                .gte('slot_date', format(new Date(), 'yyyy-MM-dd'))
-                .order('slot_date', { ascending: true })
-                .limit(100); // Solo necesitamos fechas min/max
-
-            if (dateError) throw dateError;
-
-            // 6. Obtener número de mesas activas
-            const { count: tablesCount, error: tablesError } = await supabase
-                .from('tables')
-                .select('id', { count: 'exact', head: true })
-                .eq('restaurant_id', restaurantId)
-                .eq('is_active', true);
-
-            if (tablesError) throw tablesError;
-
-            // 7. Calcular rango de fechas
-            const dates = dateRangeData?.map(slot => slot.slot_date).filter(Boolean) || [];
-            const uniqueDates = [...new Set(dates)].sort();
-            const startDate = uniqueDates[0] || format(new Date(), 'yyyy-MM-dd');
-            const endDate = uniqueDates[uniqueDates.length - 1] || format(new Date(), 'yyyy-MM-dd');
-
-            const stats = {
-                total: totalSlots || 0,
-                free: Math.max(0, freeSlots), // Asegurar no negativo
-                occupied: occupiedSlots || 0,
-                blocked: blockedSlots || 0,
-                dateRange: {
-                    start: startDate,
-                    end: endDate
-                },
-                tablesCount: tablesCount || 0,
-                calculationMethod: 'mathematical' // Indicador de método usado
-            };
-
-            console.log('✅ Estadísticas calculadas matemáticamente:', {
-                total: stats.total,
-                disponibles: stats.free,
-                ocupados: stats.occupied,
-                bloqueados: stats.blocked,
-                metodo: 'Sin límite de 1000'
-            });
-
+            console.log('✅ REAL availability stats loaded:', stats);
             setAvailabilityStats(stats);
+
         } catch (error) {
-            console.error('Error cargando estadísticas:', error);
+            console.error('❌ Error loading REAL availability stats:', error);
+            toast.error('Error al cargar estadísticas reales de disponibilidad');
+            // NO mostrar stats falsas - dejar null
             setAvailabilityStats(null);
         }
     };
