@@ -5,14 +5,17 @@
 -- 
 -- LÓGICA IMPLEMENTADA (5 PASOS):
 -- 1. Política de Reservas: Lee datos reales de restaurants.settings
---    - advance_booking_days, reservation_duration, min/max_party_size, min_advance_hours
+--    - advance_booking_days, reservation_duration, slot_interval, min/max_party_size, min_advance_hours
+--    - slot_interval: Permite slots flexibles (ej: cada 15/30 min) para máxima ocupación
 -- 2. Calendario del Restaurante: PRIORIDAD 1 - special_events, PRIORIDAD 2 - calendar_schedule
 --    - Primero verifica special_events (festivos, vacaciones específicas)
 --    - Si no hay evento, usa calendar_schedule (horario semanal)
 --    - Si closed=true → NO genera slots
 -- 3. Horario General: Respeta horarios de apertura/cierre reales
 --    - Última reserva = close_time (el cliente puede reservar hasta la hora de cierre)
--- 4. Generación de Slots: Intervalos según duración real de reserva
+-- 4. Generación de Slots: Intervalos flexibles configurables
+--    - Genera slots cada slot_interval minutos (ej: 15, 30 min)
+--    - Reserva bloquea múltiples slots según reservation_duration
 --    - Formato HH:MM (sin segundos)
 -- 5. Reglas Clave: Prioridad special_events > calendar_schedule > Política de Reservas
 -- ============================================
@@ -47,6 +50,7 @@ DECLARE
     -- Política de Reservas (DATOS REALES)
     v_advance_booking_days INTEGER;
     v_reservation_duration INTEGER;
+    v_slot_interval INTEGER; -- NUEVO: Intervalo entre slots (15, 30, 60 min)
     v_min_party_size INTEGER;
     v_max_party_size INTEGER;
     v_min_advance_hours INTEGER;
@@ -107,7 +111,8 @@ BEGIN
     -- PASO 1: CARGAR POLÍTICA DE RESERVAS (DATOS REALES)
     -- ============================================
     v_advance_booking_days := COALESCE((v_settings->'booking_settings'->>'advance_booking_days')::INTEGER, 30);
-    v_reservation_duration := COALESCE((v_settings->>'reservation_duration')::INTEGER, 90);
+    v_reservation_duration := COALESCE((v_settings->'booking_settings'->>'reservation_duration')::INTEGER, 90);
+    v_slot_interval := COALESCE((v_settings->'booking_settings'->>'slot_interval')::INTEGER, 30); -- Default 30 min
     v_min_party_size := COALESCE((v_settings->'booking_settings'->>'min_party_size')::INTEGER, 1);
     v_max_party_size := COALESCE((v_settings->'booking_settings'->>'max_party_size')::INTEGER, 12);
     v_min_advance_hours := COALESCE((v_settings->'booking_settings'->>'min_booking_hours')::INTEGER, 2);
@@ -228,8 +233,9 @@ BEGIN
                         NULL; -- Slot ya existe, continuar
                 END;
                 
-                -- PASO 4: Avanzar según la duración de reserva
-                v_current_time := v_current_time + (v_reservation_duration || ' minutes')::INTERVAL;
+                -- PASO 4: Avanzar según el INTERVALO de slots (no la duración de reserva)
+                -- Esto permite slots cada 15/30 min aunque la reserva dure 90 min
+                v_current_time := v_current_time + (v_slot_interval || ' minutes')::INTERVAL;
             END LOOP;
         END LOOP;
         
@@ -249,6 +255,7 @@ BEGIN
         'policy_applied', jsonb_build_object(
             'advance_booking_days', v_advance_booking_days,
             'reservation_duration', v_reservation_duration,
+            'slot_interval', v_slot_interval,
             'min_party_size', v_min_party_size,
             'max_party_size', v_max_party_size,
             'min_advance_hours', v_min_advance_hours
