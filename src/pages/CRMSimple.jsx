@@ -231,7 +231,7 @@ const CRMSimple = () => {
         <div className="p-6 max-w-7xl mx-auto">
             {/* HEADER */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">CRM Inteligente</h1>
+                <h1 className="text-lg font-bold text-gray-900">CRM Inteligente</h1>
                 <p className="text-gray-600">Gestiona la comunicación con tus clientes de forma inteligente</p>
             </div>
 
@@ -269,7 +269,7 @@ const CRMSimple = () => {
                 <div className="bg-blue-50 p-2 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="text-2xl font-bold text-blue-600">{stats.mensajesEnviados}</div>
+                            <div className="text-lg font-bold text-blue-600">{stats.mensajesEnviados}</div>
                             <div className="text-sm text-blue-700">Mensajes esta semana</div>
                         </div>
                         <MessageSquare className="w-8 h-8 text-blue-400" />
@@ -279,7 +279,7 @@ const CRMSimple = () => {
                 <div className="bg-green-50 p-2 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="text-2xl font-bold text-green-600">{stats.clientesRecuperados}</div>
+                            <div className="text-lg font-bold text-green-600">{stats.clientesRecuperados}</div>
                             <div className="text-sm text-green-700">Clientes respondieron</div>
                         </div>
                         <Users className="w-8 h-8 text-green-400" />
@@ -289,7 +289,7 @@ const CRMSimple = () => {
                 <div className="bg-purple-50 p-2 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="text-2xl font-bold text-purple-600">€{stats.valorGenerado}</div>
+                            <div className="text-lg font-bold text-purple-600">€{stats.valorGenerado}</div>
                             <div className="text-sm text-purple-700">Valor generado</div>
                         </div>
                         <DollarSign className="w-8 h-8 text-purple-400" />
@@ -409,3 +409,4 @@ const CRMSimple = () => {
 };
 
 export default CRMSimple;
+

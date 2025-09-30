@@ -153,7 +153,7 @@ await signOut();
                             <div className="flex items-center space-x-3">
                                 <Bot className="w-8 h-8 text-purple-600" />
                                 <div>
-                                    <h1 className="text-xl font-bold text-gray-900">
+                                    <h1 className="text-base font-bold text-gray-900">
                                         La-IA
                                     </h1>
                                 </div>
@@ -225,7 +225,7 @@ await signOut();
                     <header className="bg-white shadow-sm border-b border-gray-200">
                         <div className="flex items-center justify-between px-6 py-4">
                             <div className="flex items-center space-x-4">
-                                <h2 className="text-xl font-semibold text-gray-900">
+                                <h2 className="text-base font-semibold text-gray-900">
                                     {menuItems.find((item) =>
                                         window.location.pathname.includes(
                                             item.path,
@@ -332,7 +332,7 @@ await signOut();
         return (
             <div className="min-h-screen flex items-center justify-center bg-red-50">
                 <div className="text-center p-6">
-                    <h1 className="text-xl font-bold text-red-600 mb-4">Error en Layout</h1>
+                    <h1 className="text-base font-bold text-red-600 mb-4">Error en Layout</h1>
                     <p className="text-gray-600 mb-4">Ha ocurrido un error inesperado</p>
                     <button
                         onClick={() => window.location.reload()}
@@ -345,3 +345,4 @@ await signOut();
         );
     }
 };
+

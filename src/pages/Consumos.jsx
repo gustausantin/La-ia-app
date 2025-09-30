@@ -546,7 +546,7 @@ const Consumos = () => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                             <Receipt className="w-6 h-6 text-purple-600" />
                             Consumos
                         </h1>
@@ -635,7 +635,7 @@ const Consumos = () => {
                             <Users className="w-4 h-4 text-blue-600" />
                             <span className="text-sm text-blue-600 font-medium">Reservas</span>
                         </div>
-                        <div className="text-2xl font-bold text-blue-900">{stats.totalReservations}</div>
+                        <div className="text-lg font-bold text-blue-900">{stats.totalReservations}</div>
                     </div>
 
                     <div className="bg-green-50 p-2 rounded-lg border border-green-200">
@@ -643,7 +643,7 @@ const Consumos = () => {
                             <Link2 className="w-4 h-4 text-green-600" />
                             <span className="text-sm text-green-600 font-medium">Vinculadas</span>
                         </div>
-                        <div className="text-2xl font-bold text-green-900">{stats.linkedReservations}</div>
+                        <div className="text-lg font-bold text-green-900">{stats.linkedReservations}</div>
                     </div>
 
                     <div className="bg-yellow-50 p-2 rounded-lg border border-yellow-200">
@@ -651,7 +651,7 @@ const Consumos = () => {
                             <AlertTriangle className="w-4 h-4 text-yellow-600" />
                             <span className="text-sm text-yellow-600 font-medium">Pendientes</span>
                         </div>
-                        <div className="text-2xl font-bold text-yellow-900">{stats.pendingMatches}</div>
+                        <div className="text-lg font-bold text-yellow-900">{stats.pendingMatches}</div>
                     </div>
 
                     <div className="bg-purple-50 p-2 rounded-lg border border-purple-200">
@@ -659,7 +659,7 @@ const Consumos = () => {
                             <DollarSign className="w-4 h-4 text-purple-600" />
                             <span className="text-sm text-purple-600 font-medium">Facturación</span>
                         </div>
-                        <div className="text-2xl font-bold text-purple-900">{stats.totalRevenue.toFixed(0)}€</div>
+                        <div className="text-lg font-bold text-purple-900">{stats.totalRevenue.toFixed(0)}€</div>
                     </div>
 
                     <div className="bg-indigo-50 p-2 rounded-lg border border-indigo-200">
@@ -667,7 +667,7 @@ const Consumos = () => {
                             <BarChart3 className="w-4 h-4 text-indigo-600" />
                             <span className="text-sm text-indigo-600 font-medium">Ticket Medio</span>
                         </div>
-                        <div className="text-2xl font-bold text-indigo-900">{stats.avgTicket.toFixed(0)}€</div>
+                        <div className="text-lg font-bold text-indigo-900">{stats.avgTicket.toFixed(0)}€</div>
                     </div>
                 </div>
             </div>
@@ -968,3 +968,4 @@ const Consumos = () => {
 };
 
 export default Consumos;
+

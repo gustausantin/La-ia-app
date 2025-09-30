@@ -324,7 +324,7 @@ export default function Login() {
                 <Sparkles className="w-6 h-6 text-yellow-300" />
                 <p className="text-yellow-100 font-bold text-sm">🎁 Oferta especial</p>
               </div>
-              <p className="text-2xl font-black text-white mb-1">14 días GRATIS</p>
+              <p className="text-lg font-black text-white mb-1">14 días GRATIS</p>
               <p className="text-white/90 font-semibold">Sin tarjeta de crédito</p>
             </div>
           </div>
@@ -355,7 +355,7 @@ export default function Login() {
                 </div>
               </div>
               <div className="text-left">
-                <h1 className="text-2xl font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                <h1 className="text-lg font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   La-IA
                 </h1>
                 <p className="text-gray-600 text-sm font-semibold">Powered by AI</p>
@@ -879,3 +879,4 @@ export default function Login() {
     </div>
   );
 }
+
