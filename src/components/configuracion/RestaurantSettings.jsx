@@ -88,23 +88,27 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
     try {
       await onUpdate(settings);
       
-      // 🚨 CRÍTICO: Detectar cambios en parámetros de disponibilidad
+      toast.success('Configuración guardada correctamente');
+      
+      // 🚨 CRÍTICO: Detectar cambios en parámetros de disponibilidad (solo si existen slots)
       const hoursChanged = JSON.stringify(previousSettings.opening_hours) !== JSON.stringify(settings.opening_hours);
       const policyChanged = JSON.stringify(previousSettings.booking_settings) !== JSON.stringify(settings.booking_settings);
       
-      if (hoursChanged) {
-        changeDetection.onScheduleChange('operating_hours');
-        // MOSTRAR MODAL INMEDIATAMENTE
-        showRegenerationModal('schedule_changed', 'Horarios del restaurante modificados');
+      if (hoursChanged || policyChanged) {
+        changeDetection.checkExistingSlots().then(slotsExist => {
+          if (slotsExist) {
+            if (hoursChanged) {
+              changeDetection.onScheduleChange('operating_hours');
+              showRegenerationModal('schedule_changed', 'Horarios del restaurante modificados');
+            } else if (policyChanged) {
+              changeDetection.onPolicyChange('booking_settings');
+              showRegenerationModal('policy_changed', 'Política de reservas modificada');
+            }
+          } else {
+            console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
+          }
+        });
       }
-      
-      if (policyChanged) {
-        changeDetection.onPolicyChange('booking_settings');
-        // MOSTRAR MODAL INMEDIATAMENTE
-        showRegenerationModal('policy_changed', 'Política de reservas modificada');
-      }
-      
-      toast.success('Configuración guardada correctamente');
     } catch (error) {
       toast.error('Error al guardar la configuración');
     } finally {

@@ -442,14 +442,20 @@ export default function Calendario() {
             // Actualizar estado local
             setEvents(prev => prev.filter(e => e.id !== event.id));
             
-            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN
-            changeDetection.onSpecialEventChange('removed', event.title);
-            showRegenerationModal(
-                'special_event_deleted', 
-                `Evento "${event.title}" eliminado (${format(parseISO(event.event_date), 'dd/MM/yyyy')})`
-            );
-            
             toast.success(`✅ Evento "${event.title}" eliminado correctamente`);
+            
+            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
+            changeDetection.checkExistingSlots().then(slotsExist => {
+                if (slotsExist) {
+                    changeDetection.onSpecialEventChange('removed', event.title);
+                    showRegenerationModal(
+                        'special_event_deleted', 
+                        `Evento "${event.title}" eliminado (${format(parseISO(event.event_date), 'dd/MM/yyyy')})`
+                    );
+                } else {
+                    console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
+                }
+            });
         } catch (error) {
             console.error('❌ Error eliminando evento:', error);
             toast.error('Error al eliminar el evento');
@@ -561,20 +567,26 @@ export default function Calendario() {
             // Actualizar estado local
             setEvents(prev => [...prev, data]);
             
-            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN
-            changeDetection.onSpecialEventChange(
-                eventForm.closed ? 'closed' : 'special_hours',
-                format(selectedDay, 'dd/MM/yyyy')
-            );
-            
-            // MOSTRAR MODAL INMEDIATAMENTE
-            if (eventForm.closed) {
-                showRegenerationModal('special_event_closed', `Día ${format(selectedDay, 'dd/MM/yyyy')} cerrado`);
-            } else {
-                showRegenerationModal('special_event_created', `Evento "${eventForm.title}" en ${format(selectedDay, 'dd/MM/yyyy')}`);
-            }
-            
             toast.success(`✅ Evento "${eventForm.title}" creado para ${format(selectedDay, 'dd/MM/yyyy')}`);
+            
+            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
+            changeDetection.checkExistingSlots().then(slotsExist => {
+                if (slotsExist) {
+                    changeDetection.onSpecialEventChange(
+                        eventForm.closed ? 'closed' : 'special_hours',
+                        format(selectedDay, 'dd/MM/yyyy')
+                    );
+                    
+                    // MOSTRAR MODAL
+                    if (eventForm.closed) {
+                        showRegenerationModal('special_event_closed', `Día ${format(selectedDay, 'dd/MM/yyyy')} cerrado`);
+                    } else {
+                        showRegenerationModal('special_event_created', `Evento "${eventForm.title}" en ${format(selectedDay, 'dd/MM/yyyy')}`);
+                    }
+                } else {
+                    console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
+                }
+            });
             setShowEventModal(false);
             
             console.log('✅ Evento guardado:', data);
@@ -819,9 +831,15 @@ export default function Calendario() {
             toast.success("✅ Horarios guardados correctamente");
             console.log("✅ Guardado exitoso - horarios simples");
             
-            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN
-            changeDetection.onScheduleChange('weekly_schedule');
-            showRegenerationModal('schedule_changed', 'Horarios semanales del restaurante modificados');
+            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
+            changeDetection.checkExistingSlots().then(slotsExist => {
+                if (slotsExist) {
+                    changeDetection.onScheduleChange('weekly_schedule');
+                    showRegenerationModal('schedule_changed', 'Horarios semanales del restaurante modificados');
+                } else {
+                    console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
+                }
+            });
             
         } catch (error) {
             console.error("❌ Error guardando horarios:", error);
