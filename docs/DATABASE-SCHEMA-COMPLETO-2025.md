@@ -1,11 +1,12 @@
 # 📊 DOCUMENTACIÓN COMPLETA DE LA BASE DE DATOS - 2025
 
 ## 🎯 **RESUMEN EJECUTIVO**
-- **41 TABLAS** documentadas completamente
+- **43 TABLAS** documentadas completamente
 - **TODAS las columnas** con tipos, nullabilidad y defaults
 - **TODOS los constraints CHECK** con valores permitidos
 - **TODAS las claves primarias y foráneas** mapeadas
 - **TODAS las funciones RPC** disponibles
+- **✨ ACTUALIZADO:** Sistema de disponibilidades completo (30/09/2025)
 
 ---
 
