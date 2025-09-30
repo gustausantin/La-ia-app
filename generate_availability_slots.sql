@@ -18,6 +18,7 @@
 -- LIMPIAR FUNCIONES ANTERIORES
 DROP FUNCTION IF EXISTS generate_availability_slots_simple CASCADE;
 DROP FUNCTION IF EXISTS generate_availability_slots CASCADE;
+DROP FUNCTION IF EXISTS borrar_disponibilidades_simple CASCADE;
 
 -- ============================================
 -- FUNCIÓN QUE FUNCIONA PARA TODOS
@@ -235,10 +236,81 @@ END;
 $$;
 
 -- ============================================
+-- FUNCIÓN PARA BORRAR DISPONIBILIDADES
+-- ============================================
+CREATE OR REPLACE FUNCTION borrar_disponibilidades_simple(
+    p_restaurant_id UUID DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_restaurant_id UUID;
+    v_deleted_count INTEGER;
+    v_restaurant_name TEXT;
+BEGIN
+    -- Determinar restaurant_id (igual que en la función de generar)
+    v_restaurant_id := p_restaurant_id;
+    
+    IF v_restaurant_id IS NULL AND auth.uid() IS NOT NULL THEN
+        -- Buscar en mapping
+        SELECT urm.restaurant_id, r.name 
+        INTO v_restaurant_id, v_restaurant_name
+        FROM user_restaurant_mapping urm
+        JOIN restaurants r ON r.id = urm.restaurant_id
+        WHERE urm.auth_user_id = auth.uid()
+        AND urm.active = true
+        ORDER BY urm.created_at DESC
+        LIMIT 1;
+        
+        -- Si no hay mapping, buscar por owner
+        IF v_restaurant_id IS NULL THEN
+            SELECT id, name 
+            INTO v_restaurant_id, v_restaurant_name
+            FROM restaurants
+            WHERE owner_id = auth.uid()
+            AND active = true
+            ORDER BY created_at DESC
+            LIMIT 1;
+        END IF;
+    ELSE
+        SELECT name INTO v_restaurant_name
+        FROM restaurants
+        WHERE id = v_restaurant_id;
+    END IF;
+    
+    -- Validación
+    IF v_restaurant_id IS NULL THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'No se pudo determinar el restaurante'
+        );
+    END IF;
+    
+    -- Borrar disponibilidades del restaurante
+    DELETE FROM availability_slots
+    WHERE restaurant_id = v_restaurant_id;
+    
+    GET DIAGNOSTICS v_deleted_count = ROW_COUNT;
+    
+    RETURN jsonb_build_object(
+        'success', true,
+        'message', format('Disponibilidades eliminadas de %s', v_restaurant_name),
+        'deleted_count', v_deleted_count,
+        'restaurant_id', v_restaurant_id,
+        'restaurant_name', v_restaurant_name
+    );
+END;
+$$;
+
+-- ============================================
 -- PERMISOS PARA TODOS
 -- ============================================
 GRANT EXECUTE ON FUNCTION generate_availability_slots_simple TO authenticated;
 GRANT EXECUTE ON FUNCTION generate_availability_slots_simple TO anon;
+GRANT EXECUTE ON FUNCTION borrar_disponibilidades_simple TO authenticated;
+GRANT EXECUTE ON FUNCTION borrar_disponibilidades_simple TO anon;
 
 -- ============================================
 -- RLS PARA MULTI-TENANCY
