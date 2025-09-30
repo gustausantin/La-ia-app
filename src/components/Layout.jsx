@@ -148,7 +148,7 @@ await signOut();
                 {/* Sidebar */}
                 <div className="w-64 bg-white shadow-lg flex flex-col">
                     {/* Logo y Estado del Agente */}
-                    <div className="p-6 border-b border-gray-200">
+                    <div className="p-4 border-b border-gray-200">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center space-x-3">
                                 <Bot className="w-8 h-8 text-purple-600" />
@@ -310,7 +310,7 @@ await signOut();
                     </header>
 
                     {/* Page Content */}
-                    <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+                    <main className="flex-1 overflow-y-auto bg-gray-50 p-4">
                         {// console.log removed for production
 }
                         <Outlet />
@@ -331,7 +331,7 @@ await signOut();
     } catch (error) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-red-50">
-                <div className="text-center p-8">
+                <div className="text-center p-6">
                     <h1 className="text-xl font-bold text-red-600 mb-4">Error en Layout</h1>
                     <p className="text-gray-600 mb-4">Ha ocurrido un error inesperado</p>
                     <button

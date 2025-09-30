@@ -207,47 +207,47 @@ const CHANNELS = {
 // Componente de estadísticas del agente
 const AgentStatsPanel = ({ stats, insights }) => {
     return (
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-4 text-white">
+            <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-semibold flex items-center gap-2">
                     <Brain className="w-5 h-5" />
                     Rendimiento del Agente IA
                 </h3>
-                <span className="text-sm bg-white/20 px-3 py-1 rounded-full">
+                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
                     En línea
                 </span>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
                 <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl font-bold">
                         {stats.agentReservations || 0}
                     </p>
-                    <p className="text-sm text-purple-100">Reservas IA</p>
+                    <p className="text-xs text-purple-100">Reservas IA</p>
                 </div>
                 <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl font-bold">
                         {stats.conversionRate || 0}%
                     </p>
-                    <p className="text-sm text-purple-100">Conversión</p>
+                    <p className="text-xs text-purple-100">Conversión</p>
                 </div>
                 <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl font-bold">
                         {stats.avgResponseTime || "0s"}
                     </p>
-                    <p className="text-sm text-purple-100">Tiempo respuesta</p>
+                    <p className="text-xs text-purple-100">Tiempo respuesta</p>
                 </div>
                 <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl font-bold">
                         {stats.peakChannel || "WhatsApp"}
                     </p>
-                    <p className="text-sm text-purple-100">Canal principal</p>
+                    <p className="text-xs text-purple-100">Canal principal</p>
                 </div>
                 <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl font-bold">
                         {stats.satisfaction || 0}%
                     </p>
-                    <p className="text-sm text-purple-100">Satisfacción</p>
+                    <p className="text-xs text-purple-100">Satisfacción</p>
                 </div>
             </div>
 

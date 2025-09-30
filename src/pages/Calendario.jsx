@@ -937,7 +937,7 @@ export default function Calendario() {
                         <Activity className="w-5 h-5 text-blue-600" />
                         Resumen de actividad
                     </h2>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="text-center">
                             <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-3">
                                 <CheckCircle className="w-6 h-6 text-green-600" />
@@ -1006,7 +1006,7 @@ export default function Calendario() {
                     {/* Tab: Horarios del restaurante */}
                     {activeTab === 'horarios' && (
                         <div className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                 {schedule.map((day, index) => (
                                     <div key={day.day_of_week} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                                         <div className="flex items-center justify-between mb-3">
