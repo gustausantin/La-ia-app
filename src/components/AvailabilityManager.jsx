@@ -25,6 +25,16 @@ const AvailabilityManager = () => {
     const { restaurantId } = useAuthContext();
     const changeDetection = useAvailabilityChangeDetection(restaurantId);
     const [loading, setLoading] = useState(false);
+    
+    // 🚨 Forzar verificación del estado cuando se monta el componente
+    useEffect(() => {
+        if (restaurantId) {
+            console.log('🔍 AvailabilityManager montado - verificando estado de regeneración...');
+            console.log('🔍 needsRegeneration:', changeDetection.needsRegeneration);
+            console.log('🔍 changeType:', changeDetection.changeType);
+            console.log('🔍 changeDetails:', changeDetection.changeDetails);
+        }
+    }, [restaurantId, changeDetection.needsRegeneration, changeDetection.changeType]);
     const [availabilityStats, setAvailabilityStats] = useState(null);
     const [conflictingReservations, setConflictingReservations] = useState([]);
     const [showDetails, setShowDetails] = useState(false);
