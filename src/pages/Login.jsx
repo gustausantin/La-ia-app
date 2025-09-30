@@ -243,7 +243,7 @@ export default function Login() {
   // Componente principal de beneficios - COMPLETAMENTE REDISEÑADO
   const AgentBenefits = () => (
     <div className="lg:block hidden relative">
-      <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 p-6 rounded-3xl text-white h-full min-h-screen">
+      <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 p-4 rounded-3xl text-white h-full min-h-screen">
         {/* Elementos decorativos de fondo */}
         <div className="absolute inset-0 opacity-30">
           <div className="w-full h-full bg-white/5" style={{
@@ -265,7 +265,7 @@ export default function Login() {
               </div>
             </div>
           <div>
-              <h2 className="text-3xl font-black bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
+              <h2 className="text-2xl font-black bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
                 Tu Agente IA 24/7
               </h2>
               <p className="text-white/90 font-semibold text-lg">Recepcionista virtual inteligente</p>
@@ -324,7 +324,7 @@ export default function Login() {
                 <Sparkles className="w-6 h-6 text-yellow-300" />
                 <p className="text-yellow-100 font-bold text-lg">🎁 Oferta especial</p>
               </div>
-              <p className="text-4xl font-black text-white mb-2">14 días GRATIS</p>
+              <p className="text-3xl font-black text-white mb-2">14 días GRATIS</p>
               <p className="text-white/90 font-semibold">Sin tarjeta de crédito</p>
             </div>
           </div>
@@ -341,7 +341,7 @@ export default function Login() {
       }} />
       
       {/* Panel izquierdo - Formularios REDISEÑADO */}
-      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+      <div className="flex-1 flex items-center justify-center p-4 relative z-10">
         <div className="max-w-md w-full space-y-8">
           {/* Header principal rediseñado */}
           <div className="text-center">
@@ -355,7 +355,7 @@ export default function Login() {
                 </div>
               </div>
               <div className="text-left">
-                <h1 className="text-5xl font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   La-IA
                 </h1>
                 <p className="text-gray-600 text-sm font-semibold">Powered by AI</p>
@@ -376,7 +376,7 @@ export default function Login() {
           </div>
 
           {/* Contenedor principal del formulario */}
-          <div className="relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl p-8">
+          <div className="relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl p-6">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-blue-50/30" />
             <div className="relative z-10">
               
@@ -848,7 +848,7 @@ export default function Login() {
                   Prueba 14 días gratis
                 </button>
               </p>
-              <div className="flex items-center justify-center gap-6 text-xs text-gray-500">
+              <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
                 <span className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-500" />
                   <span className="font-semibold">Sin tarjeta</span>
