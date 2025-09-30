@@ -1007,21 +1007,25 @@ export default function Mesas() {
                     });
                 }
 
-                // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN
+                // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
                 const deletedTable = tables.find(t => t.id === tableId);
                 if (deletedTable) {
                     // Registrar el cambio para el sistema
                     changeDetection.onTableChange('removed', deletedTable);
+                    
+                    // MOSTRAR MODAL solo si ya existen disponibilidades generadas
+                    changeDetection.checkExistingSlots().then(slotsExist => {
+                        if (slotsExist) {
+                            setTimeout(() => {
+                                showRegenerationModal('table_deleted', `Mesa "${deletedTable.name}" eliminada`);
+                            }, 100);
+                        } else {
+                            console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
+                        }
+                    });
                 }
                 
                 loadTables();
-                
-                // MOSTRAR MODAL SIEMPRE (después de loadTables para que se vea bien)
-                if (deletedTable) {
-                    setTimeout(() => {
-                        showRegenerationModal('table_deleted', `Mesa "${deletedTable.name}" eliminada`);
-                    }, 100);
-                }
             } catch (error) {
                 toast.error("Error al eliminar la mesa");
             }
@@ -1402,21 +1406,28 @@ export default function Mesas() {
                         setSelectedTable(null);
                     }}
                     onSave={(savedTable) => {
-                        // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN
+                        // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
                         const isNew = !selectedTable;
-                        if (isNew) {
-                            changeDetection.onTableChange('added', savedTable || { name: 'Nueva mesa' });
-                            // MOSTRAR MODAL INMEDIATAMENTE
-                            showRegenerationModal('table_created', `Mesa "${savedTable?.name || 'nueva'}" creada`);
-                        } else {
-                            changeDetection.onTableChange('modified', selectedTable);
-                            showRegenerationModal('table_modified', `Mesa "${selectedTable?.name}" modificada`);
-                        }
-
+                        
                         setShowCreateModal(false);
                         setShowEditModal(false);
                         setSelectedTable(null);
                         loadTables();
+                        
+                        // Verificar si existen slots antes de mostrar modal
+                        changeDetection.checkExistingSlots().then(slotsExist => {
+                            if (slotsExist) {
+                                if (isNew) {
+                                    changeDetection.onTableChange('added', savedTable || { name: 'Nueva mesa' });
+                                    showRegenerationModal('table_created', `Mesa "${savedTable?.name || 'nueva'}" creada`);
+                                } else {
+                                    changeDetection.onTableChange('modified', selectedTable);
+                                    showRegenerationModal('table_modified', `Mesa "${selectedTable?.name}" modificada`);
+                                }
+                            } else {
+                                console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
+                            }
+                        });
                         toast.success(
                             selectedTable
                                 ? "Mesa actualizada correctamente"
