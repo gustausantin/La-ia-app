@@ -418,11 +418,11 @@ const AvailabilityManager = () => {
                 return;
             }
             
-            const { data, error } = await supabase.rpc('generate_availability_slots_smart_check', {
+            // USAR FUNCIÓN SIMPLIFICADA (sin turnos)
+            const { data, error } = await supabase.rpc('generate_availability_slots_simple', {
                 p_restaurant_id: restaurantId,
                 p_start_date: today,
-                p_end_date: endDate,
-                p_slot_duration_minutes: duration
+                p_end_date: endDate
             });
 
             if (error) {
