@@ -425,8 +425,9 @@ const AvailabilityManager = () => {
             }
             
             // USAR FUNCIÓN SIMPLIFICADA (sin turnos)
+            // Si no hay restaurantId, pasar null para que la función lo detecte
             const { data, error } = await supabase.rpc('generate_availability_slots_simple', {
-                p_restaurant_id: restaurantId,
+                p_restaurant_id: restaurantId || null,
                 p_start_date: today,
                 p_end_date: endDate
             });
