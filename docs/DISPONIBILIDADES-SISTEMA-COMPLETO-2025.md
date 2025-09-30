@@ -217,7 +217,16 @@ borrar_disponibilidades_simple(
 
 ## 🔔 SISTEMA DE DETECCIÓN DE CAMBIOS
 
-### Trigger: `handle_table_changes`
+### ⚡ PRINCIPIO FUNDAMENTAL
+**"CUALQUIER modificación de parámetros de cálculo = AVISO OBLIGATORIO"**
+
+El sistema detecta automáticamente cambios en:
+- ❌ **Mesas** (crear/modificar/eliminar)
+- ❌ **Horarios** (abrir/cerrar días, cambiar horarios)
+- ❌ **Calendario** (eventos especiales, días cerrados)
+- ❌ **Política de Reservas** (duración, intervalo, anticipación)
+
+### Trigger SQL: `handle_table_changes`
 **Se dispara en:** `INSERT`, `UPDATE`, `DELETE` en tabla `tables`
 
 **Lógica:**
@@ -236,7 +245,7 @@ ELSIF TG_OP = 'INSERT' AND NEW.is_active = true THEN
 END IF;
 ```
 
-**Archivo:** `FIX_TRIGGER_TABLES.sql`
+**Archivo:** `UPDATE_TRIGGER_DELETE_SUPPORT.sql`
 
 ### Hook Frontend: `useAvailabilityChangeDetection`
 **Ubicación:** `src/hooks/useAvailabilityChangeDetection.js`
@@ -244,12 +253,24 @@ END IF;
 **Funciones:**
 - `onTableChange(action, tableData)` - Detecta cambios en mesas
 - `onScheduleChange(scheduleData)` - Detecta cambios en horarios
-- `onPolicyChange(policyData)` - Detecta cambios en política
+- `onPolicyChange(policyData)` - Detecta cambios en política de reservas
 - `onSpecialEventChange(action, eventData)` - Detecta eventos especiales
 
+**Integrado en:**
+- ✅ `src/pages/Mesas.jsx` - Cambios en mesas
+- ✅ `src/pages/Calendario.jsx` - Eventos especiales (días cerrados/especiales)
+- ✅ `src/components/configuracion/RestaurantSettings.jsx` - Horarios y política
+
+**UI de Alerta:**
+Banner rojo prominente en `AvailabilityManager.jsx`:
+- 🚨 Imposible de ignorar
+- 📍 Botones de acción directa
+- 🔄 Animación para captar atención
+- 📝 Muestra el motivo del cambio
+
 **Estado persistente:** LocalStorage
-- Solo muestra aviso si **ya existen slots generados**
-- Limpia automáticamente si no hay slots
+- Muestra aviso SIEMPRE que hay cambios
+- Solo se limpia tras regenerar disponibilidades
 
 ---
 
@@ -451,6 +472,7 @@ Para dudas o cambios en el sistema de disponibilidades:
 
 ---
 
-**Última actualización:** 30 Septiembre 2025  
+**Última actualización:** 30 Septiembre 2025 - 15:30  
 **Responsable:** Sistema de Documentación Automática  
-**Versión:** 2.0 - Sistema Profesional Multi-Tenant
+**Versión:** 2.1 - Sistema Completo de Detección de Cambios  
+**Cambios:** Integración completa del sistema de avisos en Calendario y RestaurantSettings
