@@ -444,14 +444,66 @@ const AvailabilityManager = () => {
 
             if (error) {
                 console.error('❌ Error en generate_availability_slots:', error);
-                throw error;
+                toast.dismiss('generating');
+                
+                // Mostrar error técnico si lo hay
+                const errorMsg = error.message || error.hint || 'Error desconocido';
+                toast.error(
+                    `❌ Error al generar horarios de reserva\n\n` +
+                    `🔍 Motivo: ${errorMsg}\n\n` +
+                    '📋 Verifica que:\n' +
+                    '• Tienes horarios de apertura configurados\n' +
+                    '• Hay días abiertos en el calendario\n' +
+                    '• La política de reservas está completa\n' +
+                    '• Tienes mesas activas\n\n' +
+                    '🔧 Revisa: Configuración → Horarios y Política de Reservas',
+                    { duration: 10000 }
+                );
+                setLoading(false);
+                return;
             }
             
             // Verificar si la respuesta es exitosa
             if (data && typeof data === 'object') {
                 if (data.success === false) {
-                    console.error('❌ Error en la función:', data.error);
-                    throw new Error(data.error || 'Error generando disponibilidades');
+                    console.error('❌ Error en la función:', data);
+                    toast.dismiss('generating');
+                    
+                    // 🎯 MOSTRAR EL MOTIVO EXACTO DEL ERROR
+                    const errorReason = data.error || 'Error desconocido';
+                    const errorHint = data.hint || '';
+                    
+                    let helpMessage = '\n\n📋 Verifica que:\n';
+                    
+                    // Personalizar mensaje según el error
+                    if (errorReason.includes('mesas')) {
+                        helpMessage += '• Tienes al menos una mesa activa\n' +
+                                      '🔧 Ve a: Mesas → Crear nueva mesa';
+                    } else if (errorReason.includes('horario') || errorReason.includes('cerrado')) {
+                        helpMessage += '• Tienes horarios de apertura configurados\n' +
+                                      '• Hay días abiertos en el calendario\n' +
+                                      '🔧 Ve a: Configuración → Horarios o Calendario';
+                    } else if (errorReason.includes('política') || errorReason.includes('reservas')) {
+                        helpMessage += '• La política de reservas está completa\n' +
+                                      '• Los días de antelación están configurados\n' +
+                                      '🔧 Ve a: Configuración → Política de Reservas';
+                    } else {
+                        helpMessage += '• Horarios de apertura configurados\n' +
+                                      '• Días abiertos en el calendario\n' +
+                                      '• Política de reservas completa\n' +
+                                      '• Mesas activas creadas\n' +
+                                      '🔧 Revisa: Configuración → Horarios, Calendario y Mesas';
+                    }
+                    
+                    toast.error(
+                        `❌ No se pudieron generar horarios de reserva\n\n` +
+                        `🔍 Motivo: ${errorReason}` +
+                        (errorHint ? `\n💡 Sugerencia: ${errorHint}` : '') +
+                        helpMessage,
+                        { duration: 12000 }
+                    );
+                    setLoading(false);
+                    return;
                 }
             }
             
@@ -1232,7 +1284,7 @@ const AvailabilityManager = () => {
                     className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
                     {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                    {loading ? 'Generando...' : 'Generar Disponibilidades'}
+                    {loading ? 'Generando...' : 'Generar Horarios de Reserva'}
                 </button>
 
             </div>
@@ -1264,7 +1316,7 @@ const AvailabilityManager = () => {
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors h-10"
                         >
                             {loadingDayView ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
-                            Ver Disponibilidades
+                            Ver Horarios de Reserva
                         </button>
                     </div>
                 </div>
@@ -1359,7 +1411,7 @@ const AvailabilityManager = () => {
                         <div className="text-center py-8 text-gray-500">
                             <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                             <p>No hay disponibilidades generadas para este período</p>
-                            <p className="text-sm">Usa el botón "Generar Disponibilidades" para crear slots</p>
+                            <p className="text-sm">Usa el botón "Generar Horarios de Reserva" para crear slots</p>
                         </div>
                     ) : (
                         <div className="space-y-6 max-h-96 overflow-y-auto">
