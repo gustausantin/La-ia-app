@@ -100,7 +100,7 @@ const AdvancedCharts = React.memo(({ data, dateRange }) => {
   const CustomTooltip = ({ active, payload, label, formatter }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <div className="bg-white p-2 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-medium text-gray-900 mb-2">{label}</p>
           {payload.map((entry, index) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
@@ -117,7 +117,7 @@ const AdvancedCharts = React.memo(({ data, dateRange }) => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-lg font-bold text-gray-900 mb-2">
           Análisis Avanzado
         </h2>
         <p className="text-gray-600">

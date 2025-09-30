@@ -26,7 +26,7 @@ const ComponentSkeleton = ({ type = 'default', height = 200, className = '' }) =
             <div className="h-4 bg-gray-200 rounded w-16"></div>
           </div>
           <div className="relative">
-            <div className="h-64 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg flex items-end justify-between p-4">
+            <div className="h-64 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg flex items-end justify-between p-2">
               {[...Array(7)].map((_, i) => (
                 <div 
                   key={i}
@@ -65,7 +65,7 @@ const ComponentSkeleton = ({ type = 'default', height = 200, className = '' }) =
         </div>
         <div className="divide-y divide-gray-100">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="p-4 animate-pulse">
+            <div key={i} className="p-2 animate-pulse">
               <div className="flex items-center space-x-4">
                 <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
                 <div className="flex-1 space-y-2">

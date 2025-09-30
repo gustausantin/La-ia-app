@@ -154,7 +154,7 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
   );
 
   const DaySchedule = ({ day, schedule, onChange }) => (
-    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+    <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
       <div className="w-20">
         <span className="text-sm font-medium text-gray-700 capitalize">{day}</span>
       </div>

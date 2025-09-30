@@ -21,7 +21,7 @@ const ProtectedRoute = ({ children }) => {
             <Bot className="w-12 h-12 text-purple-600 mr-2" />
             <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-700">
+          <h2 className="text-base font-semibold text-gray-700">
             Cargando La-IA...
           </h2>
           <p className="text-sm text-gray-500 mt-2">

@@ -47,7 +47,7 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
             <div>
               <h4 className="font-medium text-gray-900 mb-3">Información Personal</h4>
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
                   <User className="w-4 h-4 text-gray-500" />
                   <div>
                     <div className="font-medium text-gray-900">{customerData.name}</div>
@@ -55,7 +55,7 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
                   <Phone className="w-4 h-4 text-gray-500" />
                   <div>
                     <div className="font-medium text-gray-900">{customerData.phone}</div>
@@ -63,7 +63,7 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
                   <Mail className="w-4 h-4 text-gray-500" />
                   <div>
                     <div className="font-medium text-gray-900">{customerData.email}</div>
@@ -71,7 +71,7 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
                   <MapPin className="w-4 h-4 text-gray-500" />
                   <div>
                     <div className="font-medium text-gray-900">{customerData.location}</div>
@@ -85,19 +85,19 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
             <div>
               <h4 className="font-medium text-gray-900 mb-3">Estadísticas</h4>
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{customerData.visits}</div>
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <div className="text-lg font-bold text-blue-600">{customerData.visits}</div>
                   <div className="text-sm text-blue-600">Visitas</div>
                 </div>
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">€{customerData.totalSpent}</div>
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <div className="text-lg font-bold text-green-600">€{customerData.totalSpent}</div>
                   <div className="text-sm text-green-600">Total gastado</div>
                 </div>
-                <div className="p-3 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">€{customerData.avgSpent}</div>
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <div className="text-lg font-bold text-purple-600">€{customerData.avgSpent}</div>
                   <div className="text-sm text-purple-600">Promedio</div>
                 </div>
-                <div className="p-3 bg-orange-50 rounded-lg">
+                <div className="p-2 bg-orange-50 rounded-lg">
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 text-orange-500 fill-current" />
                     <span className="text-lg font-bold text-orange-600">{customerData.satisfaction}</span>
@@ -145,7 +145,7 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
             <h4 className="font-medium text-gray-900">Historial de Pedidos</h4>
             <div className="space-y-3">
               {customerData.orders.map((order, index) => (
-                <div key={index} className="p-3 border border-gray-200 rounded-lg">
+                <div key={index} className="p-2 border border-gray-200 rounded-lg">
                   <div className="flex justify-between items-start mb-2">
                     <div className="text-sm font-medium text-gray-900">{order.date}</div>
                     <div className="text-sm font-bold text-green-600">€{order.total}</div>
@@ -162,7 +162,7 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
           <div className="space-y-4">
             <h4 className="font-medium text-gray-900">Insights del Cliente</h4>
             <div className="space-y-3">
-              <div className="p-3 bg-blue-50 rounded-lg">
+              <div className="p-2 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="w-4 h-4 text-blue-600" />
                   <span className="font-medium text-blue-900">Tendencia de visitas</span>
@@ -172,7 +172,7 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
                 </div>
               </div>
               
-              <div className="p-3 bg-green-50 rounded-lg">
+              <div className="p-2 bg-green-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Award className="w-4 h-4 text-green-600" />
                   <span className="font-medium text-green-900">Cliente VIP</span>
@@ -182,7 +182,7 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
                 </div>
               </div>
               
-              <div className="p-3 bg-purple-50 rounded-lg">
+              <div className="p-2 bg-purple-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Activity className="w-4 h-4 text-purple-600" />
                   <span className="font-medium text-purple-900">Patrón de consumo</span>
@@ -203,7 +203,7 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
   return (
     <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-2 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-900">
             Información del cliente
@@ -238,12 +238,12 @@ const CustomerInfoPanel = ({ customer, onClose }) => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-2">
         <TabContent />
       </div>
 
       {/* Actions */}
-      <div className="p-4 border-t border-gray-200 space-y-2">
+      <div className="p-2 border-t border-gray-200 space-y-2">
         <button
           onClick={() => {
             toast("Navegando a crear reserva...", { icon: '📅' });

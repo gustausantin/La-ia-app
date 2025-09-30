@@ -901,7 +901,7 @@ export default function Calendario() {
                 <div className="mb-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                                 <Calendar className="w-8 h-8 text-blue-600" />
                                 Horarios y Calendario
                             </h1>

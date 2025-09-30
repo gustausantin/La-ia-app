@@ -86,7 +86,7 @@ const RegenerationRequiredModal = ({
             
             {/* Modal centrado */}
             <div 
-                className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+                className="fixed inset-0 z-[10000] flex items-center justify-center p-2"
                 style={{
                     animation: 'slideIn 0.3s ease-out',
                 }}
@@ -100,11 +100,11 @@ const RegenerationRequiredModal = ({
                     {/* Header - Rojo brillante */}
                     <div className="bg-gradient-to-r from-red-600 to-red-700 p-6 rounded-t-xl">
                         <div className="flex items-center gap-4">
-                            <div className="bg-white/20 p-3 rounded-full animate-bounce">
+                            <div className="bg-white/20 p-2 rounded-full animate-bounce">
                                 <AlertTriangle className="w-10 h-10 text-white" />
                             </div>
                             <div className="flex-1">
-                                <h2 className="text-2xl font-bold text-white mb-1">
+                                <h2 className="text-lg font-bold text-white mb-1">
                                     🚨 REGENERACIÓN OBLIGATORIA
                                 </h2>
                                 <p className="text-red-100 font-medium">
@@ -117,7 +117,7 @@ const RegenerationRequiredModal = ({
                     {/* Contenido */}
                     <div className="p-8">
                         {/* Razón del cambio */}
-                        <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded">
+                        <div className="mb-6 p-2 bg-yellow-50 border-l-4 border-yellow-500 rounded">
                             <p className="text-lg font-semibold text-gray-900 mb-2">
                                 {getReasonText()}
                             </p>
@@ -150,7 +150,7 @@ const RegenerationRequiredModal = ({
                         </div>
 
                         {/* Solución */}
-                        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded">
+                        <div className="mb-6 p-2 bg-green-50 border-l-4 border-green-500 rounded">
                             <p className="text-gray-800 font-medium text-lg mb-2">
                                 ✅ <strong>SOLUCIÓN:</strong>
                             </p>
@@ -185,7 +185,7 @@ const RegenerationRequiredModal = ({
                         </div>
 
                         {/* Advertencia final */}
-                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="mt-4 p-2 bg-red-50 border border-red-200 rounded-lg">
                             <p className="text-sm text-red-800 text-center">
                                 <strong>⏰ IMPORTANTE:</strong> Hasta que actualices, tus clientes verán horarios incorrectos
                             </p>

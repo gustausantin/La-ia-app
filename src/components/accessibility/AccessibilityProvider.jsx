@@ -321,7 +321,7 @@ export const AccessibleModal = ({
         />
         
         {/* Modal */}
-        <div className="flex min-h-full items-center justify-center p-4">
+        <div className="flex min-h-full items-center justify-center p-2">
           <motion.div
             className={`
               relative bg-white rounded-lg shadow-xl max-w-md w-full

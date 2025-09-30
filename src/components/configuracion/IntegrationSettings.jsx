@@ -134,7 +134,7 @@ const IntegrationSettings = React.memo(({ settings, onUpdate }) => {
   }, []);
 
   const WebhookCard = ({ webhook }) => (
-    <div className="border border-gray-200 rounded-lg p-4">
+    <div className="border border-gray-200 rounded-lg p-2">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className={`w-3 h-3 rounded-full ${webhook.active ? 'bg-green-500' : 'bg-gray-400'}`} />
@@ -229,7 +229,7 @@ const IntegrationSettings = React.memo(({ settings, onUpdate }) => {
     };
 
     return (
-      <div className="border border-gray-200 rounded-lg p-4">
+      <div className="border border-gray-200 rounded-lg p-2">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${enabled ? 'bg-green-100' : 'bg-gray-100'}`}>
@@ -297,7 +297,7 @@ const IntegrationSettings = React.memo(({ settings, onUpdate }) => {
     const Icon = info?.icon || Settings;
 
     return (
-      <div className="border border-gray-200 rounded-lg p-4">
+      <div className="border border-gray-200 rounded-lg p-2">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${enabled ? 'bg-blue-100' : 'bg-gray-100'}`}>
@@ -441,7 +441,7 @@ const IntegrationSettings = React.memo(({ settings, onUpdate }) => {
               <h4 className="font-medium text-gray-900 mb-4">Claves de API</h4>
               
               <div className="space-y-4">
-                <div className="border border-gray-200 rounded-lg p-4">
+                <div className="border border-gray-200 rounded-lg p-2">
                   <div className="flex items-center justify-between mb-2">
                     <label className="font-medium text-gray-900">API Key del Restaurante</label>
                     <button
@@ -468,7 +468,7 @@ const IntegrationSettings = React.memo(({ settings, onUpdate }) => {
                   </p>
                 </div>
 
-                <div className="border border-gray-200 rounded-lg p-4">
+                <div className="border border-gray-200 rounded-lg p-2">
                   <div className="flex items-center justify-between mb-2">
                     <label className="font-medium text-gray-900">Webhook Secret</label>
                     <button
@@ -497,7 +497,7 @@ const IntegrationSettings = React.memo(({ settings, onUpdate }) => {
               </div>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-blue-50 p-2 rounded-lg">
               <div className="flex items-start gap-3">
                 <Database className="w-5 h-5 text-blue-600 mt-0.5" />
                 <div>

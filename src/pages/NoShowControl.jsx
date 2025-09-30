@@ -21,7 +21,7 @@ export default function NoShowControl() {
                             Volver al Dashboard
                         </button>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
+                            <h1 className="text-lg font-bold text-gray-900">
                                 Control de No-Shows
                             </h1>
                             <p className="text-gray-600">

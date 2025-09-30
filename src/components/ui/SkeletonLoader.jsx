@@ -61,7 +61,7 @@ const SkeletonTable = ({ rows = 5, columns = 4 }) => (
     transition={{ duration: 0.3 }}
   >
     {/* Header */}
-    <div className="p-4 border-b border-gray-200">
+    <div className="p-2 border-b border-gray-200">
       <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
         {Array.from({ length: columns }).map((_, i) => (
           <Skeleton key={i} width="w-20" height="h-4" />
@@ -72,7 +72,7 @@ const SkeletonTable = ({ rows = 5, columns = 4 }) => (
     {/* Rows */}
     <div className="divide-y divide-gray-100">
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <div key={rowIndex} className="p-4">
+        <div key={rowIndex} className="p-2">
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
             {Array.from({ length: columns }).map((_, colIndex) => (
               <Skeleton 
@@ -230,12 +230,12 @@ const PageSkeleton = ({ type = 'dashboard' }) => {
     
     communication: (
       <div className="flex h-full">
-        <div className="w-80 border-r border-gray-200 p-4 space-y-4">
+        <div className="w-80 border-r border-gray-200 p-2 space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <SkeletonCard key={i} lines={2} />
           ))}
         </div>
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-2">
           <SkeletonConversation />
         </div>
       </div>

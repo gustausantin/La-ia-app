@@ -435,16 +435,16 @@ const CustomerModal = ({
     }
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
             <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
                     <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-lg ${segmentInfo.bgColor} ${segmentInfo.borderColor} border`}>
-                            <span className="text-2xl">{segmentInfo.icon}</span>
+                        <div className={`p-2 rounded-lg ${segmentInfo.bgColor} ${segmentInfo.borderColor} border`}>
+                            <span className="text-lg">{segmentInfo.icon}</span>
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900">
+                            <h2 className="text-lg font-bold text-gray-900">
                                 {mode === 'create' ? 'Nuevo Cliente' : formData.name || 'Cliente'}
                             </h2>
                             <div className="flex items-center gap-2 mt-1">
@@ -664,41 +664,41 @@ const CustomerModal = ({
                     {activeTab === 'stats' && (
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Activity className="w-5 h-5 text-blue-600" />
                                         <span className="text-sm font-medium text-blue-800">Total Visitas</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-blue-900">{formData.visits_count}</p>
+                                    <p className="text-lg font-bold text-blue-900">{formData.visits_count}</p>
                                 </div>
 
-                                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                <div className="bg-green-50 p-2 rounded-lg border border-green-200">
                                     <div className="flex items-center gap-2 mb-2">
                                         <DollarSign className="w-5 h-5 text-green-600" />
                                         <span className="text-sm font-medium text-green-800">Total Gastado</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-green-900">{formData.total_spent}€</p>
+                                    <p className="text-lg font-bold text-green-900">{formData.total_spent}€</p>
                                 </div>
 
-                                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                <div className="bg-purple-50 p-2 rounded-lg border border-purple-200">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Target className="w-5 h-5 text-purple-600" />
                                         <span className="text-sm font-medium text-purple-800">Ticket Promedio</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-purple-900">{formData.avg_ticket}€</p>
+                                    <p className="text-lg font-bold text-purple-900">{formData.avg_ticket}€</p>
                                 </div>
 
-                                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                                <div className="bg-orange-50 p-2 rounded-lg border border-orange-200">
                                     <div className="flex items-center gap-2 mb-2">
                                         <AlertTriangle className="w-5 h-5 text-orange-600" />
                                         <span className="text-sm font-medium text-orange-800">Riesgo Pérdida</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-orange-900">{formData.churn_risk_score}%</p>
+                                    <p className="text-lg font-bold text-orange-900">{formData.churn_risk_score}%</p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                <div className="bg-white p-2 rounded-lg border border-gray-200">
                                     <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
                                         <Clock className="w-5 h-5 text-gray-600" />
                                         Última Actividad
@@ -720,7 +720,7 @@ const CustomerModal = ({
                                     )}
                                 </div>
 
-                                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                <div className="bg-white p-2 rounded-lg border border-gray-200">
                                     <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
                                         <Brain className="w-5 h-5 text-purple-600" />
                                         IA Predictiva
@@ -753,7 +753,7 @@ const CustomerModal = ({
                                     <Settings className="w-5 h-5 text-gray-600" />
                                     Preferencias del Cliente
                                 </h3>
-                                <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="bg-gray-50 p-2 rounded-lg">
                                     <p className="text-gray-600 text-center">
                                         Las preferencias se actualizarán automáticamente basándose en el historial de pedidos y comportamiento del cliente.
                                     </p>
@@ -774,7 +774,7 @@ const CustomerModal = ({
                                 </h3>
                                 
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                    <div className="flex items-center justify-between p-2 bg-blue-50 rounded-lg border border-blue-200">
                                         <div className="flex items-center gap-3">
                                             <Mail className="w-5 h-5 text-blue-600" />
                                             <div>
@@ -796,7 +796,7 @@ const CustomerModal = ({
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                                    <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200">
                                         <div className="flex items-center gap-3">
                                             <MessageSquare className="w-5 h-5 text-green-600" />
                                             <div>
@@ -818,7 +818,7 @@ const CustomerModal = ({
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                                    <div className="flex items-center justify-between p-2 bg-emerald-50 rounded-lg border border-emerald-200">
                                         <div className="flex items-center gap-3">
                                             <Phone className="w-5 h-5 text-emerald-600" />
                                             <div>
@@ -964,7 +964,7 @@ const CustomerModal = ({
                             </div>
                         </div>
                         
-                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-6">
+                        <div className="p-2 bg-yellow-50 border border-yellow-200 rounded-lg mb-6">
                             <p className="text-sm text-yellow-800">
                                 <strong>Cliente:</strong> {formData.first_name} {formData.last_name1}<br />
                                 {formData.email && <><strong>Email:</strong> {formData.email}<br /></>}

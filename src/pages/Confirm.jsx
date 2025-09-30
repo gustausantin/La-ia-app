@@ -139,13 +139,13 @@ export default function Confirm() {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-4 ${getBackgroundColor()}`}>
+    <div className={`min-h-screen flex items-center justify-center p-2 ${getBackgroundColor()}`}>
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
         <div className="flex justify-center mb-6">
           {getIcon()}
         </div>
         
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+        <h1 className="text-lg font-bold text-gray-900 mb-4">
           Confirmación de Email
         </h1>
         

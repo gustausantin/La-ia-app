@@ -207,7 +207,7 @@ export default function Register() {
             <div className="mx-auto h-20 w-20 bg-green-100 rounded-full flex items-center justify-center shadow-lg mb-4">
               <Mail className="h-10 w-10 text-green-600" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-gray-900">
               ¡Casi está!
             </h2>
             <p className="mt-2 text-sm text-gray-600">
@@ -217,7 +217,7 @@ export default function Register() {
 
           <div className="bg-white py-8 px-6 shadow-xl rounded-xl">
             <div className="text-center space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-2">
                 <p className="text-sm text-green-800">
                   Hemos enviado un correo a <strong>{registeredEmail}</strong>.
                 </p>
@@ -301,7 +301,7 @@ export default function Register() {
           <div className="mx-auto h-20 w-20 bg-white rounded-full flex items-center justify-center shadow-lg mb-4">
             <Bot className="h-10 w-10 text-purple-600" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-gray-900">
             Únete a La-IA
           </h2>
           <p className="mt-2 text-sm text-gray-600">

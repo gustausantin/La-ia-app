@@ -166,9 +166,9 @@ const PWAInstaller = () => {
     <>
       {/* Banner de instalación PWA */}
       {isInstallable && (
-        <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-lg z-50 flex items-center justify-between">
+        <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white p-2 rounded-lg shadow-lg z-50 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="text-2xl">📱</div>
+            <div className="text-lg">📱</div>
             <div>
               <div className="font-semibold">¡Instala La-IA!</div>
               <div className="text-sm opacity-90">Acceso rápido desde tu pantalla de inicio</div>

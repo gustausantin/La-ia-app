@@ -153,7 +153,7 @@ const AIInsightsDashboard = ({ className = '' }) => {
               <Brain className="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Dashboard IA</h2>
+              <h2 className="text-base font-bold text-gray-900">Dashboard IA</h2>
               <p className="text-sm text-gray-600">
                 Insights y predicciones generadas por inteligencia artificial
               </p>
@@ -320,7 +320,7 @@ const AIMetricsOverview = ({ insights, predictions, recommendations }) => {
                   <Icon className={`w-5 h-5 ${metric.color}`} />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-lg font-bold text-gray-900">
                     {metric.value}
                   </div>
                   <div className="text-sm text-gray-600">
@@ -381,7 +381,7 @@ const AIInsightsList = ({ insights, onSelectInsight, selectedInsight }) => {
           return (
             <motion.div
               key={index}
-              className={`p-4 cursor-pointer transition-colors hover:bg-gray-50 ${
+              className={`p-2 cursor-pointer transition-colors hover:bg-gray-50 ${
                 isSelected ? 'bg-purple-50 border-l-4 border-purple-500' : ''
               }`}
               onClick={() => onSelectInsight(insight)}
@@ -448,7 +448,7 @@ const AIPredictionsPanel = ({ predictions }) => {
       
       <div className="space-y-4">
         {predictions.revenue && (
-          <div className="p-3 bg-blue-50 rounded-lg">
+          <div className="p-2 bg-blue-50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-blue-900">
                 Ingresos Hoy
@@ -494,7 +494,7 @@ const AIRecommendationsPanel = ({ recommendations }) => {
       
       <div className="space-y-3">
         {recommendations.slice(0, 3).map((rec, index) => (
-          <div key={index} className="p-3 bg-green-50 rounded-lg">
+          <div key={index} className="p-2 bg-green-50 rounded-lg">
             <div className="text-sm font-medium text-green-900 mb-1">
               {rec.title}
             </div>
@@ -524,7 +524,7 @@ const AIRecommendationsPanel = ({ recommendations }) => {
 const AIInsightModal = ({ insight, onClose }) => {
   return (
     <motion.div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -539,7 +539,7 @@ const AIInsightModal = ({ insight, onClose }) => {
       >
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-base font-bold text-gray-900">
               {insight.title}
             </h2>
             <button
@@ -589,7 +589,7 @@ const AIInsightModal = ({ insight, onClose }) => {
             {insight.data && (
               <div>
                 <h3 className="font-medium text-gray-900 mb-2">Datos Adicionales</h3>
-                <pre className="bg-gray-100 p-3 rounded text-xs overflow-x-auto">
+                <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto">
                   {JSON.stringify(insight.data, null, 2)}
                 </pre>
               </div>

@@ -113,7 +113,7 @@ const ConversationList = React.memo(({
       <div
         onClick={() => onSelectConversation(conversation)}
         className={`
-          p-4 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:bg-gray-50
+          p-2 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:bg-gray-50
           ${isSelected ? 'bg-purple-50 border-purple-200' : ''}
           ${hasUnread ? 'bg-blue-50' : ''}
         `}
@@ -208,7 +208,7 @@ const ConversationList = React.memo(({
   return (
     <div className="flex flex-col h-full">
       {/* Header con búsqueda y filtros */}
-      <div className="p-4 space-y-3 border-b border-gray-200">
+      <div className="p-2 space-y-3 border-b border-gray-200">
         {/* Búsqueda */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />

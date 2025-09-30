@@ -289,7 +289,7 @@ export default function CRMProximosMensajes() {
     return (
       <div className="p-6 text-center">
         <AlertTriangle className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        <h2 className="text-base font-semibold text-gray-900 mb-2">
           Configuración Requerida
         </h2>
         <p className="text-gray-600">
@@ -305,7 +305,7 @@ export default function CRMProximosMensajes() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <h1 className="text-lg font-bold text-gray-900 flex items-center gap-3">
               <MessageSquare className="w-6 h-6 text-purple-600" />
               Próximos Mensajes CRM
             </h1>
@@ -374,7 +374,7 @@ export default function CRMProximosMensajes() {
       </div>
       
       {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {/* Búsqueda */}
           <div className="relative">
@@ -535,11 +535,11 @@ const StatsCard = ({ title, value, icon: Icon, color }) => {
   };
   
   return (
-    <div className="bg-white p-4 rounded-lg border border-gray-200">
+    <div className="bg-white p-2 rounded-lg border border-gray-200">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+          <p className="text-lg font-bold text-gray-900">{value}</p>
         </div>
         <Icon className={`w-8 h-8 ${colorClasses[color]}`} />
       </div>
@@ -601,7 +601,7 @@ const MessageRow = ({
   };
   
   return (
-    <div className="p-4 hover:bg-gray-50">
+    <div className="p-2 hover:bg-gray-50">
       <div className="flex items-center gap-4">
         {/* Checkbox */}
         <input
@@ -717,11 +717,11 @@ const MessageRow = ({
 // Modal de preview
 const PreviewModal = ({ message, onClose }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-50">
       <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-900">
+            <h3 className="text-base font-semibold text-gray-900">
               Preview del Mensaje
             </h3>
             <button
@@ -761,7 +761,7 @@ const PreviewModal = ({ message, onClose }) => {
             
             <div>
               <p className="text-sm font-medium text-gray-700">Contenido:</p>
-              <div className="mt-2 p-4 bg-gray-50 rounded-lg">
+              <div className="mt-2 p-2 bg-gray-50 rounded-lg">
                 <pre className="whitespace-pre-wrap text-gray-900 text-sm">
                   {message.content_rendered}
                 </pre>
@@ -795,11 +795,11 @@ const EditModal = ({ message, onSave, onClose }) => {
   };
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-50">
       <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-900">
+            <h3 className="text-base font-semibold text-gray-900">
               Editar Mensaje
             </h3>
             <button

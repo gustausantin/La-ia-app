@@ -95,7 +95,7 @@ const ResponsiveSidebar = ({ isOpen, onClose, currentPath, navigation }) => {
             <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">LA</span>
             </div>
-            <h1 className="text-xl font-bold text-gray-900">La-IA</h1>
+            <h1 className="text-base font-bold text-gray-900">La-IA</h1>
           </div>
           
           {isMobile && (
@@ -109,7 +109,7 @@ const ResponsiveSidebar = ({ isOpen, onClose, currentPath, navigation }) => {
         </div>
 
         {/* Navegación */}
-        <nav className="p-4 space-y-2">
+        <nav className="p-2 space-y-2">
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = currentPath === item.path;
@@ -142,8 +142,8 @@ const ResponsiveSidebar = ({ isOpen, onClose, currentPath, navigation }) => {
         </nav>
 
         {/* Footer del sidebar */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+        <div className="absolute bottom-0 left-0 right-0 p-2 border-t border-gray-200">
+          <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
             <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
               <User className="w-4 h-4 text-white" />
             </div>
@@ -180,7 +180,7 @@ const ResponsiveHeader = ({ onMenuClick, title, actions }) => {
           </button>
           
           <div>
-            <h1 className="text-lg lg:text-xl font-semibold text-gray-900">
+            <h1 className="text-lg lg:text-base font-semibold text-gray-900">
               {title}
             </h1>
             {!isMobile && (
@@ -249,7 +249,7 @@ const ResponsiveContent = ({ children, className = '' }) => {
   return (
     <main className={`
       flex-1 overflow-auto bg-gray-50
-      p-4 lg:p-6
+      p-2 lg:p-6
       ${className}
     `}>
       <div className={`

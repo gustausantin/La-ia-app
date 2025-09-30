@@ -93,7 +93,7 @@ const RealtimeStatus = ({ variant = 'compact', className = '' }) => {
 
         {/* Estado de conexión */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <div className="text-center p-2 bg-gray-50 rounded-lg">
             <div className={`text-lg font-bold ${getStatusColor()}`}>
               {isConnected ? 'Conectado' : 'Desconectado'}
             </div>
@@ -102,7 +102,7 @@ const RealtimeStatus = ({ variant = 'compact', className = '' }) => {
             </div>
           </div>
           
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <div className="text-center p-2 bg-gray-50 rounded-lg">
             <div className="text-lg font-bold text-blue-600">
               {getOnlineCount()}
             </div>
@@ -145,7 +145,7 @@ const RealtimeStatus = ({ variant = 'compact', className = '' }) => {
 
         {/* Alertas */}
         {alerts.length > 0 && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-center gap-2 text-red-800 font-medium mb-2">
               <AlertTriangle className="w-4 h-4" />
               <span>Alertas activas ({alerts.length})</span>
@@ -167,7 +167,7 @@ const RealtimeStatus = ({ variant = 'compact', className = '' }) => {
 
         {/* Error */}
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-center gap-2 text-red-800 font-medium mb-1">
               <AlertTriangle className="w-4 h-4" />
               <span>Error de conexión</span>
@@ -285,7 +285,7 @@ export const RealtimeNotifications = ({ className = '' }) => {
               initial={{ opacity: 0, x: 300, scale: 0.9 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 300, scale: 0.9 }}
-              className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm"
+              className="bg-white border border-gray-200 rounded-lg shadow-lg p-2 max-w-sm"
             >
               <div className="flex items-start gap-3">
                 <div className={`p-2 rounded-full ${getSeverityColor(notification.severity)}`}>
@@ -348,7 +348,7 @@ export const RealtimeMetricsWidget = ({ className = '' }) => {
             return (
               <motion.div
                 key={metric.key}
-                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                className={`p-2 rounded-lg border cursor-pointer transition-all ${
                   selectedMetric === metric.key 
                     ? 'border-purple-200 bg-purple-50' 
                     : 'border-gray-200 hover:border-gray-300'
@@ -372,7 +372,7 @@ export const RealtimeMetricsWidget = ({ className = '' }) => {
         </div>
 
         {/* Gráfico simple o información adicional */}
-        <div className="p-3 bg-gray-50 rounded-lg">
+        <div className="p-2 bg-gray-50 rounded-lg">
           <div className="text-sm text-gray-600 mb-2">
             {metrics.find(m => m.key === selectedMetric)?.label} - Última actualización
           </div>

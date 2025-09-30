@@ -76,7 +76,7 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-2">
           <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
             {/* Icono de Error */}
             <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -84,7 +84,7 @@ class ErrorBoundary extends React.Component {
             </div>
 
             {/* Título */}
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-lg font-bold text-gray-900 mb-2">
               ¡Ups! Algo salió mal
             </h1>
             
@@ -94,7 +94,7 @@ class ErrorBoundary extends React.Component {
 
             {/* ID del Error */}
             {this.state.errorId && (
-              <div className="bg-gray-100 rounded-lg p-3 mb-6">
+              <div className="bg-gray-100 rounded-lg p-2 mb-6">
                 <p className="text-xs text-gray-500 mb-1">ID del Error:</p>
                 <p className="font-mono text-sm text-gray-700">{this.state.errorId}</p>
               </div>
@@ -133,7 +133,7 @@ class ErrorBoundary extends React.Component {
                 <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
                   Ver detalles técnicos
                 </summary>
-                <div className="mt-3 p-3 bg-red-50 rounded-lg text-xs font-mono text-red-800 overflow-auto max-h-40">
+                <div className="mt-3 p-2 bg-red-50 rounded-lg text-xs font-mono text-red-800 overflow-auto max-h-40">
                   <p><strong>Error:</strong> {this.state.error.toString()}</p>
                   <p><strong>Stack:</strong></p>
                   <pre className="whitespace-pre-wrap">{this.state.error.stack}</pre>

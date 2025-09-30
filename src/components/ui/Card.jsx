@@ -33,7 +33,7 @@ const Card = ({
 
   const paddings = {
     none: '',
-    sm: 'p-3',
+    sm: 'p-2',
     md: 'p-6',
     lg: 'p-8',
     xl: 'p-10',

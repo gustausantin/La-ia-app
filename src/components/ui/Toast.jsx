@@ -94,7 +94,7 @@ const Toast = ({
         relative max-w-sm w-full
         ${config.bgColor} ${config.borderColor}
         border rounded-lg shadow-lg
-        p-4 pointer-events-auto
+        p-2 pointer-events-auto
         ring-1 ring-black ring-opacity-5
       `}
     >
@@ -165,7 +165,7 @@ const Toast = ({
 // Container para múltiples toasts
 const ToastContainer = ({ toasts = [], onRemoveToast }) => {
   return (
-    <div className="fixed top-0 right-0 z-50 w-full sm:w-96 p-4 space-y-4 pointer-events-none">
+    <div className="fixed top-0 right-0 z-50 w-full sm:w-96 p-2 space-y-4 pointer-events-none">
       <AnimatePresence>
         {toasts.map((toast) => (
           <Toast

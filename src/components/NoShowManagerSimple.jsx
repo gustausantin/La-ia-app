@@ -109,7 +109,7 @@ const NoShowManagerSimple = () => {
             <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                             <Shield className="w-6 h-6 text-purple-600" />
                             Control No-Shows
                         </h1>
@@ -227,7 +227,7 @@ const NoShowManagerSimple = () => {
 
                 {/* Recomendación */}
                 {data.todayRisk > 0 && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-4">
                         <div className="flex items-start gap-3">
                             <Zap className="w-5 h-5 text-yellow-600 mt-0.5" />
                             <div>

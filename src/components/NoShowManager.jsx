@@ -782,13 +782,13 @@ const NoShowManager = () => {
                     <div>
                         <div className="flex items-center gap-3 mb-2">
                             <Shield className="w-8 h-8" />
-                            <h2 className="text-2xl font-bold">Control No-Shows</h2>
+                            <h2 className="text-lg font-bold">Control No-Shows</h2>
                         </div>
                         <p className="text-blue-100">Sistema inteligente de prevención</p>
                     </div>
                     
                     <div className="text-right">
-                        <div className="text-3xl font-bold mb-1">
+                        <div className="text-xl font-bold mb-1">
                             {noShowData.weeklyPrevented}
                         </div>
                         <div className="text-sm text-blue-100">
@@ -815,7 +815,7 @@ const NoShowManager = () => {
                         <h3 className="font-semibold text-gray-900">Riesgo Hoy</h3>
                     </div>
                     
-                    <div className="text-2xl font-bold mb-1">
+                    <div className="text-lg font-bold mb-1">
                         {noShowData.todayRisk}
                     </div>
                     <div className="text-sm text-gray-600">
@@ -830,7 +830,7 @@ const NoShowManager = () => {
                         <h3 className="font-semibold text-gray-900">Predicción IA</h3>
                     </div>
                     
-                    <div className="text-2xl font-bold mb-1">
+                    <div className="text-lg font-bold mb-1">
                         {noShowData.predictions?.highRisk || 0}
                     </div>
                     <div className="text-sm text-gray-600">
@@ -845,7 +845,7 @@ const NoShowManager = () => {
                         <h3 className="font-semibold text-gray-900">Acciones</h3>
                     </div>
                     
-                    <div className="text-2xl font-bold mb-1">
+                    <div className="text-lg font-bold mb-1">
                         {noShowData.preventionActions.length}
                     </div>
                     <div className="text-sm text-gray-600">
@@ -864,7 +864,7 @@ const NoShowManager = () => {
                     
                     <div className="space-y-3">
                         {noShowData.preventionActions.map((action, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                                 <div className="flex items-center gap-3">
                                     {action.type === 'call' ? (
                                         <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
@@ -908,7 +908,7 @@ const NoShowManager = () => {
                     
                     <div className="space-y-3">
                         {noShowData.riskReservations.map((reservation, index) => (
-                            <div key={reservation.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div key={reservation.id} className="flex items-center justify-between p-2 border rounded-lg">
                                 <div className="flex items-center gap-4">
                                     <div className={`w-3 h-3 rounded-full ${
                                         reservation.risk.level === 'high' ? 'bg-red-500' :

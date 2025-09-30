@@ -415,7 +415,7 @@ export default function Analytics() {
             <div className="min-h-[400px] flex items-center justify-center">
                 <div className="text-center max-w-md">
                     <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    <h3 className="text-base font-bold text-gray-900 mb-2">
                         Analytics en preparación
                     </h3>
                     <p className="text-gray-600 mb-4">
@@ -435,7 +435,7 @@ export default function Analytics() {
             <div className="bg-white rounded-xl shadow-sm border p-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                        <h1 className="text-lg font-bold text-gray-900 mb-2">
                             Analytics Inteligente
                         </h1>
                         <p className="text-gray-600">
@@ -460,28 +460,28 @@ export default function Analytics() {
                 <div className="flex items-center gap-3 mb-4">
                     <Calculator className="w-8 h-8" />
                     <div>
-                        <h3 className="text-xl font-bold">Retorno de Inversión (ROI)</h3>
+                        <h3 className="text-base font-bold">Retorno de Inversión (ROI)</h3>
                         <p className="text-green-100">Cálculo transparente basado en datos reales</p>
                     </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="bg-white/20 rounded-lg p-4">
+                    <div className="bg-white/20 rounded-lg p-2">
                         <p className="text-green-100 text-sm">Beneficio mensual</p>
-                        <p className="text-2xl font-bold">€{roiAnalysis.desglose?.beneficioNeto.toLocaleString() || '0'}</p>
+                        <p className="text-lg font-bold">€{roiAnalysis.desglose?.beneficioNeto.toLocaleString() || '0'}</p>
                     </div>
-                    <div className="bg-white/20 rounded-lg p-4">
+                    <div className="bg-white/20 rounded-lg p-2">
                         <p className="text-green-100 text-sm">ROI mensual</p>
-                        <p className="text-2xl font-bold">{roiAnalysis.roiMensual || 0}%</p>
+                        <p className="text-lg font-bold">{roiAnalysis.roiMensual || 0}%</p>
                     </div>
-                    <div className="bg-white/20 rounded-lg p-4">
+                    <div className="bg-white/20 rounded-lg p-2">
                         <p className="text-green-100 text-sm">Recuperación</p>
-                        <p className="text-2xl font-bold">{roiAnalysis.paybackSemanas || 0} semanas</p>
+                        <p className="text-lg font-bold">{roiAnalysis.paybackSemanas || 0} semanas</p>
                     </div>
                 </div>
                 
                 {/* Desglose transparente */}
-                <div className="bg-white/10 rounded-lg p-4 text-sm">
+                <div className="bg-white/10 rounded-lg p-2 text-sm">
                     <p className="font-medium mb-2">📊 Cálculo detallado:</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         <div>+ Ingresos base: €{roiAnalysis.desglose?.ingresoBase.toLocaleString() || '0'}</div>
@@ -501,7 +501,7 @@ export default function Analytics() {
                     <div className="flex items-center justify-between mb-2">
                         <div>
                             <p className="text-sm font-medium text-gray-600">Interacciones Recibidas</p>
-                            <p className="text-3xl font-bold text-gray-900">{metricsData.totalConversations}</p>
+                            <p className="text-xl font-bold text-gray-900">{metricsData.totalConversations}</p>
                         </div>
                         <MessageSquare className="w-10 h-10 text-blue-500" />
                     </div>
@@ -512,7 +512,7 @@ export default function Analytics() {
                     <div className="flex items-center justify-between mb-2">
                         <div>
                             <p className="text-sm font-medium text-gray-600">Reservas Confirmadas</p>
-                            <p className="text-3xl font-bold text-gray-900">{metricsData.totalBookings}</p>
+                            <p className="text-xl font-bold text-gray-900">{metricsData.totalBookings}</p>
                         </div>
                         <Users className="w-10 h-10 text-green-500" />
                     </div>
@@ -523,7 +523,7 @@ export default function Analytics() {
                     <div className="flex items-center justify-between mb-2">
                         <div>
                             <p className="text-sm font-medium text-gray-600">Tasa de Conversión</p>
-                            <p className="text-3xl font-bold text-gray-900">{metricsData.conversionRate.toFixed(1)}%</p>
+                            <p className="text-xl font-bold text-gray-900">{metricsData.conversionRate.toFixed(1)}%</p>
                         </div>
                         <Target className="w-10 h-10 text-purple-500" />
                     </div>
@@ -534,7 +534,7 @@ export default function Analytics() {
                     <div className="flex items-center justify-between mb-2">
                         <div>
                             <p className="text-sm font-medium text-gray-600">Tiempo de Respuesta</p>
-                            <p className="text-3xl font-bold text-gray-900">{metricsData.avgResponseTime.toFixed(1)}s</p>
+                            <p className="text-xl font-bold text-gray-900">{metricsData.avgResponseTime.toFixed(1)}s</p>
                         </div>
                         <Clock className="w-10 h-10 text-orange-500" />
                     </div>
@@ -631,7 +631,7 @@ export default function Analytics() {
                                 </ResponsiveContainer>
                             </div>
                             <div className="space-y-4">
-                                <div className="bg-purple-50 rounded-lg p-4">
+                                <div className="bg-purple-50 rounded-lg p-2">
                                     <h4 className="font-semibold text-purple-900 mb-2">Metodología</h4>
                                     <p className="text-sm text-purple-700">{forecastData.methodology}</p>
                                     <p className="text-xs text-purple-600 mt-1">
@@ -662,7 +662,7 @@ export default function Analytics() {
                             <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 rounded-full mb-4">
                                 <Star className="w-10 h-10 text-yellow-500" />
                             </div>
-                            <p className="text-3xl font-bold text-gray-900">
+                            <p className="text-xl font-bold text-gray-900">
                                 {satisfactionAnalysis.overall?.toFixed(1) || '0.0'}
                             </p>
                             <p className="text-gray-600">de 5 estrellas</p>
@@ -711,7 +711,7 @@ export default function Analytics() {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
                                         <h4 className="font-bold text-gray-900">{insight.title}</h4>
-                                        <span className="text-2xl font-bold text-blue-600">{insight.metric}</span>
+                                        <span className="text-lg font-bold text-blue-600">{insight.metric}</span>
                                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                                             insight.priority === 'alta' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
                                         }`}>
@@ -719,7 +719,7 @@ export default function Analytics() {
                                         </span>
                                     </div>
                                     <p className="text-gray-700 mb-3">{insight.analysis}</p>
-                                    <div className="bg-blue-50 rounded-lg p-3">
+                                    <div className="bg-blue-50 rounded-lg p-2">
                                         <p className="text-sm font-medium text-blue-900 mb-1">🎯 Acción recomendada:</p>
                                         <p className="text-sm text-blue-700">{insight.action}</p>
                                     </div>

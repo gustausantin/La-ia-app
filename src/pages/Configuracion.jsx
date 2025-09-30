@@ -489,7 +489,7 @@ const Configuracion = () => {
                 <div className="mb-8 text-center">
                     <div className="flex items-center justify-center gap-2 mb-4">
                         <SettingsIcon className="w-8 h-8 text-purple-600" />
-                        <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
+                        <h1 className="text-xl font-bold text-gray-900">Configuración</h1>
                     </div>
                     <p className="text-gray-600 max-w-2xl mx-auto">
                         Centro de control para tu restaurante. Configura canales de comunicación y notificaciones.
