@@ -998,6 +998,10 @@ export default function Mesas() {
 
                 if (error) throw error;
 
+                // Guardar referencia ANTES de actualizar
+                const deletedTable = tables.find(t => t.id === tableId);
+                const tableName = deletedTable?.name || 'Mesa';
+                
                 toast.success("Mesa eliminada correctamente");
                 if (addNotification) {
                     addNotification({
@@ -1007,27 +1011,20 @@ export default function Mesas() {
                     });
                 }
 
-                // Guardar referencia de la mesa antes de borrar
-                const deletedTable = tables.find(t => t.id === tableId);
-                
                 loadTables();
                 
-                // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
-                if (deletedTable) {
-                    console.log('🔍 Mesa eliminada:', deletedTable.name);
-                    // Verificar slots y mostrar modal
-                    setTimeout(async () => {
-                        console.log('🔍 Verificando si existen slots...');
-                        const slotsExist = await changeDetection.checkExistingSlots();
-                        console.log('🔍 ¿Existen slots?', slotsExist);
-                        if (slotsExist) {
-                            console.log('🚨 Mostrando modal de regeneración...');
-                            changeDetection.onTableChange('removed', deletedTable);
-                            showRegenerationModal('table_deleted', `Mesa "${deletedTable.name}" eliminada`);
-                        } else {
-                            console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
-                        }
-                    }, 300);
+                // 🚨 VERIFICAR SLOTS Y MOSTRAR MODAL
+                console.log('🔍 Verificando slots después de eliminar mesa...');
+                const slotsExist = await changeDetection.checkExistingSlots();
+                console.log('🔍 ¿Existen slots?', slotsExist);
+                
+                if (slotsExist) {
+                    console.log('🚨 HAY SLOTS - Mostrando modal...');
+                    setTimeout(() => {
+                        showRegenerationModal('table_deleted', `Mesa "${tableName}" eliminada`);
+                    }, 500);
+                } else {
+                    console.log('✅ No hay slots - No se muestra modal');
                 }
             } catch (error) {
                 toast.error("Error al eliminar la mesa");
