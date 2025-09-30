@@ -218,26 +218,26 @@ const ComunicacionMejorada = () => {
                 <div className="max-w-7xl mx-auto px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Centro de Comunicación</h1>
+                            <h1 className="text-lg font-bold text-gray-900">Centro de Comunicación</h1>
                             <p className="text-sm text-gray-600 mt-1">
                                 Todas las conversaciones de los últimos 7 días
                             </p>
                         </div>
                         <div className="flex items-center gap-6 text-sm">
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+                                <div className="text-lg font-bold text-gray-900">{stats.total}</div>
                                 <div className="text-gray-500">Total</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-green-600">{stats.activas}</div>
+                                <div className="text-lg font-bold text-green-600">{stats.activas}</div>
                                 <div className="text-gray-500">Activas</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-yellow-600">{stats.pendientes}</div>
+                                <div className="text-lg font-bold text-yellow-600">{stats.pendientes}</div>
                                 <div className="text-gray-500">Pendientes</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-600">{stats.cerradas}</div>
+                                <div className="text-lg font-bold text-gray-600">{stats.cerradas}</div>
                                 <div className="text-gray-500">Cerradas</div>
                             </div>
                         </div>
@@ -250,7 +250,7 @@ const ComunicacionMejorada = () => {
                     {/* Lista de Conversaciones */}
                     <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
                         {/* Filtros */}
-                        <div className="p-4 border-b">
+                        <div className="p-2 border-b">
                             <div className="space-y-3">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -292,7 +292,7 @@ const ComunicacionMejorada = () => {
                                         <div
                                             key={conversation.id}
                                             onClick={() => setSelectedConversation(conversation)}
-                                            className={`p-4 border-b cursor-pointer transition-colors ${
+                                            className={`p-2 border-b cursor-pointer transition-colors ${
                                                 isSelected ? 'bg-purple-50' : 'hover:bg-gray-50'
                                             }`}
                                         >
@@ -348,7 +348,7 @@ const ComunicacionMejorada = () => {
                         {selectedConversation ? (
                             <>
                                 {/* Header del chat */}
-                                <div className="p-4 border-b">
+                                <div className="p-2 border-b">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <User className="w-8 h-8 text-gray-400" />
@@ -371,7 +371,7 @@ const ComunicacionMejorada = () => {
                                 </div>
 
                                 {/* Mensajes */}
-                                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                <div className="flex-1 overflow-y-auto p-2 space-y-4">
                                     {messages.map((message) => (
                                         <div
                                             key={message.id}
@@ -394,7 +394,7 @@ const ComunicacionMejorada = () => {
                                 </div>
 
                                 {/* Input de mensaje */}
-                                <div className="p-4 border-t">
+                                <div className="p-2 border-t">
                                     <div className="flex gap-2">
                                         <input
                                             type="text"

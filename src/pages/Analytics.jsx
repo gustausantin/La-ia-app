@@ -548,7 +548,7 @@ export default function Analytics() {
                     <div className="flex items-center justify-between mb-2">
                         <div>
                             <p className="text-sm font-medium text-gray-600">Interacciones Recibidas</p>
-                            <p className="text-3xl font-bold text-gray-900">{metricsData.totalConversations}</p>
+                            <p className="text-xl font-bold text-gray-900">{metricsData.totalConversations}</p>
                         </div>
                         <MessageSquare className="w-10 h-10 text-blue-500" />
                     </div>
@@ -559,7 +559,7 @@ export default function Analytics() {
                     <div className="flex items-center justify-between mb-2">
                         <div>
                             <p className="text-sm font-medium text-gray-600">Reservas Confirmadas</p>
-                            <p className="text-3xl font-bold text-gray-900">{metricsData.totalBookings}</p>
+                            <p className="text-xl font-bold text-gray-900">{metricsData.totalBookings}</p>
                         </div>
                         <Users className="w-10 h-10 text-green-500" />
                     </div>
@@ -570,7 +570,7 @@ export default function Analytics() {
                     <div className="flex items-center justify-between mb-2">
                         <div>
                             <p className="text-sm font-medium text-gray-600">Tasa de Conversión</p>
-                            <p className="text-3xl font-bold text-gray-900">{metricsData.conversionRate.toFixed(1)}%</p>
+                            <p className="text-xl font-bold text-gray-900">{metricsData.conversionRate.toFixed(1)}%</p>
                         </div>
                         <Target className="w-10 h-10 text-purple-500" />
                     </div>
@@ -581,7 +581,7 @@ export default function Analytics() {
                     <div className="flex items-center justify-between mb-2">
                         <div>
                             <p className="text-sm font-medium text-gray-600">Tiempo de Respuesta</p>
-                            <p className="text-3xl font-bold text-gray-900">{metricsData.avgResponseTime.toFixed(1)}s</p>
+                            <p className="text-xl font-bold text-gray-900">{metricsData.avgResponseTime.toFixed(1)}s</p>
                         </div>
                         <Clock className="w-10 h-10 text-orange-500" />
                     </div>
@@ -709,7 +709,7 @@ export default function Analytics() {
                             <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 rounded-full mb-4">
                                 <Star className="w-10 h-10 text-yellow-500" />
                             </div>
-                            <p className="text-3xl font-bold text-gray-900">
+                            <p className="text-xl font-bold text-gray-900">
                                 {satisfactionAnalysis.overall?.toFixed(1) || '0.0'}
                             </p>
                             <p className="text-gray-600">de 5 estrellas</p>

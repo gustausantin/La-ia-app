@@ -229,7 +229,7 @@ const AIStatusHeader = memo(({ status, performance }) => {
           <div className="flex items-center space-x-3">
             <Brain className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold">Centro de Control IA</h1>
+              <h1 className="text-lg font-bold">Centro de Control IA</h1>
               <p className="text-purple-100">Sistema inteligente activo y aprendiendo</p>
             </div>
           </div>
@@ -250,19 +250,19 @@ const AIStatusHeader = memo(({ status, performance }) => {
         {/* Métricas principales */}
         <div className="grid grid-cols-4 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold">{performance.accuracy}%</div>
+            <div className="text-lg font-bold">{performance.accuracy}%</div>
             <div className="text-sm text-purple-100">Precisión IA</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold">{performance.responseTime}s</div>
+            <div className="text-lg font-bold">{performance.responseTime}s</div>
             <div className="text-sm text-purple-100">Tiempo Respuesta</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold">{performance.automationLevel}%</div>
+            <div className="text-lg font-bold">{performance.automationLevel}%</div>
             <div className="text-sm text-purple-100">Automatización</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold">€{performance.costSavings?.toLocaleString()}</div>
+            <div className="text-lg font-bold">€{performance.costSavings?.toLocaleString()}</div>
             <div className="text-sm text-purple-100">Ahorro Mensual</div>
           </div>
         </div>
@@ -294,7 +294,7 @@ const AIInsightPanel = memo(({ insights }) => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500"
+                className="bg-gray-50 rounded-lg p-2 border-l-4 border-blue-500"
               >
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-medium text-gray-900">{insight.title}</h3>
@@ -336,12 +336,12 @@ const AIPredictionPanel = memo(({ predictions }) => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-green-50 rounded-lg p-4">
+          <div className="bg-green-50 rounded-lg p-2">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-green-800">Demanda Esperada</span>
               <Users className="w-4 h-4 text-green-600" />
             </div>
-            <div className="text-2xl font-bold text-green-900">
+            <div className="text-lg font-bold text-green-900">
               {predictions.expectedReservations || 0} reservas
             </div>
             <div className="text-sm text-green-600">
@@ -349,12 +349,12 @@ const AIPredictionPanel = memo(({ predictions }) => {
             </div>
           </div>
           
-          <div className="bg-blue-50 rounded-lg p-4">
+          <div className="bg-blue-50 rounded-lg p-2">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-blue-800">Ingresos Previstos</span>
               <DollarSign className="w-4 h-4 text-blue-600" />
             </div>
-            <div className="text-2xl font-bold text-blue-900">
+            <div className="text-lg font-bold text-blue-900">
               €{((predictions.expectedReservations || 0) * 45).toLocaleString()}
             </div>
             <div className="text-sm text-blue-600">
@@ -404,7 +404,7 @@ const AIControlPanel = memo(({ status, onStatusChange }) => {
         
         <div className="space-y-3">
           {Object.entries(status).map(([service, state]) => (
-            <div key={service} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div key={service} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
               <div>
                 <div className="font-medium capitalize">{service}</div>
                 <div className="text-sm text-gray-500">
@@ -453,7 +453,7 @@ const AIRecommendationPanel = memo(({ recommendations }) => {
         
         <div className="space-y-3 max-h-64 overflow-y-auto">
           {recommendations.slice(0, 5).map((rec, index) => (
-            <div key={index} className="bg-purple-50 rounded-lg p-3 border-l-4 border-purple-500">
+            <div key={index} className="bg-purple-50 rounded-lg p-2 border-l-4 border-purple-500">
               <div className="flex justify-between items-start mb-1">
                 <div className="font-medium text-purple-900 text-sm">{rec.title}</div>
                 <span className="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded">
@@ -579,7 +579,7 @@ const AIConversationPanel = memo(() => {
         
         <div className="space-y-3">
           {conversations.map(conv => (
-            <div key={conv.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div key={conv.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-3">
                 <div className={`w-3 h-3 rounded-full ${
                   conv.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'

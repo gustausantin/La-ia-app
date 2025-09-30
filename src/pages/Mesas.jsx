@@ -373,7 +373,7 @@ const TableCard = ({
 
             <div className="flex flex-col items-center justify-center space-y-3">
                 <div
-                    className={`w-16 h-16 ${stateInfo.bgColor} rounded-full flex items-center justify-center text-3xl`}
+                    className={`w-16 h-16 ${stateInfo.bgColor} rounded-full flex items-center justify-center text-xl`}
                 >
                     {stateInfo.icon}
                 </div>
@@ -2061,7 +2061,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                                 </h4>
                                 <div className="grid grid-cols-3 gap-2 text-center">
                                     <div>
-                                        <p className="text-3xl font-bold text-purple-600">
+                                        <p className="text-xl font-bold text-purple-600">
                                             {stats.agentAssignments}
                                         </p>
                                         <p className="text-sm text-gray-600">
@@ -2069,7 +2069,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-3xl font-bold text-purple-600">
+                                        <p className="text-xl font-bold text-purple-600">
                                             {stats.agentPercentage}%
                                         </p>
                                         <p className="text-sm text-gray-600">
@@ -2077,7 +2077,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-3xl font-bold text-purple-600">
+                                        <p className="text-xl font-bold text-purple-600">
                                             {stats.avgPartySize}
                                         </p>
                                         <p className="text-sm text-gray-600">

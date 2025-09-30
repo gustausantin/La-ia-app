@@ -14,7 +14,7 @@ const AvailabilityUpdateWarning = ({
     if (!show) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg max-w-md z-50">
+        <div className="fixed bottom-4 right-4 bg-yellow-50 border border-yellow-200 rounded-lg p-2 shadow-lg max-w-md z-50">
             <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
                 <div className="flex-1">

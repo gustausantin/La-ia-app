@@ -225,11 +225,11 @@ const ReservationFormModal = ({ isOpen, onClose, onSave, tables, restaurantId })
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
             <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                    <h2 className="text-xl font-bold text-gray-900">
+                    <h2 className="text-base font-bold text-gray-900">
                         📅 Nueva Reserva
                     </h2>
                     <button
@@ -387,21 +387,21 @@ const ReservationFormModal = ({ isOpen, onClose, onSave, tables, restaurantId })
                     {/* Estado de disponibilidad */}
                     <div className="mb-6">
                         {availabilityStatus.checking && (
-                            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-center gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
                                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
                                 <span className="text-blue-800">Verificando disponibilidad...</span>
                             </div>
                         )}
                         
                         {!availabilityStatus.checking && availabilityStatus.isValid === true && (
-                            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded-lg">
                                 <CheckCircle2 className="w-5 h-5 text-green-600" />
                                 <span className="text-green-800">✅ Disponibilidad confirmada</span>
                             </div>
                         )}
                         
                         {!availabilityStatus.checking && availabilityStatus.isValid === false && (
-                            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-lg">
                                 <AlertTriangle className="w-5 h-5 text-red-600" />
                                 <span className="text-red-800">❌ {availabilityStatus.message}</span>
                             </div>
@@ -427,7 +427,7 @@ const ReservationFormModal = ({ isOpen, onClose, onSave, tables, restaurantId })
 
                     {/* Error de validación */}
                     {validationError && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="mb-4 p-2 bg-red-50 border border-red-200 rounded-lg">
                             <div className="flex items-center gap-2">
                                 <AlertTriangle className="w-5 h-5 text-red-600" />
                                 <span className="text-red-800">{validationError}</span>

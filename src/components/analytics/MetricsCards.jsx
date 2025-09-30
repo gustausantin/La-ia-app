@@ -93,7 +93,7 @@ const MetricsCards = ({ metrics = {} }) => {
                 <p className="text-sm font-medium text-gray-600 mb-1">
                   {card.title}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-lg font-bold text-gray-900">
                   {card.value}
                 </p>
                 

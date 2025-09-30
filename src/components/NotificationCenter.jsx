@@ -114,7 +114,7 @@ export default function NotificationCenter({ isOpen, onClose, restaurant }) {
       
       {/* Panel de notificaciones */}
       <div className="absolute top-12 right-0 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-2 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-gray-900">
               Notificaciones ({unread.length} sin leer)
@@ -128,7 +128,7 @@ export default function NotificationCenter({ isOpen, onClose, restaurant }) {
           </div>
         </div>
         
-        <div className="max-h-96 overflow-y-auto p-4">
+        <div className="max-h-96 overflow-y-auto p-2">
           {notifications && notifications.length > 0 ? (
           <div className="space-y-3">
             {notifications.slice(0, 10).map((notification) => {
@@ -138,7 +138,7 @@ export default function NotificationCenter({ isOpen, onClose, restaurant }) {
               return (
                 <div
                   key={notification.id}
-                  className={`p-4 rounded-lg border transition-all duration-200 hover:bg-gray-50 cursor-pointer ${
+                  className={`p-2 rounded-lg border transition-all duration-200 hover:bg-gray-50 cursor-pointer ${
                     notification.read
                       ? 'bg-white border-gray-200'
                       : 'bg-blue-50 border-blue-200'

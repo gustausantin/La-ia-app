@@ -55,7 +55,7 @@ const ConflictWarning = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
             <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -64,7 +64,7 @@ const ConflictWarning = ({
                             <AlertTriangle className="w-6 h-6 text-red-600" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">
+                            <h2 className="text-base font-bold text-gray-900">
                                 {title}
                             </h2>
                             <p className="text-gray-600">
@@ -86,7 +86,7 @@ const ConflictWarning = ({
                         {conflicts.conflicts.map((conflict, index) => (
                             <div
                                 key={index}
-                                className={`border rounded-lg p-4 ${
+                                className={`border rounded-lg p-2 ${
                                     getConflictSeverity(conflict.type) === 'critical'
                                         ? 'border-red-300 bg-red-50'
                                         : getConflictSeverity(conflict.type) === 'high'
@@ -171,7 +171,7 @@ const ConflictWarning = ({
                     </div>
 
                     {/* Resumen */}
-                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <div className="mt-6 p-2 bg-gray-50 rounded-lg">
                         <h3 className="font-medium text-gray-900 mb-2">📊 Resumen del impacto:</h3>
                         <ul className="text-sm text-gray-700 space-y-1">
                             <li>• Total de conflictos: <strong>{conflicts.conflicts.length}</strong></li>
@@ -181,7 +181,7 @@ const ConflictWarning = ({
                     </div>
 
                     {/* Recomendaciones */}
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <div className="mt-4 p-2 bg-blue-50 rounded-lg">
                         <h3 className="font-medium text-blue-900 mb-2">💡 Recomendaciones:</h3>
                         <ul className="text-sm text-blue-800 space-y-1">
                             <li>• Contacta a los clientes afectados antes de hacer el cambio</li>

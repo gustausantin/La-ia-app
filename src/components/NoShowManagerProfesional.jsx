@@ -360,7 +360,7 @@ const NoShowManagerProfesional = () => {
             <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                             <Shield className="w-6 h-6 text-purple-600" />
                             Control No-Shows
                         </h1>
@@ -414,17 +414,17 @@ const NoShowManagerProfesional = () => {
             {/* Métricas principales - MÁS PEQUEÑAS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Evitados esta semana */}
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div className="bg-blue-50 rounded-lg p-2 border border-blue-200">
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="text-sm font-medium text-blue-900">Evitados esta semana</h3>
                         <CheckCircle className="w-4 h-4 text-blue-600" />
                     </div>
-                    <div className="text-2xl font-bold text-blue-600">{data.weeklyPrevented}</div>
+                    <div className="text-lg font-bold text-blue-600">{data.weeklyPrevented}</div>
                     <p className="text-xs text-blue-700 mt-1">Tasa de éxito: {data.successRate}%</p>
                 </div>
 
                 {/* No-shows detectados hoy - MÁS PEQUEÑO */}
-                <div className={`rounded-lg p-4 border ${
+                <div className={`rounded-lg p-2 border ${
                     reservasRiesgo.filter(r => r.riskLevel === 'high').length > 0 ? 'bg-red-50 border-red-200' :
                     reservasRiesgo.filter(r => r.riskLevel === 'medium').length > 0 ? 'bg-yellow-50 border-yellow-200' :
                     'bg-green-50 border-green-200'
@@ -441,7 +441,7 @@ const NoShowManagerProfesional = () => {
                             'text-green-600'
                         }`} />
                     </div>
-                    <div className={`text-2xl font-bold ${
+                    <div className={`text-lg font-bold ${
                         reservasRiesgo.filter(r => r.riskLevel === 'high').length > 0 ? 'text-red-600' :
                         reservasRiesgo.filter(r => r.riskLevel === 'medium').length > 0 ? 'text-yellow-600' :
                         'text-green-600'
@@ -463,7 +463,7 @@ const NoShowManagerProfesional = () => {
             {/* ANÁLISIS DETALLADO ELIMINADO - Como pediste */}
 
             {/* MINI-DASHBOARD INFO */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-4 border border-blue-200">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-2 rounded-lg mb-4 border border-blue-200">
                 <div className="flex items-center gap-2 mb-3">
                     <Target className="w-5 h-5 text-blue-600" />
                     <h4 className="font-bold text-blue-900">Resumen de Riesgos</h4>
@@ -478,19 +478,19 @@ const NoShowManagerProfesional = () => {
                 
                 <div className="grid grid-cols-4 gap-3 mb-3">
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-gray-800">{reservasRiesgo.length}</div>
+                        <div className="text-lg font-bold text-gray-800">{reservasRiesgo.length}</div>
                         <div className="text-xs text-gray-600">Total</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-red-600">{reservasRiesgo.filter(r => r.riskLevel === 'high').length}</div>
+                        <div className="text-lg font-bold text-red-600">{reservasRiesgo.filter(r => r.riskLevel === 'high').length}</div>
                         <div className="text-xs text-red-700">Alto</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-yellow-600">{reservasRiesgo.filter(r => r.riskLevel === 'medium').length}</div>
+                        <div className="text-lg font-bold text-yellow-600">{reservasRiesgo.filter(r => r.riskLevel === 'medium').length}</div>
                         <div className="text-xs text-yellow-700">Medio</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">{reservasRiesgo.filter(r => r.riskLevel === 'low').length}</div>
+                        <div className="text-lg font-bold text-green-600">{reservasRiesgo.filter(r => r.riskLevel === 'low').length}</div>
                         <div className="text-xs text-green-700">Bajo</div>
                     </div>
                 </div>
@@ -529,7 +529,7 @@ const NoShowManagerProfesional = () => {
                     </div>
                     <div className="divide-y divide-gray-200">
                         {reservasRiesgo.map((reserva) => (
-                            <div key={reserva.id} className="p-4 hover:bg-gray-50">
+                            <div key={reserva.id} className="p-2 hover:bg-gray-50">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
@@ -620,11 +620,11 @@ const NoShowManagerProfesional = () => {
 
             {/* MODAL EXPLICATIVO DE FACTORES DE RIESGO */}
             {showRiskExplanation && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
                     <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
                                     <Target className="w-6 h-6 text-blue-600" />
                                     ¿Cómo Calculamos el Riesgo?
                                 </h2>
@@ -637,7 +637,7 @@ const NoShowManagerProfesional = () => {
                             </div>
                             
                             <div className="space-y-4">
-                                <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-400">
+                                <div className="bg-red-50 p-2 rounded-lg border-l-4 border-red-400">
                                     <h3 className="font-semibold text-red-900 mb-2">🔴 ALTO RIESGO (85+ puntos)</h3>
                                     <ul className="text-sm text-red-800 space-y-1">
                                         <li>• Cliente con historial de no-shows</li>
@@ -647,7 +647,7 @@ const NoShowManagerProfesional = () => {
                                     </ul>
                                 </div>
                                 
-                                <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400">
+                                <div className="bg-yellow-50 p-2 rounded-lg border-l-4 border-yellow-400">
                                     <h3 className="font-semibold text-yellow-900 mb-2">🟡 RIESGO MEDIO (65-84 puntos)</h3>
                                     <ul className="text-sm text-yellow-800 space-y-1">
                                         <li>• Cliente ocasional</li>
@@ -656,7 +656,7 @@ const NoShowManagerProfesional = () => {
                                     </ul>
                                 </div>
                                 
-                                <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-400">
+                                <div className="bg-green-50 p-2 rounded-lg border-l-4 border-green-400">
                                     <h3 className="font-semibold text-green-900 mb-2">🟢 RIESGO BAJO (0-64 puntos)</h3>
                                     <ul className="text-sm text-green-800 space-y-1">
                                         <li>• Cliente VIP o regular</li>

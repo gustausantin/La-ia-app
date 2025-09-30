@@ -49,7 +49,7 @@ const RealtimeStats = React.memo(({ conversations = [], messages = [] }) => {
   }, [conversations, messages]);
 
   const StatCard = ({ icon: Icon, label, value, trend, color = "blue", subtitle }) => (
-    <div className={`p-3 bg-${color}-50 rounded-lg border border-${color}-100`}>
+    <div className={`p-2 bg-${color}-50 rounded-lg border border-${color}-100`}>
       <div className="flex items-center justify-between mb-1">
         <Icon className={`w-4 h-4 text-${color}-600`} />
         {trend && (
@@ -148,7 +148,7 @@ const RealtimeStats = React.memo(({ conversations = [], messages = [] }) => {
       </div>
 
       {/* Barra de progreso de eficiencia IA */}
-      <div className="bg-gray-50 rounded-lg p-3">
+      <div className="bg-gray-50 rounded-lg p-2">
         <div className="flex items-center justify-between text-sm mb-2">
           <span className="font-medium text-gray-700">Automatización IA</span>
           <span className="text-gray-600">{stats.aiEfficiency}%</span>

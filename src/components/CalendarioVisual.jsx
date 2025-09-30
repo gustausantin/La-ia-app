@@ -37,7 +37,7 @@ const CalendarioVisual = ({ reservations, onDateSelect, selectedDate }) => {
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <Calendar className="w-6 h-6 text-purple-500" />
-                    <h3 className="text-xl font-semibold text-gray-900">Vista Calendario</h3>
+                    <h3 className="text-base font-semibold text-gray-900">Vista Calendario</h3>
                 </div>
                 
                 <div className="flex items-center gap-4">
@@ -64,7 +64,7 @@ const CalendarioVisual = ({ reservations, onDateSelect, selectedDate }) => {
             {/* Días de la semana */}
             <div className="grid grid-cols-7 gap-1 mb-2">
                 {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
-                    <div key={day} className="p-3 text-center text-sm font-medium text-gray-500">
+                    <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
                         {day}
                     </div>
                 ))}
@@ -83,7 +83,7 @@ const CalendarioVisual = ({ reservations, onDateSelect, selectedDate }) => {
                             key={day.toString()}
                             onClick={() => onDateSelect(dateKey)}
                             className={`
-                                relative p-3 h-20 border rounded-lg transition-all hover:border-purple-300
+                                relative p-2 h-20 border rounded-lg transition-all hover:border-purple-300
                                 ${isSelected 
                                     ? 'border-purple-500 bg-purple-50' 
                                     : 'border-gray-200 hover:bg-gray-50'

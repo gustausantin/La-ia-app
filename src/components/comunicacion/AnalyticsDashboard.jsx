@@ -118,7 +118,7 @@ const AnalyticsDashboard = React.memo(({ conversations = [], messages = [] }) =>
   const MetricCard = ({ icon: Icon, title, value, subtitle, trend, color = 'blue' }) => (
     <div className="bg-white p-6 rounded-xl border border-gray-200">
       <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 bg-${color}-100 rounded-lg`}>
+        <div className={`p-2 bg-${color}-100 rounded-lg`}>
           <Icon className={`w-6 h-6 text-${color}-600`} />
         </div>
         {trend && (
@@ -129,7 +129,7 @@ const AnalyticsDashboard = React.memo(({ conversations = [], messages = [] }) =>
         )}
       </div>
       <div className="space-y-1">
-        <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
+        <h3 className="text-lg font-bold text-gray-900">{value}</h3>
         <p className="font-medium text-gray-700">{title}</p>
         {subtitle && <p className="text-sm text-gray-600">{subtitle}</p>}
       </div>
@@ -151,7 +151,7 @@ const AnalyticsDashboard = React.memo(({ conversations = [], messages = [] }) =>
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-lg font-bold text-gray-900 mb-2">
           Analytics de Comunicación
         </h2>
         <p className="text-gray-600">

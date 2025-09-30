@@ -84,7 +84,7 @@ const AIInsights = React.memo(({ data, dateRange }) => {
     const Icon = insight.icon;
 
     return (
-      <div className={`p-4 rounded-lg border ${config.bgColor} ${config.borderColor}`}>
+      <div className={`p-2 rounded-lg border ${config.bgColor} ${config.borderColor}`}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-start gap-3">
             <div className={`p-2 rounded-lg bg-white ${config.iconColor}`}>
@@ -123,7 +123,7 @@ const AIInsights = React.memo(({ data, dateRange }) => {
 
   // Componente de predicción
   const PredictionCard = ({ prediction }) => (
-    <div className="bg-white p-4 rounded-lg border border-gray-200">
+    <div className="bg-white p-2 rounded-lg border border-gray-200">
       <div className="flex items-center justify-between mb-2">
         <h4 className="font-semibold text-gray-900">{prediction.title}</h4>
         <span className="text-sm font-medium text-purple-600">{prediction.probability}%</span>
@@ -144,7 +144,7 @@ const AIInsights = React.memo(({ data, dateRange }) => {
 
   // Componente de patrón
   const PatternCard = ({ pattern }) => (
-    <div className="bg-white p-4 rounded-lg border border-gray-200">
+    <div className="bg-white p-2 rounded-lg border border-gray-200">
       <div className="flex items-center justify-between mb-2">
         <h4 className="font-medium text-gray-900">{pattern.title}</h4>
         <span className={`text-xs px-2 py-1 rounded-full ${
@@ -168,7 +168,7 @@ const AIInsights = React.memo(({ data, dateRange }) => {
           <div className="flex items-center gap-3">
             <Brain className="w-8 h-8" />
             <div>
-              <h2 className="text-2xl font-bold">Insights de Inteligencia Artificial</h2>
+              <h2 className="text-lg font-bold">Insights de Inteligencia Artificial</h2>
               <p className="text-purple-100">Análisis inteligente y recomendaciones</p>
             </div>
           </div>
@@ -177,19 +177,19 @@ const AIInsights = React.memo(({ data, dateRange }) => {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold">{insights.aiMetrics.successfulResolutions}</div>
+            <div className="text-lg font-bold">{insights.aiMetrics.successfulResolutions}</div>
             <div className="text-sm text-purple-100">Resoluciones Exitosas</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold">{insights.aiMetrics.accuracyRate}%</div>
+            <div className="text-lg font-bold">{insights.aiMetrics.accuracyRate}%</div>
             <div className="text-sm text-purple-100">Precisión</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold">{insights.aiMetrics.averageResponseTime}min</div>
+            <div className="text-lg font-bold">{insights.aiMetrics.averageResponseTime}min</div>
             <div className="text-sm text-purple-100">Tiempo Respuesta</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold">€{insights.aiMetrics.costSavings}</div>
+            <div className="text-lg font-bold">€{insights.aiMetrics.costSavings}</div>
             <div className="text-sm text-purple-100">Ahorro Mensual</div>
           </div>
         </div>

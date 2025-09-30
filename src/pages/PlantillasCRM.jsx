@@ -319,7 +319,7 @@ export default function PlantillasCRM() {
                 <div className="mb-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                            <h1 className="text-xl font-bold text-gray-900 flex items-center">
                                 <Mail className="w-8 h-8 text-purple-600 mr-3" />
                                 Plantillas CRM
                             </h1>
@@ -346,7 +346,7 @@ export default function PlantillasCRM() {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Total Plantillas</p>
-                                <p className="text-2xl font-bold text-gray-900">{templates.length}</p>
+                                <p className="text-lg font-bold text-gray-900">{templates.length}</p>
                             </div>
                         </div>
                     </div>
@@ -357,7 +357,7 @@ export default function PlantillasCRM() {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Activas</p>
-                                <p className="text-2xl font-bold text-gray-900">
+                                <p className="text-lg font-bold text-gray-900">
                                     {templates.filter(t => t.is_active ?? t.active).length}
                                 </p>
                             </div>
@@ -370,7 +370,7 @@ export default function PlantillasCRM() {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Tipos</p>
-                                <p className="text-2xl font-bold text-gray-900">
+                                <p className="text-lg font-bold text-gray-900">
                                     {new Set(templates.map(t => t.segment || t.type)).size}
                                 </p>
                             </div>
@@ -388,7 +388,7 @@ export default function PlantillasCRM() {
                                 <div className={`px-6 py-4 border-b border-gray-200 bg-${standard.color}-50`}>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <span className="text-3xl">{standard.icon}</span>
+                                            <span className="text-xl">{standard.icon}</span>
                                             <div>
                                                 <h3 className="text-lg font-bold text-gray-900 capitalize">
                                                     Clientes {type}
@@ -412,7 +412,7 @@ export default function PlantillasCRM() {
                                     {typeTemplates.length > 0 ? (
                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                             {typeTemplates.map(template => (
-                                                <div key={template.id} className="border border-gray-200 rounded-lg p-4">
+                                                <div key={template.id} className="border border-gray-200 rounded-lg p-2">
                                                     <div className="flex items-center justify-between mb-3">
                                                         <h4 className="font-medium text-gray-900">{template.name}</h4>
                                                         <div className="flex items-center gap-2">
@@ -482,7 +482,7 @@ export default function PlantillasCRM() {
 
                 {/* Modal de Edición/Vista Previa */}
                 {showModal && editingTemplate && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
                         <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                             <div className="flex items-center justify-between p-6 border-b border-gray-200">
                                 <h3 className="text-lg font-bold text-gray-900">
@@ -515,7 +515,7 @@ export default function PlantillasCRM() {
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Contenido del Mensaje
                                             </label>
-                                            <div className="bg-gray-50 p-4 rounded-lg whitespace-pre-wrap">
+                                            <div className="bg-gray-50 p-2 rounded-lg whitespace-pre-wrap">
                                                 {editingTemplate.content_markdown || editingTemplate.content}
                                             </div>
                                         </div>
@@ -565,7 +565,7 @@ export default function PlantillasCRM() {
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                             />
                                         </div>
-                                        <div className="bg-blue-50 p-4 rounded-lg">
+                                        <div className="bg-blue-50 p-2 rounded-lg">
                                             <h4 className="font-medium text-blue-900 mb-2">Variables Disponibles:</h4>
                                             <div className="flex flex-wrap gap-2 text-sm">
                                                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">

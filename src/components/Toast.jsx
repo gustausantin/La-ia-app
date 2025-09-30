@@ -117,7 +117,7 @@ const Toast = ({
         </div>
       )}
 
-      <div className="flex items-start gap-3 p-4">
+      <div className="flex items-start gap-3 p-2">
         {/* Icono */}
         <div className="flex-shrink-0">
           <IconComponent className={clsx('w-5 h-5', toastConfig.iconColor)} />

@@ -1049,7 +1049,7 @@ const AvailabilityManager = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                    <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                         <Calendar className="w-6 h-6 text-blue-600" />
                         Gestión de Disponibilidades
                     </h2>
@@ -1063,7 +1063,7 @@ const AvailabilityManager = () => {
 
             {/* Información de Política de Reservas */}
             {restaurantSettings && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-6">
                     <h3 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
                         <Settings className="w-5 h-5" />
                         Política de Reservas Actual
@@ -1091,7 +1091,7 @@ const AvailabilityManager = () => {
 
             {/* Panel de Estado de Disponibilidades - PERSISTENTE */}
             {(generationSuccess || availabilityStats?.total > 0) && (
-                <div className="border border-green-200 rounded-lg p-4 mb-6 bg-green-50">
+                <div className="border border-green-200 rounded-lg p-2 mb-6 bg-green-50">
                     <h3 className="font-medium text-green-900 mb-3 flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5" />
                         ✅ Disponibilidades Activas
@@ -1099,15 +1099,15 @@ const AvailabilityManager = () => {
                     
                     {/* Estadísticas completas */}
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-                        <div className="text-center bg-white rounded-lg p-3 border border-green-200">
-                            <div className="text-2xl font-bold text-green-700">
+                        <div className="text-center bg-white rounded-lg p-2 border border-green-200">
+                            <div className="text-lg font-bold text-green-700">
                                 {generationSuccess ? generationSuccess.slotsCreated : (availabilityStats?.total || 0)}
                             </div>
                             <div className="text-xs text-green-600">
                                 {generationSuccess ? 'Slots Creados' : 'Total Slots'}
                             </div>
                         </div>
-                        <div className="text-center bg-white rounded-lg p-3 border border-green-200">
+                        <div className="text-center bg-white rounded-lg p-2 border border-green-200">
                             <div className="text-lg font-bold text-blue-700">
                                 {generationSuccess?.totalAvailable !== null && generationSuccess?.totalAvailable !== undefined 
                                     ? generationSuccess.totalAvailable 
@@ -1115,7 +1115,7 @@ const AvailabilityManager = () => {
                             </div>
                             <div className="text-xs text-blue-600">Disponibles</div>
                         </div>
-                        <div className="text-center bg-white rounded-lg p-3 border border-green-200">
+                        <div className="text-center bg-white rounded-lg p-2 border border-green-200">
                             <div className="text-lg font-bold text-red-700">
                                 {generationSuccess?.totalOccupied !== null && generationSuccess?.totalOccupied !== undefined 
                                     ? generationSuccess.totalOccupied 
@@ -1123,7 +1123,7 @@ const AvailabilityManager = () => {
                             </div>
                             <div className="text-xs text-red-600">Ocupados</div>
                         </div>
-                        <div className="text-center bg-white rounded-lg p-3 border border-green-200">
+                        <div className="text-center bg-white rounded-lg p-2 border border-green-200">
                             <div className="text-lg font-bold text-purple-700">
                                 {generationSuccess?.totalReserved !== null && generationSuccess?.totalReserved !== undefined 
                                     ? generationSuccess.totalReserved 
@@ -1131,7 +1131,7 @@ const AvailabilityManager = () => {
                             </div>
                             <div className="text-xs text-purple-600">Con Reservas</div>
                         </div>
-                        <div className="text-center bg-white rounded-lg p-3 border border-green-200">
+                        <div className="text-center bg-white rounded-lg p-2 border border-green-200">
                             <div className="text-lg font-bold text-gray-700">
                                 {availabilityStats?.tablesCount || 0}
                             </div>
@@ -1191,7 +1191,7 @@ const AvailabilityManager = () => {
                                     <strong>⚡ IMPORTANTE:</strong> Las disponibilidades actuales NO reflejan los cambios. 
                                     Los clientes podrían ver horarios incorrectos.
                                 </p>
-                                <div className="bg-white border-l-4 border-red-500 p-3 rounded">
+                                <div className="bg-white border-l-4 border-red-500 p-2 rounded">
                                     <p className="text-sm font-medium text-red-900">
                                         📍 Acción requerida:
                                     </p>
@@ -1230,7 +1230,7 @@ const AvailabilityManager = () => {
 
             {/* Conflictos detectados */}
             {showDetails && conflictingReservations.length > 0 && (
-                <div className="border border-orange-200 rounded-lg p-4 mb-6 bg-orange-50">
+                <div className="border border-orange-200 rounded-lg p-2 mb-6 bg-orange-50">
                     <h3 className="font-medium text-orange-900 mb-3 flex items-center gap-2">
                         <AlertTriangle className="w-5 h-5" />
                         Reservas que podrían verse afectadas ({conflictingReservations.length})
@@ -1274,7 +1274,7 @@ const AvailabilityManager = () => {
             </div>
 
             {/* Selector de día específico */}
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mt-4 p-2 bg-blue-50 border border-blue-200 rounded-lg">
                 <h3 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
                     Consultar Día Específico
@@ -1314,7 +1314,7 @@ const AvailabilityManager = () => {
                         
                         <div className="space-y-3 max-h-60 overflow-y-auto">
                             {Object.entries(dayAvailability).map(([tableName, slots]) => (
-                                <div key={tableName} className={`p-3 rounded border ${
+                                <div key={tableName} className={`p-2 rounded border ${
                                     slots[0]?.isClosed 
                                         ? 'bg-red-50 border-red-200' 
                                         : slots[0]?.isEmpty
@@ -1330,7 +1330,7 @@ const AvailabilityManager = () => {
                                                 ? 'text-red-600' 
                                                 : 'text-yellow-600'
                                         }`}>
-                                            <div className="text-2xl mb-2">
+                                            <div className="text-lg mb-2">
                                                 {slots[0]?.isClosed ? '🚫' : '❌'}
                                             </div>
                                             <div className="font-medium">
@@ -1365,7 +1365,7 @@ const AvailabilityManager = () => {
 
             {/* Info del período actual - ACTUALIZADO DINÁMICAMENTE */}
             {availabilityStats?.total > 0 && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                <div className="mt-4 p-2 bg-gray-50 rounded-lg">
                     <div className="text-sm text-gray-600">
                         <strong>Período actual:</strong> {' '}
                         {availabilityStats?.dateRange?.start ? (
@@ -1385,7 +1385,7 @@ const AvailabilityManager = () => {
 
             {/* Vista detallada de disponibilidades */}
             {showAvailabilityGrid && (
-                <div className="mt-6 border border-gray-200 rounded-lg p-4">
+                <div className="mt-6 border border-gray-200 rounded-lg p-2">
                     <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
                         <Calendar className="w-5 h-5" />
                         Calendario de Disponibilidades
@@ -1400,7 +1400,7 @@ const AvailabilityManager = () => {
                     ) : (
                         <div className="space-y-6 max-h-96 overflow-y-auto">
                             {Object.entries(availabilityGrid).map(([date, tables]) => (
-                                <div key={date} className="border border-gray-100 rounded-lg p-4">
+                                <div key={date} className="border border-gray-100 rounded-lg p-2">
                                     <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
                                         <Clock className="w-4 h-4" />
                                         {format(new Date(date), 'EEEE, dd/MM/yyyy', { locale: es })}
@@ -1408,7 +1408,7 @@ const AvailabilityManager = () => {
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {Object.entries(tables).map(([tableName, tableData]) => (
-                                            <div key={tableName} className="bg-gray-50 rounded-lg p-3">
+                                            <div key={tableName} className="bg-gray-50 rounded-lg p-2">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <Users className="w-4 h-4 text-gray-600" />
                                                     <span className="font-medium text-gray-900">
@@ -1461,7 +1461,7 @@ const AvailabilityManager = () => {
 
             {/* 🚨 MODAL DE ADVERTENCIA: NO SE GENERARON SLOTS */}
             {showNoSlotsModal && noSlotsReason && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-2">
                     <div 
                         className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center relative border-4 border-orange-500"
                         style={{
@@ -1474,7 +1474,7 @@ const AvailabilityManager = () => {
                         </div>
 
                         {/* Título */}
-                        <h2 className="text-3xl font-extrabold text-gray-900 mb-4 leading-tight">
+                        <h2 className="text-xl font-extrabold text-gray-900 mb-4 leading-tight">
                             ⚠️ NO SE GENERARON HORARIOS DE RESERVA
                         </h2>
 

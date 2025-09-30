@@ -91,7 +91,7 @@ const CustomTooltip = memo(({ active, payload, label, formatter }) => {
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-white p-3 rounded-lg shadow-lg border border-gray-200"
+      className="bg-white p-2 rounded-lg shadow-lg border border-gray-200"
     >
       <p className="font-medium text-gray-900 mb-2">{label}</p>
       {payload.map((entry, index) => (
@@ -166,7 +166,7 @@ const OptimizedChart = memo(({
   // Renderizar loading state
   const LoadingSkeleton = () => (
     <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg">
-      <div className="animate-pulse space-y-2 w-full p-4">
+      <div className="animate-pulse space-y-2 w-full p-2">
         <div className="h-4 bg-gray-200 rounded w-1/4 mx-auto"></div>
         <div className="grid grid-cols-12 gap-1 h-48">
           {Array(12).fill(0).map((_, i) => (
@@ -185,8 +185,8 @@ const OptimizedChart = memo(({
   if (error || hasError) {
     return (
       <div className="flex items-center justify-center h-full bg-red-50 rounded-lg border border-red-200">
-        <div className="text-center p-4">
-          <div className="text-red-500 text-2xl mb-2">📊</div>
+        <div className="text-center p-2">
+          <div className="text-red-500 text-lg mb-2">📊</div>
           <p className="text-red-800 font-medium">Error cargando gráfico</p>
           <p className="text-red-600 text-sm">{error?.message || 'Error desconocido'}</p>
         </div>

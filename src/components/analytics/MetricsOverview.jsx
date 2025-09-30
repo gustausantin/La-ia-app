@@ -92,7 +92,7 @@ const MetricsOverview = React.memo(({ data, dateRange }) => {
     return (
       <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-200">
         <div className="flex items-center justify-between mb-4">
-          <div className={`p-3 bg-${color}-100 rounded-lg`}>
+          <div className={`p-2 bg-${color}-100 rounded-lg`}>
             <Icon className={`w-6 h-6 text-${color}-600`} />
           </div>
           {change !== 0 && (
@@ -112,7 +112,7 @@ const MetricsOverview = React.memo(({ data, dateRange }) => {
         </div>
         
         <div className="space-y-1">
-          <h3 className="text-3xl font-bold text-gray-900">
+          <h3 className="text-xl font-bold text-gray-900">
             {formatValue(value)}{unit}
           </h3>
           <p className="font-medium text-gray-700">{title}</p>
@@ -130,7 +130,7 @@ const MetricsOverview = React.memo(({ data, dateRange }) => {
 
   // Componente de métrica simplificada para grid 2x2
   const SimpleMetric = ({ icon: Icon, title, value, unit, color, trend }) => (
-    <div className="bg-white p-4 rounded-lg border border-gray-200">
+    <div className="bg-white p-2 rounded-lg border border-gray-200">
       <div className="flex items-center justify-between mb-2">
         <Icon className={`w-5 h-5 text-${color}-600`} />
         {trend && (
@@ -140,7 +140,7 @@ const MetricsOverview = React.memo(({ data, dateRange }) => {
           </div>
         )}
       </div>
-      <div className="text-xl font-bold text-gray-900">{value}{unit}</div>
+      <div className="text-base font-bold text-gray-900">{value}{unit}</div>
       <div className="text-sm text-gray-600">{title}</div>
     </div>
   );
@@ -150,7 +150,7 @@ const MetricsOverview = React.memo(({ data, dateRange }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-lg font-bold text-gray-900">
             Resumen de Métricas
           </h2>
           <p className="text-gray-600 mt-1">
@@ -255,19 +255,19 @@ const MetricsOverview = React.memo(({ data, dateRange }) => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <div className="text-2xl font-bold text-purple-600">
+                <div className="text-lg font-bold text-purple-600">
                   €{(metrics.totalRevenue * 0.15).toLocaleString()}
                 </div>
                 <div className="text-sm text-gray-600">Ahorro en personal</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-lg font-bold text-blue-600">
                   {((metrics.totalRevenue * 0.15) / 500).toFixed(1)}x
                 </div>
                 <div className="text-sm text-gray-600">ROI mensual</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-lg font-bold text-green-600">
                   24/7
                 </div>
                 <div className="text-sm text-gray-600">Disponibilidad</div>

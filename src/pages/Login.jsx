@@ -317,7 +317,7 @@ export default function Login() {
         </div>
 
           {/* Oferta especial rediseñada */}
-          <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400/20 to-orange-400/20 backdrop-blur-xl border border-yellow-300/30 rounded-2xl p-4">
+          <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400/20 to-orange-400/20 backdrop-blur-xl border border-yellow-300/30 rounded-2xl p-2">
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-300/10 to-transparent" />
             <div className="relative z-10 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
@@ -376,7 +376,7 @@ export default function Login() {
           </div>
 
           {/* Contenedor principal del formulario */}
-          <div className="relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl p-4">
+          <div className="relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl p-2">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-blue-50/30" />
             <div className="relative z-10">
               
@@ -418,7 +418,7 @@ export default function Login() {
 
               {/* Mensajes rediseñados */}
             {error && (
-                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-xl">
+                <div className="mb-6 p-2 bg-red-50 border-l-4 border-red-400 rounded-xl">
                   <p className="text-red-700 text-sm font-semibold">{error}</p>
                   {showResendButton && (
                     <button
@@ -442,7 +442,7 @@ export default function Login() {
             )}
 
             {message && (
-                <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-xl">
+                <div className="mb-6 p-2 bg-green-50 border-l-4 border-green-400 rounded-xl">
                   <p className="text-green-700 text-sm font-semibold whitespace-pre-line">{message}</p>
                   {showResendButton && (
                     <button
@@ -710,7 +710,7 @@ export default function Login() {
                       </label>
                         <div className="grid grid-cols-2 gap-4">
                         <label
-                            className={`relative flex items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                            className={`relative flex items-center justify-center p-2 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
                             primaryChannel === "whatsapp"
                                 ? "border-purple-500 bg-purple-50 shadow-lg transform scale-105"
                                 : "border-gray-300 hover:border-purple-300 hover:bg-purple-50/50"
@@ -728,7 +728,7 @@ export default function Login() {
                             <span className="font-bold text-sm">WhatsApp</span>
                         </label>
                         <label
-                            className={`relative flex items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                            className={`relative flex items-center justify-center p-2 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
                             primaryChannel === "vapi"
                                 ? "border-purple-500 bg-purple-50 shadow-lg transform scale-105"
                                 : "border-gray-300 hover:border-purple-300 hover:bg-purple-50/50"
@@ -820,7 +820,7 @@ export default function Login() {
                       </button>
                     </div>
 
-                      <div className="mt-6 p-4 bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl border border-purple-200">
+                      <div className="mt-6 p-2 bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl border border-purple-200">
                         <p className="text-sm text-purple-700 text-center font-bold">
                           ✨ Tu agente {agentName} empezará a recibir reservas inmediatamente
                       </p>

@@ -280,7 +280,7 @@ export default function Analytics() {
             <div className="bg-white rounded-xl shadow-sm border p-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                        <h1 className="text-lg font-bold text-gray-900 mb-2">
                             📊 Cómo va tu agente IA
                         </h1>
                         <p className="text-gray-600">
@@ -312,7 +312,7 @@ export default function Analytics() {
                 </div>
                 
                 {!hasData && !showDemo && (
-                    <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-2">
                         <div className="flex items-center gap-2">
                             <Info className="w-5 h-5 text-blue-600" />
                             <span className="text-blue-800 font-medium">
@@ -332,23 +332,23 @@ export default function Analytics() {
                     <div className="flex items-center gap-3 mb-4">
                         <Euro className="w-8 h-8" />
                         <div>
-                            <h3 className="text-xl font-bold">¿Cuánto dinero te hace ganar tu agente?</h3>
+                            <h3 className="text-base font-bold">¿Cuánto dinero te hace ganar tu agente?</h3>
                             <p className="text-green-100">Calculado automáticamente cada mes</p>
                         </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-white/20 rounded-lg p-4">
+                        <div className="bg-white/20 rounded-lg p-2">
                             <p className="text-green-100 text-sm mb-1">Ingresos extra</p>
-                            <p className="text-2xl font-bold">{displayROI.simpleMessage}</p>
+                            <p className="text-lg font-bold">{displayROI.simpleMessage}</p>
                         </div>
-                        <div className="bg-white/20 rounded-lg p-4">
+                        <div className="bg-white/20 rounded-lg p-2">
                             <p className="text-green-100 text-sm mb-1">Ahorros en personal</p>
-                            <p className="text-2xl font-bold">{displayROI.savingsMessage}</p>
+                            <p className="text-lg font-bold">{displayROI.savingsMessage}</p>
                         </div>
-                        <div className="bg-white/20 rounded-lg p-4">
+                        <div className="bg-white/20 rounded-lg p-2">
                             <p className="text-green-100 text-sm mb-1">Recuperación</p>
-                            <p className="text-2xl font-bold">{displayROI.paybackMessage}</p>
+                            <p className="text-lg font-bold">{displayROI.paybackMessage}</p>
                         </div>
                     </div>
                 </div>
@@ -361,7 +361,7 @@ export default function Analytics() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Personas que escriben</p>
-                                <p className="text-3xl font-bold text-gray-900">{displayMetrics.totalConversaciones}</p>
+                                <p className="text-xl font-bold text-gray-900">{displayMetrics.totalConversaciones}</p>
                                 <p className="text-sm text-gray-500 mt-1">conversaciones totales</p>
                             </div>
                             <MessageSquare className="w-10 h-10 text-blue-500" />
@@ -372,7 +372,7 @@ export default function Analytics() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Reservas confirmadas</p>
-                                <p className="text-3xl font-bold text-gray-900">{displayMetrics.reservasExitosas}</p>
+                                <p className="text-xl font-bold text-gray-900">{displayMetrics.reservasExitosas}</p>
                                 <p className="text-sm text-gray-500 mt-1">mesas ocupadas</p>
                             </div>
                             <Users className="w-10 h-10 text-green-500" />
@@ -383,7 +383,7 @@ export default function Analytics() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">De cada 100 que escriben</p>
-                                <p className="text-3xl font-bold text-gray-900">{Math.round(displayMetrics.tasaConversion)}</p>
+                                <p className="text-xl font-bold text-gray-900">{Math.round(displayMetrics.tasaConversion)}</p>
                                 <p className="text-sm text-gray-500 mt-1">hacen reserva</p>
                             </div>
                             <Target className="w-10 h-10 text-purple-500" />
@@ -394,7 +394,7 @@ export default function Analytics() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Velocidad de respuesta</p>
-                                <p className="text-3xl font-bold text-gray-900">{displayMetrics.tiempoRespuesta?.toFixed(1)}s</p>
+                                <p className="text-xl font-bold text-gray-900">{displayMetrics.tiempoRespuesta?.toFixed(1)}s</p>
                                 <p className="text-sm text-gray-500 mt-1">súper rápido</p>
                             </div>
                             <Clock className="w-10 h-10 text-orange-500" />
@@ -508,7 +508,7 @@ export default function Analytics() {
                                     <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 rounded-full mb-4">
                                         <Star className="w-10 h-10 text-yellow-500" />
                                     </div>
-                                    <p className="text-3xl font-bold text-gray-900">
+                                    <p className="text-xl font-bold text-gray-900">
                                         {showDemo ? '4.3' : (userMetrics.satisfaccion?.toFixed(1) || '---')}
                                     </p>
                                     <p className="text-gray-600">de 5 estrellas</p>

@@ -207,7 +207,7 @@ const MessageArea = React.memo(({
   return (
     <div className="flex-1 flex flex-col bg-white">
       {/* Header de la conversación */}
-      <div className="p-4 border-b border-gray-200 bg-white">
+      <div className="p-2 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Avatar del cliente */}
@@ -257,7 +257,7 @@ const MessageArea = React.memo(({
       </div>
 
       {/* Área de mensajes */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-2 space-y-4">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-gray-500">
@@ -274,7 +274,7 @@ const MessageArea = React.memo(({
       </div>
 
       {/* Input de mensaje */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      <div className="p-2 border-t border-gray-200 bg-white">
         <div className="flex items-end gap-3">
           {/* Botones de acción */}
           <div className="flex gap-1">

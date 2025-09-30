@@ -26,7 +26,7 @@ const LoadingSpinner = ({
     sm: 'text-sm',
     md: 'text-base',
     lg: 'text-lg',
-    xl: 'text-xl'
+    xl: 'text-base'
   };
 
   const variants = {
@@ -105,7 +105,7 @@ const LoadingSpinner = ({
   return (
     <div className={clsx('flex flex-col items-center gap-3', className)}>
       <div className={clsx(
-        'rounded-full p-3',
+        'rounded-full p-2',
         currentVariant.bgClass
       )}>
         <IconComponent 

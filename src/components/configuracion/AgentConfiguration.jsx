@@ -129,7 +129,7 @@ const AgentConfiguration = React.memo(({ settings, onUpdate }) => {
   );
 
   const ToggleField = ({ label, checked, onChange, help }) => (
-    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+    <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
       <div className="flex-1">
         <div className="font-medium text-gray-900">{label}</div>
         {help && <div className="text-sm text-gray-600">{help}</div>}
@@ -164,7 +164,7 @@ const AgentConfiguration = React.memo(({ settings, onUpdate }) => {
   );
 
   const MetricCard = ({ icon: Icon, label, current, target, unit = '', color = 'blue' }) => (
-    <div className="bg-white p-4 rounded-lg border border-gray-200">
+    <div className="bg-white p-2 rounded-lg border border-gray-200">
       <div className="flex items-center gap-3 mb-3">
         <div className={`p-2 bg-${color}-100 rounded-lg`}>
           <Icon className={`w-4 h-4 text-${color}-600`} />
@@ -568,7 +568,7 @@ const AgentConfiguration = React.memo(({ settings, onUpdate }) => {
               />
             </div>
 
-            <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="bg-purple-50 p-2 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-5 h-5 text-purple-600" />
                 <h5 className="font-medium text-purple-900">Rendimiento Actual</h5>

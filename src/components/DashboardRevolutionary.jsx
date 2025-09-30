@@ -831,7 +831,7 @@ const DashboardRevolutionary = () => {
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-2">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-xl font-bold text-gray-900 mb-2">
                         Dashboard Ejecutivo
                     </h1>
                     <p className="text-gray-600">

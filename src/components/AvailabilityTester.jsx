@@ -149,7 +149,7 @@ const AvailabilityTester = () => {
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-blue-600" />
                     Prueba del Sistema de Disponibilidades
                 </h2>
@@ -236,7 +236,7 @@ const AvailabilityTester = () => {
                 {results && (
                     <div className="space-y-4">
                         {/* Validación */}
-                        <div className={`p-4 rounded-lg border-l-4 ${
+                        <div className={`p-2 rounded-lg border-l-4 ${
                             results.validation.valid 
                                 ? 'bg-green-50 border-green-500' 
                                 : 'bg-red-50 border-red-500'
@@ -257,7 +257,7 @@ const AvailabilityTester = () => {
                         </div>
 
                         {/* Disponibilidad */}
-                        <div className={`p-4 rounded-lg border-l-4 ${
+                        <div className={`p-2 rounded-lg border-l-4 ${
                             results.availability.hasAvailability 
                                 ? 'bg-green-50 border-green-500' 
                                 : 'bg-yellow-50 border-yellow-500'
@@ -302,7 +302,7 @@ const AvailabilityTester = () => {
 
                         {/* Horarios del día */}
                         {results.timeSlots.shifts.length > 0 && (
-                            <div className="p-4 bg-gray-50 rounded-lg">
+                            <div className="p-2 bg-gray-50 rounded-lg">
                                 <h3 className="font-semibold text-gray-900 mb-3">
                                     Horarios disponibles ({results.timeSlots.totalSlots} slots totales)
                                 </h3>

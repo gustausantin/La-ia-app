@@ -479,7 +479,7 @@ El equipo del restaurante`,
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                             <Brain className="w-6 h-6 text-purple-600" />
                             CRM Inteligente
                         </h1>
@@ -544,15 +544,15 @@ El equipo del restaurante`,
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-gray-600">Inactivos contactados</span>
-                                    <span className="text-2xl font-bold text-gray-900">{dashboardMetrics.reactivations.contacted}</span>
+                                    <span className="text-lg font-bold text-gray-900">{dashboardMetrics.reactivations.contacted}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-gray-600">Volvieron</span>
-                                    <span className="text-2xl font-bold text-green-600">{dashboardMetrics.reactivations.returned}</span>
+                                    <span className="text-lg font-bold text-green-600">{dashboardMetrics.reactivations.returned}</span>
                                 </div>
-                                <div className="bg-green-50 rounded-lg p-3">
+                                <div className="bg-green-50 rounded-lg p-2">
                                     <div className="text-center">
-                                        <div className="text-2xl font-bold text-green-700">{dashboardMetrics.reactivations.percentage}%</div>
+                                        <div className="text-lg font-bold text-green-700">{dashboardMetrics.reactivations.percentage}%</div>
                                         <div className="text-sm text-green-600">Tasa de éxito 🔥</div>
                                     </div>
                                 </div>
@@ -571,7 +571,7 @@ El equipo del restaurante`,
                             <div className="space-y-3">
                                 <button 
                                     onClick={() => setActiveTab('messages')}
-                                    className="w-full flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                                    className="w-full flex items-center justify-between p-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                                 >
                                     <span className="text-blue-800">Enviar bienvenidas</span>
                                     <span className="bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
@@ -581,7 +581,7 @@ El equipo del restaurante`,
                                 
                                 <button 
                                     onClick={() => setActiveTab('messages')}
-                                    className="w-full flex items-center justify-between p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                                    className="w-full flex items-center justify-between p-2 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
                                 >
                                     <span className="text-purple-800">Recordar a VIPs</span>
                                     <span className="bg-purple-200 text-purple-800 px-2 py-1 rounded-full text-sm font-medium">
@@ -591,7 +591,7 @@ El equipo del restaurante`,
                                 
                                 <button 
                                     onClick={() => setActiveTab('messages')}
-                                    className="w-full flex items-center justify-between p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
+                                    className="w-full flex items-center justify-between p-2 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
                                 >
                                     <span className="text-orange-800">Reactivar inactivos</span>
                                     <span className="bg-orange-200 text-orange-800 px-2 py-1 rounded-full text-sm font-medium">
@@ -606,23 +606,23 @@ El equipo del restaurante`,
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen de Acciones CRM</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="text-center p-3 bg-blue-50 rounded-lg">
-                                <div className="text-2xl font-bold text-blue-600">{dashboardMetrics.roiBreakdown.welcomes.returned}</div>
+                            <div className="text-center p-2 bg-blue-50 rounded-lg">
+                                <div className="text-lg font-bold text-blue-600">{dashboardMetrics.roiBreakdown.welcomes.returned}</div>
                                 <div className="text-sm text-blue-700">👋 Bienvenidas exitosas</div>
                                 <div className="text-xs text-blue-600">€{dashboardMetrics.roiBreakdown.welcomes.revenue}</div>
                             </div>
-                            <div className="text-center p-3 bg-orange-50 rounded-lg">
-                                <div className="text-2xl font-bold text-orange-600">{dashboardMetrics.roiBreakdown.reactivations.returned}</div>
+                            <div className="text-center p-2 bg-orange-50 rounded-lg">
+                                <div className="text-lg font-bold text-orange-600">{dashboardMetrics.roiBreakdown.reactivations.returned}</div>
                                 <div className="text-sm text-orange-700">🔄 Clientes recuperados</div>
                                 <div className="text-xs text-orange-600">€{dashboardMetrics.roiBreakdown.reactivations.revenue}</div>
                             </div>
-                            <div className="text-center p-3 bg-purple-50 rounded-lg">
-                                <div className="text-2xl font-bold text-purple-600">{dashboardMetrics.roiBreakdown.vips.returned}</div>
+                            <div className="text-center p-2 bg-purple-50 rounded-lg">
+                                <div className="text-lg font-bold text-purple-600">{dashboardMetrics.roiBreakdown.vips.returned}</div>
                                 <div className="text-sm text-purple-700">👑 VIPs activos</div>
                                 <div className="text-xs text-purple-600">€{dashboardMetrics.roiBreakdown.vips.revenue}</div>
                             </div>
-                            <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                                <div className="text-2xl font-bold text-yellow-600">{dashboardMetrics.roiBreakdown.risk.saved}</div>
+                            <div className="text-center p-2 bg-yellow-50 rounded-lg">
+                                <div className="text-lg font-bold text-yellow-600">{dashboardMetrics.roiBreakdown.risk.saved}</div>
                                 <div className="text-sm text-yellow-700">⚠️ Clientes salvados</div>
                                 <div className="text-xs text-yellow-600">€{dashboardMetrics.roiBreakdown.risk.revenue}</div>
                             </div>
@@ -636,18 +636,18 @@ El equipo del restaurante`,
                             Estado General de Clientes
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="text-center p-4 bg-green-50 rounded-lg">
-                                <div className="text-3xl font-bold text-green-600">{dashboardMetrics.segments.active}</div>
+                            <div className="text-center p-2 bg-green-50 rounded-lg">
+                                <div className="text-xl font-bold text-green-600">{dashboardMetrics.segments.active}</div>
                                 <div className="text-green-700 font-medium">Clientes Activos ⭐</div>
                                 <div className="text-sm text-green-600">Visitando regularmente</div>
                             </div>
-                            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                                <div className="text-3xl font-bold text-yellow-600">{dashboardMetrics.segments.risk}</div>
+                            <div className="text-center p-2 bg-yellow-50 rounded-lg">
+                                <div className="text-xl font-bold text-yellow-600">{dashboardMetrics.segments.risk}</div>
                                 <div className="text-yellow-700 font-medium">En Riesgo ⚠️</div>
                                 <div className="text-sm text-yellow-600">Necesitan atención</div>
                             </div>
-                            <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                <div className="text-3xl font-bold text-gray-600">{dashboardMetrics.segments.inactive}</div>
+                            <div className="text-center p-2 bg-gray-50 rounded-lg">
+                                <div className="text-xl font-bold text-gray-600">{dashboardMetrics.segments.inactive}</div>
                                 <div className="text-gray-700 font-medium">Inactivos 😴</div>
                                 <div className="text-sm text-gray-600">Para reactivar</div>
                             </div>
@@ -661,7 +661,7 @@ El equipo del restaurante`,
                 <div className="space-y-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-900">Mensajes CRM IA</h2>
+                            <h2 className="text-base font-semibold text-gray-900">Mensajes CRM IA</h2>
                             <p className="text-gray-600">Ejecuta el CRM IA para generar mensajes automáticos del día</p>
                         </div>
                         <button
@@ -745,7 +745,7 @@ El equipo del restaurante`,
                                         const customer = customerFeatures.find(c => c.name === message.customer_name);
                                         
                                         return (
-                                            <div key={message.id || index} className="border border-gray-200 rounded-lg p-4">
+                                            <div key={message.id || index} className="border border-gray-200 rounded-lg p-2">
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
@@ -783,7 +783,7 @@ El equipo del restaurante`,
                                                 </div>
                                                 
                                                 {/* Vista previa del mensaje */}
-                                                <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                                                <div className="bg-gray-50 rounded-lg p-2 mb-3">
                                                     <div className="text-sm text-gray-700 space-y-2">
                                                         <div>
                                                             <strong>Para:</strong> {message.customers?.name || message.customer_name}<br/>
@@ -794,7 +794,7 @@ El equipo del restaurante`,
                                                         {/* CONTENIDO COMPLETO DEL MENSAJE */}
                                                         <div className="border-t border-gray-200 pt-2">
                                                             <strong>Mensaje:</strong>
-                                                            <div className="mt-1 p-3 bg-white rounded border whitespace-pre-wrap">
+                                                            <div className="mt-1 p-2 bg-white rounded border whitespace-pre-wrap">
                                                                 {message.content || message.message || `Hola ${message.customers?.name || message.customer_name},
 
 ¡Te echamos de menos en nuestro restaurante! 
@@ -886,7 +886,7 @@ El equipo del restaurante`}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-900">Automatización CRM</h2>
+                            <h2 className="text-base font-semibold text-gray-900">Automatización CRM</h2>
                             <p className="text-gray-600">Activa o desactiva reglas automáticas de mensajería</p>
                         </div>
                         <div className="text-sm text-gray-500">
@@ -944,7 +944,7 @@ El equipo del restaurante`}
                             {automationRules.length > 0 ? (
                                 <div className="space-y-4">
                                     {automationRules.map((rule) => (
-                                        <div key={rule.id} className="border border-gray-200 rounded-lg p-4">
+                                        <div key={rule.id} className="border border-gray-200 rounded-lg p-2">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <h3 className="font-medium text-gray-900">{rule.name}</h3>
@@ -1037,7 +1037,7 @@ El equipo del restaurante`}
                             <div className="space-y-4">
                                 <h3 className="font-medium text-gray-900">Segmentación AIVI</h3>
                                 
-                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
                                     <h4 className="font-medium text-blue-900 mb-2">💡 ¿Qué es AIVI?</h4>
                                     <p className="text-sm text-blue-800">
                                         <strong>AIVI = Ritmo Personal del Cliente</strong><br/>
@@ -1086,7 +1086,7 @@ El equipo del restaurante`}
                                             </div>
                                         </div>
                                         
-                                        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                        <div className="bg-green-50 p-2 rounded-lg border border-green-200">
                                             <p className="text-sm text-green-800 mb-2">
                                                 <strong>¿Qué significa este valor?</strong>
                                             </p>
@@ -1125,7 +1125,7 @@ El equipo del restaurante`}
                                             </div>
                                         </div>
                                         
-                                        <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                                        <div className="bg-orange-50 p-2 rounded-lg border border-orange-200">
                                             <p className="text-sm text-orange-800 mb-2">
                                                 <strong>¿Qué significa este valor?</strong>
                                             </p>
@@ -1164,7 +1164,7 @@ El equipo del restaurante`}
                                             </div>
                                         </div>
                                         
-                                        <div className="bg-red-50 p-3 rounded-lg border border-red-200">
+                                        <div className="bg-red-50 p-2 rounded-lg border border-red-200">
                                             <p className="text-sm text-red-800 mb-2">
                                                 <strong>¿Qué significa este valor?</strong>
                                             </p>
@@ -1209,7 +1209,7 @@ El equipo del restaurante`}
                                         </div>
                                     </div>
                                     
-                                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                    <div className="bg-purple-50 p-2 rounded-lg border border-purple-200">
                                         <p className="text-sm text-purple-800 mb-2">
                                             <strong>¿Qué significa este valor?</strong>
                                         </p>
@@ -1248,7 +1248,7 @@ El equipo del restaurante`}
                                         </div>
                                     </div>
                                     
-                                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                    <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
                                         <p className="text-sm text-blue-800 mb-2">
                                             <strong>¿Qué significa este valor?</strong>
                                         </p>
@@ -1260,7 +1260,7 @@ El equipo del restaurante`}
                                     </div>
                                 </div>
 
-                                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                <div className="bg-yellow-50 p-2 rounded-lg border border-yellow-200">
                                     <h4 className="font-medium text-yellow-900 mb-2">🚀 Integración con Plantillas CRM</h4>
                                     <p className="text-sm text-yellow-800 mb-3">
                                         El CRM v2 usa las plantillas existentes en "Plantillas CRM". 
