@@ -90,7 +90,7 @@ const SystemStatus = ({ status, metrics }) => {
     const StatusIcon = config.icon;
 
     return (
-        <div className={`${config.bgColor} ${config.borderColor} border rounded-xl p-4 mb-4`}>
+        <div className={`${config.bgColor} ${config.borderColor} border rounded-xl p-3 mb-4`}>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 ${config.color} rounded-full flex items-center justify-center`}>
@@ -153,7 +153,7 @@ const NoShowWidget = ({ data, onViewDetails }) => {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border p-4">
+        <div className="bg-white rounded-xl shadow-sm border p-3">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -286,7 +286,7 @@ const ReturningCustomersWidget = ({ data }) => {
     const getCustomerValue = (visits) => visits * avgTicket;
     
     return (
-        <div className="bg-white rounded-xl shadow-sm border p-4">
+        <div className="bg-white rounded-xl shadow-sm border p-3">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
@@ -423,7 +423,7 @@ const ReturningCustomersWidget = ({ data }) => {
 // Widget de CRM Oportunidades
 const CRMOpportunitiesWidget = ({ data, onReviewAction }) => {
     return (
-        <div className="bg-white rounded-xl shadow-sm border p-4">
+        <div className="bg-white rounded-xl shadow-sm border p-3">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
@@ -481,7 +481,7 @@ const TotalValueWidget = ({ data }) => {
     const totalValue = (data.noShowsRecovered || 0) + (data.crmGenerated || 0) + (data.automationSavings || 0);
     
     return (
-        <div className="bg-white border-2 border-blue-200 rounded-xl shadow-sm p-4">
+        <div className="bg-white border-2 border-blue-200 rounded-xl shadow-sm p-3">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
@@ -502,7 +502,7 @@ const TotalValueWidget = ({ data }) => {
             </div>
 
             {/* Total destacado arriba */}
-            <div className="mb-4 text-center bg-blue-50 rounded-lg p-4">
+            <div className="mb-4 text-center bg-blue-50 rounded-lg p-3">
                 <div className="text-4xl font-bold text-blue-600">{totalValue}€</div>
                 <div className="text-base text-gray-600 font-medium">generados esta semana</div>
             </div>
@@ -545,7 +545,7 @@ const TotalValueWidget = ({ data }) => {
                     <div className="text-sm font-medium text-gray-700 mb-3">📊 Análisis de ROI Detallado:</div>
                     
                     {/* Comparación con costos */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 bg-green-50 rounded-lg">
                             <div className="text-sm font-medium text-green-700">Valor Generado</div>
                             <div className="text-xl font-bold text-green-600">{totalValue}€</div>
@@ -827,7 +827,7 @@ const DashboardRevolutionary = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4">
+        <div className="min-h-screen bg-gray-50 p-3">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-4">
@@ -846,7 +846,7 @@ const DashboardRevolutionary = () => {
                 />
 
                 {/* Widgets Principales */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
                     <NoShowWidget 
                         data={dashboardData.noShowData}
                         onViewDetails={() => navigate('/no-shows')}
