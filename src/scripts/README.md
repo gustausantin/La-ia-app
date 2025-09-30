@@ -79,10 +79,11 @@
 - **Cuándo usar:** Setup de analytics de no-shows
 - **Resultado:** Función `get_restaurant_noshow_metrics()` disponible
 
-#### **`fix-availability-generator.sql`**
-- **Propósito:** Reparar/crear función generadora de disponibilidad
-- **Cuándo usar:** Si el generador de disponibilidad falla
-- **Resultado:** Función `generate_availability_slots()` funcional
+#### **`fix-availability-generator-simple.sql`** ⭐ **NUEVO - SIMPLIFICADO**
+- **Propósito:** Función generadora simplificada SIN TURNOS
+- **Cuándo usar:** Para generar slots usando solo operating_hours
+- **Resultado:** Función `generate_availability_slots_simple()` funcional
+- **Mejoras:** Eliminada complejidad de turnos, solo horarios generales
 
 #### **`noshow-metrics-queries.sql`**
 - **Propósito:** Queries optimizadas para métricas de no-shows
