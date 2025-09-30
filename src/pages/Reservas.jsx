@@ -118,6 +118,8 @@ const sendNoShowMessage = async (reservation) => {
 import { processReservationCompletion } from "../services/CRMService";
 import AvailabilityManager from "../components/AvailabilityManager";
 import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
+import { useRegenerationModal } from '../hooks/useRegenerationModal';
+import RegenerationRequiredModal from '../components/RegenerationRequiredModal';
 
 // DATOS NECESARIOS DE SUPABASE:
 // - tabla: reservations (con campos 'source' y 'channel')
@@ -523,6 +525,7 @@ export default function Reservas() {
     const navigate = useNavigate();
     const location = useLocation();
     const changeDetection = useAvailabilityChangeDetection(restaurantId);
+    const { isModalOpen, modalChangeReason, modalChangeDetails, showRegenerationModal, closeModal } = useRegenerationModal();
 
     const [loading, setLoading] = useState(true);
     const [reservations, setReservations] = useState([]);
@@ -2285,11 +2288,12 @@ export default function Reservas() {
                                     
                                     toast.success('✅ Política de Reservas guardada correctamente');
                                     
-                                    // 🚨 NOTIFICAR CAMBIO PARA REGENERAR DISPONIBILIDADES
-                                    changeDetection.onPolicyChange(updatedSettings);
-                                    toast('⚠️ Política actualizada - Se recomienda regenerar disponibilidades', {
-                                        icon: '⚠️',
-                                        duration: 4000
+                                    // 🚨 VERIFICAR SI EXISTEN SLOTS ANTES DE MOSTRAR MODAL
+                                    changeDetection.checkExistingSlots().then(slotsExist => {
+                                        if (slotsExist) {
+                                            changeDetection.onPolicyChange(updatedSettings);
+                                            showRegenerationModal('policy_changed', 'Política de reservas modificada');
+                                        }
                                     });
                                     
                                 } catch (error) {
@@ -2308,6 +2312,14 @@ export default function Reservas() {
                     </div>
                 </div>
             )}
+            
+            {/* 🚨 MODAL BLOQUEANTE DE REGENERACIÓN */}
+            <RegenerationRequiredModal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                changeReason={modalChangeReason}
+                changeDetails={modalChangeDetails}
+            />
         </div>
     );
 }
