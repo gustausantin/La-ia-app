@@ -330,7 +330,7 @@ Gestiona horarios del restaurante, disponibilidad del agente IA y eventos especi
 **⚠️ IMPORTANTE:** Los datos son **SIMULADOS/MOCK**
 
 **Datos reales que debería usar:**
-- Tabla `restaurant_schedule` - Horarios de apertura
+- Campo `restaurants.settings.operating_hours` - Horarios simplificados (sin turnos)
 - Tabla `agent_schedule` - Horarios del agente por canal
 - Tabla `special_events` - Eventos y cierres
 - Tabla `capacity_settings` - Configuración de capacidad
