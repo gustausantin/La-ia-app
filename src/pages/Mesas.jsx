@@ -1007,25 +1007,24 @@ export default function Mesas() {
                     });
                 }
 
-                // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
+                // Guardar referencia de la mesa antes de borrar
                 const deletedTable = tables.find(t => t.id === tableId);
+                
+                loadTables();
+                
+                // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
                 if (deletedTable) {
-                    // Registrar el cambio para el sistema
-                    changeDetection.onTableChange('removed', deletedTable);
-                    
-                    // MOSTRAR MODAL solo si ya existen disponibilidades generadas
-                    changeDetection.checkExistingSlots().then(slotsExist => {
+                    // Verificar slots y mostrar modal
+                    setTimeout(async () => {
+                        const slotsExist = await changeDetection.checkExistingSlots();
                         if (slotsExist) {
-                            setTimeout(() => {
-                                showRegenerationModal('table_deleted', `Mesa "${deletedTable.name}" eliminada`);
-                            }, 100);
+                            changeDetection.onTableChange('removed', deletedTable);
+                            showRegenerationModal('table_deleted', `Mesa "${deletedTable.name}" eliminada`);
                         } else {
                             console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
                         }
-                    });
+                    }, 300);
                 }
-                
-                loadTables();
             } catch (error) {
                 toast.error("Error al eliminar la mesa");
             }
