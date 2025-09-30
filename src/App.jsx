@@ -166,11 +166,7 @@ function AppContent() {
               />
               <Route 
                 path="/plantillas" 
-                element={
-                  <Suspense fallback={<PageLoading />}>
-                    <PlantillasCRM />
-                  </Suspense>
-                } 
+                element={<Navigate to="/crm-inteligente" state={{ autoOpenPlantillas: true }} replace />}
               />
               <Route 
                 path="/mesas" 

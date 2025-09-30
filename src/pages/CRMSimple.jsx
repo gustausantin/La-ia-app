@@ -1,6 +1,7 @@
 // CRM SIMPLE - Una sola página con todo claro
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { 
     Bell, 
@@ -12,13 +13,18 @@ import {
     MessageSquare,
     DollarSign,
     Info,
-    CheckCircle
+    CheckCircle,
+    Mail,
+    LayoutDashboard
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import PlantillasCRM from './PlantillasCRM'; // Importar componente de Plantillas
 
 const CRMSimple = () => {
     const { restaurant } = useAuthContext();
+    const location = useLocation();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [alertas, setAlertas] = useState([]);
     const [stats, setStats] = useState({
@@ -27,12 +33,28 @@ const CRMSimple = () => {
         valorGenerado: 0
     });
     const [mostrarInfo, setMostrarInfo] = useState(false);
+    
+    // Estado para tabs
+    const [activeTab, setActiveTab] = useState('dashboard');
+
+    // Detectar si viene de /plantillas para abrir el tab correcto
+    useEffect(() => {
+        if (location.state?.autoOpenPlantillas) {
+            setActiveTab('plantillas');
+        }
+    }, [location.state]);
 
     useEffect(() => {
         if (restaurant?.id) {
             cargarDatos();
         }
     }, [restaurant]);
+    
+    // Definir tabs
+    const tabs = [
+        { id: 'dashboard', label: 'Dashboard CRM', icon: LayoutDashboard },
+        { id: 'plantillas', label: 'Plantillas', icon: Mail }
+    ];
 
     const cargarDatos = async () => {
         try {
@@ -209,9 +231,38 @@ const CRMSimple = () => {
         <div className="p-6 max-w-7xl mx-auto">
             {/* HEADER */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">CRM - Centro de Mensajes</h1>
+                <h1 className="text-2xl font-bold text-gray-900">CRM Inteligente</h1>
                 <p className="text-gray-600">Gestiona la comunicación con tus clientes de forma inteligente</p>
             </div>
+
+            {/* TABS DE NAVEGACIÓN */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+                <div className="border-b border-gray-200">
+                    <nav className="flex space-x-8 px-6" aria-label="Tabs">
+                        {tabs.map((tab) => {
+                            const Icon = tab.icon;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`${
+                                        activeTab === tab.id
+                                            ? 'border-purple-500 text-purple-600'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                                >
+                                    <Icon className="w-4 h-4" />
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </div>
+            </div>
+
+            {/* CONTENIDO POR TAB */}
+            {activeTab === 'dashboard' && (
+            <div>
 
             {/* MINI DASHBOARD */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -346,6 +397,13 @@ const CRMSimple = () => {
                     </div>
                 )}
             </div>
+            </div>
+            )}
+
+            {/* TAB DE PLANTILLAS */}
+            {activeTab === 'plantillas' && (
+                <PlantillasCRM />
+            )}
         </div>
     );
 };
