@@ -253,10 +253,9 @@ const AvailabilityManager = () => {
             const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
 
 
-            const { data, error } = await supabase.rpc('regenerate_availability_smart', {
+            // Usar cleanup_and_regenerate_availability ya que regenerate_availability_smart no existe
+            const { data, error } = await supabase.rpc('cleanup_and_regenerate_availability', {
                 p_restaurant_id: restaurantId,
-                p_change_type: changeType,
-                p_change_data: changeData,
                 p_start_date: today,
                 p_end_date: endDate
             });
@@ -265,12 +264,19 @@ const AvailabilityManager = () => {
                 console.error('❌ Error en regeneración inteligente:', error);
                 throw error;
             }
-
+            
+            // Verificar si la respuesta es exitosa
+            if (data && typeof data === 'object') {
+                if (data.success === false) {
+                    console.error('❌ Error en la función:', data.error);
+                    throw new Error(data.error || 'Error regenerando disponibilidades');
+                }
+            }
 
             toast.dismiss('smart-generating');
             
             // Mostrar resultados detallados
-            const results = data; // RPC devuelve objeto directo, no array
+            const results = data; // RPC devuelve objeto directo
             const duration = restaurantSettings?.reservation_duration || 90;
             const endDateFormatted = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
             
@@ -430,32 +436,69 @@ const AvailabilityManager = () => {
                 throw error;
             }
             
+            // Verificar si la respuesta es exitosa
+            if (data && typeof data === 'object') {
+                if (data.success === false) {
+                    console.error('❌ Error en la función:', data.error);
+                    throw new Error(data.error || 'Error generando disponibilidades');
+                }
+            }
+            
             // 🔍 DEBUG: Ver exactamente qué devuelve la función SQL
             console.log('🔍 DEBUG RESULTADO SQL:');
             console.log('   📊 data completo:', data);
-            console.log('   📊 slots_created:', data?.slots_created);
             console.log('   📊 success:', data?.success);
+            console.log('   📊 stats:', data?.stats);
+            console.log('   📊 config:', data?.config);
 
             toast.dismiss('generating');
             
-            // Crear mensaje inteligente basado en la acción
-            const endDateFormatted = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
+            // Verificar el resultado
+            if (!data || !data.success) {
+                const errorMessage = data?.error || 'Error desconocido';
+                toast.error(`❌ ${errorMessage}`);
+                return;
+            }
+            
+            // Extraer estadísticas y configuración
+            const stats = data.stats || {};
+            const config = data.config || {};
+            const dateRange = data.date_range || {};
+            
+            const slotsCreated = stats.slots_created || 0;
+            const slotsSkipped = stats.slots_skipped || 0;
+            const daysProcessed = stats.days_processed || 0;
+            const daysClosed = stats.days_closed || 0;
+            const tableCount = stats.table_count || 0;
+            const duration = config.duration_minutes || 90;
+            
+            const endDateFormatted = dateRange.end ? format(new Date(dateRange.end), 'dd/MM/yyyy') : format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
             
             let summaryMessage = '';
             
-            if (data.action === 'no_changes_detected') {
-                // No había cambios - mostrar mensaje informativo
-                summaryMessage = `ℹ️ No hay disponibilidades nuevas que generar:
+            if (slotsCreated === 0 && slotsSkipped === 0) {
+                // No se generaron slots
+                if (daysClosed === daysProcessed) {
+                    summaryMessage = `⚠️ No se generaron disponibilidades:
 
-📊 ESTADO ACTUAL:
-• ${data.current_slots || 0} slots ya existentes
-• Período: HOY hasta ${endDateFormatted} (${advanceDays} días)
-• Duración: ${duration} min por reserva
-• Última generación: ${data.last_generation ? new Date(data.last_generation).toLocaleString() : 'No disponible'}
+📊 ANÁLISIS:
+• Días procesados: ${daysProcessed}
+• Días cerrados: ${daysClosed}
+• Mesas disponibles: ${tableCount}
 
-✅ Motivo: ${data.reason}
+❌ Todos los días están cerrados en el período seleccionado.
+🎯 Verifica los horarios de apertura en Configuración.`;
+                } else {
+                    summaryMessage = `ℹ️ No se generaron nuevos slots:
 
-🎯 Las disponibilidades están actualizadas.`;
+📊 ESTADO:
+• Slots existentes preservados: ${slotsSkipped}
+• Días procesados: ${daysProcessed}
+• Días cerrados: ${daysClosed}
+• Período: HOY hasta ${endDateFormatted}
+
+✅ Las disponibilidades ya estaban actualizadas.`;
+                }
                 
                 toast.info(summaryMessage, { 
                     duration: 6000,
@@ -466,20 +509,17 @@ const AvailabilityManager = () => {
                     }
                 });
             } else {
-                // Hubo regeneración - mostrar mensaje de éxito
-                const changesDetected = data.changes_detected ? data.changes_detected.join(', ') : 'Cambios detectados';
-                
-                summaryMessage = `✅ Disponibilidades regeneradas exitosamente:
+                // Se generaron slots exitosamente
+                summaryMessage = `✅ Disponibilidades generadas exitosamente:
 
 📊 RESUMEN:
-• ${data.slots_created || 0} slots nuevos creados
-• ${data.slots_updated || 0} slots actualizados
-• ${data.slots_preserved || 0} reservas preservadas
-• Desde HOY hasta ${endDateFormatted} (${advanceDays} días)
+• ${slotsCreated} slots nuevos creados
+• ${slotsSkipped} slots existentes preservados
+• ${tableCount} mesas procesadas
+• ${daysProcessed} días analizados
+• ${daysClosed} días cerrados excluidos
+• Desde HOY hasta ${endDateFormatted}
 • Duración por reserva: ${duration} min
-
-🔍 CAMBIOS DETECTADOS:
-• ${changesDetected}
 
 🎯 Las disponibilidades están listas para recibir reservas.`;
                 
@@ -493,42 +533,40 @@ const AvailabilityManager = () => {
                 });
             }
 
-            // 🔒 CONSULTAR DATOS REALES POST-GENERACIÓN
-            console.log('📊 Consultando slots reales creados...');
+            // 🔒 VERIFICAR DATOS REALES POST-GENERACIÓN
+            console.log('📊 Verificando resultado de generación...');
             
-            // Contar slots reales creados en los últimos 5 minutos
-            const { count: recentSlotsCount, error: countError } = await supabase
+            // Contar slots totales actuales
+            const { count: totalSlotsCount, error: countError } = await supabase
                 .from('availability_slots')
                 .select('id', { count: 'exact', head: true })
                 .eq('restaurant_id', restaurantId)
-                .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
+                .gte('slot_date', format(new Date(), 'yyyy-MM-dd'));
             
-            const actualSlotsCreated = countError ? 0 : (recentSlotsCount || 0);
+            const totalSlots = countError ? 0 : (totalSlotsCount || 0);
             
-            console.log('📊 Slots realmente creados en los últimos 5 min:', actualSlotsCreated);
+            console.log('📊 Total de slots en el sistema:', totalSlots);
             console.log('📊 Respuesta de función SQL:', data);
-            
-            // Usar datos reales o fallback a la respuesta SQL
-            const slotsCreated = actualSlotsCreated > 0 ? actualSlotsCreated : (data?.slots_created || 0);
-            const slotsUpdated = data?.slots_updated || 0;
-            const slotsPreserved = data?.slots_preserved || 0;
             
             const successData = {
                 slotsCreated: slotsCreated,
+                slotsSkipped: slotsSkipped,
                 dateRange: `HOY hasta ${endDateFormatted}`,
                 duration: duration,
-                buffer: 15, // Buffer por defecto en minutos
+                tableCount: tableCount,
+                daysProcessed: daysProcessed,
+                daysClosed: daysClosed,
                 timestamp: new Date().toLocaleString(),
-                // 🔒 DATOS REALES CALCULADOS
-                totalAvailable: Math.max(0, slotsCreated - slotsPreserved), // Nuevos slots disponibles
-                totalOccupied: 0,  // Los ocupados se cargarán con stats reales
-                totalReserved: slotsPreserved, // Slots con reservas preservadas
-                actuallyCreated: actualSlotsCreated // Slots realmente creados según consulta directa
+                totalSlots: totalSlots
             };
             
-            // Actualizar el mensaje de éxito con datos reales
-            if (actualSlotsCreated > 0) {
-                toast.success(`✅ ¡Generación exitosa!\n\n📊 SLOTS CREADOS: ${actualSlotsCreated}\n🕒 Duración: ${duration} min\n📅 Período: ${successData.dateRange}`, {
+            // Persistir éxito
+            setGenerationSuccess(successData);
+            localStorage.setItem(`generationSuccess_${restaurantId}`, JSON.stringify(successData));
+            
+            // Actualizar el mensaje de éxito final
+            if (slotsCreated > 0) {
+                toast.success(`✅ ¡Generación completa!\n\n📊 SLOTS CREADOS: ${slotsCreated}\n🏪 MESAS: ${tableCount}\n📅 PERÍODO: ${successData.dateRange}`, {
                     duration: 6000,
                     style: { 
                         minWidth: '350px',
@@ -710,13 +748,20 @@ const AvailabilityManager = () => {
             const { data, error } = await supabase.rpc('cleanup_and_regenerate_availability', {
                 p_restaurant_id: restaurantId,
                 p_start_date: today,
-                p_end_date: endDate,
-                p_slot_duration_minutes: duration
+                p_end_date: endDate
             });
 
             if (error) {
                 console.error('❌ Error en limpieza inteligente:', error);
                 throw error;
+            }
+            
+            // Verificar si la respuesta es exitosa
+            if (data && typeof data === 'object') {
+                if (data.success === false) {
+                    console.error('❌ Error en la función:', data.error);
+                    throw new Error(data.error || 'Error en limpieza y regeneración');
+                }
             }
 
             console.log('🧠 Resultado limpieza inteligente:', data);
@@ -724,14 +769,20 @@ const AvailabilityManager = () => {
             toast.dismiss('smart-cleanup');
 
             if (data?.success) {
-                const slotsCreated = data?.total_slots_created || 0;
-                const reservationsProtected = data?.reservations_protected || 0;
+                // Extraer datos del resultado anidado
+                const cleanup = data.cleanup || {};
+                const generation = data.generation || {};
+                const stats = generation.stats || {};
+                
+                const slotsCreated = stats.slots_created || 0;
+                const slotsDeleted = cleanup.slots_deleted || 0;
+                const slotsPreserved = cleanup.slots_preserved || 0;
 
                 toast.success(
                     `🧠 Limpieza Inteligente Completada:\n\n` +
-                    `✅ ${slotsCreated} slots generados\n` +
-                    `🛡️ ${reservationsProtected} reservas protegidas\n` +
-                    `🗑️ Slots sin reservas eliminados\n\n` +
+                    `✅ ${slotsCreated} slots nuevos generados\n` +
+                    `🗑️ ${slotsDeleted} slots obsoletos eliminados\n` +
+                    `🛡️ ${slotsPreserved} slots con reservas protegidos\n\n` +
                     `¡Disponibilidades actualizadas correctamente!`,
                     { 
                         duration: 6000,
