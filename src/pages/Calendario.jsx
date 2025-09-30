@@ -942,36 +942,36 @@ export default function Calendario() {
                             <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-3">
                                 <CheckCircle className="w-6 h-6 text-green-600" />
                                 </div>
-                            <p className="text-2xl font-bold text-gray-900">{stats.daysOpen}</p>
+                            <p className="text-xl font-bold text-gray-900">{stats.daysOpen}</p>
                                     <p className="text-sm text-gray-600">Días abiertos</p>
-                            <p className="text-xs text-gray-500">de 7 días</p>
+                            <p className="text-sm text-gray-500">de 7 días</p>
                         </div>
 
                         <div className="text-center">
                             <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-3">
                                 <Clock className="w-6 h-6 text-blue-600" />
                                 </div>
-                            <p className="text-2xl font-bold text-gray-900">{stats.weeklyHours}h</p>
+                            <p className="text-xl font-bold text-gray-900">{stats.weeklyHours}h</p>
                                     <p className="text-sm text-gray-600">Horas semanales</p>
-                            <p className="text-xs text-gray-500">tiempo de servicio</p>
+                            <p className="text-sm text-gray-500">tiempo de servicio</p>
                         </div>
 
                         <div className="text-center">
                             <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mx-auto mb-3">
                                 <MessageSquare className="w-6 h-6 text-purple-600" />
                                 </div>
-                            <p className="text-2xl font-bold text-gray-900">{stats.activeChannels}</p>
+                            <p className="text-xl font-bold text-gray-900">{stats.activeChannels}</p>
                             <p className="text-sm text-gray-600">Canales activos</p>
-                            <p className="text-xs text-gray-500">comunicación</p>
+                            <p className="text-sm text-gray-500">comunicación</p>
                         </div>
 
                         <div className="text-center">
                             <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mx-auto mb-3">
                                 <TrendingUp className="w-6 h-6 text-orange-600" />
                                 </div>
-                            <p className="text-2xl font-bold text-gray-900">{stats.occupancy}%</p>
+                            <p className="text-xl font-bold text-gray-900">{stats.occupancy}%</p>
                             <p className="text-sm text-gray-600">Ocupación</p>
-                            <p className="text-xs text-gray-500">última semana</p>
+                            <p className="text-sm text-gray-500">última semana</p>
                         </div>
                     </div>
                 </div>
