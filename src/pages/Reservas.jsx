@@ -1,7 +1,7 @@
 // Reservas.jsx - Sistema COMPLETO de Gestión de Reservas con Agente IA para Son-IA
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { format, parseISO, addDays, subDays, startOfMonth, endOfMonth } from "date-fns";
@@ -521,12 +521,22 @@ export default function Reservas() {
     const { restaurant, restaurantId, isReady, addNotification } =
         useAuthContext();
     const navigate = useNavigate();
+    const location = useLocation();
     const changeDetection = useAvailabilityChangeDetection(restaurantId);
 
     const [loading, setLoading] = useState(true);
     const [reservations, setReservations] = useState([]);
     const [selectedReservations, setSelectedReservations] = useState(new Set());
     const [activeTab, setActiveTab] = useState('reservas'); // 'reservas' o 'disponibilidades'
+
+    // 🚨 Auto-abrir tab de disponibilidades si viene desde el modal de regeneración
+    useEffect(() => {
+        if (location.state?.autoOpenAvailability) {
+            setActiveTab('disponibilidades');
+            // Limpiar el state para que no se repita
+            window.history.replaceState({}, document.title);
+        }
+    }, [location]);
     const [tables, setTables] = useState([]);
     const [policySettings, setPolicySettings] = useState({
         min_party_size: 1,

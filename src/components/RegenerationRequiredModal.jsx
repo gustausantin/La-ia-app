@@ -155,7 +155,7 @@ const RegenerationRequiredModal = ({
                                 ✅ <strong>SOLUCIÓN:</strong>
                             </p>
                             <p className="text-gray-700">
-                                Regenera las disponibilidades <strong>AHORA</strong> para que los cambios se apliquen correctamente.
+                                Actualiza los horarios de reserva <strong>AHORA</strong> para que los cambios se reflejen correctamente en el calendario de reservas.
                             </p>
                         </div>
 
@@ -170,7 +170,7 @@ const RegenerationRequiredModal = ({
                                 }}
                             >
                                 <RefreshCw className="w-6 h-6" />
-                                REGENERAR DISPONIBILIDADES AHORA
+                                ACTUALIZAR HORARIOS DE RESERVA AHORA
                                 <ArrowRight className="w-6 h-6" />
                             </button>
 
@@ -187,7 +187,7 @@ const RegenerationRequiredModal = ({
                         {/* Advertencia final */}
                         <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                             <p className="text-sm text-red-800 text-center">
-                                <strong>⏰ IMPORTANTE:</strong> Mientras no regeneres, tus clientes verán información desactualizada
+                                <strong>⏰ IMPORTANTE:</strong> Hasta que actualices, tus clientes verán horarios incorrectos
                             </p>
                         </div>
                     </div>
