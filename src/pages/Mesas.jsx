@@ -99,7 +99,7 @@ const AgentInsightsPanel = ({ stats, suggestions }) => {
                 </span>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div>
                     <p className="text-2xl font-bold">
                         {stats.agentAssignments || 0}
@@ -213,14 +213,14 @@ const TableCard = ({
     if (viewMode === "list") {
         return (
             <div
-                className={`bg-white border rounded-lg p-4 hover:shadow-md transition-all duration-200 ${stateInfo.color} ${
+                className={`bg-white border rounded-lg p-3 hover:shadow-md transition-all duration-200 ${stateInfo.color} ${
                     agentPreference && agentPreference.score > 80
                         ? "ring-2 ring-purple-400"
                         : ""
                 }`}
             >
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         <div
                             className={`w-12 h-12 ${stateInfo.bgColor} rounded-lg flex items-center justify-center text-2xl border relative`}
                         >
@@ -344,7 +344,7 @@ const TableCard = ({
     // Vista de grid (tarjetas cuadradas)
     return (
         <div
-            className={`relative bg-white border-2 rounded-xl p-4 transition-all duration-200 hover:shadow-lg cursor-pointer ${stateInfo.color} ${
+            className={`relative bg-white border-2 rounded-xl p-3 transition-all duration-200 hover:shadow-lg cursor-pointer ${stateInfo.color} ${
                 agentPreference && agentPreference.score > 80
                     ? "ring-2 ring-purple-400"
                     : ""
@@ -1078,7 +1078,7 @@ export default function Mesas() {
         <div className="max-w-7xl mx-auto space-y-6">
             {/* Header mejorado con estadísticas */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                             Gestión de Mesas
@@ -1125,7 +1125,7 @@ export default function Mesas() {
                 </div>
 
                 {/* Estadísticas rápidas */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-6">
                     <div className="bg-gray-50 rounded-lg p-3">
                         <div className="flex items-center justify-between">
                             <div>
@@ -1213,8 +1213,8 @@ export default function Mesas() {
             )}
 
             {/* Filtros y controles */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <div className="flex flex-col lg:flex-row gap-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+                <div className="flex flex-col lg:flex-row gap-3">
                     {/* Búsqueda */}
                     <div className="flex-1 relative">
                         <Search
@@ -1279,7 +1279,7 @@ export default function Mesas() {
                 </div>
 
                 {/* Leyenda de estados */}
-                <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-200 text-sm">
+                <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-200 text-sm">
                     {Object.entries(TABLE_STATES).map(([key, state]) => (
                         <div key={key} className="flex items-center gap-2">
                             <span className="text-lg">{state.icon}</span>
@@ -1295,11 +1295,11 @@ export default function Mesas() {
 
             {/* Vista de mesas */}
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                     {[...Array(8)].map((_, i) => (
                         <div
                             key={i}
-                            className="bg-white border border-gray-200 rounded-xl p-4 animate-pulse"
+                            className="bg-white border border-gray-200 rounded-xl p-3 animate-pulse"
                         >
                             <div className="space-y-3">
                                 <div className="flex justify-between items-start">
@@ -1330,7 +1330,7 @@ export default function Mesas() {
                                         </span>
                                     </div>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
                                         {zoneTables.map((table) => (
                                             <TableCard
                                                 key={table.id}
@@ -1632,7 +1632,7 @@ const TableModal = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 z-50">
             <div className="bg-white rounded-xl max-w-lg w-full">
                 <div className="p-6 border-b border-gray-200">
                     <h3 className="text-xl font-semibold text-gray-900">
@@ -1641,7 +1641,7 @@ const TableModal = ({
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Número de Mesa
@@ -1833,7 +1833,7 @@ const ReservationModal = ({ isOpen, onClose, reservation }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 z-50">
             <div className="bg-white rounded-xl max-w-lg w-full">
                 <div className="p-6 border-b border-gray-200">
                     <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
@@ -1845,7 +1845,7 @@ const ReservationModal = ({ isOpen, onClose, reservation }) => {
                 </div>
 
                 <div className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
                             <p className="text-sm text-gray-600">Cliente</p>
                             <p className="font-medium text-gray-900">
@@ -1970,7 +1970,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
     if (!isOpen || !table) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 z-50">
             <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6 border-b border-gray-200 sticky top-0 bg-white">
                     <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
@@ -1995,8 +1995,8 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                     ) : stats ? (
                         <div className="space-y-6">
                             {/* Métricas principales */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="bg-gray-50 rounded-lg p-3">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-2xl font-bold text-gray-900">
@@ -2010,7 +2010,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                                     </div>
                                 </div>
 
-                                <div className="bg-gray-50 rounded-lg p-4">
+                                <div className="bg-gray-50 rounded-lg p-3">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-2xl font-bold text-gray-900">
@@ -2024,7 +2024,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                                     </div>
                                 </div>
 
-                                <div className="bg-gray-50 rounded-lg p-4">
+                                <div className="bg-gray-50 rounded-lg p-3">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-2xl font-bold text-gray-900">
@@ -2038,7 +2038,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                                     </div>
                                 </div>
 
-                                <div className="bg-gray-50 rounded-lg p-4">
+                                <div className="bg-gray-50 rounded-lg p-3">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-2xl font-bold text-gray-900">
@@ -2059,7 +2059,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                                     <Bot className="w-5 h-5 text-purple-600" />
                                     Rendimiento del Agente IA
                                 </h4>
-                                <div className="grid grid-cols-3 gap-4 text-center">
+                                <div className="grid grid-cols-3 gap-3 text-center">
                                     <div>
                                         <p className="text-3xl font-bold text-purple-600">
                                             {stats.agentAssignments}
@@ -2105,7 +2105,7 @@ const TableStatsModal = ({ isOpen, onClose, table, restaurantId }) => {
                             </div>
 
                             {/* Recomendación del agente */}
-                            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                            <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
                                 <div className="flex items-start gap-3">
                                     <Sparkles className="w-5 h-5 text-purple-600 mt-0.5" />
                                     <div>

@@ -148,7 +148,7 @@ await signOut();
                 {/* Sidebar */}
                 <div className="w-64 bg-white shadow-lg flex flex-col">
                     {/* Logo y Estado del Agente */}
-                    <div className="p-4 border-b border-gray-200">
+                    <div className="p-3 border-b border-gray-200">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center space-x-3">
                                 <Bot className="w-8 h-8 text-purple-600" />
@@ -180,7 +180,7 @@ await signOut();
                     </div>
 
                     {/* Navegación */}
-                    <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                    <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                         {menuItems.map((item) => (
                             <NavLink
                                 key={item.name}
@@ -207,7 +207,7 @@ await signOut();
                     </nav>
 
                     {/* Acciones */}
-                    <div className="p-4 border-t border-gray-200">
+                    <div className="p-3 border-t border-gray-200">
                         <button
                             onClick={forceLogout}
                             className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors font-medium"
@@ -272,7 +272,7 @@ await signOut();
 
                                     {showUserMenu && (
                                         <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                                            <div className="p-4 border-b border-gray-200">
+                                            <div className="p-3 border-b border-gray-200">
                                                 <p className="font-semibold text-gray-900">
                                                     {restaurant?.name}
                                                 </p>
@@ -310,7 +310,7 @@ await signOut();
                     </header>
 
                     {/* Page Content */}
-                    <main className="flex-1 overflow-y-auto bg-gray-50 p-4">
+                    <main className="flex-1 overflow-y-auto bg-gray-50 p-3">
                         {// console.log removed for production
 }
                         <Outlet />

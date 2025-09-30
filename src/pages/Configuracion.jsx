@@ -766,7 +766,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {settings.channels?.voice?.enabled && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Número de teléfono</label>
                                                 <input
@@ -812,7 +812,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {showHelpWA && (
-                                        <div className="mb-4 p-4 rounded-lg bg-green-50 border border-green-200 text-sm text-gray-700">
+                                        <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-gray-700">
                                             <p className="font-medium mb-1">¿Dónde consigo esto?</p>
                                             <ol className="list-decimal ml-5 space-y-1">
                                                 <li>Indica el número que ya usas con tus clientes.</li>
@@ -822,7 +822,7 @@ const Configuracion = () => {
                                         </div>
                                     )}
                                     {settings.channels?.whatsapp?.enabled && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             <div className="flex items-center gap-3">
                                                 <input
                                                     id="wa-same-number"
@@ -881,7 +881,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {settings.channels?.webchat?.enabled !== false && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Dominio del sitio</label>
                                                 <input
@@ -944,7 +944,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {showHelpIG && (
-                                        <div className="mb-4 p-4 rounded-lg bg-pink-50 border border-pink-200 text-sm text-gray-700">
+                                        <div className="mb-4 p-3 rounded-lg bg-pink-50 border border-pink-200 text-sm text-gray-700">
                                             <p className="font-medium mb-1">¿Cómo conectarlo?</p>
                                             <ol className="list-decimal ml-5 space-y-1">
                                                 <li>Escribe tu @usuario o URL de Instagram.</li>
@@ -954,7 +954,7 @@ const Configuracion = () => {
                                         </div>
                                     )}
                                     {settings.channels?.instagram?.enabled && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Usuario o URL de Instagram</label>
                                                 <input
@@ -1017,7 +1017,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {showHelpFB && (
-                                        <div className="mb-4 p-4 rounded-lg bg-blue-50 border border-blue-200 text-sm text-gray-700">
+                                        <div className="mb-4 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-gray-700">
                                             <p className="font-medium mb-1">¿Cómo conectarlo?</p>
                                             <ol className="list-decimal ml-5 space-y-1">
                                                 <li>Pega la URL de tu página de Facebook.</li>
@@ -1027,7 +1027,7 @@ const Configuracion = () => {
                                         </div>
                                     )}
                                     {settings.channels?.facebook?.enabled && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">URL de la página</label>
                                                 <input
@@ -1087,7 +1087,7 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {settings.channels?.vapi?.enabled && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Número para el asistente (voz)</label>
                                                 <input

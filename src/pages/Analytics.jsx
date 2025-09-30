@@ -512,23 +512,23 @@ export default function Analytics() {
                     </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="bg-white/20 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                    <div className="bg-white/20 rounded-lg p-3">
                         <p className="text-green-100 text-sm">Beneficio mensual</p>
                         <p className="text-2xl font-bold">€{roiAnalysis.desglose?.beneficioNeto.toLocaleString() || '0'}</p>
                     </div>
-                    <div className="bg-white/20 rounded-lg p-4">
+                    <div className="bg-white/20 rounded-lg p-3">
                         <p className="text-green-100 text-sm">ROI mensual</p>
                         <p className="text-2xl font-bold">{roiAnalysis.roiMensual || 0}%</p>
                     </div>
-                    <div className="bg-white/20 rounded-lg p-4">
+                    <div className="bg-white/20 rounded-lg p-3">
                         <p className="text-green-100 text-sm">Recuperación</p>
                         <p className="text-2xl font-bold">{roiAnalysis.paybackSemanas || 0} semanas</p>
                     </div>
                 </div>
                 
                 {/* Desglose transparente */}
-                <div className="bg-white/10 rounded-lg p-4 text-sm">
+                <div className="bg-white/10 rounded-lg p-3 text-sm">
                     <p className="font-medium mb-2">📊 Cálculo detallado:</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         <div>+ Ingresos base: €{roiAnalysis.desglose?.ingresoBase.toLocaleString() || '0'}</div>
@@ -678,7 +678,7 @@ export default function Analytics() {
                                 </ResponsiveContainer>
                             </div>
                             <div className="space-y-4">
-                                <div className="bg-purple-50 rounded-lg p-4">
+                                <div className="bg-purple-50 rounded-lg p-3">
                                     <h4 className="font-semibold text-purple-900 mb-2">Metodología</h4>
                                     <p className="text-sm text-purple-700">{forecastData.methodology}</p>
                                     <p className="text-xs text-purple-600 mt-1">
@@ -745,7 +745,7 @@ export default function Analytics() {
                 <div className="space-y-4">
                     {actionableInsights.map((insight, idx) => (
                         <div key={idx} className="bg-white rounded-xl shadow-sm border p-6">
-                            <div className="flex items-start gap-4">
+                            <div className="flex items-start gap-3">
                                 <div className={`p-2 rounded-lg ${
                                     insight.type === 'success' ? 'bg-green-100' :
                                     insight.type === 'warning' ? 'bg-yellow-100' :
