@@ -1548,28 +1548,28 @@ const AvailabilityManager = () => {
                     </div>
                 </div>
             )}
-        </div>
 
-        {/* Estilos de animación */}
-        <style jsx>{`
-            @keyframes bounceIn {
-                0% {
-                    transform: scale(0.3);
-                    opacity: 0;
+            {/* Estilos de animación inline */}
+            <style>{`
+                @keyframes bounceIn {
+                    0% {
+                        transform: scale(0.3);
+                        opacity: 0;
+                    }
+                    50% {
+                        transform: scale(1.05);
+                        opacity: 1;
+                    }
+                    70% {
+                        transform: scale(0.9);
+                    }
+                    100% {
+                        transform: scale(1);
+                        opacity: 1;
+                    }
                 }
-                50% {
-                    transform: scale(1.05);
-                    opacity: 1;
-                }
-                70% {
-                    transform: scale(0.9);
-                }
-                100% {
-                    transform: scale(1);
-                    opacity: 1;
-                }
-            }
-        `}</style>
+            `}</style>
+        </div>
     );
 };
 
