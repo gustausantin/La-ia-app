@@ -368,10 +368,39 @@ const AvailabilityManager = () => {
                 }
             }
 
-            // 2. Llamar a la función de generación usando política de reservas
-            const today = format(new Date(), 'yyyy-MM-dd');
-            const advanceDays = restaurantSettings?.advance_booking_days || 30;
-            const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
+            // 2. CARGAR POLÍTICA DE RESERVAS REAL ANTES DE GENERAR
+            console.log('📋 Cargando política de reservas REAL...');
+            const { useReservationStore } = await import('../stores/reservationStore.js');
+            
+            try {
+                await useReservationStore.getState().loadReservationPolicy(restaurantId);
+                const settings = useReservationStore.getState().settings;
+                console.log('✅ Política cargada:', settings);
+                
+                // Usar valores REALES de la política
+                const advanceDays = settings.maxAdvanceBooking;
+                const duration = settings.slotDuration;
+                
+                if (!advanceDays || !duration) {
+                    throw new Error('Política de reservas incompleta - faltan datos obligatorios');
+                }
+                
+                const today = format(new Date(), 'yyyy-MM-dd');
+                const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
+                
+                console.log('🎯 Usando política REAL:', {
+                    advanceDays,
+                    duration,
+                    startDate: today,
+                    endDate
+                });
+                
+            } catch (policyError) {
+                console.error('❌ Error cargando política de reservas:', policyError);
+                toast.error('Error: No se pudo cargar la política de reservas. Verifica la configuración.');
+                toast.dismiss('generating');
+                return;
+            }
             
             // Verificar si hay mesas activas
             const { data: tablesData, error: tablesError } = await supabase
@@ -380,28 +409,11 @@ const AvailabilityManager = () => {
                 .eq('restaurant_id', restaurantId)
                 .eq('is_active', true);
             
-            
             if (!tablesData || tablesData.length === 0) {
                 toast.error('❌ No hay mesas activas. Añade mesas antes de generar disponibilidades.');
                 toast.dismiss('generating');
                 return;
             }
-
-
-            // MOSTRAR RESTAURANT ID PARA DEBUG
-            console.log('🏪 GENERANDO PARA RESTAURANT ID:', restaurantId);
-            
-            // 🔍 DEBUG: Logs críticos para investigar el problema
-            console.log('🔍 DEBUG GENERACIÓN:');
-            console.log('   📊 restaurantSettings:', restaurantSettings);
-            console.log('   📅 advance_booking_days configurado:', restaurantSettings?.advance_booking_days);
-            console.log('   📅 advanceDays calculado:', advanceDays);
-            console.log('   📅 Fecha inicio:', today);
-            console.log('   📅 Fecha fin:', endDate);
-            
-            // Generar disponibilidades usando la duración configurada
-            const duration = restaurantSettings?.reservation_duration || 90;
-            console.log('🕒 Usando duración configurada:', duration, 'minutos');
             
             const { data, error } = await supabase.rpc('generate_availability_slots_smart_check', {
                 p_restaurant_id: restaurantId,

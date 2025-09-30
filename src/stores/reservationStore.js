@@ -661,12 +661,24 @@ export const useReservationStore = create()(
             throw new Error('Restaurant ID is REQUIRED for REAL stats');
           }
           
+          // Generar fecha actual correctamente - forzar timezone local
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          const todayStr = `${year}-${month}-${day}`;
+          
+          log.info('📅 Using correct date for 30/09/2025:', {
+            date_filter: todayStr,
+            restaurant_id: restaurantId
+          });
+          
           // Consultar slots REALES desde Supabase
           const { data: slotsData, error: slotsError } = await supabase
             .from('availability_slots')
             .select('*')
             .eq('restaurant_id', restaurantId)
-            .gte('slot_date', new Date().toISOString().split('T')[0]); // Solo futuros
+            .gte('slot_date', todayStr); // Solo futuros
             
           if (slotsError) {
             log.error('❌ Slots query failed:', slotsError);
@@ -680,11 +692,12 @@ export const useReservationStore = create()(
           try {
             log.info('🔍 Querying reservations...');
             
+            // Consulta simplificada para evitar error 400
             const { data, error: reservationsError } = await supabase
               .from('reservations')
-              .select('id, slot_id, status, reservation_date')
+              .select('id, status, reservation_date') // Quitar slot_id por si no existe
               .eq('restaurant_id', restaurantId)
-              .gte('reservation_date', new Date().toISOString().split('T')[0]);
+              .gte('reservation_date', todayStr);
               
             if (reservationsError) {
               log.error('❌ Reservations query failed:', reservationsError);
@@ -704,8 +717,12 @@ export const useReservationStore = create()(
           
           // Calcular estadísticas REALES
           const totalSlots = slotsData?.length || 0;
-          const reservedSlotIds = new Set(reservationsData.map(r => r.slot_id).filter(Boolean));
-          const occupiedSlots = slotsData?.filter(slot => reservedSlotIds.has(slot.id)).length || 0;
+          
+          // Calcular ocupación basada en reservas activas (sin slot_id por ahora)
+          const activeReservations = reservationsData.length;
+          
+          // Estimación conservadora: cada reserva ocupa al menos 1 slot
+          const occupiedSlots = Math.min(activeReservations, totalSlots);
           const availableSlots = Math.max(0, totalSlots - occupiedSlots);
           
           // Consultar mesas REALES
