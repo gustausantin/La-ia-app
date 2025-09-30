@@ -103,6 +103,8 @@ export default function Calendario() {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [activeTab, setActiveTab] = useState('calendario');
     const [showEventModal, setShowEventModal] = useState(false);
+    const [showEventDetailModal, setShowEventDetailModal] = useState(false); // Modal para ver evento existente
+    const [selectedEvent, setSelectedEvent] = useState(null); // Evento seleccionado para ver/editar/eliminar
     
     // Estados para estadísticas calculadas
     const [stats, setStats] = useState({
@@ -556,19 +558,48 @@ export default function Calendario() {
                 is_closed: eventForm.closed
             };
             
-            const { data, error } = await supabase
-                .from('special_events')
-                .insert([eventData])
-                .select()
-                .single();
+            // Verificar si ya existe un evento en esta fecha para actualizar o crear
+            const existingEvent = getDayEvent(selectedDay);
+            const isEditing = !!existingEvent;
             
-            if (error) throw error;
+            let data, error;
             
-            // Actualizar estado local
-            setEvents(prev => [...prev, data]);
+            if (isEditing) {
+                // ACTUALIZAR evento existente
+                const updateResult = await supabase
+                    .from('special_events')
+                    .update(eventData)
+                    .eq('id', existingEvent.id)
+                    .select()
+                    .single();
+                
+                data = updateResult.data;
+                error = updateResult.error;
+                
+                if (!error) {
+                    // Actualizar estado local
+                    setEvents(prev => prev.map(e => e.id === existingEvent.id ? data : e));
+                    toast.success(`✅ Evento "${eventForm.title}" actualizado correctamente`);
+                }
+            } else {
+                // CREAR evento nuevo
+                const insertResult = await supabase
+                    .from('special_events')
+                    .insert([eventData])
+                    .select()
+                    .single();
+                
+                data = insertResult.data;
+                error = insertResult.error;
+                
+                if (!error) {
+                    // Actualizar estado local
+                    setEvents(prev => [...prev, data]);
+                    toast.success(`✅ Evento "${eventForm.title}" creado para ${format(selectedDay, 'dd/MM/yyyy')}`);
+                }
+            }
             
-            toast.success(`✅ Evento "${eventForm.title}" creado para ${format(selectedDay, 'dd/MM/yyyy')}`);
-            
+            if (error) throw error;            
             // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
             changeDetection.checkExistingSlots().then(slotsExist => {
                 if (slotsExist) {
@@ -634,14 +665,11 @@ export default function Calendario() {
             const existingEvent = getDayEvent(date);
             
             if (existingEvent) {
-                setEventForm({
-                    title: existingEvent.title,
-                    description: existingEvent.description || '',
-                    start_time: existingEvent.start_time || '09:00',
-                    end_time: existingEvent.end_time || '22:00',
-                    closed: existingEvent.is_closed
-                });
+                // SI HAY EVENTO → Mostrar modal de detalles con opciones [Editar] [Eliminar]
+                setSelectedEvent(existingEvent);
+                setShowEventDetailModal(true);
             } else {
+                // NO HAY EVENTO → Mostrar modal de creación
                 setEventForm({
                     title: '',
                     description: '',
@@ -649,9 +677,8 @@ export default function Calendario() {
                     end_time: '22:00',
                     closed: false
                 });
+                setShowEventModal(true);
             }
-            
-            setShowEventModal(true);
         } catch (error) {
             console.error("Error en handleDayClick:", error);
             toast.error("Error al seleccionar el día");
@@ -1375,6 +1402,100 @@ export default function Calendario() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* 🎯 MODAL DE DETALLES DEL EVENTO (con opciones Editar/Eliminar) */}
+            {showEventDetailModal && selectedEvent && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                                Evento: {selectedEvent.title}
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    setShowEventDetailModal(false);
+                                    setSelectedEvent(null);
+                                }}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Información del evento */}
+                        <div className="space-y-4 mb-6">
+                            <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                                <p className="text-sm text-blue-900 font-medium">
+                                    📅 {format(parseISO(selectedEvent.event_date), 'EEEE, dd MMMM yyyy', { locale: es })}
+                                </p>
+                            </div>
+
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <p className="text-sm text-gray-600 mb-2">Estado:</p>
+                                {selectedEvent.is_closed ? (
+                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                        🔒 Restaurante cerrado este día
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                        🎉 Evento especial - Restaurante abierto
+                                    </span>
+                                )}
+                            </div>
+
+                            {!selectedEvent.is_closed && (selectedEvent.start_time || selectedEvent.end_time) && (
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm text-gray-600 mb-2">Horario especial:</p>
+                                    <p className="text-base font-medium text-gray-900">
+                                        {selectedEvent.start_time || '09:00'} - {selectedEvent.end_time || '22:00'}
+                                    </p>
+                                </div>
+                            )}
+
+                            {selectedEvent.description && (
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm text-gray-600 mb-2">Descripción:</p>
+                                    <p className="text-sm text-gray-900">{selectedEvent.description}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Botones de acción */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    // Cerrar modal de detalles y abrir modal de edición
+                                    setEventForm({
+                                        title: selectedEvent.title,
+                                        description: selectedEvent.description || '',
+                                        start_time: selectedEvent.start_time || '09:00',
+                                        end_time: selectedEvent.end_time || '22:00',
+                                        closed: selectedEvent.is_closed
+                                    });
+                                    setShowEventDetailModal(false);
+                                    setShowEventModal(true);
+                                    setSelectedDay(parseISO(selectedEvent.event_date));
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                <Edit2 className="w-4 h-4" />
+                                Editar evento
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    setShowEventDetailModal(false);
+                                    setSelectedEvent(null);
+                                    await handleDeleteEvent(selectedEvent);
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                                Eliminar evento
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
