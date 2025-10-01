@@ -75,6 +75,11 @@ const Configuracion = () => {
     const [activeTab, setActiveTab] = useState('general');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [agentMetrics, setAgentMetrics] = useState({
+        totalReservations: 0,
+        totalCustomers: 0,
+        loading: true
+    });
     
     const [settings, setSettings] = useState({
         name: "",
@@ -96,8 +101,12 @@ const Configuracion = () => {
         agent: {
             enabled: true,
             name: "Sofia",
+            lastname: "Martínez",
+            role: "Agente de Reservas",
             gender: "female",
-            avatar_url: ""
+            avatar_url: "",
+            bio: "Profesional, amable y siempre dispuesta a ayudar. Le encanta su trabajo y conoce a la perfección cada detalle del restaurante. Paciente y con una sonrisa permanente, hará que cada cliente se sienta especial.",
+            hired_date: new Date().toISOString().split('T')[0]
         },
         channels: {
             // Modo simple por defecto (objetos precreados para evitar undefined)
@@ -189,6 +198,53 @@ const Configuracion = () => {
             icon: <Bell className="w-4 h-4" />,
         }
     ];
+
+    // 📊 Cargar métricas REALES del agente
+    const loadAgentMetrics = async () => {
+        if (!restaurantId) return;
+        
+        try {
+            // Reservas gestionadas por el agente (últimos 7 días)
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            
+            const { count: reservationsCount } = await supabase
+                .from('reservations')
+                .select('*', { count: 'exact', head: true })
+                .eq('restaurant_id', restaurantId)
+                .gte('created_at', weekAgo.toISOString());
+
+            // Clientes únicos atendidos
+            const { data: customersData } = await supabase
+                .from('reservations')
+                .select('customer_id')
+                .eq('restaurant_id', restaurantId)
+                .gte('created_at', weekAgo.toISOString())
+                .not('customer_id', 'is', null);
+
+            const uniqueCustomers = new Set(customersData?.map(r => r.customer_id) || []).size;
+
+            setAgentMetrics({
+                totalReservations: reservationsCount || 0,
+                totalCustomers: uniqueCustomers || 0,
+                loading: false
+            });
+        } catch (error) {
+            console.error('Error cargando métricas del agente:', error);
+            setAgentMetrics({
+                totalReservations: 0,
+                totalCustomers: 0,
+                loading: false
+            });
+        }
+    };
+
+    // Cargar métricas cuando se abre la pestaña del agente
+    useEffect(() => {
+        if (activeTab === 'agent' && restaurantId) {
+            loadAgentMetrics();
+        }
+    }, [activeTab, restaurantId]);
 
     useEffect(() => {
         const loadSettings = async () => {
@@ -298,8 +354,12 @@ const Configuracion = () => {
                     agent: {
                         enabled: dbSettings.agent?.enabled !== false,
                         name: dbSettings.agent?.name || registrationData?.agentName || "Sofia",
+                        lastname: dbSettings.agent?.lastname || "Martínez",
+                        role: dbSettings.agent?.role || "Agente de Reservas",
                         gender: dbSettings.agent?.gender || "female",
-                        avatar_url: dbSettings.agent?.avatar_url || ""
+                        avatar_url: dbSettings.agent?.avatar_url || "",
+                        bio: dbSettings.agent?.bio || "Profesional, amable y siempre dispuesta a ayudar. Le encanta su trabajo y conoce a la perfección cada detalle del restaurante. Paciente y con una sonrisa permanente, hará que cada cliente se sienta especial.",
+                        hired_date: dbSettings.agent?.hired_date || new Date().toISOString().split('T')[0]
                     },
                     
                     // ✅ CANALES Y NOTIFICACIONES
@@ -888,26 +948,89 @@ const Configuracion = () => {
 
                                             {/* DERECHA: CONFIGURACIÓN */}
                                             <div className="flex flex-col gap-6">
-                                                {/* Nombre del agente */}
+                                                {/* Información del empleado */}
+                                                <div className="bg-white p-4 rounded-xl border-2 border-gray-200">
+                                                    <div className="space-y-3">
+                                                        <div className="flex items-center gap-2 text-lg">
+                                                            <span className="font-bold text-gray-900">
+                                                                {settings.agent?.name} {settings.agent?.lastname}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                            <span>📋</span>
+                                                            <span>{settings.agent?.role}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                            <span>📅</span>
+                                                            <span>En plantilla desde: {new Date(settings.agent?.hired_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                            <span>⏰</span>
+                                                            <span>Turno: 24/7</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Nombre y Apellido */}
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Nombre
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={settings.agent?.name || ""}
+                                                            onChange={(e) => setSettings(prev => ({
+                                                                ...prev,
+                                                                agent: {
+                                                                    ...prev.agent,
+                                                                    name: e.target.value
+                                                                }
+                                                            }))}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                            placeholder="Sofia"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Apellido
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={settings.agent?.lastname || ""}
+                                                            onChange={(e) => setSettings(prev => ({
+                                                                ...prev,
+                                                                agent: {
+                                                                    ...prev.agent,
+                                                                    lastname: e.target.value
+                                                                }
+                                                            }))}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                            placeholder="Martínez"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Puesto/Rol */}
                                                 <div>
-                                                    <label className="block text-base font-bold text-gray-900 mb-3">
-                                                        Nombre del agente
+                                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                        Puesto
                                                     </label>
                                                     <input
                                                         type="text"
-                                                        value={settings.agent?.name || ""}
+                                                        value={settings.agent?.role || ""}
                                                         onChange={(e) => setSettings(prev => ({
                                                             ...prev,
                                                             agent: {
                                                                 ...prev.agent,
-                                                                name: e.target.value
+                                                                role: e.target.value
                                                             }
                                                         }))}
-                                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base font-medium"
-                                                        placeholder="Ej: Sofia, Marcos, Laura..."
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        placeholder="Agente de Reservas"
                                                     />
-                                                    <p className="text-sm text-gray-600 mt-2">
-                                                        Así se presentará a tus clientes
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        Ej: Agente de Reservas, Recepcionista Virtual, etc.
                                                     </p>
                                                 </div>
 
@@ -1004,6 +1127,65 @@ const Configuracion = () => {
                                             </div>
                                         </div>
                                     )}
+
+                                    {/* Biografía del agente */}
+                                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                                        <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                            💬 Sobre {settings.agent?.name}
+                                        </h4>
+                                        <textarea
+                                            value={settings.agent?.bio || ""}
+                                            onChange={(e) => setSettings(prev => ({
+                                                ...prev,
+                                                agent: {
+                                                    ...prev.agent,
+                                                    bio: e.target.value
+                                                }
+                                            }))}
+                                            rows={4}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
+                                            placeholder="Describe la personalidad y características de tu agente..."
+                                        />
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Esta descripción ayuda a humanizar al agente. Describe su personalidad, estilo de atención, etc.
+                                        </p>
+                                    </div>
+
+                                    {/* Métricas de rendimiento - DATOS REALES */}
+                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
+                                        <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                            📊 Rendimiento esta semana
+                                        </h4>
+                                        {agentMetrics.loading ? (
+                                            <div className="flex items-center justify-center py-8">
+                                                <RefreshCw className="w-6 h-6 animate-spin text-purple-600" />
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-white p-4 rounded-lg shadow-sm">
+                                                    <p className="text-2xl font-bold text-purple-600">
+                                                        {agentMetrics.totalCustomers}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600 mt-1">
+                                                        Clientes atendidos
+                                                    </p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-lg shadow-sm">
+                                                    <p className="text-2xl font-bold text-blue-600">
+                                                        {agentMetrics.totalReservations}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600 mt-1">
+                                                        Reservas gestionadas
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {!agentMetrics.loading && agentMetrics.totalReservations === 0 && (
+                                            <p className="text-sm text-gray-600 mt-3 text-center">
+                                                Las métricas se mostrarán cuando haya actividad registrada
+                                            </p>
+                                        )}
+                                    </div>
 
                                     {/* Botón guardar */}
                                     <div className="flex justify-end pt-4 border-t border-gray-200">
