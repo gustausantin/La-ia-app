@@ -805,14 +805,14 @@ const Configuracion = () => {
                                 icon={<Bot />}
                             >
                                 <div className="space-y-6">
-                                    {/* Tarjeta de perfil del agente - FOTO GRANDE */}
-                                    <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-purple-50 p-8 rounded-2xl border-2 border-purple-200 shadow-xl">
-                                        <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 items-start">
-                                            {/* IZQUIERDA: FOTO GRANDE DEL AGENTE */}
-                                            <div className="flex flex-col items-center gap-4">
-                                                {/* Foto MÁS GRANDE - aprovechando el espacio */}
-                                                <div className="relative group">
-                                                    <div className="w-80 h-96 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center ring-4 ring-white transform transition-transform duration-300 group-hover:scale-[1.02]">
+                                    {/* Tarjeta de perfil profesional */}
+                                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                                        <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-0">
+                                            {/* COLUMNA IZQUIERDA: Foto + Descripción */}
+                                            <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-6 flex flex-col items-center">
+                                                {/* Foto del agente */}
+                                                <div className="relative group mb-6">
+                                                    <div className="w-72 h-96 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-700 to-blue-700 flex items-center justify-center transform transition-all duration-300 group-hover:scale-[1.02] group-hover:shadow-3xl">
                                                         {settings.agent?.avatar_url ? (
                                                             <img
                                                                 src={settings.agent.avatar_url}
@@ -820,18 +820,18 @@ const Configuracion = () => {
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         ) : (
-                                                            <div className="flex flex-col items-center gap-4 text-white">
-                                                                <Bot className="w-32 h-32" />
-                                                                <p className="text-xl font-medium text-center px-4">
-                                                                    Sube la foto de tu agente virtual
+                                                            <div className="flex flex-col items-center gap-4 text-white p-8">
+                                                                <Bot className="w-32 h-32 opacity-60" />
+                                                                <p className="text-lg font-medium text-center">
+                                                                    Sube la foto de tu empleado virtual
                                                                 </p>
                                                             </div>
                                                         )}
                                                     </div>
                                                 </div>
-                                                
-                                                {/* Botones de acción */}
-                                                <div className="flex flex-col items-center gap-2 w-full">
+
+                                                {/* Botones */}
+                                                <div className="w-full max-w-xs space-y-3 mb-6">
                                                     <input
                                                         type="file"
                                                         id="avatar-upload-main"
@@ -858,7 +858,7 @@ const Configuracion = () => {
                                                     <button 
                                                         type="button"
                                                         onClick={() => document.getElementById('avatar-upload-main').click()}
-                                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg font-semibold text-base"
+                                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white text-purple-600 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg font-semibold"
                                                     >
                                                         <Upload className="w-5 h-5" />
                                                         Subir avatar
@@ -878,31 +878,32 @@ const Configuracion = () => {
                                                                     toast.success('Avatar eliminado');
                                                                 }
                                                             }}
-                                                            className="text-sm text-red-600 hover:text-red-700 font-medium"
+                                                            className="w-full text-sm text-white hover:text-red-200 font-medium transition-colors"
                                                         >
                                                             Eliminar avatar
                                                         </button>
                                                     )}
-                                                    <p className="text-xs text-gray-600 text-center mt-1">
-                                                        JPG o PNG (máx. 5MB) • Recomendado: 512x512px o superior
+                                                    <p className="text-xs text-white/70 text-center">
+                                                        JPG o PNG (máx. 5MB)
                                                     </p>
                                                 </div>
 
-                                                {/* Descripción del personaje - DEBAJO DE LA FOTO */}
-                                                <div className="w-full mt-4">
-                                                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
-                                                        <h4 className="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-2">
-                                                            💬 Descripción
+                                                {/* Descripción */}
+                                                <div className="w-full max-w-xs">
+                                                    <div className="bg-white/10 backdrop-blur-sm p-5 rounded-xl border border-white/20">
+                                                        <h4 className="font-semibold text-white mb-3 text-sm flex items-center gap-2">
+                                                            <MessageSquare className="w-4 h-4" />
+                                                            Descripción
                                                         </h4>
-                                                        <p className="text-sm text-gray-700 leading-relaxed">
+                                                        <p className="text-sm text-white/90 leading-relaxed">
                                                             {settings.agent?.bio || "Profesional, amable y siempre dispuesta a ayudar. Le encanta su trabajo y conoce a la perfección cada detalle del restaurante. Paciente y con una sonrisa permanente, hará que cada cliente se sienta especial."}
                                                         </p>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {/* DERECHA: CONFIGURACIÓN */}
-                                            <div className="flex flex-col gap-6">
+                                            {/* COLUMNA DERECHA: Configuración */}
+                                            <div className="p-8 flex flex-col gap-6">
                                                 {/* Información del empleado */}
                                                 <div className="bg-white p-4 rounded-xl border-2 border-gray-200">
                                                     <div className="space-y-3">
