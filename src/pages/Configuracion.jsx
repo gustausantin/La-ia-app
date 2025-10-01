@@ -796,33 +796,95 @@ const Configuracion = () => {
                                 icon={<Bot />}
                             >
                                 <div className="space-y-6">
-                                    {/* Toggle principal del agente con AVATAR */}
+                                    {/* Avatar del agente - ARRIBA DE TODO */}
                                     <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-xl border border-purple-200">
+                                        <div className="flex flex-col items-center gap-4">
+                                            {/* Avatar grande y prominente */}
+                                            <div className="w-32 h-32 rounded-full overflow-hidden shadow-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center ring-4 ring-white">
+                                                {settings.agent?.avatar_url ? (
+                                                    <img
+                                                        src={settings.agent.avatar_url}
+                                                        alt={settings.agent?.name || "Agente"}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <Bot className="w-16 h-16 text-white" />
+                                                )}
+                                            </div>
+                                            
+                                            {/* Botones de subir/eliminar avatar */}
+                                            <div className="flex flex-col items-center gap-2">
+                                                <input
+                                                    type="file"
+                                                    id="avatar-upload-main"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            const reader = new FileReader();
+                                                            reader.onload = (event) => {
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    agent: {
+                                                                        ...prev.agent,
+                                                                        avatar_url: event.target.result
+                                                                    }
+                                                                }));
+                                                                toast.success('Avatar cargado correctamente');
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        }
+                                                    }}
+                                                />
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => document.getElementById('avatar-upload-main').click()}
+                                                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg font-medium"
+                                                >
+                                                    <Upload className="w-4 h-4" />
+                                                    Subir avatar
+                                                </button>
+                                                {settings.agent?.avatar_url && (
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (window.confirm('¿Eliminar el avatar?')) {
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    agent: {
+                                                                        ...prev.agent,
+                                                                        avatar_url: ''
+                                                                    }
+                                                                }));
+                                                                toast.success('Avatar eliminado');
+                                                            }
+                                                        }}
+                                                        className="text-sm text-red-600 hover:text-red-700 font-medium"
+                                                    >
+                                                        Eliminar avatar
+                                                    </button>
+                                                )}
+                                                <p className="text-xs text-gray-500 text-center mt-1">
+                                                    Formatos: JPG, PNG (máx. 5MB) • Recomendado: 512x512px
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Estado y Toggle del agente */}
+                                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                                         <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                {/* Avatar del agente */}
-                                                <div className="w-20 h-20 rounded-full overflow-hidden shadow-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-                                                    {settings.agent?.avatar_url ? (
-                                                        <img
-                                                            src={settings.agent.avatar_url}
-                                                            alt={settings.agent?.name || "Agente"}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <Bot className="w-10 h-10 text-white" />
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-gray-900">
-                                                        {settings.agent?.name || "Agente IA"}
-                                                    </h3>
-                                                    <p className="text-sm text-gray-600">
-                                                        {settings.agent?.gender === "male" ? "👨 Voz masculina" : "👩 Voz femenina"}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 mt-1">
-                                                        {settings.agent?.enabled ? "✅ Activo - Atendiendo clientes 24/7" : "❌ Desactivado"}
-                                                    </p>
-                                                </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-900">
+                                                    {settings.agent?.name || "Agente IA"}
+                                                </h3>
+                                                <p className="text-sm text-gray-600">
+                                                    {settings.agent?.gender === "male" ? "👨 Voz masculina" : "👩 Voz femenina"}
+                                                </p>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    {settings.agent?.enabled ? "✅ Activo - Atendiendo clientes 24/7" : "❌ Desactivado"}
+                                                </p>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
@@ -925,86 +987,6 @@ const Configuracion = () => {
                                             <p className="text-xs text-gray-500 mt-1">
                                                 Define qué voz usará en llamadas telefónicas
                                             </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Avatar personalizado */}
-                                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
-                                        <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                            <Image className="w-5 h-5 text-blue-600" />
-                                            Avatar del Agente (Humanizar)
-                                        </h4>
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-24 h-24 bg-white rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
-                                                {settings.agent?.avatar_url ? (
-                                                    <img
-                                                        src={settings.agent.avatar_url}
-                                                        alt="Avatar"
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <Bot className="w-10 h-10 text-gray-400" />
-                                                )}
-                                            </div>
-                                            <div className="flex-1">
-                                                <input
-                                                    type="file"
-                                                    id="avatar-upload"
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files[0];
-                                                        if (file) {
-                                                            const reader = new FileReader();
-                                                            reader.onload = (event) => {
-                                                                setSettings(prev => ({
-                                                                    ...prev,
-                                                                    agent: {
-                                                                        ...prev.agent,
-                                                                        avatar_url: event.target.result
-                                                                    }
-                                                                }));
-                                                                toast.success('Avatar cargado correctamente');
-                                                            };
-                                                            reader.readAsDataURL(file);
-                                                        }
-                                                    }}
-                                                />
-                                                <div className="flex gap-2">
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => document.getElementById('avatar-upload').click()}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
-                                                    >
-                                                        <Upload className="w-4 h-4" />
-                                                        Subir avatar
-                                                    </button>
-                                                    {settings.agent?.avatar_url && (
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => {
-                                                                if (window.confirm('¿Eliminar el avatar?')) {
-                                                                    setSettings(prev => ({
-                                                                        ...prev,
-                                                                        agent: {
-                                                                            ...prev.agent,
-                                                                            avatar_url: ''
-                                                                        }
-                                                                    }));
-                                                                    toast.success('Avatar eliminado');
-                                                                }
-                                                            }}
-                                                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200"
-                                                        >
-                                                            <X className="w-4 h-4" />
-                                                            Eliminar
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                <p className="text-xs text-gray-500 mt-2">
-                                                    💡 Genera una imagen con IA (Midjourney, DALL-E) de un empleado virtual realista. Recomendado: foto profesional, circular, 512x512px
-                                                </p>
-                                            </div>
                                         </div>
                                     </div>
 
