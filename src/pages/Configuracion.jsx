@@ -384,7 +384,7 @@ const Configuracion = () => {
                 const { data: currentData } = await supabase
                     .from("restaurants")
                     .select("settings")
-                    .eq("id", restaurantId)
+                    .eq("id", effectiveRestaurantId)
                     .single();
                     
                 const currentSettings = currentData?.settings || {};
@@ -410,7 +410,7 @@ const Configuracion = () => {
                         },
                         updated_at: new Date().toISOString()
                     })
-                    .eq("id", restaurantId);
+                    .eq("id", effectiveRestaurantId);
 
                 if (error) throw error;
             } else if (section === "Canales de comunicación") {

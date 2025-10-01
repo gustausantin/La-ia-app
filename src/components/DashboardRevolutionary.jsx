@@ -882,5 +882,8 @@ const DashboardRevolutionary = () => {
     );
 };
 
+// Exportar componentes individuales para reutilizar
+export { NoShowWidget, ReturningCustomersWidget, TotalValueWidget, CRMOpportunitiesWidget };
+
 export default DashboardRevolutionary;
 
