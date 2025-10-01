@@ -92,7 +92,7 @@ export default function Layout() {
             icon: Receipt,
             badge: null,
         },
-        { name: "Analytics", path: "/analytics", icon: BarChart2, badge: null },
+        // { name: "Analytics", path: "/analytics", icon: BarChart2, badge: null }, // Deshabilitado temporalmente
         {
             name: "Configuración",
             path: "/configuracion",

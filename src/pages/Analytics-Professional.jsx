@@ -236,14 +236,15 @@ export default function Analytics() {
                 
             if (metricsError) throw metricsError;
             
-            // 2. Conversaciones para satisfacción
-            const { data: conversations, error: convError } = await supabase
-                .from('agent_conversations')
-                .select('satisfaction_score, started_at, booking_created')
-                .eq('restaurant_id', restaurantId)
-                .not('satisfaction_score', 'is', null);
+            // 2. Conversaciones para satisfacción (temporalmente deshabilitado hasta crear tabla)
+            // const { data: conversations, error: convError } = await supabase
+            //     .from('agent_conversations')
+            //     .select('satisfaction_score, started_at, booking_created')
+            //     .eq('restaurant_id', restaurantId)
+            //     .not('satisfaction_score', 'is', null);
                 
-            if (convError) throw convError;
+            // if (convError) throw convError;
+            const conversations = []; // Temporal
             
             if (!metrics || metrics.length === 0) {
                 // Sin datos - mostrar pantalla explicativa

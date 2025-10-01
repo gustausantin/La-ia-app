@@ -30,7 +30,7 @@ const Comunicacion = lazy(() =>
     return module;
   })
 );
-const Analytics = lazy(() => import('./pages/Analytics'));
+// const Analytics = lazy(() => import('./pages/Analytics')); // Deshabilitado temporalmente
 const Configuracion = lazy(() => import('./pages/Configuracion'));
 const CRMProximosMensajes = lazy(() => import('./pages/CRMProximosMensajes'));
 
@@ -195,14 +195,15 @@ function AppContent() {
                   </Suspense>
                 } 
               />
-              <Route 
+              {/* Analytics deshabilitado temporalmente */}
+              {/* <Route 
                 path="/analytics" 
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <Analytics />
                   </Suspense>
                 } 
-              />
+              /> */}
               <Route 
                 path="/comunicacion" 
                 element={
