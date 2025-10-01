@@ -796,111 +796,196 @@ const Configuracion = () => {
                                 icon={<Bot />}
                             >
                                 <div className="space-y-6">
-                                    {/* Avatar del agente - ARRIBA DE TODO */}
-                                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-xl border border-purple-200">
-                                        <div className="flex flex-col items-center gap-4">
-                                            {/* Avatar grande y prominente */}
-                                            <div className="w-32 h-32 rounded-full overflow-hidden shadow-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center ring-4 ring-white">
-                                                {settings.agent?.avatar_url ? (
-                                                    <img
-                                                        src={settings.agent.avatar_url}
-                                                        alt={settings.agent?.name || "Agente"}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <Bot className="w-16 h-16 text-white" />
-                                                )}
-                                            </div>
-                                            
-                                            {/* Botones de subir/eliminar avatar */}
-                                            <div className="flex flex-col items-center gap-2">
-                                                <input
-                                                    type="file"
-                                                    id="avatar-upload-main"
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files[0];
-                                                        if (file) {
-                                                            const reader = new FileReader();
-                                                            reader.onload = (event) => {
-                                                                setSettings(prev => ({
-                                                                    ...prev,
-                                                                    agent: {
-                                                                        ...prev.agent,
-                                                                        avatar_url: event.target.result
-                                                                    }
-                                                                }));
-                                                                toast.success('Avatar cargado correctamente');
-                                                            };
-                                                            reader.readAsDataURL(file);
-                                                        }
-                                                    }}
-                                                />
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => document.getElementById('avatar-upload-main').click()}
-                                                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg font-medium"
-                                                >
-                                                    <Upload className="w-4 h-4" />
-                                                    Subir avatar
-                                                </button>
-                                                {settings.agent?.avatar_url && (
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => {
-                                                            if (window.confirm('¿Eliminar el avatar?')) {
-                                                                setSettings(prev => ({
-                                                                    ...prev,
-                                                                    agent: {
-                                                                        ...prev.agent,
-                                                                        avatar_url: ''
-                                                                    }
-                                                                }));
-                                                                toast.success('Avatar eliminado');
+                                    {/* Tarjeta de perfil del agente - FOTO GRANDE */}
+                                    <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-purple-50 p-8 rounded-2xl border-2 border-purple-200 shadow-xl">
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                                            {/* IZQUIERDA: FOTO GRANDE DEL AGENTE */}
+                                            <div className="flex flex-col items-center gap-4">
+                                                {/* Foto grande y prominente - como tarjeta de empleado */}
+                                                <div className="relative group">
+                                                    <div className="w-64 h-80 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center ring-4 ring-white transform transition-transform duration-300 group-hover:scale-105">
+                                                        {settings.agent?.avatar_url ? (
+                                                            <img
+                                                                src={settings.agent.avatar_url}
+                                                                alt={settings.agent?.name || "Agente"}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex flex-col items-center gap-4 text-white">
+                                                                <Bot className="w-24 h-24" />
+                                                                <p className="text-lg font-medium text-center px-4">
+                                                                    Sube la foto de tu agente virtual
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {/* Badge de género sobre la foto */}
+                                                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                                                        <span className="text-sm font-semibold">
+                                                            {settings.agent?.gender === "male" ? "👨 Masculino" : "👩 Femenino"}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Botones de acción */}
+                                                <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+                                                    <input
+                                                        type="file"
+                                                        id="avatar-upload-main"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files[0];
+                                                            if (file) {
+                                                                const reader = new FileReader();
+                                                                reader.onload = (event) => {
+                                                                    setSettings(prev => ({
+                                                                        ...prev,
+                                                                        agent: {
+                                                                            ...prev.agent,
+                                                                            avatar_url: event.target.result
+                                                                        }
+                                                                    }));
+                                                                    toast.success('Avatar cargado correctamente');
+                                                                };
+                                                                reader.readAsDataURL(file);
                                                             }
                                                         }}
-                                                        className="text-sm text-red-600 hover:text-red-700 font-medium"
+                                                    />
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => document.getElementById('avatar-upload-main').click()}
+                                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg font-semibold text-base"
                                                     >
-                                                        Eliminar avatar
+                                                        <Upload className="w-5 h-5" />
+                                                        Subir avatar
                                                     </button>
-                                                )}
-                                                <p className="text-xs text-gray-500 text-center mt-1">
-                                                    Formatos: JPG, PNG (máx. 5MB) • Recomendado: 512x512px
-                                                </p>
+                                                    {settings.agent?.avatar_url && (
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (window.confirm('¿Eliminar el avatar?')) {
+                                                                    setSettings(prev => ({
+                                                                        ...prev,
+                                                                        agent: {
+                                                                            ...prev.agent,
+                                                                            avatar_url: ''
+                                                                        }
+                                                                    }));
+                                                                    toast.success('Avatar eliminado');
+                                                                }
+                                                            }}
+                                                            className="text-sm text-red-600 hover:text-red-700 font-medium"
+                                                        >
+                                                            Eliminar avatar
+                                                        </button>
+                                                    )}
+                                                    <p className="text-xs text-gray-600 text-center mt-1">
+                                                        JPG o PNG (máx. 5MB) • Recomendado: 512x512px o superior
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    {/* Estado y Toggle del agente */}
-                                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-gray-900">
-                                                    {settings.agent?.name || "Agente IA"}
-                                                </h3>
-                                                <p className="text-sm text-gray-600">
-                                                    {settings.agent?.gender === "male" ? "👨 Voz masculina" : "👩 Voz femenina"}
-                                                </p>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    {settings.agent?.enabled ? "✅ Activo - Atendiendo clientes 24/7" : "❌ Desactivado"}
-                                                </p>
+                                            {/* DERECHA: CONFIGURACIÓN */}
+                                            <div className="flex flex-col gap-6">
+                                                {/* Nombre del agente */}
+                                                <div>
+                                                    <label className="block text-base font-bold text-gray-900 mb-3">
+                                                        Nombre del agente
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={settings.agent?.name || ""}
+                                                        onChange={(e) => setSettings(prev => ({
+                                                            ...prev,
+                                                            agent: {
+                                                                ...prev.agent,
+                                                                name: e.target.value
+                                                            }
+                                                        }))}
+                                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base font-medium"
+                                                        placeholder="Ej: Sofia, Marcos, Laura..."
+                                                    />
+                                                    <p className="text-sm text-gray-600 mt-2">
+                                                        Así se presentará a tus clientes
+                                                    </p>
+                                                </div>
+
+                                                {/* Género de la voz */}
+                                                <div>
+                                                    <label className="block text-base font-bold text-gray-900 mb-3">
+                                                        Género de la voz telefónica
+                                                    </label>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSettings(prev => ({
+                                                                ...prev,
+                                                                agent: {
+                                                                    ...prev.agent,
+                                                                    gender: "female"
+                                                                }
+                                                            }))}
+                                                            className={`px-6 py-4 rounded-xl border-2 transition-all text-base font-semibold ${
+                                                                settings.agent?.gender === "female"
+                                                                    ? "border-purple-500 bg-purple-50 text-purple-700 shadow-lg scale-105"
+                                                                    : "border-gray-300 bg-white text-gray-700 hover:border-purple-300 hover:shadow-md"
+                                                            }`}
+                                                        >
+                                                            👩 Femenino
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSettings(prev => ({
+                                                                ...prev,
+                                                                agent: {
+                                                                    ...prev.agent,
+                                                                    gender: "male"
+                                                                }
+                                                            }))}
+                                                            className={`px-6 py-4 rounded-xl border-2 transition-all text-base font-semibold ${
+                                                                settings.agent?.gender === "male"
+                                                                    ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg scale-105"
+                                                                    : "border-gray-300 bg-white text-gray-700 hover:border-blue-300 hover:shadow-md"
+                                                            }`}
+                                                        >
+                                                            👨 Masculino
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-sm text-gray-600 mt-2">
+                                                        Define qué voz usará en llamadas
+                                                    </p>
+                                                </div>
+
+                                                {/* Estado activo/inactivo */}
+                                                <div className="bg-white p-4 rounded-xl border-2 border-gray-200">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="font-bold text-gray-900 text-base">
+                                                                Estado del agente
+                                                            </p>
+                                                            <p className="text-sm text-gray-600 mt-1">
+                                                                {settings.agent?.enabled ? "✅ Activo - Atendiendo 24/7" : "❌ Desactivado"}
+                                                            </p>
+                                                        </div>
+                                                        <label className="relative inline-flex items-center cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={settings.agent?.enabled || false}
+                                                                onChange={(e) => setSettings(prev => ({
+                                                                    ...prev,
+                                                                    agent: {
+                                                                        ...prev.agent,
+                                                                        enabled: e.target.checked
+                                                                    }
+                                                                }))}
+                                                                className="sr-only peer"
+                                                            />
+                                                            <div className="w-16 h-8 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-8 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-blue-600"></div>
+                                                        </label>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <label className="relative inline-flex items-center cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={settings.agent?.enabled || false}
-                                                    onChange={(e) => setSettings(prev => ({
-                                                        ...prev,
-                                                        agent: {
-                                                            ...prev.agent,
-                                                            enabled: e.target.checked
-                                                        }
-                                                    }))}
-                                                    className="sr-only peer"
-                                                />
-                                                <div className="w-16 h-8 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-8 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-blue-600"></div>
-                                            </label>
                                         </div>
                                     </div>
 
@@ -919,76 +1004,6 @@ const Configuracion = () => {
                                             </div>
                                         </div>
                                     )}
-
-                                    {/* Configuración básica */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Nombre del agente
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={settings.agent?.name || ""}
-                                                onChange={(e) => setSettings(prev => ({
-                                                    ...prev,
-                                                    agent: {
-                                                        ...prev.agent,
-                                                        name: e.target.value
-                                                    }
-                                                }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                                placeholder="Sofia o Marcos"
-                                            />
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                El nombre con el que se presentará a los clientes
-                                            </p>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Género de la voz
-                                            </label>
-                                            <div className="flex gap-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setSettings(prev => ({
-                                                        ...prev,
-                                                        agent: {
-                                                            ...prev.agent,
-                                                            gender: "female"
-                                                        }
-                                                    }))}
-                                                    className={`flex-1 px-4 py-2 rounded-lg border-2 transition-all ${
-                                                        settings.agent?.gender === "female"
-                                                            ? "border-purple-500 bg-purple-50 text-purple-700 font-semibold"
-                                                            : "border-gray-300 bg-white text-gray-700 hover:border-purple-300"
-                                                    }`}
-                                                >
-                                                    👩 Femenino
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setSettings(prev => ({
-                                                        ...prev,
-                                                        agent: {
-                                                            ...prev.agent,
-                                                            gender: "male"
-                                                        }
-                                                    }))}
-                                                    className={`flex-1 px-4 py-2 rounded-lg border-2 transition-all ${
-                                                        settings.agent?.gender === "male"
-                                                            ? "border-blue-500 bg-blue-50 text-blue-700 font-semibold"
-                                                            : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"
-                                                    }`}
-                                                >
-                                                    👨 Masculino
-                                                </button>
-                                            </div>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Define qué voz usará en llamadas telefónicas
-                                            </p>
-                                        </div>
-                                    </div>
 
                                     {/* Botón guardar */}
                                     <div className="flex justify-end pt-4 border-t border-gray-200">
