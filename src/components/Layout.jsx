@@ -167,7 +167,7 @@ await signOut();
                     </div>
 
                     {/* Info del Restaurante */}
-                    <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <div className="px-4 py-4 bg-gray-50 border-b border-gray-200">
                         <h3 className="font-semibold text-gray-900 truncate">
                             {restaurant?.name || "Mi Restaurante"}
                         </h3>

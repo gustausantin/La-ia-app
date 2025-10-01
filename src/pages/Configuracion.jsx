@@ -75,11 +75,6 @@ const Configuracion = () => {
     const [activeTab, setActiveTab] = useState('general');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [agentMetrics, setAgentMetrics] = useState({
-        totalReservations: 0,
-        totalCustomers: 0,
-        loading: true
-    });
     
     const [settings, setSettings] = useState({
         name: "",
@@ -199,52 +194,6 @@ const Configuracion = () => {
         }
     ];
 
-    // 📊 Cargar métricas REALES del agente
-    const loadAgentMetrics = async () => {
-        if (!restaurantId) return;
-        
-        try {
-            // Reservas gestionadas por el agente (últimos 7 días)
-            const weekAgo = new Date();
-            weekAgo.setDate(weekAgo.getDate() - 7);
-            
-            const { count: reservationsCount } = await supabase
-                .from('reservations')
-                .select('*', { count: 'exact', head: true })
-                .eq('restaurant_id', restaurantId)
-                .gte('created_at', weekAgo.toISOString());
-
-            // Clientes únicos atendidos
-            const { data: customersData } = await supabase
-                .from('reservations')
-                .select('customer_id')
-                .eq('restaurant_id', restaurantId)
-                .gte('created_at', weekAgo.toISOString())
-                .not('customer_id', 'is', null);
-
-            const uniqueCustomers = new Set(customersData?.map(r => r.customer_id) || []).size;
-
-            setAgentMetrics({
-                totalReservations: reservationsCount || 0,
-                totalCustomers: uniqueCustomers || 0,
-                loading: false
-            });
-        } catch (error) {
-            console.error('Error cargando métricas del agente:', error);
-            setAgentMetrics({
-                totalReservations: 0,
-                totalCustomers: 0,
-                loading: false
-            });
-        }
-    };
-
-    // Cargar métricas cuando se abre la pestaña del agente
-    useEffect(() => {
-        if (activeTab === 'agent' && restaurantId) {
-            loadAgentMetrics();
-        }
-    }, [activeTab, restaurantId]);
 
     useEffect(() => {
         const loadSettings = async () => {
@@ -858,12 +807,12 @@ const Configuracion = () => {
                                 <div className="space-y-6">
                                     {/* Tarjeta de perfil del agente - FOTO GRANDE */}
                                     <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-purple-50 p-8 rounded-2xl border-2 border-purple-200 shadow-xl">
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                                        <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 items-start">
                                             {/* IZQUIERDA: FOTO GRANDE DEL AGENTE */}
                                             <div className="flex flex-col items-center gap-4">
-                                                {/* Foto grande y prominente - como tarjeta de empleado */}
+                                                {/* Foto MÁS GRANDE - aprovechando el espacio */}
                                                 <div className="relative group">
-                                                    <div className="w-64 h-80 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center ring-4 ring-white transform transition-transform duration-300 group-hover:scale-105">
+                                                    <div className="w-80 h-96 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center ring-4 ring-white transform transition-transform duration-300 group-hover:scale-[1.02]">
                                                         {settings.agent?.avatar_url ? (
                                                             <img
                                                                 src={settings.agent.avatar_url}
@@ -872,23 +821,17 @@ const Configuracion = () => {
                                                             />
                                                         ) : (
                                                             <div className="flex flex-col items-center gap-4 text-white">
-                                                                <Bot className="w-24 h-24" />
-                                                                <p className="text-lg font-medium text-center px-4">
+                                                                <Bot className="w-32 h-32" />
+                                                                <p className="text-xl font-medium text-center px-4">
                                                                     Sube la foto de tu agente virtual
                                                                 </p>
                                                             </div>
                                                         )}
                                                     </div>
-                                                    {/* Badge de género sobre la foto */}
-                                                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-                                                        <span className="text-sm font-semibold">
-                                                            {settings.agent?.gender === "male" ? "👨 Masculino" : "👩 Femenino"}
-                                                        </span>
-                                                    </div>
                                                 </div>
                                                 
                                                 {/* Botones de acción */}
-                                                <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+                                                <div className="flex flex-col items-center gap-2 w-full">
                                                     <input
                                                         type="file"
                                                         id="avatar-upload-main"
@@ -943,6 +886,18 @@ const Configuracion = () => {
                                                     <p className="text-xs text-gray-600 text-center mt-1">
                                                         JPG o PNG (máx. 5MB) • Recomendado: 512x512px o superior
                                                     </p>
+                                                </div>
+
+                                                {/* Descripción del personaje - DEBAJO DE LA FOTO */}
+                                                <div className="w-full mt-4">
+                                                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                                                        <h4 className="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-2">
+                                                            💬 Descripción
+                                                        </h4>
+                                                        <p className="text-sm text-gray-700 leading-relaxed">
+                                                            {settings.agent?.bio || "Profesional, amable y siempre dispuesta a ayudar. Le encanta su trabajo y conoce a la perfección cada detalle del restaurante. Paciente y con una sonrisa permanente, hará que cada cliente se sienta especial."}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -1128,64 +1083,6 @@ const Configuracion = () => {
                                         </div>
                                     )}
 
-                                    {/* Biografía del agente */}
-                                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
-                                        <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                            💬 Sobre {settings.agent?.name}
-                                        </h4>
-                                        <textarea
-                                            value={settings.agent?.bio || ""}
-                                            onChange={(e) => setSettings(prev => ({
-                                                ...prev,
-                                                agent: {
-                                                    ...prev.agent,
-                                                    bio: e.target.value
-                                                }
-                                            }))}
-                                            rows={4}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
-                                            placeholder="Describe la personalidad y características de tu agente..."
-                                        />
-                                        <p className="text-xs text-gray-500 mt-2">
-                                            Esta descripción ayuda a humanizar al agente. Describe su personalidad, estilo de atención, etc.
-                                        </p>
-                                    </div>
-
-                                    {/* Métricas de rendimiento - DATOS REALES */}
-                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
-                                        <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                            📊 Rendimiento esta semana
-                                        </h4>
-                                        {agentMetrics.loading ? (
-                                            <div className="flex items-center justify-center py-8">
-                                                <RefreshCw className="w-6 h-6 animate-spin text-purple-600" />
-                                            </div>
-                                        ) : (
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-white p-4 rounded-lg shadow-sm">
-                                                    <p className="text-2xl font-bold text-purple-600">
-                                                        {agentMetrics.totalCustomers}
-                                                    </p>
-                                                    <p className="text-sm text-gray-600 mt-1">
-                                                        Clientes atendidos
-                                                    </p>
-                                                </div>
-                                                <div className="bg-white p-4 rounded-lg shadow-sm">
-                                                    <p className="text-2xl font-bold text-blue-600">
-                                                        {agentMetrics.totalReservations}
-                                                    </p>
-                                                    <p className="text-sm text-gray-600 mt-1">
-                                                        Reservas gestionadas
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {!agentMetrics.loading && agentMetrics.totalReservations === 0 && (
-                                            <p className="text-sm text-gray-600 mt-3 text-center">
-                                                Las métricas se mostrarán cuando haya actividad registrada
-                                            </p>
-                                        )}
-                                    </div>
 
                                     {/* Botón guardar */}
                                     <div className="flex justify-end pt-4 border-t border-gray-200">
