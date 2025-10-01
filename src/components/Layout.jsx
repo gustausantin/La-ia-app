@@ -149,17 +149,15 @@ await signOut();
                 <div className="w-64 bg-white shadow-lg flex flex-col">
                     {/* Logo y Estado del Agente */}
                     <div className="p-4 border-b border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
                                 <Bot className="w-8 h-8 text-purple-600" />
-                                <div>
-                                    <h1 className="text-base font-bold text-gray-900">
-                                        La-IA
-                                    </h1>
-                                </div>
+                                <h1 className="text-base font-bold text-gray-900">
+                                    La-IA
+                                </h1>
                             </div>
                             <span
-                                className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
                                     safeAgentStatus?.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
                                 }`}
                             >

@@ -95,7 +95,9 @@ const Configuracion = () => {
         price_range: "",
         agent: {
             enabled: true,
-            name: "Sofia"
+            name: "Sofia",
+            gender: "female",
+            avatar_url: ""
         },
         channels: {
             // Modo simple por defecto (objetos precreados para evitar undefined)
@@ -295,7 +297,9 @@ const Configuracion = () => {
                     // ✅ AGENTE IA
                     agent: {
                         enabled: dbSettings.agent?.enabled !== false,
-                        name: dbSettings.agent?.name || registrationData?.agentName || "Sofia"
+                        name: dbSettings.agent?.name || registrationData?.agentName || "Sofia",
+                        gender: dbSettings.agent?.gender || "female",
+                        avatar_url: dbSettings.agent?.avatar_url || ""
                     },
                     
                     // ✅ CANALES Y NOTIFICACIONES
@@ -792,19 +796,31 @@ const Configuracion = () => {
                                 icon={<Bot />}
                             >
                                 <div className="space-y-6">
-                                    {/* Toggle principal del agente */}
+                                    {/* Toggle principal del agente con AVATAR */}
                                     <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-xl border border-purple-200">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                                                    <Bot className="w-8 h-8 text-white" />
+                                                {/* Avatar del agente */}
+                                                <div className="w-20 h-20 rounded-full overflow-hidden shadow-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                                                    {settings.agent?.avatar_url ? (
+                                                        <img
+                                                            src={settings.agent.avatar_url}
+                                                            alt={settings.agent?.name || "Agente"}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <Bot className="w-10 h-10 text-white" />
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <h3 className="text-lg font-bold text-gray-900">
                                                         {settings.agent?.name || "Agente IA"}
                                                     </h3>
                                                     <p className="text-sm text-gray-600">
-                                                        {settings.agent?.enabled ? "✅ Activo - Atendiendo clientes 24/7" : "❌ Desactivado - Sin atención automática"}
+                                                        {settings.agent?.gender === "male" ? "👨 Voz masculina" : "👩 Voz femenina"}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        {settings.agent?.enabled ? "✅ Activo - Atendiendo clientes 24/7" : "❌ Desactivado"}
                                                     </p>
                                                 </div>
                                             </div>
@@ -842,27 +858,154 @@ const Configuracion = () => {
                                         </div>
                                     )}
 
-                                    {/* Configuración del nombre */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Nombre del agente
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={settings.agent?.name || ""}
-                                            onChange={(e) => setSettings(prev => ({
-                                                ...prev,
-                                                agent: {
-                                                    ...prev.agent,
-                                                    name: e.target.value
-                                                }
-                                            }))}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                            placeholder="Sofia"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            El nombre con el que se presentará el agente a los clientes
-                                        </p>
+                                    {/* Configuración básica */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Nombre del agente
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.agent?.name || ""}
+                                                onChange={(e) => setSettings(prev => ({
+                                                    ...prev,
+                                                    agent: {
+                                                        ...prev.agent,
+                                                        name: e.target.value
+                                                    }
+                                                }))}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                placeholder="Sofia o Marcos"
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                El nombre con el que se presentará a los clientes
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Género de la voz
+                                            </label>
+                                            <div className="flex gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSettings(prev => ({
+                                                        ...prev,
+                                                        agent: {
+                                                            ...prev.agent,
+                                                            gender: "female"
+                                                        }
+                                                    }))}
+                                                    className={`flex-1 px-4 py-2 rounded-lg border-2 transition-all ${
+                                                        settings.agent?.gender === "female"
+                                                            ? "border-purple-500 bg-purple-50 text-purple-700 font-semibold"
+                                                            : "border-gray-300 bg-white text-gray-700 hover:border-purple-300"
+                                                    }`}
+                                                >
+                                                    👩 Femenino
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSettings(prev => ({
+                                                        ...prev,
+                                                        agent: {
+                                                            ...prev.agent,
+                                                            gender: "male"
+                                                        }
+                                                    }))}
+                                                    className={`flex-1 px-4 py-2 rounded-lg border-2 transition-all ${
+                                                        settings.agent?.gender === "male"
+                                                            ? "border-blue-500 bg-blue-50 text-blue-700 font-semibold"
+                                                            : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"
+                                                    }`}
+                                                >
+                                                    👨 Masculino
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Define qué voz usará en llamadas telefónicas
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Avatar personalizado */}
+                                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                                        <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                            <Image className="w-5 h-5 text-blue-600" />
+                                            Avatar del Agente (Humanizar)
+                                        </h4>
+                                        <div className="flex items-center gap-6">
+                                            <div className="w-24 h-24 bg-white rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
+                                                {settings.agent?.avatar_url ? (
+                                                    <img
+                                                        src={settings.agent.avatar_url}
+                                                        alt="Avatar"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <Bot className="w-10 h-10 text-gray-400" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1">
+                                                <input
+                                                    type="file"
+                                                    id="avatar-upload"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            const reader = new FileReader();
+                                                            reader.onload = (event) => {
+                                                                setSettings(prev => ({
+                                                                    ...prev,
+                                                                    agent: {
+                                                                        ...prev.agent,
+                                                                        avatar_url: event.target.result
+                                                                    }
+                                                                }));
+                                                                toast.success('Avatar cargado correctamente');
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="flex gap-2">
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => document.getElementById('avatar-upload').click()}
+                                                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
+                                                    >
+                                                        <Upload className="w-4 h-4" />
+                                                        Subir avatar
+                                                    </button>
+                                                    {settings.agent?.avatar_url && (
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (window.confirm('¿Eliminar el avatar?')) {
+                                                                    setSettings(prev => ({
+                                                                        ...prev,
+                                                                        agent: {
+                                                                            ...prev.agent,
+                                                                            avatar_url: ''
+                                                                        }
+                                                                    }));
+                                                                    toast.success('Avatar eliminado');
+                                                                }
+                                                            }}
+                                                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                            Eliminar
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-2">
+                                                    💡 Genera una imagen con IA (Midjourney, DALL-E) de un empleado virtual realista. Recomendado: foto profesional, circular, 512x512px
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Botón guardar */}
