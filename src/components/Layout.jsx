@@ -1,5 +1,4 @@
 // src/components/Layout.jsx - Versión COMPLETA con NotificationCenter
-// v1.0.2 - Layout sin gaps, sidebar pegado al contenido
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuthContext } from "../contexts/AuthContext";
 import { useState } from "react";
@@ -145,9 +144,9 @@ await signOut();
 
     try {
         return (
-            <div className="flex h-screen bg-gray-50 overflow-hidden">
+            <div className="flex h-screen bg-gray-50">
                 {/* Sidebar */}
-                <div className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+                <div className="w-64 bg-white shadow-lg flex flex-col">
                     {/* Logo y Estado del Agente */}
                     <div className="p-2 border-b border-gray-200">
                         <div className="flex items-center justify-between mb-4">
@@ -221,9 +220,9 @@ await signOut();
                 </div>
 
                 {/* Main Content Area */}
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col">
                     {/* Top Bar */}
-                    <header className="bg-white border-b border-gray-200 flex-shrink-0">
+                    <header className="bg-white shadow-sm border-b border-gray-200">
                         <div className="flex items-center justify-between px-6 py-4">
                             <div className="flex items-center space-x-4">
                                 <h2 className="text-base font-semibold text-gray-900">
