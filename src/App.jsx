@@ -107,8 +107,8 @@ function AppContent() {
         ) : (
           <>
             <Route element={<Layout />}>
-              {/* Ruta por defecto al dashboard */}
-              <Route index element={<Navigate to="/dashboard" replace />} />
+              {/* Ruta por defecto al dashboard nuevo */}
+              <Route index element={<Navigate to="/dashboard-agente" replace />} />
 
               {/* Rutas principales con lazy loading */}
               <Route 
