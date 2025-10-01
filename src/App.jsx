@@ -42,6 +42,9 @@ const AvailabilityTester = lazy(() => import('./components/AvailabilityTester'))
 // 🛡️ Sistema de No-Shows Revolucionario
 const NoShowControl = lazy(() => import('./pages/NoShowControl'));
 
+// 🤖 Dashboard del Agente IA
+const DashboardAgente = lazy(() => import('./pages/DashboardAgente'));
+
 // Componente de carga mejorado
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -113,6 +116,14 @@ function AppContent() {
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <Dashboard />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/dashboard-agente" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <DashboardAgente />
                   </Suspense>
                 } 
               />
