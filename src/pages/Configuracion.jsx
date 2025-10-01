@@ -8,7 +8,10 @@ import {
     MessageSquare,
     Save,
     Upload,
+    X,
     RefreshCw,
+    Bot,
+    Power,
     Image,
     Phone,
     Instagram,
@@ -90,6 +93,10 @@ const Configuracion = () => {
         logo_url: "",
         capacity_total: 0,
         price_range: "",
+        agent: {
+            enabled: true,
+            name: "Sofia"
+        },
         channels: {
             // Modo simple por defecto (objetos precreados para evitar undefined)
             voice: { enabled: false, phone_number: "" },
@@ -163,6 +170,11 @@ const Configuracion = () => {
             id: "general",
             label: "General",
             icon: <Building2 className="w-4 h-4" />,
+        },
+        {
+            id: "agent",
+            label: "Agente IA",
+            icon: <Bot className="w-4 h-4" />,
         },
         {
             id: "channels",
@@ -248,15 +260,26 @@ const Configuracion = () => {
                 // Fusionar configuraciones manteniendo estructura completa
                 const dbSettings = restaurant.settings || {};
                 
+                // 🔥 RECUPERAR DATOS DEL REGISTRO si están vacíos
+                const pendingData = localStorage.getItem('pendingRegistration');
+                let registrationData = null;
+                if (pendingData) {
+                    try {
+                        registrationData = JSON.parse(pendingData);
+                    } catch (e) {
+                        console.error('Error parsing pendingRegistration:', e);
+                    }
+                }
+                
                 setSettings({
-                    // ✅ DATOS DEL REGISTRO - CAMPOS DIRECTOS
-                    name: restaurant.name || "",
-                    email: restaurant.email || "",
-                    phone: restaurant.phone || "",
-                    address: restaurant.address || "",
-                    city: restaurant.city || "",
-                    postal_code: restaurant.postal_code || "",
-                    cuisine_type: restaurant.cuisine_type || "",
+                    // ✅ DATOS DEL REGISTRO - Prioridad: DB > localStorage > vacío
+                    name: restaurant.name || registrationData?.restaurantName || "",
+                    email: restaurant.email || registrationData?.email || "",
+                    phone: restaurant.phone || registrationData?.phone || "",
+                    address: restaurant.address || registrationData?.address || "",
+                    city: restaurant.city || registrationData?.city || "",
+                    postal_code: restaurant.postal_code || registrationData?.postalCode || "",
+                    cuisine_type: restaurant.cuisine_type || registrationData?.cuisineType || "",
                     
                     // ✅ DATOS ADICIONALES - DESDE SETTINGS
                     description: dbSettings.description || "",
@@ -268,6 +291,12 @@ const Configuracion = () => {
                     timezone: restaurant.timezone || "Europe/Madrid",
                     currency: restaurant.currency || "EUR",
                     language: restaurant.language || "es",
+                    
+                    // ✅ AGENTE IA
+                    agent: {
+                        enabled: dbSettings.agent?.enabled !== false,
+                        name: dbSettings.agent?.name || registrationData?.agentName || "Sofia"
+                    },
                     
                     // ✅ CANALES Y NOTIFICACIONES
                     channels: {
@@ -565,14 +594,34 @@ const Configuracion = () => {
                                                     }}
                                                 />
                                                 <div className="space-y-2">
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => document.getElementById('logo-upload').click()}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
-                                                    >
-                                                        <Upload className="w-4 h-4" />
-                                                        Subir logo profesional
-                                                    </button>
+                                                    <div className="flex gap-2">
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => document.getElementById('logo-upload').click()}
+                                                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
+                                                        >
+                                                            <Upload className="w-4 h-4" />
+                                                            Subir logo
+                                                        </button>
+                                                        {settings.logo_url && (
+                                                            <button 
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (window.confirm('¿Estás seguro de eliminar el logo?')) {
+                                                                        setSettings(prev => ({
+                                                                            ...prev,
+                                                                            logo_url: ''
+                                                                        }));
+                                                                        toast.success('Logo eliminado correctamente');
+                                                                    }
+                                                                }}
+                                                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200"
+                                                            >
+                                                                <X className="w-4 h-4" />
+                                                                Eliminar
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                     <p className="text-xs text-gray-500">
                                                         PNG, JPG o SVG (máx. 5MB) • Recomendado: 400x400px
                                                     </p>
@@ -728,6 +777,112 @@ const Configuracion = () => {
                                                 <Save className="w-4 h-4" />
                                             )}
                                             Guardar General
+                                        </button>
+                                    </div>
+                                </div>
+                            </SettingSection>
+                        </div>
+                    )}
+
+                    {activeTab === "agent" && (
+                        <div className="space-y-6">
+                            <SettingSection
+                                title="Configuración del Agente IA"
+                                description="Control centralizado de tu asistente virtual"
+                                icon={<Bot />}
+                            >
+                                <div className="space-y-6">
+                                    {/* Toggle principal del agente */}
+                                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-xl border border-purple-200">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                                    <Bot className="w-8 h-8 text-white" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-gray-900">
+                                                        {settings.agent?.name || "Agente IA"}
+                                                    </h3>
+                                                    <p className="text-sm text-gray-600">
+                                                        {settings.agent?.enabled ? "✅ Activo - Atendiendo clientes 24/7" : "❌ Desactivado - Sin atención automática"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={settings.agent?.enabled || false}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        agent: {
+                                                            ...prev.agent,
+                                                            enabled: e.target.checked
+                                                        }
+                                                    }))}
+                                                    className="sr-only peer"
+                                                />
+                                                <div className="w-16 h-8 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-8 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-blue-600"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Información cuando está desactivado */}
+                                    {!settings.agent?.enabled && (
+                                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                            <div className="flex gap-3">
+                                                <Power className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                                <div>
+                                                    <h4 className="font-semibold text-amber-900">Agente desactivado</h4>
+                                                    <p className="text-sm text-amber-800 mt-1">
+                                                        El agente no responderá a clientes en WhatsApp, teléfono, Instagram, Facebook ni otros canales.
+                                                        Las reservas manuales desde el dashboard siguen funcionando normalmente.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Configuración del nombre */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Nombre del agente
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={settings.agent?.name || ""}
+                                            onChange={(e) => setSettings(prev => ({
+                                                ...prev,
+                                                agent: {
+                                                    ...prev.agent,
+                                                    name: e.target.value
+                                                }
+                                            }))}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                            placeholder="Sofia"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            El nombre con el que se presentará el agente a los clientes
+                                        </p>
+                                    </div>
+
+                                    {/* Botón guardar */}
+                                    <div className="flex justify-end pt-4 border-t border-gray-200">
+                                        <button
+                                            onClick={() => handleSave("Configuración del Agente")}
+                                            disabled={saving}
+                                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 disabled:opacity-50 font-semibold shadow-lg"
+                                        >
+                                            {saving ? (
+                                                <>
+                                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                                    Guardando...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Save className="w-4 h-4" />
+                                                    Guardar Configuración
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </div>

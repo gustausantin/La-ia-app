@@ -148,8 +148,8 @@ await signOut();
                 {/* Sidebar */}
                 <div className="w-64 bg-white shadow-lg flex flex-col">
                     {/* Logo y Estado del Agente */}
-                    <div className="p-2 border-b border-gray-200">
-                        <div className="flex items-center justify-between mb-4">
+                    <div className="p-4 border-b border-gray-200">
+                        <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                                 <Bot className="w-8 h-8 text-purple-600" />
                                 <div>
@@ -166,7 +166,6 @@ await signOut();
                                 {safeAgentStatus?.active ? "Activo" : "Inactivo"}
                             </span>
                         </div>
-                        
                     </div>
 
                     {/* Info del Restaurante */}
