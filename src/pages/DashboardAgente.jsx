@@ -345,10 +345,10 @@ export default function DashboardAgente() {
                             )}
                         </div>
                         <button
-                            onClick={() => navigate('/analytics')}
+                            onClick={() => navigate('/reservas')}
                             className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm font-medium"
                         >
-                            Ver estadísticas
+                            Ver reservas
                             <ArrowRight className="w-4 h-4" />
                         </button>
                     </div>

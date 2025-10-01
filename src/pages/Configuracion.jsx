@@ -474,6 +474,28 @@ const Configuracion = () => {
                     console.error('RPC update_restaurant_channels error:', error);
                     throw error;
                 }
+            } else if (section === "Configuración del Agente") {
+                // Guardar configuración del agente en settings
+                const { data: currentData } = await supabase
+                    .from("restaurants")
+                    .select("settings")
+                    .eq("id", effectiveRestaurantId)
+                    .single();
+                    
+                const currentSettings = currentData?.settings || {};
+                
+                const { error } = await supabase
+                    .from("restaurants")
+                    .update({
+                        settings: {
+                            ...currentSettings,
+                            agent: settings.agent
+                        },
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("id", effectiveRestaurantId);
+
+                if (error) throw error;
             } else if (section === "Configuración de notificaciones") {
                 // Validaciones previas para notificaciones
                 const n = settings.notifications || {};
