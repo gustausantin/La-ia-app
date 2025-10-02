@@ -240,7 +240,7 @@ export default function DashboardAgente() {
                 {/* ====================================
                     ENCABEZADO CON ESTILO CORPORATIVO
                 ==================================== */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-6">
+                <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-white rounded-xl shadow-sm border border-purple-100 p-8 mb-6">
                     <div className="flex items-center gap-8">
                         {/* Avatar más grande con degradado corporativo */}
                         <div className="flex-shrink-0">
@@ -258,8 +258,8 @@ export default function DashboardAgente() {
                             <h1 className="text-3xl font-bold text-gray-900 mb-2">
                                 {format(new Date(), 'HH') < 12 ? 'Buenos días' : format(new Date(), 'HH') < 20 ? 'Buenas tardes' : 'Buenas noches'}, {contactName}
                             </h1>
-                            <p className="text-lg text-gray-600 mb-6">
-                                Resumen operativo del restaurante
+                            <p className="text-lg text-gray-700 mb-6">
+                                Aquí tienes los datos más importantes del día para tu restaurante
                             </p>
                             
                             <div className="flex items-center gap-6 text-sm text-gray-500">
