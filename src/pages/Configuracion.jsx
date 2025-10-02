@@ -829,12 +829,12 @@ const Configuracion = () => {
                                 <div className="space-y-6">
                                     {/* Tarjeta de perfil profesional */}
                                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                                        <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-0">
+                                        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-[400px_1fr] gap-0">
                                             {/* COLUMNA IZQUIERDA: Foto + Descripción */}
-                                            <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-purple-700 p-6 flex flex-col items-center">
+                                            <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-purple-700 p-4 md:p-6 flex flex-col items-center">
                                                 {/* Foto del agente */}
-                                                <div className="relative group mb-6">
-                                                    <div className="w-72 h-96 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-blue-700 via-purple-700 to-purple-800 flex items-center justify-center transform transition-all duration-300 group-hover:shadow-xl">
+                                                <div className="relative group mb-4 md:mb-6">
+                                                    <div className="w-56 h-72 md:w-72 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-blue-700 via-purple-700 to-purple-800 flex items-center justify-center transform transition-all duration-300 group-hover:shadow-xl">
                                                         {settings.agent?.avatar_url ? (
                                                             <img
                                                                 src={settings.agent.avatar_url}
@@ -925,7 +925,7 @@ const Configuracion = () => {
                                             </div>
 
                                             {/* COLUMNA DERECHA: Configuración */}
-                                            <div className="p-8 flex flex-col gap-6">
+                                            <div className="p-4 md:p-8 flex flex-col gap-4 md:gap-6">
                                                 {/* Información del empleado */}
                                                 <div className="bg-white p-4 rounded-xl border-2 border-gray-200">
                                                     <div className="space-y-3">
@@ -950,7 +950,7 @@ const Configuracion = () => {
                                                 </div>
 
                                                 {/* Nombre y Apellido */}
-                                                <div className="grid grid-cols-2 gap-3">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                     <div>
                                                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                                                             Nombre

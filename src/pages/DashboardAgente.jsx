@@ -235,16 +235,16 @@ export default function DashboardAgente() {
     const vsLastWeek = dashboardData.thisWeekReservations - dashboardData.lastWeekReservations;
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
                 {/* ====================================
                     ENCABEZADO CON ESTILO CORPORATIVO
                 ==================================== */}
-                <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-white rounded-xl shadow-sm border border-purple-100 p-8 mb-6">
-                    <div className="flex items-center gap-8">
+                <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-white rounded-xl shadow-sm border border-purple-100 p-4 md:p-8 mb-4 md:mb-6">
+                    <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
                         {/* Avatar más grande con degradado corporativo */}
                         <div className="flex-shrink-0">
-                            <div className="w-56 h-56 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-purple-700 flex items-center justify-center shadow-lg ring-4 ring-purple-100">
+                            <div className="w-40 h-40 md:w-56 md:h-56 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-purple-700 flex items-center justify-center shadow-lg ring-4 ring-purple-100">
                                 {agentAvatar ? (
                                     <img src={agentAvatar} alt={agentName} className="w-full h-full object-cover" />
                                 ) : (
@@ -254,15 +254,15 @@ export default function DashboardAgente() {
                         </div>
 
                         {/* Información */}
-                        <div className="flex-1">
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                        <div className="flex-1 text-center md:text-left">
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
                                 {format(new Date(), 'HH') < 12 ? 'Buenos días' : format(new Date(), 'HH') < 20 ? 'Buenas tardes' : 'Buenas noches'}, {contactName}
                             </h1>
-                            <p className="text-lg text-gray-700 mb-6">
+                            <p className="text-base md:text-lg text-gray-700 mb-4 md:mb-6">
                                 Aquí tienes los datos más importantes del día para tu restaurante
                             </p>
                             
-                            <div className="flex items-center gap-6 text-sm text-gray-500">
+                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-xs md:text-sm text-gray-500">
                                 <div className="flex items-center gap-2">
                                     <Calendar className="w-4 h-4" />
                                     <span className="font-medium capitalize">
@@ -288,7 +288,7 @@ export default function DashboardAgente() {
                 {/* ====================================
                     GRID DE MÉTRICAS - DISEÑO PROFESIONAL
                 ==================================== */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-4">
                     
                     {/* MÉTRICA 1: Reservas de Hoy */}
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col hover:shadow-md transition-shadow">
@@ -510,7 +510,7 @@ export default function DashboardAgente() {
                 {/* ====================================
                     WIDGETS DEL DASHBOARD ANTIGUO
                 ==================================== */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
                     <NoShowWidget 
                         data={dashboardData.noShowWidgetData} 
                         onViewDetails={() => navigate('/no-shows')} 
@@ -520,7 +520,7 @@ export default function DashboardAgente() {
                     />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <TotalValueWidget 
                         data={dashboardData.totalValueData} 
                     />
