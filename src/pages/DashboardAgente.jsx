@@ -238,17 +238,17 @@ export default function DashboardAgente() {
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-7xl mx-auto">
                 {/* ====================================
-                    ENCABEZADO PROFESIONAL
+                    ENCABEZADO CON ESTILO CORPORATIVO
                 ==================================== */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-6">
                     <div className="flex items-center gap-8">
-                        {/* Avatar profesional */}
+                        {/* Avatar más grande con degradado corporativo */}
                         <div className="flex-shrink-0">
-                            <div className="w-48 h-48 rounded-lg overflow-hidden bg-gray-900 flex items-center justify-center shadow-md border-2 border-gray-200">
+                            <div className="w-56 h-56 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-purple-700 flex items-center justify-center shadow-lg ring-4 ring-purple-100">
                                 {agentAvatar ? (
                                     <img src={agentAvatar} alt={agentName} className="w-full h-full object-cover" />
                                 ) : (
-                                    <Bot className="w-24 h-24 text-gray-400" />
+                                    <Bot className="w-28 h-28 text-white opacity-80" />
                                 )}
                             </div>
                         </div>
@@ -275,7 +275,7 @@ export default function DashboardAgente() {
                                 </div>
                                 <button
                                     onClick={loadDashboardData}
-                                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                                    className="flex items-center gap-2 px-3 py-2 text-sm text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg transition-all shadow-sm"
                                 >
                                     <RefreshCw className="w-4 h-4" />
                                     Actualizar
@@ -313,7 +313,7 @@ export default function DashboardAgente() {
                         <div className="p-4 bg-gray-50 border-t border-gray-200">
                             <button
                                 onClick={() => navigate('/reservas', { state: { filterToday: true } })}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded transition-colors text-sm font-medium"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all text-sm font-medium shadow-sm"
                             >
                                 Ver reservas de hoy
                                 <ArrowRight className="w-4 h-4" />
@@ -339,7 +339,7 @@ export default function DashboardAgente() {
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                     <div 
-                                        className="bg-gray-900 h-2 rounded-full transition-all duration-500"
+                                        className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-500"
                                         style={{ width: `${Math.min(dashboardData.occupancyPercent, 100)}%` }}
                                     />
                                 </div>
@@ -349,7 +349,7 @@ export default function DashboardAgente() {
                         <div className="p-4 bg-gray-50 border-t border-gray-200">
                             <button
                                 onClick={() => navigate('/mesas')}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded transition-colors text-sm font-medium"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all text-sm font-medium shadow-sm"
                             >
                                 Gestionar mesas
                                 <ArrowRight className="w-4 h-4" />
@@ -389,7 +389,7 @@ export default function DashboardAgente() {
                         <div className="p-4 bg-gray-50 border-t border-gray-200">
                             <button
                                 onClick={() => navigate('/clientes', { state: { filterToday: true } })}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded transition-colors text-sm font-medium"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all text-sm font-medium shadow-sm"
                             >
                                 Ver clientes de hoy
                                 <ArrowRight className="w-4 h-4" />
@@ -427,7 +427,7 @@ export default function DashboardAgente() {
                         <div className="p-4 bg-gray-50 border-t border-gray-200">
                             <button
                                 onClick={() => navigate('/no-shows')}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded transition-colors text-sm font-medium"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all text-sm font-medium shadow-sm"
                             >
                                 {dashboardData.noShowsRisk > 0 ? 'Ver alertas' : 'Ver historial'}
                                 <ArrowRight className="w-4 h-4" />
@@ -467,7 +467,7 @@ export default function DashboardAgente() {
                         <div className="p-4 bg-gray-50 border-t border-gray-200">
                             <button
                                 onClick={() => navigate('/reservas', { state: { filterWeek: true } })}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded transition-colors text-sm font-medium"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all text-sm font-medium shadow-sm"
                             >
                                 Ver reservas de la semana
                                 <ArrowRight className="w-4 h-4" />
@@ -497,7 +497,7 @@ export default function DashboardAgente() {
                         <div className="p-4 bg-gray-50 border-t border-gray-200">
                             <button
                                 onClick={() => navigate('/crm-inteligente')}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded transition-colors text-sm font-medium"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all text-sm font-medium shadow-sm"
                             >
                                 {dashboardData.pendingCRMAlerts > 0 ? 'Ejecutar CRM IA' : 'Ver CRM IA'}
                                 <ArrowRight className="w-4 h-4" />
