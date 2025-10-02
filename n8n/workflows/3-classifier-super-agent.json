@@ -1,0 +1,280 @@
+{
+  "name": "3️⃣ Clasificador Super Agent (GPT-4o-mini)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "classifier-super-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "id": "webhook-classifier",
+      "name": "Webhook Clasificador",
+      "webhookId": "classifier-super-agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validar datos de entrada\nconst input = $input.all()[0].json;\n\nif (!input.conversation_id || !input.restaurant_id || !input.message_text) {\n  throw new Error('❌ Faltan datos obligatorios: conversation_id, restaurant_id, message_text');\n}\n\nreturn {\n  conversation_id: input.conversation_id,\n  restaurant_id: input.restaurant_id,\n  customer_id: input.customer_id || null,\n  message_text: input.message_text,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "id": "validate-classifier-input",
+      "name": "Validar Entrada"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "=Eres un asistente experto en clasificar la intención de los mensajes de clientes de restaurantes.\n\nTu única tarea es analizar el mensaje del usuario y clasificarlo en una de las siguientes categorías:\n\n**CATEGORÍAS:**\n- `nueva_reserva`: El usuario quiere hacer una nueva reserva\n- `modificar_reserva`: El usuario quiere cambiar una reserva existente (fecha, hora, número personas)\n- `cancelar_reserva`: El usuario quiere cancelar una reserva existente\n- `consulta_menu`: El usuario pregunta sobre el menú, platos, precios, alérgenos\n- `consulta_general`: Preguntas generales sobre el restaurante (horario, ubicación, servicios, parking, etc.)\n- `consulta_reserva`: El usuario pregunta sobre el estado de su reserva o busca una reserva existente\n- `saludo_inicial`: Mensajes de saludo sin una intención clara aún (\"Hola\", \"Buenos días\", etc.)\n\n**INSTRUCCIONES:**\n1. Lee el mensaje del usuario con atención\n2. Identifica la intención principal\n3. SIEMPRE responde con un objeto JSON válido con esta estructura exacta:\n\n```json\n{\n  \"category\": \"nueva_reserva\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"El usuario menciona 'quiero reservar' y 'para 4 personas'.\"\n}\n```\n\n**IMPORTANTE:**\n- `confidence`: número entre 0.0 y 1.0\n- Si no estás seguro, usa `confidence` menor a 0.7\n- Si el mensaje es ambiguo, clasifícalo como `saludo_inicial` o `consulta_general`\n- NO inventes información, solo clasifica la intención\n\n**EJEMPLOS:**\n\n**Mensaje:** \"Hola, quiero reservar mesa para 4 personas el sábado a las 21h\"\n**Respuesta:**\n```json\n{\n  \"category\": \"nueva_reserva\",\n  \"confidence\": 0.98,\n  \"reasoning\": \"Solicitud explícita de reserva con detalles: 4 personas, sábado 21h\"\n}\n```\n\n**Mensaje:** \"¿Podéis cambiar mi reserva de mañana a las 20h?\"\n**Respuesta:**\n```json\n{\n  \"category\": \"modificar_reserva\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Solicitud de modificación de reserva existente\"\n}\n```\n\n**Mensaje:** \"Tengo que cancelar la reserva de esta noche\"\n**Respuesta:**\n```json\n{\n  \"category\": \"cancelar_reserva\",\n  \"confidence\": 0.99,\n  \"reasoning\": \"Solicitud explícita de cancelación\"\n}\n```\n\n**Mensaje:** \"¿Tenéis menú sin gluten?\"\n**Respuesta:**\n```json\n{\n  \"category\": \"consulta_menu\",\n  \"confidence\": 0.97,\n  \"reasoning\": \"Pregunta específica sobre opciones del menú\"\n}\n```\n\n**Mensaje:** \"¿A qué hora cerráis?\"\n**Respuesta:**\n```json\n{\n  \"category\": \"consulta_general\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Pregunta sobre horarios del restaurante\"\n}\n```\n\n**Mensaje:** \"Hola buenos días\"\n**Respuesta:**\n```json\n{\n  \"category\": \"saludo_inicial\",\n  \"confidence\": 0.99,\n  \"reasoning\": \"Saludo sin intención clara todavía\"\n}\n```\n\nAhora clasifica el siguiente mensaje del usuario:"
+            },
+            {
+              "content": "={{ $json.message_text }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 150
+        },
+        "jsonOutput": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.4,
+      "position": [680, 300],
+      "id": "openai-classifier",
+      "name": "OpenAI GPT-4o-mini",
+      "credentials": {
+        "openAiApi": {
+          "id": "{{OPENAI_CREDENTIAL_ID}}",
+          "name": "OpenAI La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsear respuesta de OpenAI\nconst openaiResponse = $input.all()[0].json;\nconst inputData = $('Validar Entrada').item.json;\n\nlet classification;\ntry {\n  // Intentar parsear el JSON de la respuesta\n  const content = openaiResponse.message?.content || openaiResponse.choices?.[0]?.message?.content || '{}';\n  classification = typeof content === 'string' ? JSON.parse(content) : content;\n} catch (error) {\n  console.error('Error parseando respuesta OpenAI:', error);\n  // Clasificación por defecto si falla\n  classification = {\n    category: 'consulta_general',\n    confidence: 0.5,\n    reasoning: 'Error al procesar respuesta de IA'\n  };\n}\n\n// Validar categoría\nconst validCategories = [\n  'nueva_reserva',\n  'modificar_reserva',\n  'cancelar_reserva',\n  'consulta_menu',\n  'consulta_general',\n  'consulta_reserva',\n  'saludo_inicial'\n];\n\nif (!validCategories.includes(classification.category)) {\n  classification.category = 'consulta_general';\n  classification.confidence = 0.5;\n}\n\nreturn {\n  conversation_id: inputData.conversation_id,\n  restaurant_id: inputData.restaurant_id,\n  customer_id: inputData.customer_id,\n  category: classification.category,\n  confidence: classification.confidence,\n  reasoning: classification.reasoning,\n  original_message: inputData.message_text,\n  timestamp: inputData.timestamp\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "id": "parse-classification",
+      "name": "Parsear Clasificación"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "update",
+        "tableId": "agent_conversations",
+        "filterType": "manual",
+        "matchingColumns": "id",
+        "matchingColumnsUi": {
+          "matchingColumn": [
+            {
+              "column": "id",
+              "operator": "eq",
+              "value": "={{ $json.conversation_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "interaction_type",
+              "fieldValue": "={{ $json.category }}"
+            },
+            {
+              "fieldId": "metadata",
+              "fieldValue": "={{ JSON.stringify({\n  classification_confidence: $json.confidence,\n  classification_reasoning: $json.reasoning,\n  classified_at: $json.timestamp\n}) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "id": "update-conversation",
+      "name": "Actualizar Conversación",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "route-nueva-reserva",
+              "leftValue": "={{ $json.category }}",
+              "rightValue": "nueva_reserva",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [1340, 300],
+      "id": "route-by-category",
+      "name": "Enrutar por Categoría"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ruta: Nueva Reserva\nreturn {\n  conversation_id: $json.conversation_id,\n  restaurant_id: $json.restaurant_id,\n  customer_id: $json.customer_id,\n  category: $json.category,\n  message: $json.original_message,\n  next_agent: 'reservation-agent'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 180],
+      "id": "route-reservation",
+      "name": "→ Agente Reservas"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ruta: Otras categorías (placeholder)\nreturn {\n  conversation_id: $json.conversation_id,\n  restaurant_id: $json.restaurant_id,\n  category: $json.category,\n  message: 'Categoría reconocida pero sin agente especializado aún',\n  next_agent: 'general-agent'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 420],
+      "id": "route-general",
+      "name": "→ Agente General (TODO)"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: 'success',\n  conversation_id: $json.conversation_id,\n  category: $json.category,\n  confidence: $('Parsear Clasificación').item.json.confidence,\n  next_agent: $json.next_agent,\n  message: 'Clasificación completada'\n}) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1780, 300],
+      "id": "respond-classifier",
+      "name": "Responder Clasificador"
+    }
+  ],
+  "connections": {
+    "Webhook Clasificador": {
+      "main": [
+        [
+          {
+            "node": "Validar Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Entrada": {
+      "main": [
+        [
+          {
+            "node": "OpenAI GPT-4o-mini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-4o-mini": {
+      "main": [
+        [
+          {
+            "node": "Parsear Clasificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear Clasificación": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Conversación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Conversación": {
+      "main": [
+        [
+          {
+            "node": "Enrutar por Categoría",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutar por Categoría": {
+      "main": [
+        [
+          {
+            "node": "→ Agente Reservas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ Agente General (TODO)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "→ Agente Reservas": {
+      "main": [
+        [
+          {
+            "node": "Responder Clasificador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "→ Agente General (TODO)": {
+      "main": [
+        [
+          {
+            "node": "Responder Clasificador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-02T00:00:00.000Z",
+  "versionId": "1"
+}
+

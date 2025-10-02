@@ -1,0 +1,452 @@
+{
+  "name": "2️⃣ Gateway Unificado (Get/Create Customer + Conversation)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "gateway-unified",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "id": "webhook-gateway",
+      "name": "Webhook Gateway",
+      "webhookId": "gateway-unified"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraer y validar datos de entrada\nconst input = $input.all()[0].json;\n\n// Obtener restaurant_id desde env o auth\nconst restaurantId = input.restaurant_id || $env.DEFAULT_RESTAURANT_ID;\n\nif (!restaurantId) {\n  throw new Error('❌ restaurant_id es obligatorio');\n}\n\nif (!input.customer_phone) {\n  throw new Error('❌ customer_phone es obligatorio');\n}\n\nreturn {\n  restaurant_id: restaurantId,\n  source_channel: input.source_channel || 'unknown',\n  customer_phone: input.customer_phone,\n  customer_name: input.customer_name || 'Cliente',\n  customer_email: input.customer_email || null,\n  message_text: input.message_text || '',\n  timestamp: new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "id": "validate-input",
+      "name": "Validar Entrada"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "get",
+        "tableId": "customers",
+        "filterType": "manual",
+        "matchingColumns": "restaurant_id,phone",
+        "matchingColumnsUi": {
+          "matchingColumn": [
+            {
+              "column": "restaurant_id",
+              "operator": "eq",
+              "value": "={{ $json.restaurant_id }}"
+            },
+            {
+              "column": "phone",
+              "operator": "eq",
+              "value": "={{ $json.customer_phone }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "id": "get-customer",
+      "name": "Buscar Cliente",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "name": "Supabase La-IA"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "customer-exists",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "id": "check-customer-exists",
+      "name": "¿Cliente existe?"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "insert",
+        "tableId": "customers",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "restaurant_id",
+              "fieldValue": "={{ $('Validar Entrada').item.json.restaurant_id }}"
+            },
+            {
+              "fieldId": "name",
+              "fieldValue": "={{ $('Validar Entrada').item.json.customer_name }}"
+            },
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $('Validar Entrada').item.json.customer_phone }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $('Validar Entrada').item.json.customer_email }}"
+            },
+            {
+              "fieldId": "segment_auto",
+              "fieldValue": "nuevo"
+            },
+            {
+              "fieldId": "segment_auto_v2",
+              "fieldValue": "nuevo"
+            },
+            {
+              "fieldId": "preferred_channel",
+              "fieldValue": "={{ $('Validar Entrada').item.json.source_channel }}"
+            },
+            {
+              "fieldId": "consent_whatsapp",
+              "fieldValue": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1120, 420],
+      "id": "create-customer",
+      "name": "Crear Cliente Nuevo",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge: usar cliente existente o recién creado\nconst existingCustomer = $('Buscar Cliente').item?.json;\nconst newCustomer = $('Crear Cliente Nuevo').item?.json;\n\nconst customer = existingCustomer || newCustomer;\n\nif (!customer || !customer.id) {\n  throw new Error('❌ No se pudo obtener o crear el cliente');\n}\n\nconst inputData = $('Validar Entrada').item.json;\n\nreturn {\n  restaurant_id: inputData.restaurant_id,\n  customer_id: customer.id,\n  customer_phone: inputData.customer_phone,\n  customer_name: customer.name,\n  customer_email: customer.email,\n  source_channel: inputData.source_channel,\n  message_text: inputData.message_text,\n  timestamp: inputData.timestamp\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300],
+      "id": "merge-customer",
+      "name": "Merge Customer Data"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "insert",
+        "tableId": "agent_conversations",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "restaurant_id",
+              "fieldValue": "={{ $json.restaurant_id }}"
+            },
+            {
+              "fieldId": "customer_id",
+              "fieldValue": "={{ $json.customer_id }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $json.customer_phone }}"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $json.customer_name }}"
+            },
+            {
+              "fieldId": "customer_email",
+              "fieldValue": "={{ $json.customer_email }}"
+            },
+            {
+              "fieldId": "source_channel",
+              "fieldValue": "={{ $json.source_channel }}"
+            },
+            {
+              "fieldId": "interaction_type",
+              "fieldValue": "pendiente_clasificacion"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "active"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1560, 300],
+      "id": "create-conversation",
+      "name": "Crear Conversación",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "insert",
+        "tableId": "agent_messages",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "conversation_id",
+              "fieldValue": "={{ $('Crear Conversación').item.json.id }}"
+            },
+            {
+              "fieldId": "restaurant_id",
+              "fieldValue": "={{ $('Merge Customer Data').item.json.restaurant_id }}"
+            },
+            {
+              "fieldId": "direction",
+              "fieldValue": "inbound"
+            },
+            {
+              "fieldId": "sender",
+              "fieldValue": "customer"
+            },
+            {
+              "fieldId": "message_text",
+              "fieldValue": "={{ $('Merge Customer Data').item.json.message_text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1780, 300],
+      "id": "log-message",
+      "name": "Log Mensaje Inbound",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Preparar datos para el Clasificador\nconst conversation = $('Crear Conversación').item.json;\nconst customerData = $('Merge Customer Data').item.json;\n\nreturn {\n  conversation_id: conversation.id,\n  restaurant_id: customerData.restaurant_id,\n  customer_id: customerData.customer_id,\n  customer_name: customerData.customer_name,\n  source_channel: customerData.source_channel,\n  message_text: customerData.message_text,\n  timestamp: customerData.timestamp\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 300],
+      "id": "prepare-classifier",
+      "name": "Preparar para Clasificador"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_BASE_URL }}/webhook/classifier-super-agent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "conversation_id",
+              "value": "={{ $json.conversation_id }}"
+            },
+            {
+              "name": "restaurant_id",
+              "value": "={{ $json.restaurant_id }}"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $json.customer_id }}"
+            },
+            {
+              "name": "message_text",
+              "value": "={{ $json.message_text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2220, 300],
+      "id": "call-classifier",
+      "name": "Llamar Clasificador",
+      "credentials": {
+        "n8nApi": {
+          "id": "{{N8N_API_CREDENTIAL_ID}}",
+          "name": "n8n API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: 'success',\n  conversation_id: $json.conversation_id,\n  customer_id: $json.customer_id,\n  message: 'Conversación creada y enviada al clasificador'\n}) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2440, 300],
+      "id": "respond-gateway",
+      "name": "Responder Gateway"
+    }
+  ],
+  "connections": {
+    "Webhook Gateway": {
+      "main": [
+        [
+          {
+            "node": "Validar Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Entrada": {
+      "main": [
+        [
+          {
+            "node": "Buscar Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Cliente": {
+      "main": [
+        [
+          {
+            "node": "¿Cliente existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Cliente existe?": {
+      "main": [
+        [
+          {
+            "node": "Merge Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear Cliente Nuevo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Cliente Nuevo": {
+      "main": [
+        [
+          {
+            "node": "Merge Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Customer Data": {
+      "main": [
+        [
+          {
+            "node": "Crear Conversación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Conversación": {
+      "main": [
+        [
+          {
+            "node": "Log Mensaje Inbound",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Mensaje Inbound": {
+      "main": [
+        [
+          {
+            "node": "Preparar para Clasificador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar para Clasificador": {
+      "main": [
+        [
+          {
+            "node": "Llamar Clasificador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar Clasificador": {
+      "main": [
+        [
+          {
+            "node": "Responder Gateway",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-02T00:00:00.000Z",
+  "versionId": "1"
+}
+
