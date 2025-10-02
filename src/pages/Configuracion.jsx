@@ -828,13 +828,13 @@ const Configuracion = () => {
                             >
                                 <div className="space-y-6">
                                     {/* Tarjeta de perfil profesional */}
-                                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                                         <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-0">
                                             {/* COLUMNA IZQUIERDA: Foto + Descripción */}
-                                            <div className="bg-gray-900 p-6 flex flex-col items-center">
+                                            <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-purple-700 p-6 flex flex-col items-center">
                                                 {/* Foto del agente */}
                                                 <div className="relative group mb-6">
-                                                    <div className="w-72 h-96 rounded-lg overflow-hidden shadow-md bg-gray-800 flex items-center justify-center transform transition-all duration-200 group-hover:shadow-lg">
+                                                    <div className="w-72 h-96 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-blue-700 via-purple-700 to-purple-800 flex items-center justify-center transform transition-all duration-300 group-hover:shadow-xl">
                                                         {settings.agent?.avatar_url ? (
                                                             <img
                                                                 src={settings.agent.avatar_url}
@@ -842,9 +842,9 @@ const Configuracion = () => {
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         ) : (
-                                                            <div className="flex flex-col items-center gap-4 text-gray-400 p-8">
-                                                                <Bot className="w-32 h-32" />
-                                                                <p className="text-base font-medium text-center text-gray-300">
+                                                            <div className="flex flex-col items-center gap-4 text-white p-8">
+                                                                <Bot className="w-32 h-32 opacity-60" />
+                                                                <p className="text-base font-medium text-center">
                                                                     Sube la foto de tu empleado virtual
                                                                 </p>
                                                             </div>
@@ -880,7 +880,7 @@ const Configuracion = () => {
                                                     <button 
                                                         type="button"
                                                         onClick={() => document.getElementById('avatar-upload-main').click()}
-                                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-all duration-200 shadow-sm font-medium border border-gray-200"
+                                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white text-purple-600 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-md font-semibold"
                                                     >
                                                         <Upload className="w-5 h-5" />
                                                         Subir avatar
@@ -900,24 +900,24 @@ const Configuracion = () => {
                                                                     toast.success('Avatar eliminado');
                                                                 }
                                                             }}
-                                                            className="w-full text-sm text-gray-400 hover:text-red-400 font-medium transition-colors"
+                                                            className="w-full text-sm text-white hover:text-red-200 font-medium transition-colors"
                                                         >
                                                             Eliminar avatar
                                                         </button>
                                                     )}
-                                                    <p className="text-xs text-gray-400 text-center">
+                                                    <p className="text-xs text-white/70 text-center">
                                                         JPG o PNG (máx. 5MB)
                                                     </p>
                                                 </div>
 
                                                 {/* Descripción */}
                                                 <div className="w-full max-w-xs">
-                                                    <div className="bg-gray-800 border border-gray-700 p-5 rounded-lg">
-                                                        <h4 className="font-semibold text-gray-300 mb-3 text-sm flex items-center gap-2">
+                                                    <div className="bg-white/10 backdrop-blur-sm p-5 rounded-xl border border-white/20">
+                                                        <h4 className="font-semibold text-white mb-3 text-sm flex items-center gap-2">
                                                             <MessageSquare className="w-4 h-4" />
                                                             Descripción
                                                         </h4>
-                                                        <p className="text-sm text-gray-400 leading-relaxed">
+                                                        <p className="text-sm text-white/90 leading-relaxed">
                                                             {settings.agent?.bio || "Profesional, amable y siempre dispuesta a ayudar. Le encanta su trabajo y conoce a la perfección cada detalle del restaurante. Paciente y con una sonrisa permanente, hará que cada cliente se sienta especial."}
                                                         </p>
                                                     </div>
@@ -1027,10 +1027,10 @@ const Configuracion = () => {
                                                                     gender: "female"
                                                                 }
                                                             }))}
-                                                            className={`px-6 py-4 rounded-lg border-2 transition-all text-base font-medium ${
+                                                            className={`px-6 py-4 rounded-xl border-2 transition-all text-base font-semibold ${
                                                                 settings.agent?.gender === "female"
-                                                                    ? "border-gray-900 bg-gray-900 text-white"
-                                                                    : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                                                                    ? "border-purple-500 bg-purple-50 text-purple-700 shadow-md"
+                                                                    : "border-gray-300 bg-white text-gray-700 hover:border-purple-300"
                                                             }`}
                                                         >
                                                             👩 Femenino
@@ -1044,10 +1044,10 @@ const Configuracion = () => {
                                                                     gender: "male"
                                                                 }
                                                             }))}
-                                                            className={`px-6 py-4 rounded-lg border-2 transition-all text-base font-medium ${
+                                                            className={`px-6 py-4 rounded-xl border-2 transition-all text-base font-semibold ${
                                                                 settings.agent?.gender === "male"
-                                                                    ? "border-gray-900 bg-gray-900 text-white"
-                                                                    : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                                                                    ? "border-blue-500 bg-blue-50 text-blue-700 shadow-md"
+                                                                    : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"
                                                             }`}
                                                         >
                                                             👨 Masculino
@@ -1082,7 +1082,7 @@ const Configuracion = () => {
                                                                 }))}
                                                                 className="sr-only peer"
                                                             />
-                                                            <div className="w-16 h-8 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gray-300 rounded-full peer peer-checked:after:translate-x-8 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-gray-900"></div>
+                                                            <div className="w-16 h-8 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-8 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-600 peer-checked:to-purple-600"></div>
                                                         </label>
                                                     </div>
                                                 </div>
