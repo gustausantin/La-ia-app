@@ -1,0 +1,393 @@
+{
+  "name": "1️⃣ WhatsApp Input → Buffer",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "id": "webhook-whatsapp",
+      "name": "Webhook WhatsApp",
+      "webhookId": "whatsapp-inbound"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraer datos del webhook de WhatsApp\nconst input = $input.all();\nconst data = input[0].json;\n\n// Normalizar datos (adaptar según proveedor: Twilio, Meta, etc.)\nconst customerPhone = data.from || data.From || data.phone;\nconst customerName = data.profile?.name || data.ProfileName || 'Cliente';\nconst messageText = data.body || data.Body || data.text || '';\nconst timestamp = data.timestamp || new Date().toISOString();\n\n// Generar buffer_key único (phone + fecha/hora con 10 seg de ventana)\nconst now = new Date();\nconst bufferWindow = Math.floor(now.getTime() / 10000) * 10000; // Ventana de 10 segundos\nconst bufferKey = `${customerPhone}_${bufferWindow}`;\n\nreturn {\n  buffer_key: bufferKey,\n  customer_phone: customerPhone,\n  customer_name: customerName,\n  message_text: messageText,\n  timestamp: timestamp,\n  raw_data: data\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "id": "normalize-data",
+      "name": "Normalizar Datos"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "insert",
+        "tableId": "whatsapp_message_buffer",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "buffer_key",
+              "fieldValue": "={{ $json.buffer_key }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $json.customer_phone }}"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $json.customer_name }}"
+            },
+            {
+              "fieldId": "messages",
+              "fieldValue": "={{ $json.message_text }}"
+            },
+            {
+              "fieldId": "message_count",
+              "fieldValue": "1"
+            }
+          ]
+        },
+        "options": {
+          "upsert": true,
+          "onConflict": "buffer_key"
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "id": "insert-buffer",
+      "name": "Insertar en Buffer",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "name": "Supabase La-IA"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Actualizar buffer existente (si ya existe)\nconst bufferKey = $json.buffer_key;\nconst newMessage = $json.message_text;\n\n// Este código se ejecuta si el INSERT falló (ya existe el buffer_key)\n// Concatenamos el nuevo mensaje al existente\nreturn {\n  buffer_key: bufferKey,\n  new_message: newMessage\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 480],
+      "id": "prepare-update",
+      "name": "Preparar Actualización"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "update",
+        "tableId": "whatsapp_message_buffer",
+        "filterType": "manual",
+        "matchingColumns": "buffer_key",
+        "matchingColumnsUi": {
+          "matchingColumn": [
+            {
+              "column": "buffer_key",
+              "operator": "eq",
+              "value": "={{ $json.buffer_key }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "messages",
+              "fieldValue": "=CONCAT(messages, ' ', '{{ $json.new_message }}')"
+            },
+            {
+              "fieldId": "message_count",
+              "fieldValue": "=message_count + 1"
+            },
+            {
+              "fieldId": "last_message_at",
+              "fieldValue": "=NOW()"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [900, 480],
+      "id": "update-buffer",
+      "name": "Actualizar Buffer",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "id": "wait-buffer",
+      "name": "Esperar 10 segundos",
+      "webhookId": "wait-buffer-whatsapp"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "get",
+        "tableId": "whatsapp_message_buffer",
+        "filterType": "manual",
+        "matchingColumns": "buffer_key",
+        "matchingColumnsUi": {
+          "matchingColumn": [
+            {
+              "column": "buffer_key",
+              "operator": "eq",
+              "value": "={{ $json.buffer_key }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "id": "get-buffer",
+      "name": "Obtener Buffer Completo",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Preparar datos consolidados para el Gateway\nconst buffer = $input.all()[0].json;\n\nreturn {\n  source_channel: 'whatsapp',\n  customer_phone: buffer.customer_phone,\n  customer_name: buffer.customer_name,\n  consolidated_message: buffer.messages,\n  message_count: buffer.message_count,\n  buffer_key: buffer.buffer_key,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300],
+      "id": "prepare-gateway",
+      "name": "Preparar para Gateway"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "delete",
+        "tableId": "whatsapp_message_buffer",
+        "filterType": "manual",
+        "matchingColumns": "buffer_key",
+        "matchingColumnsUi": {
+          "matchingColumn": [
+            {
+              "column": "buffer_key",
+              "operator": "eq",
+              "value": "={{ $json.buffer_key }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1560, 300],
+      "id": "delete-buffer",
+      "name": "Eliminar Buffer",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_BASE_URL }}/webhook/gateway-unified",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "source_channel",
+              "value": "={{ $json.source_channel }}"
+            },
+            {
+              "name": "customer_phone",
+              "value": "={{ $json.customer_phone }}"
+            },
+            {
+              "name": "customer_name",
+              "value": "={{ $json.customer_name }}"
+            },
+            {
+              "name": "message_text",
+              "value": "={{ $json.consolidated_message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 300],
+      "id": "call-gateway",
+      "name": "Llamar Gateway Unificado",
+      "credentials": {
+        "n8nApi": {
+          "id": "{{N8N_API_CREDENTIAL_ID}}",
+          "name": "n8n API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={\"status\": \"success\", \"message\": \"Mensaje recibido y procesado\"}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2000, 300],
+      "id": "respond-webhook",
+      "name": "Responder Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Datos": {
+      "main": [
+        [
+          {
+            "node": "Insertar en Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insertar en Buffer": {
+      "main": [
+        [
+          {
+            "node": "Esperar 10 segundos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Actualización",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Actualización": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar 10 segundos": {
+      "main": [
+        [
+          {
+            "node": "Obtener Buffer Completo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Buffer Completo": {
+      "main": [
+        [
+          {
+            "node": "Preparar para Gateway",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar para Gateway": {
+      "main": [
+        [
+          {
+            "node": "Eliminar Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Eliminar Buffer": {
+      "main": [
+        [
+          {
+            "node": "Llamar Gateway Unificado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar Gateway Unificado": {
+      "main": [
+        [
+          {
+            "node": "Responder Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-02T00:00:00.000Z",
+  "versionId": "1"
+}
+
