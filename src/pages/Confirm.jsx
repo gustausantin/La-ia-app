@@ -66,32 +66,65 @@ export default function Confirm() {
         if (pendingData) {
           const pending = JSON.parse(pendingData);
           
+          console.log('📋 DATOS DEL REGISTRO:', pending);
+          
           // Crear restaurante con datos guardados
           const { data: restaurantData, error: restaurantError } = await supabase
             .rpc('create_restaurant_securely', {
               restaurant_data: {
-                name: pending.restaurantName,
+                name: pending.restaurantName || 'Mi Restaurante',
                 email: sessionData.user.email,
-                phone: pending.phone,
-                city: pending.city,
-                address: pending.address,
-                postal_code: pending.postalCode,
-                cuisine_type: pending.cuisineType,
+                phone: pending.phone || null,
+                city: pending.city || null,
+                address: pending.address || null,
+                postal_code: pending.postalCode || null,
+                cuisine_type: pending.cuisineType || null,
                 plan: "trial",
                 active: true
               },
               user_profile: {
                 email: sessionData.user.email,
-                full_name: pending.restaurantName
+                full_name: pending.restaurantName || sessionData.user.email
               }
             });
 
+          console.log('✅ RESTAURANTE CREADO:', restaurantData);
+          console.log('❌ ERROR:', restaurantError);
+
           if (restaurantError) {
-            throw new Error("Error al crear el restaurante");
+            console.error('❌ ERROR AL CREAR RESTAURANTE:', restaurantError);
+            throw new Error(`Error al crear el restaurante: ${restaurantError.message}`);
           }
 
           // Limpiar datos temporales
           localStorage.removeItem('pendingRegistration');
+        } else {
+          console.warn('⚠️ NO HAY DATOS PENDIENTES - Creando restaurante básico');
+          
+          // Si no hay datos pendientes, crear restaurante mínimo
+          const { data: restaurantData, error: restaurantError } = await supabase
+            .rpc('create_restaurant_securely', {
+              restaurant_data: {
+                name: 'Mi Restaurante',
+                email: sessionData.user.email,
+                phone: null,
+                city: null,
+                address: null,
+                postal_code: null,
+                cuisine_type: null,
+                plan: "trial",
+                active: true
+              },
+              user_profile: {
+                email: sessionData.user.email,
+                full_name: sessionData.user.email.split('@')[0]
+              }
+            });
+
+          if (restaurantError) {
+            console.error('❌ ERROR AL CREAR RESTAURANTE BÁSICO:', restaurantError);
+            throw new Error(`Error al crear el restaurante: ${restaurantError.message}`);
+          }
         }
 
         setStatus('success');
