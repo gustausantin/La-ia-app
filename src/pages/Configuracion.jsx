@@ -256,16 +256,20 @@ const Configuracion = () => {
             }
             console.log("🏪 Restaurant ID encontrado:", currentRestaurantId);
 
-            const { data: restaurant } = await supabase
+            const { data: restaurant, error: restError } = await supabase
                 .from("restaurants")
                 .select("*")
                 .eq("id", currentRestaurantId)
                 .maybeSingle();
 
+            console.log("📊 DATOS DEL RESTAURANTE:", restaurant);
+            console.log("❌ ERROR AL CARGAR:", restError);
+
             if (restaurant) {
                 
                 // Fusionar configuraciones manteniendo estructura completa
                 const dbSettings = restaurant.settings || {};
+                console.log("⚙️ SETTINGS DB:", dbSettings);
                 
                 // 🔥 RECUPERAR DATOS DEL REGISTRO si están vacíos
                 const pendingData = localStorage.getItem('pendingRegistration');
