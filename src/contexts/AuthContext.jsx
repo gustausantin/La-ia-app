@@ -33,8 +33,8 @@ const AuthProvider = ({ children }) => {
   const loadUserDataRef = useRef(false); // NUEVA PROTECCIÓN CONTRA EJECUCIONES MÚLTIPLES
 
   // FUNCIÓN ULTRA SIMPLIFICADA Y DIRECTA
-  const fetchRestaurantInfo = async (userId) => {
-    console.log('🔵 INICIANDO fetchRestaurantInfo para usuario:', userId);
+  const fetchRestaurantInfo = async (userId, forceRefresh = false) => {
+    console.log('🔵 INICIANDO fetchRestaurantInfo para usuario:', userId, forceRefresh ? '(FORCE REFRESH)' : '');
     
     if (!userId) { 
       console.error('❌ No hay userId');
@@ -377,9 +377,23 @@ const AuthProvider = ({ children }) => {
       }
     });
 
+    // Event listener para sincronización manual desde Configuración
+    const handleRestaurantUpdate = (event) => {
+      const updatedRestaurant = event.detail?.restaurant;
+      if (updatedRestaurant) {
+        console.log('🔄 AuthContext: Recibiendo actualización del restaurant desde Configuración');
+        setRestaurant(updatedRestaurant);
+        setRestaurantId(updatedRestaurant.id);
+        console.log('✅ AuthContext: Restaurant actualizado en memoria');
+      }
+    };
+    
+    window.addEventListener('restaurant-updated', handleRestaurantUpdate);
+
     return () => {
       subscription.unsubscribe();
       window.removeEventListener('force-restaurant-reload', handleForceReload);
+      window.removeEventListener('restaurant-updated', handleRestaurantUpdate);
     };
   }, []);
 

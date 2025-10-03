@@ -591,6 +591,28 @@ const Configuracion = () => {
 
             toast.success(`✅ ${section} guardado correctamente`);
             
+            // SINCRONIZAR CONTEXTO: Forzar recarga del restaurant en AuthContext
+            // Esto asegura que el Dashboard y otras páginas vean los cambios inmediatamente
+            if (section === "Agente IA") {
+                console.log('🔄 Sincronizando datos del agente con el contexto...');
+                
+                // Recargar los datos del restaurante desde Supabase
+                const { data: updatedRestaurant, error: fetchError } = await supabase
+                    .from('restaurants')
+                    .select('*')
+                    .eq('id', effectiveRestaurantId)
+                    .single();
+                
+                if (!fetchError && updatedRestaurant) {
+                    // Disparar evento personalizado para que AuthContext se actualice
+                    window.dispatchEvent(new CustomEvent('restaurant-updated', {
+                        detail: { restaurant: updatedRestaurant }
+                    }));
+                    
+                    console.log('✅ Contexto sincronizado correctamente');
+                }
+            }
+            
         } catch (error) {
             console.error("❌ Error guardando:", error);
             toast.error("Error al guardar la configuración");
