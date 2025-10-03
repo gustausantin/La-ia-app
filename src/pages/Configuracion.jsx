@@ -317,7 +317,7 @@ const Configuracion = () => {
                     // ✅ AGENTE IA
                     agent: {
                         enabled: dbSettings.agent?.enabled !== false,
-                        name: dbSettings.agent?.name || registrationData?.agentName || "Sofia",
+                        name: dbSettings.agent?.name || "Sofia",
                         lastname: dbSettings.agent?.lastname || "Martínez",
                         role: dbSettings.agent?.role || "Agente de Reservas",
                         gender: dbSettings.agent?.gender || "female",
