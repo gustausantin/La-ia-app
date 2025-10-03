@@ -17,7 +17,6 @@ logger.info('Starting React application...');
 const Layout = lazy(() => import('./components/Layout'));
 const Login = lazy(() => import('./pages/Login'));
 const Confirm = lazy(() => import('./pages/Confirm'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Reservas = lazy(() => import('./pages/Reservas'));
 const Clientes = lazy(() => import('./pages/Clientes'));
 const PlantillasCRM = lazy(() => import('./pages/PlantillasCRM'));
@@ -107,18 +106,10 @@ function AppContent() {
         ) : (
           <>
             <Route element={<Layout />}>
-              {/* Ruta por defecto al dashboard nuevo */}
+              {/* Ruta por defecto al dashboard */}
               <Route index element={<Navigate to="/dashboard-agente" replace />} />
 
               {/* Rutas principales con lazy loading */}
-              <Route 
-                path="/dashboard" 
-                element={
-                  <Suspense fallback={<PageLoading />}>
-                    <Dashboard />
-                  </Suspense>
-                } 
-              />
               <Route 
                 path="/dashboard-agente" 
                 element={
@@ -228,10 +219,13 @@ function AppContent() {
                   </Suspense>
                 } 
               />
+              
+              {/* Redirect legacy dashboard to new one */}
+              <Route path="/dashboard" element={<Navigate to="/dashboard-agente" replace />} />
             </Route>
 
             {/* Redirigir cualquier ruta no válida al dashboard */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard-agente" replace />} />
           </>
         )}
       </Routes>
