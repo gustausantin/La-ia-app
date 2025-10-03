@@ -271,29 +271,18 @@ const Configuracion = () => {
                 const dbSettings = restaurant.settings || {};
                 console.log("⚙️ SETTINGS DB:", dbSettings);
                 
-                // 🔥 RECUPERAR DATOS DEL REGISTRO si están vacíos
-                const pendingData = localStorage.getItem('pendingRegistration');
-                let registrationData = null;
-                if (pendingData) {
-                    try {
-                        registrationData = JSON.parse(pendingData);
-                    } catch (e) {
-                        console.error('Error parsing pendingRegistration:', e);
-                    }
-                }
-                
                 setSettings({
                     // ✅ DATOS DIRECTOS DE LA TABLA
-                    name: restaurant.name || registrationData?.restaurantName || "",
-                    email: restaurant.email || registrationData?.email || "",
-                    phone: restaurant.phone || registrationData?.phone || "",
-                    address: restaurant.address || registrationData?.address || "",
-                    city: restaurant.city || registrationData?.city || "",
-                    postal_code: restaurant.postal_code || registrationData?.postalCode || "",
-                    cuisine_type: restaurant.cuisine_type || registrationData?.cuisineType || "",
+                    name: restaurant.name || "",
+                    email: restaurant.email || "",
+                    phone: restaurant.phone || "",
+                    address: restaurant.address || "",
+                    city: restaurant.city || "",
+                    postal_code: restaurant.postal_code || "",
+                    cuisine_type: restaurant.cuisine_type || "",
                     
                     // ✅ TODO LO DEMÁS DESDE SETTINGS (JSONB)
-                    contact_name: dbSettings.contact_name || registrationData?.contactName || "",
+                    contact_name: dbSettings.contact_name || "",
                     description: dbSettings.description || "",
                     website: dbSettings.website || "",
                     logo_url: dbSettings.logo_url || "",
