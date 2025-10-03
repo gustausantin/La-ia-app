@@ -2,61 +2,45 @@
   "name": "2️⃣ Gateway Unificado (Get/Create Customer + Conversation)",
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "gateway-unified",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1.1,
+      "parameters": {},
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
       "position": [240, 300],
-      "id": "webhook-gateway",
-      "name": "Webhook Gateway",
-      "webhookId": "gateway-unified"
+      "id": "trigger-gateway",
+      "name": "Start (from WhatsApp/VAPI)"
     },
     {
       "parameters": {
-        "jsCode": "// Extraer y validar datos de entrada\nconst input = $input.all()[0].json;\n\n// Obtener restaurant_id desde env o auth\nconst restaurantId = input.restaurant_id || $env.DEFAULT_RESTAURANT_ID;\n\nif (!restaurantId) {\n  throw new Error('❌ restaurant_id es obligatorio');\n}\n\nif (!input.customer_phone) {\n  throw new Error('❌ customer_phone es obligatorio');\n}\n\nreturn {\n  restaurant_id: restaurantId,\n  source_channel: input.source_channel || 'unknown',\n  customer_phone: input.customer_phone,\n  customer_name: input.customer_name || 'Cliente',\n  customer_email: input.customer_email || null,\n  message_text: input.message_text || '',\n  timestamp: new Date().toISOString()\n};"
+        "jsCode": "// ================================================\n// GATEWAY UNIFICADO - NORMALIZACIÓN DE DATOS\n// ================================================\n\nconst input = $input.item.json;\n\n// Detectar de qué canal viene\nconst channel = input.channel; // 'whatsapp' o 'vapi'\n\n// Estructura unificada para todos los canales\nconst normalized = {\n  // Identificadores\n  restaurant_id: input.restaurant_id,\n  conversation_id: input.conversation_id || `${channel}_${input.customer_phone}_${Date.now()}`,\n  customer_phone: input.customer_phone,\n  customer_name: input.customer_name || 'Cliente',\n  customer_email: input.customer_email || null,\n  \n  // Mensaje del usuario (ya agregado si viene de WhatsApp)\n  user_message: input.aggregated_messages || input.user_message || input.transcript || '',\n  \n  // Canal de origen\n  channel: channel,\n  \n  // Timestamp\n  timestamp: input.timestamp || new Date().toISOString(),\n  \n  // Metadata adicional\n  metadata: {\n    message_count: input.message_count || 1,\n    call_id: input.call_id || null, // Para VAPI\n    message_type: input.metadata?.message_type || 'text'\n  }\n};\n\n// Log para debugging\nconsole.log('Gateway - Canal:', channel);\nconsole.log('Gateway - Mensaje:', normalized.user_message.substring(0, 100));\n\nreturn [{ json: normalized }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [460, 300],
-      "id": "validate-input",
-      "name": "Validar Entrada"
+      "id": "normalize-data",
+      "name": "Normalizar Datos Multi-Canal"
     },
     {
       "parameters": {
-        "resource": "database",
+        "resource": "row",
         "operation": "get",
         "tableId": "customers",
         "filterType": "manual",
-        "matchingColumns": "restaurant_id,phone",
-        "matchingColumnsUi": {
-          "matchingColumn": [
-            {
-              "column": "restaurant_id",
-              "operator": "eq",
-              "value": "={{ $json.restaurant_id }}"
-            },
-            {
-              "column": "phone",
-              "operator": "eq",
-              "value": "={{ $json.customer_phone }}"
-            }
-          ]
+        "matchingColumns": {
+          "phone": "={{ $json.customer_phone }}",
+          "restaurant_id": "={{ $json.restaurant_id }}"
         },
         "returnAll": false,
-        "limit": 1
+        "limit": 1,
+        "options": {}
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [680, 300],
       "id": "get-customer",
-      "name": "Buscar Cliente",
+      "name": "Buscar Cliente Existente",
       "credentials": {
         "supabaseApi": {
-          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "id": "9pdl4V7ImejCLZWo",
           "name": "Supabase La-IA"
         }
       },
@@ -89,31 +73,31 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [900, 300],
-      "id": "check-customer-exists",
+      "id": "check-customer",
       "name": "¿Cliente existe?"
     },
     {
       "parameters": {
-        "resource": "database",
-        "operation": "insert",
+        "resource": "row",
+        "operation": "create",
         "tableId": "customers",
         "fieldsUi": {
           "fieldValues": [
             {
               "fieldId": "restaurant_id",
-              "fieldValue": "={{ $('Validar Entrada').item.json.restaurant_id }}"
+              "fieldValue": "={{ $('Normalizar Datos Multi-Canal').item.json.restaurant_id }}"
             },
             {
               "fieldId": "name",
-              "fieldValue": "={{ $('Validar Entrada').item.json.customer_name }}"
+              "fieldValue": "={{ $('Normalizar Datos Multi-Canal').item.json.customer_name }}"
             },
             {
               "fieldId": "phone",
-              "fieldValue": "={{ $('Validar Entrada').item.json.customer_phone }}"
+              "fieldValue": "={{ $('Normalizar Datos Multi-Canal').item.json.customer_phone }}"
             },
             {
               "fieldId": "email",
-              "fieldValue": "={{ $('Validar Entrada').item.json.customer_email }}"
+              "fieldValue": "={{ $('Normalizar Datos Multi-Canal').item.json.customer_email }}"
             },
             {
               "fieldId": "segment_auto",
@@ -125,11 +109,23 @@
             },
             {
               "fieldId": "preferred_channel",
-              "fieldValue": "={{ $('Validar Entrada').item.json.source_channel }}"
+              "fieldValue": "={{ $('Normalizar Datos Multi-Canal').item.json.channel }}"
             },
             {
               "fieldId": "consent_whatsapp",
-              "fieldValue": "true"
+              "fieldValue": true
+            },
+            {
+              "fieldId": "total_visits",
+              "fieldValue": 0
+            },
+            {
+              "fieldId": "visits_12m",
+              "fieldValue": 0
+            },
+            {
+              "fieldId": "total_spent",
+              "fieldValue": 0
             }
           ]
         },
@@ -142,25 +138,25 @@
       "name": "Crear Cliente Nuevo",
       "credentials": {
         "supabaseApi": {
-          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "id": "9pdl4V7ImejCLZWo",
           "name": "Supabase La-IA"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// Merge: usar cliente existente o recién creado\nconst existingCustomer = $('Buscar Cliente').item?.json;\nconst newCustomer = $('Crear Cliente Nuevo').item?.json;\n\nconst customer = existingCustomer || newCustomer;\n\nif (!customer || !customer.id) {\n  throw new Error('❌ No se pudo obtener o crear el cliente');\n}\n\nconst inputData = $('Validar Entrada').item.json;\n\nreturn {\n  restaurant_id: inputData.restaurant_id,\n  customer_id: customer.id,\n  customer_phone: inputData.customer_phone,\n  customer_name: customer.name,\n  customer_email: customer.email,\n  source_channel: inputData.source_channel,\n  message_text: inputData.message_text,\n  timestamp: inputData.timestamp\n};"
+        "jsCode": "// ================================================\n// FUSIONAR DATOS: Input + Customer\n// ================================================\n\nconst inputData = $('Normalizar Datos Multi-Canal').item.json;\nconst customerData = $input.item.json;\n\n// Extraer customer_id de la respuesta de Supabase\nconst customerId = customerData.id || customerData.customer_id;\n\nreturn [{\n  json: {\n    ...inputData,\n    customer_id: customerId\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1340, 300],
-      "id": "merge-customer",
-      "name": "Merge Customer Data"
+      "id": "merge-data",
+      "name": "Fusionar Datos"
     },
     {
       "parameters": {
-        "resource": "database",
-        "operation": "insert",
+        "resource": "row",
+        "operation": "create",
         "tableId": "agent_conversations",
         "fieldsUi": {
           "fieldValues": [
@@ -186,11 +182,11 @@
             },
             {
               "fieldId": "source_channel",
-              "fieldValue": "={{ $json.source_channel }}"
+              "fieldValue": "={{ $json.channel }}"
             },
             {
               "fieldId": "interaction_type",
-              "fieldValue": "pendiente_clasificacion"
+              "fieldValue": "inquiry"
             },
             {
               "fieldId": "status",
@@ -207,15 +203,15 @@
       "name": "Crear Conversación",
       "credentials": {
         "supabaseApi": {
-          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "id": "9pdl4V7ImejCLZWo",
           "name": "Supabase La-IA"
         }
       }
     },
     {
       "parameters": {
-        "resource": "database",
-        "operation": "insert",
+        "resource": "row",
+        "operation": "create",
         "tableId": "agent_messages",
         "fieldsUi": {
           "fieldValues": [
@@ -225,7 +221,7 @@
             },
             {
               "fieldId": "restaurant_id",
-              "fieldValue": "={{ $('Merge Customer Data').item.json.restaurant_id }}"
+              "fieldValue": "={{ $('Fusionar Datos').item.json.restaurant_id }}"
             },
             {
               "fieldId": "direction",
@@ -237,7 +233,11 @@
             },
             {
               "fieldId": "message_text",
-              "fieldValue": "={{ $('Merge Customer Data').item.json.message_text }}"
+              "fieldValue": "={{ $('Fusionar Datos').item.json.user_message }}"
+            },
+            {
+              "fieldId": "timestamp",
+              "fieldValue": "={{ $('Fusionar Datos').item.json.timestamp }}"
             }
           ]
         },
@@ -247,17 +247,17 @@
       "typeVersion": 1,
       "position": [1780, 300],
       "id": "log-message",
-      "name": "Log Mensaje Inbound",
+      "name": "Guardar Mensaje del Usuario",
       "credentials": {
         "supabaseApi": {
-          "id": "{{SUPABASE_CREDENTIAL_ID}}",
+          "id": "9pdl4V7ImejCLZWo",
           "name": "Supabase La-IA"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// Preparar datos para el Clasificador\nconst conversation = $('Crear Conversación').item.json;\nconst customerData = $('Merge Customer Data').item.json;\n\nreturn {\n  conversation_id: conversation.id,\n  restaurant_id: customerData.restaurant_id,\n  customer_id: customerData.customer_id,\n  customer_name: customerData.customer_name,\n  source_channel: customerData.source_channel,\n  message_text: customerData.message_text,\n  timestamp: customerData.timestamp\n};"
+        "jsCode": "// Preparar datos para el Clasificador\nconst conversation = $('Crear Conversación').item.json;\nconst fusionData = $('Fusionar Datos').item.json;\n\nreturn {\n  conversation_id: conversation.id,\n  restaurant_id: fusionData.restaurant_id,\n  customer_id: fusionData.customer_id,\n  customer_name: fusionData.customer_name,\n  customer_phone: fusionData.customer_phone,\n  channel: fusionData.channel,\n  user_message: fusionData.user_message,\n  timestamp: fusionData.timestamp\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -267,84 +267,45 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{ $env.N8N_BASE_URL }}/webhook/classifier-super-agent",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "n8nApi",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "conversation_id",
-              "value": "={{ $json.conversation_id }}"
-            },
-            {
-              "name": "restaurant_id",
-              "value": "={{ $json.restaurant_id }}"
-            },
-            {
-              "name": "customer_id",
-              "value": "={{ $json.customer_id }}"
-            },
-            {
-              "name": "message_text",
-              "value": "={{ $json.message_text }}"
-            }
-          ]
+        "workflowId": {
+          "__rl": true,
+          "value": "CLASSIFIER_WORKFLOW_ID",
+          "mode": "id",
+          "cachedResultName": "3️⃣ Clasificador Super Agent"
         },
         "options": {}
       },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
       "position": [2220, 300],
-      "id": "call-classifier",
-      "name": "Llamar Clasificador",
-      "credentials": {
-        "n8nApi": {
-          "id": "{{N8N_API_CREDENTIAL_ID}}",
-          "name": "n8n API"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({\n  status: 'success',\n  conversation_id: $json.conversation_id,\n  customer_id: $json.customer_id,\n  message: 'Conversación creada y enviada al clasificador'\n}) }}",
-        "options": {
-          "responseCode": 200
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [2440, 300],
-      "id": "respond-gateway",
-      "name": "Responder Gateway"
+      "id": "execute-classifier",
+      "name": "Ejecutar Clasificador"
     }
   ],
   "connections": {
-    "Webhook Gateway": {
+    "Start (from WhatsApp/VAPI)": {
       "main": [
         [
           {
-            "node": "Validar Entrada",
+            "node": "Normalizar Datos Multi-Canal",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Validar Entrada": {
+    "Normalizar Datos Multi-Canal": {
       "main": [
         [
           {
-            "node": "Buscar Cliente",
+            "node": "Buscar Cliente Existente",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Buscar Cliente": {
+    "Buscar Cliente Existente": {
       "main": [
         [
           {
@@ -359,7 +320,7 @@
       "main": [
         [
           {
-            "node": "Merge Customer Data",
+            "node": "Fusionar Datos",
             "type": "main",
             "index": 0
           }
@@ -377,14 +338,14 @@
       "main": [
         [
           {
-            "node": "Merge Customer Data",
+            "node": "Fusionar Datos",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Merge Customer Data": {
+    "Fusionar Datos": {
       "main": [
         [
           {
@@ -399,14 +360,14 @@
       "main": [
         [
           {
-            "node": "Log Mensaje Inbound",
+            "node": "Guardar Mensaje del Usuario",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Log Mensaje Inbound": {
+    "Guardar Mensaje del Usuario": {
       "main": [
         [
           {
@@ -421,18 +382,7 @@
       "main": [
         [
           {
-            "node": "Llamar Clasificador",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Llamar Clasificador": {
-      "main": [
-        [
-          {
-            "node": "Responder Gateway",
+            "node": "Ejecutar Clasificador",
             "type": "main",
             "index": 0
           }
@@ -445,9 +395,10 @@
   },
   "staticData": null,
   "tags": [],
-  "triggerCount": 1,
-  "updatedAt": "2025-10-02T00:00:00.000Z",
-  "versionId": "1"
+  "triggerCount": 0,
+  "updatedAt": "2025-10-03T00:00:00.000Z",
+  "versionId": "2",
+  "meta": {
+    "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
+  }
 }
-
-

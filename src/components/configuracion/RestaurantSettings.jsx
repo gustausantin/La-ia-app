@@ -29,16 +29,17 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
   const { isModalOpen, modalChangeReason, modalChangeDetails, showRegenerationModal, closeModal } = useRegenerationModal();
   const [settings, setSettings] = useState({
     name: restaurant?.name || '',
-    description: restaurant?.description || '',
+    contact_name: restaurant?.settings?.contact_name || restaurant?.contact_name || '',
+    description: restaurant?.settings?.description || restaurant?.description || '',
     cuisine_type: restaurant?.cuisine_type || '',
     phone: restaurant?.phone || '',
     email: restaurant?.email || '',
-    website: restaurant?.website || '',
+    website: restaurant?.settings?.website || restaurant?.website || '',
     address: restaurant?.address || '',
     city: restaurant?.city || '',
     postal_code: restaurant?.postal_code || '',
-    capacity: restaurant?.capacity || 50,
-    average_ticket: restaurant?.average_ticket || 45,
+    capacity: restaurant?.settings?.capacity_total || restaurant?.capacity || 50,
+    average_ticket: restaurant?.settings?.average_ticket || restaurant?.average_ticket || 45,
     
     // Horarios
     opening_hours: restaurant?.opening_hours || {
@@ -261,6 +262,24 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
                 value={settings.cuisine_type}
                 onChange={(value) => handleInputChange('cuisine_type', value)}
                 options={cuisineTypes}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Nombre del contacto"
+                value={settings.contact_name}
+                onChange={(value) => handleInputChange('contact_name', value)}
+                placeholder="Nombre de la persona de contacto"
+                icon={Users}
+              />
+              
+              <InputField
+                label="Sitio web"
+                value={settings.website}
+                onChange={(value) => handleInputChange('website', value)}
+                placeholder="https://www.turestaurante.com"
+                icon={Globe}
               />
             </div>
 
