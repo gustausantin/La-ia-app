@@ -175,12 +175,12 @@ export default function Login() {
 
     // ✅ GUARDAR DATOS DEL PASO 1 EN LOCALSTORAGE PREVENTIVAMENTE
     const step1Data = {
-      restaurantName: restaurantName.trim(),
-      phone: phone.trim(),
-      city: city.trim(),
-      address: address.trim(),
-      postalCode: postalCode.trim(),
-      cuisineType: cuisineType.trim(),
+      restaurantName: restaurantName.trim() || null,
+      phone: phone.trim() || null,
+      city: city.trim() || null,
+      address: address.trim() || null,
+      postalCode: postalCode.trim() || null,
+      cuisineType: cuisineType.trim() || null,
       email: email.trim(),
       password: password, // Temporal para el paso 2
       timestamp: new Date().toISOString()
@@ -228,12 +228,12 @@ export default function Login() {
       if (authData.user) {
         // ✅ GUARDAR TODOS LOS DATOS COMPLETOS
         const fullRegistrationData = {
-          restaurantName: step1Data.restaurantName || restaurantName.trim(),
-          phone: step1Data.phone || phone.trim(),
-          city: step1Data.city || city.trim(),
-          address: step1Data.address || address.trim(),
-          postalCode: step1Data.postalCode || postalCode.trim(),
-          cuisineType: step1Data.cuisineType || cuisineType.trim(),
+          restaurantName: step1Data.restaurantName || restaurantName.trim() || null,
+          phone: step1Data.phone || phone.trim() || null,
+          city: step1Data.city || city.trim() || null,
+          address: step1Data.address || address.trim() || null,
+          postalCode: step1Data.postalCode || postalCode.trim() || null,
+          cuisineType: step1Data.cuisineType || cuisineType.trim() || null,
           userId: authData.user.id,
           email: authData.user.email,
           timestamp: new Date().toISOString()
