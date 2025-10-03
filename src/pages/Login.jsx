@@ -173,6 +173,21 @@ export default function Login() {
       return;
     }
 
+    // ✅ GUARDAR DATOS DEL PASO 1 EN LOCALSTORAGE PREVENTIVAMENTE
+    const step1Data = {
+      restaurantName: restaurantName.trim(),
+      phone: phone.trim(),
+      city: city.trim(),
+      address: address.trim(),
+      postalCode: postalCode.trim(),
+      cuisineType: cuisineType.trim(),
+      email: email.trim(),
+      password: password, // Temporal para el paso 2
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem('pendingRegistrationStep1', JSON.stringify(step1Data));
+    console.log('💾 Datos del paso 1 guardados:', step1Data);
+
     setError("");
     setCurrentStep(2);
   };
@@ -184,17 +199,23 @@ export default function Login() {
     setMessage("");
 
     try {
+      // ✅ Recuperar datos del paso 1 si existen
+      const step1DataStr = localStorage.getItem('pendingRegistrationStep1');
+      const step1Data = step1DataStr ? JSON.parse(step1DataStr) : {};
+      
+      console.log('📦 Datos del paso 1 recuperados:', step1Data);
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
+        email: step1Data.email || email,
+        password: step1Data.password || password,
         options: {
           data: {
-            restaurant_name: restaurantName,
-            phone: phone,
-            city: city,
-            address: address,
-            postal_code: postalCode,
-            cuisine_type: cuisineType,
+            restaurant_name: step1Data.restaurantName || restaurantName,
+            phone: step1Data.phone || phone,
+            city: step1Data.city || city,
+            address: step1Data.address || address,
+            postal_code: step1Data.postalCode || postalCode,
+            cuisine_type: step1Data.cuisineType || cuisineType,
           },
           emailRedirectTo: `${window.location.origin}/confirm`,
         },
@@ -205,17 +226,24 @@ export default function Login() {
       }
 
       if (authData.user) {
-        localStorage.setItem('pendingRegistration', JSON.stringify({
-          restaurantName: restaurantName.trim(),
-          phone: phone.trim(),
-          city: city.trim(),
-          address: address.trim(),
-          postalCode: postalCode.trim(),
-          cuisineType: cuisineType.trim(),
+        // ✅ GUARDAR TODOS LOS DATOS COMPLETOS
+        const fullRegistrationData = {
+          restaurantName: step1Data.restaurantName || restaurantName.trim(),
+          phone: step1Data.phone || phone.trim(),
+          city: step1Data.city || city.trim(),
+          address: step1Data.address || address.trim(),
+          postalCode: step1Data.postalCode || postalCode.trim(),
+          cuisineType: step1Data.cuisineType || cuisineType.trim(),
           userId: authData.user.id,
-          email: email,
+          email: authData.user.email,
           timestamp: new Date().toISOString()
-        }));
+        };
+        
+        localStorage.setItem('pendingRegistration', JSON.stringify(fullRegistrationData));
+        console.log('💾 Datos completos guardados en pendingRegistration:', fullRegistrationData);
+        
+        // Limpiar datos temporales del paso 1
+        localStorage.removeItem('pendingRegistrationStep1');
         
         setMessage(`✅ ¡Registro exitoso! 
         
