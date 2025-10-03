@@ -207,11 +207,11 @@ export default function Login() {
       if (authData.user) {
         localStorage.setItem('pendingRegistration', JSON.stringify({
           restaurantName: restaurantName.trim(),
-          phone: phone || null,
-          city: city || null,
-          address: address || null,
-          postalCode: postalCode || null,
-          cuisineType: cuisineType || null,
+          phone: phone.trim(),
+          city: city.trim(),
+          address: address.trim(),
+          postalCode: postalCode.trim(),
+          cuisineType: cuisineType.trim(),
           userId: authData.user.id,
           email: email,
           timestamp: new Date().toISOString()
