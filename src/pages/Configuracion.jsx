@@ -283,9 +283,8 @@ const Configuracion = () => {
                 }
                 
                 setSettings({
-                    // ✅ DATOS DEL REGISTRO - Prioridad: DB > localStorage > vacío
+                    // ✅ DATOS DIRECTOS DE LA TABLA
                     name: restaurant.name || registrationData?.restaurantName || "",
-                    contact_name: restaurant.contact_name || dbSettings.contact_name || registrationData?.contactName || "",
                     email: restaurant.email || registrationData?.email || "",
                     phone: restaurant.phone || registrationData?.phone || "",
                     address: restaurant.address || registrationData?.address || "",
@@ -293,15 +292,16 @@ const Configuracion = () => {
                     postal_code: restaurant.postal_code || registrationData?.postalCode || "",
                     cuisine_type: restaurant.cuisine_type || registrationData?.cuisineType || "",
                     
-                    // ✅ DATOS ADICIONALES - DESDE SETTINGS
+                    // ✅ TODO LO DEMÁS DESDE SETTINGS (JSONB)
+                    contact_name: dbSettings.contact_name || registrationData?.contactName || "",
                     description: dbSettings.description || "",
-                    website: restaurant.website || dbSettings.website || "",
+                    website: dbSettings.website || "",
                     logo_url: dbSettings.logo_url || "",
-                    capacity: dbSettings.capacity_total || restaurant.capacity || 50,
-                    average_ticket: dbSettings.average_ticket || restaurant.average_ticket || 45,
+                    capacity: dbSettings.capacity_total || dbSettings.capacity || 50,
+                    average_ticket: dbSettings.average_ticket || 45,
                     
-                    // ✅ HORARIOS Y CONFIGURACIÓN DE RESERVAS
-                    opening_hours: restaurant.opening_hours || {
+                    // ✅ HORARIOS - Desde business_hours o settings
+                    opening_hours: restaurant.business_hours || dbSettings.opening_hours || {
                         monday: { open: '12:00', close: '23:00', closed: false },
                         tuesday: { open: '12:00', close: '23:00', closed: false },
                         wednesday: { open: '12:00', close: '23:00', closed: false },
@@ -310,7 +310,7 @@ const Configuracion = () => {
                         saturday: { open: '12:00', close: '24:00', closed: false },
                         sunday: { open: '12:00', close: '23:00', closed: false },
                     },
-                    booking_settings: restaurant.booking_settings || {
+                    booking_settings: dbSettings.booking_settings || {
                         advance_booking_days: 30,
                         min_booking_hours: 2,
                         max_party_size: 12,
