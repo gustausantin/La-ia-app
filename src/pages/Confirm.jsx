@@ -74,11 +74,11 @@ export default function Confirm() {
               restaurant_data: {
                 name: pending.restaurantName || 'Mi Restaurante',
                 email: sessionData.user.email,
-                phone: pending.phone || '',
-                city: pending.city || '',
-                address: pending.address || '',
-                postal_code: pending.postalCode || '',
-                cuisine_type: pending.cuisineType || '',
+                phone: pending.phone || null,
+                city: pending.city || null,
+                address: pending.address || null,
+                postal_code: pending.postalCode || null,
+                cuisine_type: pending.cuisineType || null,
                 plan: "trial",
                 active: true
               },
