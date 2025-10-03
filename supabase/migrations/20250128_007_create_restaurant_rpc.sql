@@ -62,12 +62,12 @@ BEGIN
     ) VALUES (
         new_restaurant_name,
         COALESCE(restaurant_data->>'email', user_profile->>'email', ''),
-        COALESCE(restaurant_data->>'phone', '+34 600 000 000'),
-        COALESCE(restaurant_data->>'address', 'Dirección pendiente'),
-        COALESCE(restaurant_data->>'city', 'Madrid'),
+        NULLIF(restaurant_data->>'phone', ''),
+        NULLIF(restaurant_data->>'address', ''),
+        NULLIF(restaurant_data->>'city', ''),
         COALESCE(restaurant_data->>'country', 'España'),
-        COALESCE(restaurant_data->>'postal_code', '28001'),
-        COALESCE(restaurant_data->>'cuisine_type', 'internacional'),
+        NULLIF(restaurant_data->>'postal_code', ''),
+        NULLIF(restaurant_data->>'cuisine_type', ''),
         COALESCE(restaurant_data->>'plan', 'trial'),
         COALESCE((restaurant_data->>'active')::BOOLEAN, true)
     )
