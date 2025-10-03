@@ -922,23 +922,57 @@ const Configuracion = () => {
                                                         id="avatar-upload-main"
                                                         accept="image/*"
                                                         className="hidden"
-                                                        onChange={(e) => {
-                                                            const file = e.target.files[0];
-                                                            if (file) {
-                                                                const reader = new FileReader();
-                                                                reader.onload = (event) => {
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            // Validar tamaño (máx 5MB)
+                                                            if (file.size > 5 * 1024 * 1024) {
+                                                                toast.error('La imagen es demasiado grande. Máximo 5MB');
+                                                                return;
+                                                            }
+
+                                                            // Comprimir imagen antes de guardar
+                                                            const reader = new FileReader();
+                                                            reader.onload = (event) => {
+                                                                const img = new Image();
+                                                                img.onload = () => {
+                                                                    // Crear canvas para redimensionar
+                                                                    const canvas = document.createElement('canvas');
+                                                                    const ctx = canvas.getContext('2d');
+                                                                    
+                                                                    // Tamaño máximo: 400x600 (ideal para avatares)
+                                                                    const maxWidth = 400;
+                                                                    const maxHeight = 600;
+                                                                    let width = img.width;
+                                                                    let height = img.height;
+
+                                                                    if (width > maxWidth || height > maxHeight) {
+                                                                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                                                                        width = width * ratio;
+                                                                        height = height * ratio;
+                                                                    }
+
+                                                                    canvas.width = width;
+                                                                    canvas.height = height;
+                                                                    ctx.drawImage(img, 0, 0, width, height);
+
+                                                                    // Convertir a Base64 con compresión (calidad 0.8)
+                                                                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
                                                                     setSettings(prev => ({
                                                                         ...prev,
                                                                         agent: {
                                                                             ...prev.agent,
-                                                                            avatar_url: event.target.result
+                                                                            avatar_url: compressedBase64
                                                                         }
                                                                     }));
-                                                                    toast.success('Avatar cargado correctamente');
+                                                                    toast.success('Avatar cargado y optimizado correctamente');
                                                                 };
-                                                                reader.readAsDataURL(file);
-                                                            }
-                                                        }}
+                                                                img.src = event.target.result;
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        }
+                                                    }}
                                                     />
                                                     <button 
                                                         type="button"
