@@ -281,6 +281,7 @@ const Configuracion = () => {
                 setSettings({
                     // ✅ DATOS DEL REGISTRO - Prioridad: DB > localStorage > vacío
                     name: restaurant.name || registrationData?.restaurantName || "",
+                    contact_name: restaurant.contact_name || dbSettings.contact_name || registrationData?.contactName || "",
                     email: restaurant.email || registrationData?.email || "",
                     phone: restaurant.phone || registrationData?.phone || "",
                     address: restaurant.address || registrationData?.address || "",
@@ -290,8 +291,29 @@ const Configuracion = () => {
                     
                     // ✅ DATOS ADICIONALES - DESDE SETTINGS
                     description: dbSettings.description || "",
-                    website: dbSettings.website || "",
+                    website: restaurant.website || dbSettings.website || "",
                     logo_url: dbSettings.logo_url || "",
+                    capacity: dbSettings.capacity_total || restaurant.capacity || 50,
+                    average_ticket: dbSettings.average_ticket || restaurant.average_ticket || 45,
+                    
+                    // ✅ HORARIOS Y CONFIGURACIÓN DE RESERVAS
+                    opening_hours: restaurant.opening_hours || {
+                        monday: { open: '12:00', close: '23:00', closed: false },
+                        tuesday: { open: '12:00', close: '23:00', closed: false },
+                        wednesday: { open: '12:00', close: '23:00', closed: false },
+                        thursday: { open: '12:00', close: '23:00', closed: false },
+                        friday: { open: '12:00', close: '24:00', closed: false },
+                        saturday: { open: '12:00', close: '24:00', closed: false },
+                        sunday: { open: '12:00', close: '23:00', closed: false },
+                    },
+                    booking_settings: restaurant.booking_settings || {
+                        advance_booking_days: 30,
+                        min_booking_hours: 2,
+                        max_party_size: 12,
+                        require_confirmation: true,
+                        allow_modifications: true,
+                        cancellation_policy: '24h',
+                    },
                     
                     // ✅ CONFIGURACIÓN TÉCNICA
                     country: restaurant.country || "ES",
