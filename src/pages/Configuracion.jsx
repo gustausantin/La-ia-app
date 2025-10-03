@@ -12,7 +12,7 @@ import {
     RefreshCw,
     Bot,
     Power,
-    Image,
+    Image as ImageIcon,
     Phone,
     Instagram,
     Facebook,
@@ -655,7 +655,7 @@ const Configuracion = () => {
                                 <div className="space-y-6">
                                     <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200">
                                         <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                            <Image className="w-5 h-5 text-blue-600" />
+                                            <ImageIcon className="w-5 h-5 text-blue-600" />
                                             Logo del Restaurante
                                         </h4>
                                         <div className="flex items-center gap-6">
@@ -667,7 +667,7 @@ const Configuracion = () => {
                                                         className="w-full h-full object-cover rounded-lg"
                                                     />
                                                 ) : (
-                                                    <Image className="w-8 h-8 text-gray-400" />
+                                                    <ImageIcon className="w-8 h-8 text-gray-400" />
                                                 )}
                                             </div>
                                             <div className="flex-1">
