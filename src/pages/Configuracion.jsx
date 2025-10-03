@@ -476,6 +476,52 @@ const Configuracion = () => {
                     console.error('RPC update_restaurant_channels error:', error);
                     throw error;
                 }
+                
+                // 🔥 SINCRONIZAR CON channel_credentials para N8N
+                // Guardar WhatsApp en channel_credentials para que N8N pueda identificar el restaurante
+                if (updatedChannels?.whatsapp?.enabled && updatedChannels?.whatsapp?.phone_number) {
+                    const whatsappNumber = updatedChannels.whatsapp.phone_number;
+                    
+                    // Buscar si ya existe el registro
+                    const { data: existing } = await supabase
+                        .from('channel_credentials')
+                        .select('id')
+                        .eq('restaurant_id', effectiveRestaurantId)
+                        .eq('channel', 'twilio_whatsapp')
+                        .maybeSingle();
+                    
+                    if (existing) {
+                        // Actualizar existente
+                        await supabase
+                            .from('channel_credentials')
+                            .update({
+                                channel_identifier: whatsappNumber,
+                                is_active: true,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('id', existing.id);
+                    } else {
+                        // Crear nuevo
+                        await supabase
+                            .from('channel_credentials')
+                            .insert({
+                                restaurant_id: effectiveRestaurantId,
+                                channel: 'twilio_whatsapp',
+                                channel_identifier: whatsappNumber,
+                                is_active: true,
+                                credentials: {},
+                                config: {}
+                            });
+                    }
+                    console.log('✅ Canal WhatsApp sincronizado con channel_credentials:', whatsappNumber);
+                } else if (updatedChannels?.whatsapp?.enabled === false) {
+                    // Si se deshabilita WhatsApp, marcar como inactivo
+                    await supabase
+                        .from('channel_credentials')
+                        .update({ is_active: false })
+                        .eq('restaurant_id', effectiveRestaurantId)
+                        .eq('channel', 'twilio_whatsapp');
+                }
             } else if (section === "Configuración del Agente") {
                 // Guardar configuración del agente en settings
                 const { data: currentData } = await supabase
