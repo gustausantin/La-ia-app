@@ -236,3 +236,4 @@ DEFAULT_RESTAURANT_ID=uuid-del-restaurante
 **📅 Fecha regeneración:** 2 de Octubre 2025  
 **✅ Estado:** VALIDADO CONTRA ESQUEMA REAL
 
+

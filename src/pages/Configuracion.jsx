@@ -402,10 +402,12 @@ const Configuracion = () => {
                         cuisine_type: settings.cuisine_type,
                         settings: {
                             ...currentSettings,
+                            contact_name: settings.contact_name,
                             description: settings.description,
                             website: settings.website,
                             logo_url: settings.logo_url,
-                            capacity_total: settings.capacity_total,
+                            capacity_total: settings.capacity || settings.capacity_total,
+                            average_ticket: settings.average_ticket,
                             price_range: settings.price_range
                         },
                         updated_at: new Date().toISOString()
