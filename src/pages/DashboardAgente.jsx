@@ -24,6 +24,8 @@ export default function DashboardAgente() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [lastUpdate, setLastUpdate] = useState(new Date());
+    const [restaurantCache, setRestaurantCache] = useState(restaurant);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [dashboardData, setDashboardData] = useState({
         // Métricas del día
         reservationsToday: 0,
@@ -62,6 +64,19 @@ export default function DashboardAgente() {
 
         try {
             setLoading(true);
+            
+            // RECARGAR RESTAURANT DESDE SUPABASE (incluye avatar actualizado)
+            const { data: freshRestaurant } = await supabase
+                .from('restaurants')
+                .select('*')
+                .eq('id', restaurant.id)
+                .single();
+            
+            if (freshRestaurant) {
+                setRestaurantCache(freshRestaurant);
+                console.log('✅ Restaurant y avatar refrescados desde Supabase');
+            }
+            
             const today = new Date();
             const todayStr = format(today, 'yyyy-MM-dd');
             const yesterdayStr = format(subDays(today, 1), 'yyyy-MM-dd');
@@ -209,6 +224,34 @@ export default function DashboardAgente() {
         loadDashboardData();
     }, [restaurant?.id]);
 
+    // Escuchar cambios en el restaurant desde Configuración
+    useEffect(() => {
+        const handleRestaurantUpdate = async (event) => {
+            console.log('🔄 Dashboard: Recibiendo evento restaurant-updated');
+            const updatedRestaurant = event.detail?.restaurant;
+            
+            if (updatedRestaurant) {
+                console.log('✅ Dashboard: Actualizando con nuevo restaurant');
+                setRestaurantCache(updatedRestaurant);
+                setRefreshTrigger(prev => prev + 1); // Forzar re-render
+                toast.success('Avatar actualizado');
+            }
+        };
+
+        window.addEventListener('restaurant-updated', handleRestaurantUpdate);
+
+        return () => {
+            window.removeEventListener('restaurant-updated', handleRestaurantUpdate);
+        };
+    }, []);
+
+    // Sincronizar cuando cambie el restaurant del contexto
+    useEffect(() => {
+        if (restaurant) {
+            setRestaurantCache(restaurant);
+        }
+    }, [restaurant]);
+
     const reviewCRMAction = async (opportunityId) => {
         // Navegar al CRM con el ID específico
         navigate('/crm-inteligente', { state: { highlightId: opportunityId } });
@@ -225,10 +268,11 @@ export default function DashboardAgente() {
         );
     }
 
-    const agentSettings = restaurant?.settings?.agent || {};
+    // Usar restaurantCache para asegurar reactividad
+    const agentSettings = restaurantCache?.settings?.agent || {};
     const agentName = agentSettings.name || 'Sofia';
     const agentAvatar = agentSettings.avatar_url || null;
-    const contactName = restaurant?.settings?.general?.contact_name || user?.email?.split('@')[0] || 'Jefe';
+    const contactName = restaurantCache?.settings?.contact_name || user?.email?.split('@')[0] || 'Jefe';
 
     // Calcular comparativas
     const vsYesterday = dashboardData.reservationsToday - dashboardData.yesterdayReservations;
