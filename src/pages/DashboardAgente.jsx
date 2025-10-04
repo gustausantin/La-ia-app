@@ -301,7 +301,7 @@ export default function DashboardAgente() {
                                     Las reservas manuales desde aquí siguen funcionando, pero tus clientes no reciben respuestas automáticas.
                                 </p>
                                 <button
-                                    onClick={() => navigate('/configuracion')}
+                                    onClick={() => navigate('/configuracion?tab=agent')}
                                     className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2"
                                 >
                                     <Bot className="w-5 h-5" />

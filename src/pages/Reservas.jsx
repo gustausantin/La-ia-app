@@ -2077,7 +2077,7 @@ export default function Reservas() {
                     onSave={() => {
                         setShowEditModal(false);
                         loadReservations();
-                        toast.success("Reserva actualizada correctamente");
+                        // Toast ya se muestra dentro del modal, no duplicar
                         addNotification({
                             type: "system",
                             message: "Reserva actualizada",
@@ -3194,14 +3194,23 @@ const ReservationFormModal = ({
                                 min="1"
                                 max="20"
                                 value={formData.party_size}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                    const value = e.target.value;
                                     setFormData({
                                         ...formData,
-                                        party_size:
-                                            parseInt(e.target.value) || 1,
-                                    })
-                                }
-                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 ${
+                                        party_size: value === '' ? '' : parseInt(value) || ''
+                                    });
+                                }}
+                                onBlur={(e) => {
+                                    // Si está vacío al salir del campo, poner 1 por defecto
+                                    if (e.target.value === '' || e.target.value === '0') {
+                                        setFormData({
+                                            ...formData,
+                                            party_size: 1
+                                        });
+                                    }
+                                }}
+                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 ${
                                     errors.party_size
                                         ? "border-red-300"
                                         : "border-gray-300"

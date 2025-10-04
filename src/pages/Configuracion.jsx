@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
+import { useSearchParams } from "react-router-dom";
 import {
     Settings as SettingsIcon,
     Building2,
@@ -72,9 +73,18 @@ const SettingSection = ({ title, description, icon, children }) => {
 
 const Configuracion = () => {
     const { restaurantId } = useAuthContext();
+    const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('general');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    
+    // Leer tab de la URL al cargar
+    useEffect(() => {
+        const tabFromUrl = searchParams.get('tab');
+        if (tabFromUrl && ['general', 'agent', 'channels', 'notifications'].includes(tabFromUrl)) {
+            setActiveTab(tabFromUrl);
+        }
+    }, [searchParams]);
     
     const [settings, setSettings] = useState({
         name: "",
