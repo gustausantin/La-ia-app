@@ -1082,44 +1082,24 @@ const Configuracion = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Nombre y Apellido */}
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                            Nombre
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={settings.agent?.name || ""}
-                                                            onChange={(e) => setSettings(prev => ({
-                                                                ...prev,
-                                                                agent: {
-                                                                    ...prev.agent,
-                                                                    name: e.target.value
-                                                                }
-                                                            }))}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                                            placeholder="Sofia"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                            Apellido
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={settings.agent?.lastname || ""}
-                                                            onChange={(e) => setSettings(prev => ({
-                                                                ...prev,
-                                                                agent: {
-                                                                    ...prev.agent,
-                                                                    lastname: e.target.value
-                                                                }
-                                                            }))}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                                            placeholder="Martínez"
-                                                        />
-                                                    </div>
+                                                {/* Nombre del Agente */}
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                        Nombre
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={settings.agent?.name || ""}
+                                                        onChange={(e) => setSettings(prev => ({
+                                                            ...prev,
+                                                            agent: {
+                                                                ...prev.agent,
+                                                                name: e.target.value
+                                                            }
+                                                        }))}
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        placeholder="Sofia"
+                                                    />
                                                 </div>
 
                                                 {/* Puesto/Rol */}
