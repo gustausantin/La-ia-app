@@ -183,6 +183,9 @@ export const sendNewReservationEmail = async (reservation, restaurant) => {
     
     // Enviar
     const transporter = createTransporter();
+    
+    console.log('📬 Enviando email a:', notificationEmails);
+    
     const info = await transporter.sendMail({
       from: `La-IA - ${restaurant.name} <noreply@la-ia.site>`,
       replyTo: restaurant.email,
@@ -192,6 +195,7 @@ export const sendNewReservationEmail = async (reservation, restaurant) => {
     });
     
     console.log('✅ Email enviado:', info.messageId);
+    console.log('✅ Aceptado por:', info.accepted);
     return { success: true, messageId: info.messageId };
     
   } catch (error) {
