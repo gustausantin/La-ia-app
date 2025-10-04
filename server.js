@@ -52,6 +52,44 @@ app.post('/api/register', (req, res) => {
 // EMAIL SENDING ENDPOINT
 // Usado por Supabase Edge Function para enviar emails vía SMTP
 // ========================================
+// Endpoint para registrar actividad del agente (health check)
+app.post('/api/agent-heartbeat', async (req, res) => {
+  try {
+    const { restaurant_id } = req.body;
+    
+    if (!restaurant_id) {
+      return res.status(400).json({ error: 'restaurant_id required' });
+    }
+    
+    const { registerAgentActivity } = await import('./src/services/systemNotificationService.js');
+    registerAgentActivity(restaurant_id);
+    
+    res.json({ success: true, timestamp: new Date().toISOString() });
+  } catch (error) {
+    console.error('Error en heartbeat:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Endpoint para reportar errores críticos
+app.post('/api/report-error', async (req, res) => {
+  try {
+    const { restaurant_id, error_type, error_message } = req.body;
+    
+    if (!restaurant_id || !error_type) {
+      return res.status(400).json({ error: 'restaurant_id and error_type required' });
+    }
+    
+    const { trackError } = await import('./src/services/systemNotificationService.js');
+    await trackError(restaurant_id, error_type, error_message || 'Error desconocido');
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error reportando error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/send-email', async (req, res) => {
   try {
     // Verificar autorización (solo Edge Functions pueden llamar a esto)
@@ -150,10 +188,13 @@ app.listen(PORT, '0.0.0.0', async () => {
   
   // 📧 Iniciar listener de notificaciones por email vía Realtime
   console.log('📧 Iniciando sistema de notificaciones por email...');
-  
-  // Importar dinámicamente DESPUÉS de que dotenv haya cargado las variables
   const { startRealtimeEmailListener } = await import('./src/services/realtimeEmailService.js');
   startRealtimeEmailListener();
+  
+  // 🏥 Iniciar monitor de salud de agentes y errores críticos
+  console.log('🏥 Iniciando monitor del sistema...');
+  const { startAgentHealthMonitor } = await import('./src/services/systemNotificationService.js');
+  startAgentHealthMonitor();
 });
 
 // Manejar errores de puerto
