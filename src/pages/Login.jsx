@@ -10,6 +10,7 @@ import {
   Shield,
   TrendingUp,
   Heart,
+  Sparkles,
 } from "lucide-react";
 
 // Componente de feature card REDISEÑADO - Layout horizontal optimizado
