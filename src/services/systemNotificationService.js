@@ -97,6 +97,81 @@ Se ha detectado un <strong style="color:#ea580c;">error crítico</strong> en tu 
 </html>`;
 };
 
+// Template: Agente desactivado manualmente
+const getAgentDeactivatedEmailHTML = (variables) => {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<div style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.08);overflow:hidden;">
+<div style="background-color:#6366f1;padding:30px 40px;color:#ffffff;text-align:center;">
+<h1 style="margin:0;font-size:28px;font-weight:bold;">💤 Agente Desactivado</h1>
+<p style="margin:8px 0 0 0;font-size:16px;opacity:0.9;">${variables.RestaurantName}</p>
+</div>
+<div style="padding:40px;">
+<p style="font-size:18px;color:#1a1a1a;margin:0 0 25px 0;">Hola <strong>${variables.ContactName}</strong>,</p>
+<p style="font-size:16px;color:#333333;line-height:1.6;margin:0 0 30px 0;">
+Has <strong>desactivado tu agente IA</strong> correctamente.
+</p>
+<div style="background-color:#eff6ff;border-left:4px solid:#3b82f6;padding:25px;border-radius:8px;margin-bottom:30px;">
+<h3 style="margin:0 0 15px 0;color:#1e40af;font-size:16px;">ℹ️ Qué significa esto:</h3>
+<ul style="margin:0;padding-left:20px;color:#1e3a8a;">
+<li>Tu agente <strong>NO responderá</strong> a mensajes de WhatsApp</li>
+<li>Las llamadas <strong>NO serán atendidas</strong> automáticamente</li>
+<li>Instagram y Facebook <strong>NO recibirán respuestas</strong></li>
+<li>Las reservas manuales desde el dashboard <strong>siguen funcionando</strong></li>
+</ul>
+</div>
+<div style="background-color:#fef3c7;border-left:4px solid:#f59e0b;padding:20px;border-radius:8px;margin-bottom:30px;">
+<h3 style="margin:0 0 10px 0;color:#92400e;font-size:14px;">⚠️ Recuerda:</h3>
+<p style="margin:0;color:#78350f;font-size:14px;">Los clientes que intenten contactarte NO recibirán respuesta automática. Puedes reactivar tu agente en cualquier momento desde la configuración.</p>
+</div>
+<div style="text-align:center;margin:35px 0;">
+<a href="${variables.AppURL}" style="display:inline-block;background-color:#6366f1;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-size:16px;font-weight:600;">Reactivar agente</a>
+</div>
+</div>
+<div style="background-color:#f9fafb;padding:30px 40px;border-top:1px solid #e5e7eb;">
+<p style="margin:0;font-size:14px;color:#6b7280;text-align:center;">Confirmación enviada por <strong style="color:#7c3aed;">La-IA</strong></p>
+</div>
+</div>
+</body>
+</html>`;
+};
+
+// Enviar confirmación de agente desactivado
+export const sendAgentDeactivatedConfirmation = async (restaurant) => {
+  try {
+    console.log('📧 Enviando confirmación de agente desactivado:', restaurant.id);
+    
+    const settings = restaurant.settings || {};
+    const notificationEmails = settings.notification_emails || [restaurant.email];
+    
+    const variables = {
+      RestaurantName: restaurant.name,
+      ContactName: settings.contact_name || 'Equipo',
+      AppURL: 'https://la-ia-app.vercel.app/configuracion',
+    };
+    
+    const html = getAgentDeactivatedEmailHTML(variables);
+    const transporter = createTransporter();
+    
+    const info = await transporter.sendMail({
+      from: `La-IA - ${restaurant.name} <noreply@la-ia.site>`,
+      replyTo: restaurant.email,
+      to: notificationEmails,
+      subject: `💤 Agente desactivado - ${restaurant.name}`,
+      html,
+    });
+    
+    console.log('✅ Email de confirmación enviado:', info.messageId);
+    return { success: true, messageId: info.messageId };
+    
+  } catch (error) {
+    console.error('❌ Error enviando confirmación:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Enviar alerta de agente desconectado
 export const sendAgentOfflineAlert = async (restaurant, lastSeen) => {
   try {
