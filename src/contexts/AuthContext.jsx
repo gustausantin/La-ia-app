@@ -152,8 +152,8 @@ const AuthProvider = ({ children }) => {
       console.log('⚠️ Intento 4 falló:', e.message);
     }
 
-    // Si llegamos aquí, no pudimos cargar el restaurant
-    console.error('❌ NO SE PUDO CARGAR EL RESTAURANT DESPUÉS DE 4 INTENTOS');
+    // Si llegamos aquí, el usuario no tiene restaurante asociado (es normal para nuevos usuarios)
+    console.warn('⚠️ Usuario sin restaurante asociado - deberá completar configuración inicial');
     setRestaurant(null);
     setRestaurantId(null);
   };
