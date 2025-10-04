@@ -275,9 +275,13 @@ export const sendModifiedReservationEmail = async (newReservation, oldReservatio
     const fieldsToCheck = ['reservation_date', 'reservation_time', 'party_size', 'special_requests'];
     
     fieldsToCheck.forEach(field => {
-      if (oldReservation[field] !== newReservation[field]) {
-        let oldVal = oldReservation[field];
-        let newVal = newReservation[field];
+      const oldValue = oldReservation[field];
+      const newValue = newReservation[field];
+      
+      // Solo registrar cambio si ambos valores existen y son diferentes
+      if (oldValue && newValue && oldValue !== newValue) {
+        let oldVal = oldValue;
+        let newVal = newValue;
         
         if (field === 'reservation_date') {
           oldVal = formatDate(oldVal);
