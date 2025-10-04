@@ -439,6 +439,20 @@ export const startRealtimeEmailListener = () => {
         table: 'reservations',
       },
       async (payload) => {
+        console.log('🔔 UPDATE detectado:', payload.new.id);
+        console.log('  Old:', { 
+          date: payload.old.reservation_date, 
+          time: payload.old.reservation_time, 
+          size: payload.old.party_size,
+          status: payload.old.status
+        });
+        console.log('  New:', { 
+          date: payload.new.reservation_date, 
+          time: payload.new.reservation_time, 
+          size: payload.new.party_size,
+          status: payload.new.status
+        });
+        
         try {
           const { data: restaurant } = await supabase
             .from('restaurants')
@@ -446,7 +460,10 @@ export const startRealtimeEmailListener = () => {
             .eq('id', payload.new.restaurant_id)
             .single();
           
-          if (!restaurant) return;
+          if (!restaurant) {
+            console.log('⚠️ Restaurante no encontrado');
+            return;
+          }
           
           // Cancelación
           if (payload.old.status !== 'cancelled' && payload.new.status === 'cancelled') {
@@ -462,9 +479,13 @@ export const startRealtimeEmailListener = () => {
               const oldValue = payload.old[field];
               const newValue = payload.new[field];
               
+              console.log(`  Comparando ${field}: "${oldValue}" vs "${newValue}"`);
+              
               // Si oldValue existe y es diferente del nuevo, hay cambio
               return oldValue !== undefined && oldValue !== null && oldValue !== newValue;
             });
+            
+            console.log('  ¿Tiene cambios relevantes?', hasChanges);
             
             if (hasChanges) {
               console.log('📝 Reserva modificada detectada:', payload.new.id);
