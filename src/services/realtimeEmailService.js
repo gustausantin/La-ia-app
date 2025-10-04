@@ -278,18 +278,22 @@ export const sendModifiedReservationEmail = async (newReservation, oldReservatio
       const oldValue = oldReservation[field];
       const newValue = newReservation[field];
       
-      // Solo registrar cambio si ambos valores existen y son diferentes
-      if (oldValue && newValue && oldValue !== newValue) {
-        let oldVal = oldValue;
+      // Registrar cambio si los valores son diferentes (incluso si uno es null/undefined)
+      // Convertir a string para comparación
+      const oldStr = String(oldValue || '');
+      const newStr = String(newValue || '');
+      
+      if (oldStr !== newStr && newValue !== undefined && newValue !== null) {
+        let oldVal = oldValue || 'No especificado';
         let newVal = newValue;
         
-        if (field === 'reservation_date') {
-          oldVal = formatDate(oldVal);
-          newVal = formatDate(newVal);
+        if (field === 'reservation_date' && newValue) {
+          if (oldValue) oldVal = formatDate(oldValue);
+          newVal = formatDate(newValue);
         }
         if (field === 'party_size') {
-          oldVal = `${oldVal} personas`;
-          newVal = `${newVal} personas`;
+          if (oldValue) oldVal = `${oldValue} personas`;
+          newVal = `${newValue} personas`;
         }
         
         changes[field] = { old: oldVal, new: newVal };
@@ -440,18 +444,6 @@ export const startRealtimeEmailListener = () => {
       },
       async (payload) => {
         console.log('🔔 UPDATE detectado:', payload.new.id);
-        console.log('  Old:', { 
-          date: payload.old.reservation_date, 
-          time: payload.old.reservation_time, 
-          size: payload.old.party_size,
-          status: payload.old.status
-        });
-        console.log('  New:', { 
-          date: payload.new.reservation_date, 
-          time: payload.new.reservation_time, 
-          size: payload.new.party_size,
-          status: payload.new.status
-        });
         
         try {
           const { data: restaurant } = await supabase
@@ -466,31 +458,25 @@ export const startRealtimeEmailListener = () => {
           }
           
           // Cancelación
-          if (payload.old.status !== 'cancelled' && payload.new.status === 'cancelled') {
+          if (payload.new.status === 'cancelled' && (!payload.old.status || payload.old.status !== 'cancelled')) {
             console.log('❌ Reserva cancelada detectada:', payload.new.id);
             await sendCancelledReservationEmail(payload.new, restaurant);
           }
           // Modificación (cambios en campos relevantes, pero NO cancelación)
           else if (payload.new.status !== 'cancelled') {
-            const relevantFields = ['reservation_date', 'reservation_time', 'party_size', 'special_requests'];
+            // Como payload.old no es confiable, detectamos modificación por cualquier UPDATE que no sea cancelación
+            // y dejamos que sendModifiedReservationEmail valide si hay cambios reales
+            console.log('📝 Posible modificación detectada:', payload.new.id);
             
-            // Verificar si hay cambios reales en los campos relevantes
-            const hasChanges = relevantFields.some(field => {
-              const oldValue = payload.old[field];
-              const newValue = payload.new[field];
-              
-              console.log(`  Comparando ${field}: "${oldValue}" vs "${newValue}"`);
-              
-              // Si oldValue existe y es diferente del nuevo, hay cambio
-              return oldValue !== undefined && oldValue !== null && oldValue !== newValue;
-            });
+            // Crear un objeto "old" con los valores que tenemos
+            const oldReservation = {
+              reservation_date: payload.old.reservation_date || payload.new.reservation_date,
+              reservation_time: payload.old.reservation_time || payload.new.reservation_time,
+              party_size: payload.old.party_size || payload.new.party_size,
+              special_requests: payload.old.special_requests || payload.new.special_requests,
+            };
             
-            console.log('  ¿Tiene cambios relevantes?', hasChanges);
-            
-            if (hasChanges) {
-              console.log('📝 Reserva modificada detectada:', payload.new.id);
-              await sendModifiedReservationEmail(payload.new, payload.old, restaurant);
-            }
+            await sendModifiedReservationEmail(payload.new, oldReservation, restaurant);
           }
         } catch (error) {
           console.error('Error procesando actualización de reserva:', error);
