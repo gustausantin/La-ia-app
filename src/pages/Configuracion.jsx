@@ -1197,15 +1197,20 @@ const Configuracion = () => {
                                                                     }));
                                                                     
                                                                     // Si se desactiva, enviar email de confirmación
-                                                                    if (!newEnabled && restaurantCache?.restaurantId) {
+                                                                    if (!newEnabled && restaurantId) {
                                                                         try {
-                                                                            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/agent-deactivated`, {
+                                                                            console.log('🔔 Enviando email de confirmación de desactivación...');
+                                                                            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/agent-deactivated`, {
                                                                                 method: 'POST',
                                                                                 headers: { 'Content-Type': 'application/json' },
-                                                                                body: JSON.stringify({ restaurant_id: restaurantCache.restaurantId })
+                                                                                body: JSON.stringify({ restaurant_id: restaurantId })
                                                                             });
+                                                                            const result = await response.json();
+                                                                            if (result.success) {
+                                                                                console.log('✅ Email de confirmación enviado');
+                                                                            }
                                                                         } catch (error) {
-                                                                            console.error('Error enviando confirmación:', error);
+                                                                            console.error('❌ Error enviando confirmación:', error);
                                                                         }
                                                                     }
                                                                 }}
