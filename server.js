@@ -4,6 +4,7 @@ import cors from 'cors';
 import { config } from 'dotenv';
 import { securityMiddleware } from './src/middleware/security.js';
 import nodemailer from 'nodemailer';
+import { startRealtimeEmailListener } from './src/services/realtimeEmailService.js';
 
 // CARGAR VARIABLES CORRECTAMENTE para ES6 modules
 config();
@@ -147,6 +148,10 @@ const PORT = 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ API Server running on http://0.0.0.0:${PORT}`);
+  
+  // 📧 Iniciar listener de notificaciones por email vía Realtime
+  console.log('📧 Iniciando sistema de notificaciones por email...');
+  startRealtimeEmailListener();
 });
 
 // Manejar errores de puerto
