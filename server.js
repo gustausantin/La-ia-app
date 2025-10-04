@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
 import { securityMiddleware } from './src/middleware/security.js';
+import nodemailer from 'nodemailer';
 
 // CARGAR VARIABLES CORRECTAMENTE para ES6 modules
 config();
@@ -45,6 +46,59 @@ const registerHandler = registerModule.default;
 // API Routes
 app.post('/api/register', (req, res) => {
   registerHandler(req, res);
+});
+
+// ========================================
+// EMAIL SENDING ENDPOINT
+// Usado por Supabase Edge Function para enviar emails vía SMTP
+// ========================================
+app.post('/api/send-email', async (req, res) => {
+  try {
+    // Verificar autorización (solo Edge Functions pueden llamar a esto)
+    const authHeader = req.headers.authorization;
+    const expectedToken = `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`;
+    
+    if (authHeader !== expectedToken) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { from, replyTo, to, subject, html } = req.body;
+
+    // Configurar transporter SMTP
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.hostinger.com',
+      port: 465,
+      secure: true, // SSL
+      auth: {
+        user: process.env.SMTP_USER || 'noreply@la-ia.site',
+        pass: process.env.SMTP_PASSWORD, // Debe estar en .env
+      },
+    });
+
+    // Enviar email
+    const info = await transporter.sendMail({
+      from,
+      replyTo,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html,
+    });
+
+    console.log('✅ Email enviado correctamente:', info.messageId);
+
+    res.json({
+      success: true,
+      messageId: info.messageId,
+      accepted: info.accepted,
+    });
+
+  } catch (error) {
+    console.error('❌ Error enviando email:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
 });
 
 // Health check
