@@ -1186,13 +1186,29 @@ const Configuracion = () => {
                                                             <input
                                                                 type="checkbox"
                                                                 checked={settings.agent?.enabled || false}
-                                                                onChange={(e) => setSettings(prev => ({
-                                                                    ...prev,
-                                                                    agent: {
-                                                                        ...prev.agent,
-                                                                        enabled: e.target.checked
+                                                                onChange={async (e) => {
+                                                                    const newEnabled = e.target.checked;
+                                                                    setSettings(prev => ({
+                                                                        ...prev,
+                                                                        agent: {
+                                                                            ...prev.agent,
+                                                                            enabled: newEnabled
+                                                                        }
+                                                                    }));
+                                                                    
+                                                                    // Si se desactiva, enviar email de confirmación
+                                                                    if (!newEnabled && restaurantCache?.restaurantId) {
+                                                                        try {
+                                                                            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/agent-deactivated`, {
+                                                                                method: 'POST',
+                                                                                headers: { 'Content-Type': 'application/json' },
+                                                                                body: JSON.stringify({ restaurant_id: restaurantCache.restaurantId })
+                                                                            });
+                                                                        } catch (error) {
+                                                                            console.error('Error enviando confirmación:', error);
+                                                                        }
                                                                     }
-                                                                }))}
+                                                                }}
                                                                 className="sr-only peer"
                                                             />
                                                             <div className="w-16 h-8 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-8 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-600 peer-checked:to-purple-600"></div>

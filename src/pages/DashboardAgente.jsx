@@ -282,6 +282,38 @@ export default function DashboardAgente() {
         <div className="min-h-screen bg-gray-50 p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
                 {/* ====================================
+                    BANNER: AGENTE DESACTIVADO
+                ==================================== */}
+                {!restaurantCache?.settings?.agent?.enabled && (
+                    <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-6 mb-6 shadow-lg">
+                        <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0">
+                                <div className="w-12 h-12 bg-amber-400 rounded-full flex items-center justify-center">
+                                    <AlertTriangle className="w-6 h-6 text-white" />
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-bold text-amber-900 mb-2">
+                                    ⚠️ Tu agente IA está desactivado
+                                </h3>
+                                <p className="text-amber-800 mb-4">
+                                    <strong>{agentName}</strong> no está respondiendo a tus clientes en WhatsApp, teléfono, Instagram ni otros canales. 
+                                    Las reservas manuales desde aquí siguen funcionando, pero tus clientes no reciben respuestas automáticas.
+                                </p>
+                                <button
+                                    onClick={() => navigate('/configuracion')}
+                                    className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2"
+                                >
+                                    <Bot className="w-5 h-5" />
+                                    Activar agente ahora
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ====================================
                     ENCABEZADO CON ESTILO CORPORATIVO
                 ==================================== */}
                 <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-white rounded-xl shadow-sm border border-purple-100 p-4 md:p-8 mb-4 md:mb-6">

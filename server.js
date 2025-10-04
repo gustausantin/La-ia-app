@@ -71,6 +71,41 @@ app.post('/api/agent-heartbeat', async (req, res) => {
   }
 });
 
+// Endpoint para notificar desactivación de agente
+app.post('/api/agent-deactivated', async (req, res) => {
+  try {
+    const { restaurant_id } = req.body;
+    
+    if (!restaurant_id) {
+      return res.status(400).json({ error: 'restaurant_id required' });
+    }
+    
+    // Obtener datos del restaurante
+    const supabase = (await import('@supabase/supabase-js')).createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+    
+    const { data: restaurant } = await supabase
+      .from('restaurants')
+      .select('*')
+      .eq('id', restaurant_id)
+      .single();
+    
+    if (!restaurant) {
+      return res.status(404).json({ error: 'Restaurant not found' });
+    }
+    
+    const { sendAgentDeactivatedConfirmation } = await import('./src/services/systemNotificationService.js');
+    const result = await sendAgentDeactivatedConfirmation(restaurant);
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Error enviando confirmación:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Endpoint para reportar errores críticos
 app.post('/api/report-error', async (req, res) => {
   try {
