@@ -276,7 +276,7 @@ const AvailabilityManager = () => {
                 console.error('❌ Error en regeneración inteligente:', error);
                 throw error;
             }
-            
+
             // Verificar si la respuesta es exitosa
             if (data && typeof data === 'object') {
                 if (data.success === false) {
@@ -1181,7 +1181,7 @@ const AvailabilityManager = () => {
                         <div className="flex-1">
                             <h3 className="font-bold text-red-900 text-lg mb-2 flex items-center gap-2">
                                 🚨 REGENERACIÓN REQUERIDA - ACCIÓN NECESARIA
-                            </h3>
+                    </h3>
                     
                             <div className="text-red-800 mb-4 space-y-2">
                                 <p className="font-semibold text-base">
@@ -1201,27 +1201,27 @@ const AvailabilityManager = () => {
                                         <li>Verifica las nuevas disponibilidades</li>
                                     </ol>
                                 </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={async () => {
-                                        await smartRegeneration(changeDetection.changeType, changeDetection.changeDetails);
-                                        changeDetection.clearRegenerationFlag();
-                                    }}
-                                    disabled={loading}
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={async () => {
+                                await smartRegeneration(changeDetection.changeType, changeDetection.changeDetails);
+                                changeDetection.clearRegenerationFlag();
+                            }}
+                            disabled={loading}
                                     className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all shadow-md font-semibold text-base"
-                                >
+                        >
                                     {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
                                     🔄 Regenerar Ahora
-                                </button>
-                                
-                                <button
-                                    onClick={() => changeDetection.clearRegenerationFlag()}
+                        </button>
+                        
+                        <button
+                            onClick={() => changeDetection.clearRegenerationFlag()}
                                     className="text-sm text-red-700 hover:text-red-900 underline font-medium"
-                                >
+                        >
                                     Ignorar (no recomendado)
-                                </button>
+                        </button>
                             </div>
                         </div>
                     </div>
