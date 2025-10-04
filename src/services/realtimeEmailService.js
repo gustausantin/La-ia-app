@@ -102,6 +102,53 @@ ${variables.SpecialRequests ? `<hr style="border:none;border-top:1px solid #e5e7
 </html>`;
 };
 
+// Template de reserva modificada
+const getModifiedReservationEmailHTML = (variables, changes) => {
+  const changesHTML = Object.entries(changes).map(([field, { old: oldVal, new: newVal }]) => {
+    const fieldNames = {
+      reservation_date: '📅 Fecha',
+      reservation_time: '🕐 Hora',
+      party_size: '👥 Comensales',
+      special_requests: '📝 Peticiones especiales',
+    };
+    return `<div style="margin-bottom:15px;">
+      <span style="color:#6b7280;font-size:14px;display:block;margin-bottom:4px;">${fieldNames[field] || field}</span>
+      <span style="color:#991b1b;font-size:16px;text-decoration:line-through;opacity:0.6;">${oldVal}</span>
+      <span style="color:#059669;font-size:18px;font-weight:600;margin-left:10px;">→ ${newVal}</span>
+    </div>`;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<div style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.08);overflow:hidden;">
+<div style="background-color:#f59e0b;padding:30px 40px;color:#ffffff;text-align:center;">
+<h1 style="margin:0;font-size:28px;font-weight:bold;">📝 Reserva Modificada</h1>
+<p style="margin:8px 0 0 0;font-size:16px;opacity:0.9;">${variables.RestaurantName}</p>
+</div>
+<div style="padding:40px;">
+<p style="font-size:18px;color:#1a1a1a;margin:0 0 25px 0;">Hola <strong>${variables.ContactName}</strong>,</p>
+<p style="font-size:16px;color:#333333;line-height:1.6;margin:0 0 30px 0;">Se ha <strong style="color:#f59e0b;">modificado una reserva</strong> en tu restaurante:</p>
+<div style="background-color:#fffbeb;border-left:4px solid #f59e0b;padding:25px;border-radius:8px;margin-bottom:20px;">
+<div style="margin-bottom:15px;"><span style="color:#6b7280;font-size:14px;display:block;margin-bottom:4px;">👤 Cliente</span><span style="color:#111827;font-size:18px;font-weight:600;">${variables.CustomerName}</span></div>
+</div>
+<div style="background-color:#f0fdf4;border-left:4px solid #059669;padding:25px;border-radius:8px;margin-bottom:30px;">
+<h3 style="margin:0 0 15px 0;color:#065f46;font-size:16px;">Cambios realizados:</h3>
+${changesHTML}
+</div>
+<div style="text-align:center;margin:35px 0;">
+<a href="${variables.AppURL}" style="display:inline-block;background-color:#7c3aed;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-size:16px;font-weight:600;">Ver en la app</a>
+</div>
+</div>
+<div style="background-color:#f9fafb;padding:30px 40px;border-top:1px solid #e5e7eb;">
+<p style="margin:0;font-size:14px;color:#6b7280;text-align:center;">Enviado por <strong style="color:#7c3aed;">La-IA</strong></p>
+</div>
+</div>
+</body>
+</html>`;
+};
+
 // Template de reserva cancelada
 const getCancelledReservationEmailHTML = (variables) => {
   return `<!DOCTYPE html>
@@ -204,6 +251,91 @@ export const sendNewReservationEmail = async (reservation, restaurant) => {
   }
 };
 
+// Enviar email de reserva modificada
+export const sendModifiedReservationEmail = async (newReservation, oldReservation, restaurant) => {
+  try {
+    console.log('📧 Enviando email de modificación:', newReservation.id);
+    
+    const settings = restaurant.settings || {};
+    const notificationSettings = settings.notifications || {};
+    const modifiedNotif = notificationSettings.modified_reservation || { enabled: true };
+    
+    if (modifiedNotif.enabled === false) {
+      console.log('⏭️ Notificaciones de modificación deshabilitadas');
+      return { success: true, skipped: true, reason: 'disabled' };
+    }
+    
+    if (isQuietHours(notificationSettings.quiet_hours)) {
+      console.log('🔕 Horario silencioso activo');
+      return { success: true, skipped: true, reason: 'quiet_hours' };
+    }
+    
+    // Detectar cambios
+    const changes = {};
+    const fieldsToCheck = ['reservation_date', 'reservation_time', 'party_size', 'special_requests'];
+    
+    fieldsToCheck.forEach(field => {
+      if (oldReservation[field] !== newReservation[field]) {
+        let oldVal = oldReservation[field];
+        let newVal = newReservation[field];
+        
+        if (field === 'reservation_date') {
+          oldVal = formatDate(oldVal);
+          newVal = formatDate(newVal);
+        }
+        if (field === 'party_size') {
+          oldVal = `${oldVal} personas`;
+          newVal = `${newVal} personas`;
+        }
+        
+        changes[field] = { old: oldVal, new: newVal };
+      }
+    });
+    
+    // Si no hay cambios relevantes, no enviar
+    if (Object.keys(changes).length === 0) {
+      console.log('⏭️ No hay cambios relevantes');
+      return { success: true, skipped: true, reason: 'no_changes' };
+    }
+    
+    const notificationEmails = settings.notification_emails || [restaurant.email];
+    
+    if (!notificationEmails || notificationEmails.length === 0) {
+      console.warn('⚠️ No hay emails configurados');
+      return { success: false, error: 'No notification emails' };
+    }
+    
+    const variables = {
+      RestaurantName: restaurant.name,
+      ContactName: settings.contact_name || 'Equipo',
+      CustomerName: newReservation.customer_name,
+      AppURL: `https://la-ia-app.vercel.app/reservas?id=${newReservation.id}`,
+    };
+    
+    const html = getModifiedReservationEmailHTML(variables, changes);
+    
+    const transporter = createTransporter();
+    
+    console.log('📬 Enviando email a:', notificationEmails);
+    
+    const info = await transporter.sendMail({
+      from: `La-IA - ${restaurant.name} <noreply@la-ia.site>`,
+      replyTo: restaurant.email,
+      to: notificationEmails,
+      subject: `📝 Reserva modificada - ${newReservation.customer_name}`,
+      html,
+    });
+    
+    console.log('✅ Email de modificación enviado:', info.messageId);
+    console.log('✅ Aceptado por:', info.accepted);
+    return { success: true, messageId: info.messageId };
+    
+  } catch (error) {
+    console.error('❌ Error enviando email de modificación:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Enviar email de reserva cancelada
 export const sendCancelledReservationEmail = async (reservation, restaurant) => {
   try {
@@ -301,26 +433,34 @@ export const startRealtimeEmailListener = () => {
         event: 'UPDATE',
         schema: 'public',
         table: 'reservations',
-        filter: 'status=eq.cancelled',
       },
       async (payload) => {
-        // Solo enviar si cambió a cancelled
-        if (payload.old.status !== 'cancelled' && payload.new.status === 'cancelled') {
-          console.log('❌ Reserva cancelada detectada:', payload.new.id);
+        try {
+          const { data: restaurant } = await supabase
+            .from('restaurants')
+            .select('*')
+            .eq('id', payload.new.restaurant_id)
+            .single();
           
-          try {
-            const { data: restaurant } = await supabase
-              .from('restaurants')
-              .select('*')
-              .eq('id', payload.new.restaurant_id)
-              .single();
-            
-            if (restaurant) {
-              await sendCancelledReservationEmail(payload.new, restaurant);
-            }
-          } catch (error) {
-            console.error('Error procesando cancelación:', error);
+          if (!restaurant) return;
+          
+          // Cancelación
+          if (payload.old.status !== 'cancelled' && payload.new.status === 'cancelled') {
+            console.log('❌ Reserva cancelada detectada:', payload.new.id);
+            await sendCancelledReservationEmail(payload.new, restaurant);
           }
+          // Modificación (cambios en campos relevantes, pero NO cancelación)
+          else if (payload.new.status !== 'cancelled') {
+            const relevantFields = ['reservation_date', 'reservation_time', 'party_size', 'special_requests'];
+            const hasChanges = relevantFields.some(field => payload.old[field] !== payload.new[field]);
+            
+            if (hasChanges) {
+              console.log('📝 Reserva modificada detectada:', payload.new.id);
+              await sendModifiedReservationEmail(payload.new, payload.old, restaurant);
+            }
+          }
+        } catch (error) {
+          console.error('Error procesando actualización de reserva:', error);
         }
       }
     )
