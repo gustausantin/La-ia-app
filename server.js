@@ -4,7 +4,6 @@ import cors from 'cors';
 import { config } from 'dotenv';
 import { securityMiddleware } from './src/middleware/security.js';
 import nodemailer from 'nodemailer';
-import { startRealtimeEmailListener } from './src/services/realtimeEmailService.js';
 
 // CARGAR VARIABLES CORRECTAMENTE para ES6 modules
 config();
@@ -146,11 +145,14 @@ const findAvailablePort = (startPort) => {
 // Iniciar servidor en puerto fijo
 const PORT = 5000;
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`✅ API Server running on http://0.0.0.0:${PORT}`);
   
   // 📧 Iniciar listener de notificaciones por email vía Realtime
   console.log('📧 Iniciando sistema de notificaciones por email...');
+  
+  // Importar dinámicamente DESPUÉS de que dotenv haya cargado las variables
+  const { startRealtimeEmailListener } = await import('./src/services/realtimeEmailService.js');
   startRealtimeEmailListener();
 });
 

@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale/es';
+import esLocale from 'date-fns/locale/es/index.js';
 
 // Cliente de Supabase con Service Role (bypass RLS)
 const supabase = createClient(
@@ -16,13 +16,20 @@ const supabase = createClient(
 
 // Configurar transporter SMTP
 const createTransporter = () => {
+  const smtpUser = process.env.SMTP_USER || 'noreply@la-ia.site';
+  const smtpPass = process.env.SMTP_PASSWORD;
+  
+  console.log('🔑 Configuración SMTP:');
+  console.log('  Usuario:', smtpUser);
+  console.log('  Password:', smtpPass ? `${smtpPass.substring(0, 3)}***` : '❌ NO CONFIGURADA');
+  
   return nodemailer.createTransport({
     host: 'smtp.hostinger.com',
     port: 465,
     secure: true,
     auth: {
-      user: process.env.SMTP_USER || 'noreply@la-ia.site',
-      pass: process.env.SMTP_PASSWORD,
+      user: smtpUser,
+      pass: smtpPass,
     },
   });
 };
@@ -31,7 +38,7 @@ const createTransporter = () => {
 const formatDate = (dateString) => {
   try {
     const date = parseISO(dateString);
-    return format(date, "EEEE d 'de' MMMM, yyyy", { locale: es });
+    return format(date, "EEEE d 'de' MMMM, yyyy", { locale: esLocale });
   } catch (error) {
     return dateString;
   }
