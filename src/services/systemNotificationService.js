@@ -1,19 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
-import nodemailer from 'nodemailer';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Configurar transporter SMTP
-const createTransporter = () => {
-  return nodemailer.createTransporter({
+// Configurar transporter SMTP (con dynamic import)
+const createTransporter = async () => {
+  const nodemailer = (await import('nodemailer')).default;
+  
+  return nodemailer.createTransport({
     host: 'smtp.hostinger.com',
     port: 465,
     secure: true,
     auth: {
-      user: process.env.SMTP_USER || 'noreply@la-ia.site',
+      user: process.env.SMTP_USER || 'info@la-ia.site',
       pass: process.env.SMTP_PASSWORD,
     },
   });
@@ -153,7 +154,7 @@ export const sendAgentDeactivatedConfirmation = async (restaurant) => {
     };
     
     const html = getAgentDeactivatedEmailHTML(variables);
-    const transporter = createTransporter();
+    const transporter = await createTransporter();
     
     const info = await transporter.sendMail({
       from: `La-IA - ${restaurant.name} <noreply@la-ia.site>`,
@@ -196,7 +197,7 @@ export const sendAgentOfflineAlert = async (restaurant, lastSeen) => {
     };
     
     const html = getAgentOfflineEmailHTML(variables);
-    const transporter = createTransporter();
+    const transporter = await createTransporter();
     
     const info = await transporter.sendMail({
       from: `ALERTA La-IA - ${restaurant.name} <noreply@la-ia.site>`,
@@ -241,7 +242,7 @@ export const sendCriticalErrorAlert = async (restaurant, errorType, errorMessage
     };
     
     const html = getCriticalErrorEmailHTML(variables);
-    const transporter = createTransporter();
+    const transporter = await createTransporter();
     
     const info = await transporter.sendMail({
       from: `ALERTA La-IA - ${restaurant.name} <noreply@la-ia.site>`,
