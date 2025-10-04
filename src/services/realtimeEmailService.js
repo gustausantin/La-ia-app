@@ -456,7 +456,15 @@ export const startRealtimeEmailListener = () => {
           // Modificación (cambios en campos relevantes, pero NO cancelación)
           else if (payload.new.status !== 'cancelled') {
             const relevantFields = ['reservation_date', 'reservation_time', 'party_size', 'special_requests'];
-            const hasChanges = relevantFields.some(field => payload.old[field] !== payload.new[field]);
+            
+            // Verificar si hay cambios reales en los campos relevantes
+            const hasChanges = relevantFields.some(field => {
+              const oldValue = payload.old[field];
+              const newValue = payload.new[field];
+              
+              // Si oldValue existe y es diferente del nuevo, hay cambio
+              return oldValue !== undefined && oldValue !== null && oldValue !== newValue;
+            });
             
             if (hasChanges) {
               console.log('📝 Reserva modificada detectada:', payload.new.id);
