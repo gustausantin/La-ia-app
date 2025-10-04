@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es } from 'date-fns/locale/es';
 
 // Cliente de Supabase con Service Role (bypass RLS)
 const supabase = createClient(
