@@ -248,6 +248,7 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
       <div className="p-6">
         {activeTab === 'general' && (
           <div className="space-y-6">
+            {/* FILA 1: Nombre del Restaurante | Tipo de Cocina */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputField
                 label="Nombre del Restaurante"
@@ -265,15 +266,29 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
               />
             </div>
             
+            {/* FILA 2: Email de contacto | Nombre del contacto */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Email de contacto"
+                value={settings.email}
+                onChange={(value) => handleInputChange('email', value)}
+                type="email"
+                placeholder="contacto@restaurante.com"
+                icon={Mail}
+              />
+              
               <InputField
                 label="Nombre del contacto"
                 value={settings.contact_name}
                 onChange={(value) => handleInputChange('contact_name', value)}
-                placeholder="Nombre de la persona de contacto"
+                placeholder="Tu nombre"
                 icon={Users}
+                help="¿Cómo quieres que te llame el sistema?"
               />
-              
+            </div>
+            
+            {/* FILA 3: Sitio web | Teléfono */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputField
                 label="Sitio web"
                 value={settings.website}
@@ -281,40 +296,24 @@ const RestaurantSettings = React.memo(({ restaurant, onUpdate }) => {
                 placeholder="https://www.turestaurante.com"
                 icon={Globe}
               />
-            </div>
-
-            <InputField
-              label="Descripción"
-              value={settings.description}
-              onChange={(value) => handleInputChange('description', value)}
-              placeholder="Breve descripción del restaurante..."
-              help="Esta descripción se usará en las reservas y promociones"
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
               <InputField
                 label="Teléfono"
                 value={settings.phone}
                 onChange={(value) => handleInputChange('phone', value)}
                 type="tel"
                 placeholder="+34 XXX XXX XXX"
-              />
-              
-              <InputField
-                label="Email"
-                value={settings.email}
-                onChange={(value) => handleInputChange('email', value)}
-                type="email"
-                placeholder="contacto@restaurante.com"
+                icon={Phone}
               />
             </div>
 
+            {/* Descripción del restaurante */}
             <InputField
-              label="Sitio Web"
-              value={settings.website}
-              onChange={(value) => handleInputChange('website', value)}
-              type="url"
-              placeholder="https://www.restaurante.com"
+              label="Descripción del restaurante"
+              value={settings.description}
+              onChange={(value) => handleInputChange('description', value)}
+              placeholder="Breve descripción del restaurante..."
+              help="Esta descripción se usará en las reservas y promociones"
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
