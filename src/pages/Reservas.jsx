@@ -46,6 +46,7 @@ import {
     Trash2
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { ReservationWizard } from "../components/reservas/ReservationWizard";
 
 // 📧 FUNCIÓN PARA ENVIAR MENSAJE NO-SHOW
 const sendNoShowMessage = async (reservation) => {
@@ -1280,6 +1281,110 @@ export default function Reservas() {
         filters.source,
     ]); // SIN loadReservations en dependencies
 
+    // ===== FUNCIONES HELPER PARA WIZARD =====
+    
+    // Función para vincular reserva con cliente existente y actualizar métricas
+    const handleCustomerLinking = useCallback(async (reservationData, customerData = {}) => {
+        try {
+            // Buscar cliente existente por teléfono o email
+            const { data: existingCustomers, error: searchError } = await supabase
+                .from("customers")
+                .select("*")
+                .eq("restaurant_id", restaurantId)
+                .or(`phone.eq.${reservationData.customer_phone},email.eq.${reservationData.customer_email || ''}`);
+
+            if (searchError) {
+                console.error("Error searching customers:", searchError);
+                return;
+            }
+
+            let customer = existingCustomers?.[0];
+
+            if (customer) {
+                // Cliente existente: actualizar métricas usando esquema real
+                const updatedData = {
+                    visits_count: (customer.visits_count || 0) + 1,
+                    last_visit_at: reservationData.reservation_date,
+                    total_spent: customer.total_spent || 0,
+                };
+
+                // Calcular nuevo segmento automático
+                const newSegment = calculateAutomaticSegment(updatedData, customer);
+                updatedData.preferences = {
+                    ...customer.preferences,
+                    segment: newSegment,
+                    last_auto_update: new Date().toISOString()
+                };
+
+                await supabase
+                    .from("customers")
+                    .update(updatedData)
+                    .eq("id", customer.id);
+
+                console.log(`Cliente ${customer.name} actualizado: ${updatedData.visits_count} visitas`);
+            } else {
+                // Cliente nuevo: crear automáticamente
+                const newCustomer = {
+                    name: reservationData.customer_name,
+                    first_name: customerData.first_name || reservationData.customer_name?.split(' ')[0] || '',
+                    last_name1: customerData.last_name1 || reservationData.customer_name?.split(' ')[1] || '',
+                    last_name2: customerData.last_name2 || reservationData.customer_name?.split(' ')[2] || '',
+                    phone: reservationData.customer_phone,
+                    email: reservationData.customer_email || null,
+                    birthdate: customerData.birthdate || null,
+                    notes: customerData.notes || "Cliente creado automáticamente desde reserva",
+                    consent_email: customerData.consent_email || false,
+                    consent_sms: customerData.consent_sms || false,
+                    consent_whatsapp: customerData.consent_whatsapp || false,
+                    restaurant_id: restaurantId,
+                    visits_count: 1,
+                    last_visit_at: reservationData.reservation_date,
+                    total_spent: 0,
+                    preferences: {
+                        segment: "nuevo",
+                        created_automatically: true,
+                        created_from: "reservation"
+                    },
+                };
+
+                await supabase
+                    .from("customers")
+                    .insert([newCustomer]);
+
+                console.log(`Nuevo cliente ${newCustomer.name} creado automáticamente`);
+            }
+        } catch (error) {
+            console.error("Error in customer linking:", error);
+        }
+    }, [restaurantId]);
+
+    // Función para calcular segmento automático
+    const calculateAutomaticSegment = useCallback((customerData, existingCustomer) => {
+        const totalVisits = customerData.visits_count || 0;
+        const totalSpent = customerData.total_spent || 0;
+        const lastVisit = new Date(customerData.last_visit_at);
+        const now = new Date();
+        const daysSinceLastVisit = Math.floor((now - lastVisit) / (1000 * 60 * 60 * 24));
+
+        if (totalVisits === 0 || daysSinceLastVisit <= 7) {
+            return "nuevo";
+        } else if (totalVisits >= 5 || totalSpent >= 500) {
+            return "vip";
+        } else if (totalVisits >= 3) {
+            return "regular";
+        } else if (totalVisits >= 1 && totalVisits <= 2) {
+            return "ocasional";
+        } else if (daysSinceLastVisit > 180) {
+            return "inactivo";
+        } else if (daysSinceLastVisit > 90 && (existingCustomer?.visits_count || 0) >= 3) {
+            return "en_riesgo";
+        } else if (totalSpent >= 300) {
+            return "alto_valor";
+        }
+
+        return "ocasional";
+    }, []);
+
     // Funciones de selección
     const handleSelectReservation = useCallback((id, selected) => {
         setSelectedReservations((prev) => {
@@ -1607,13 +1712,16 @@ export default function Reservas() {
                             Actualizar
                         </button>
 
-                        <button
-                            onClick={handleCreateReservation}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Nueva Reserva
-                        </button>
+                        {/* Botón Nueva Reserva solo en pestaña "reservas" */}
+                        {activeTab === 'reservas' && (
+                            <button
+                                onClick={handleCreateReservation}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Nueva Reserva
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -2050,43 +2158,77 @@ export default function Reservas() {
                 )}
             </div>
 
-            {/* Modals */}
+            {/* Modals - WIZARD NUEVO */}
             {showCreateModal && (
-                <ReservationFormModal
-                    isOpen={showCreateModal}
-                    onClose={() => setShowCreateModal(false)}
-                    onSave={() => {
-                        setShowCreateModal(false);
-                        loadReservations();
-                        toast.success("Reserva creada correctamente");
-                        addNotification({
-                            type: "system",
-                            message: "Nueva reserva manual creada",
-                            priority: "low",
-                        });
-                    }}
-                    tables={tables}
+                <ReservationWizard
                     restaurantId={restaurantId}
+                    initialData={null}
+                    onSave={async (reservationData) => {
+                        try {
+                            // Crear reserva en Supabase
+                            const { data, error } = await supabase
+                                .from('reservations')
+                                .insert([reservationData])
+                                .select()
+                                .single();
+
+                            if (error) throw error;
+
+                            // Vincular con cliente y actualizar métricas
+                            await handleCustomerLinking(reservationData, {
+                                first_name: reservationData.first_name || reservationData.customer_name?.split(' ')[0],
+                                last_name1: reservationData.last_name1 || reservationData.customer_name?.split(' ')[1],
+                                last_name2: reservationData.last_name2 || reservationData.customer_name?.split(' ')[2],
+                                birthdate: reservationData.birthdate || null,
+                                consent_email: false,
+                                consent_sms: false,
+                                consent_whatsapp: false
+                            });
+
+                            setShowCreateModal(false);
+                            loadReservations();
+                            toast.success("Reserva creada correctamente");
+                            addNotification({
+                                type: "system",
+                                message: "Nueva reserva manual creada",
+                                priority: "low",
+                            });
+                        } catch (error) {
+                            console.error('Error creando reserva:', error);
+                            toast.error('Error al crear la reserva: ' + error.message);
+                        }
+                    }}
+                    onCancel={() => setShowCreateModal(false)}
                 />
             )}
 
             {showEditModal && editingReservation && (
-                <ReservationFormModal
-                    isOpen={showEditModal}
-                    onClose={() => setShowEditModal(false)}
-                    onSave={() => {
-                        setShowEditModal(false);
-                        loadReservations();
-                        // Toast ya se muestra dentro del modal, no duplicar
-                        addNotification({
-                            type: "system",
-                            message: "Reserva actualizada",
-                            priority: "low",
-                        });
-                    }}
-                    reservation={editingReservation}
-                    tables={tables}
+                <ReservationWizard
                     restaurantId={restaurantId}
+                    initialData={editingReservation}
+                    onSave={async (reservationData) => {
+                        try {
+                            // Actualizar reserva en Supabase
+                            const { error } = await supabase
+                                .from('reservations')
+                                .update(reservationData)
+                                .eq('id', editingReservation.id);
+
+                            if (error) throw error;
+
+                            setShowEditModal(false);
+                            loadReservations();
+                            addNotification({
+                                type: "system",
+                                message: "Reserva actualizada",
+                                priority: "low",
+                            });
+                        } catch (error) {
+                            console.error('Error actualizando reserva:', error);
+                            toast.error('Error al actualizar la reserva: ' + error.message);
+                        }
+                    }}
+                    onCancel={() => setShowEditModal(false)}
                 />
             )}
 

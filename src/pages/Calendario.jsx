@@ -1201,7 +1201,7 @@ export default function Calendario() {
                                                             // Si hay evento pero NO está cerrado, mostrar evento especial
                                                             <div>
                                                                 <span className="text-green-600 bg-green-100 px-2 py-1 rounded block mb-1">
-                                                                    Abierto 09:00-22:00
+                                                                    Abierto {dayEvent.start_time || daySchedule.open_time || '09:00'}-{dayEvent.end_time || daySchedule.close_time || '22:00'}
                                                                 </span>
                                                                 <div className="flex items-center justify-between text-orange-600 bg-orange-100 px-2 py-1 rounded">
                                                                     <span className="text-xs">🎉 {dayEvent.title}</span>
@@ -1224,7 +1224,7 @@ export default function Calendario() {
                                                                     ? 'text-green-600 bg-green-100' 
                                                                     : 'text-red-600 bg-red-100'
                                                             }`}>
-                                                                {daySchedule.is_open ? 'Abierto 09:00-22:00' : 'Cerrado'}
+                                                                {daySchedule.is_open ? `Abierto ${daySchedule.open_time || '09:00'}-${daySchedule.close_time || '22:00'}` : 'Cerrado'}
                                                             </span>
                                                         )}
                                                     </div>

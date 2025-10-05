@@ -213,45 +213,44 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // ENTERPRISE: loadUserData con protección contra ejecuciones múltiples
-  const loadUserData = async (u) => {
-    // PROTECCIÓN: Solo permitir una ejecución por usuario por sesión
+  // ENTERPRISE: loadUserData PROFESIONAL con gestión de estado robusta
+  const loadUserData = async (u, source = 'unknown') => {
+    // PROTECCIÓN INTELIGENTE: Solo bloquear si el mismo usuario está siendo procesado
     const userKey = `loadUserData_${u.id}`;
-    if (loadUserDataRef.current || window[userKey]) {
-      logger.warn('🛡️ loadUserData ya en progreso - ignorando ejecución duplicada');
+    
+    if (window[userKey]) {
+      logger.debug(`🛡️ loadUserData ya completado para usuario ${u.id} - usando datos en cache`);
       return;
     }
     
-    // Marcar como en progreso
-    loadUserDataRef.current = true;
-    window[userKey] = true;
+    // Si hay otra carga en progreso para un usuario diferente, esperar
+    if (loadUserDataRef.current && loadUserDataRef.current !== u.id) {
+      logger.warn('⏳ Otra carga en progreso, esperando...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      return loadUserData(u, source); // Reintentar
+    }
     
-    logger.info('🔵 INICIANDO CARGA DE DATOS DE USUARIO', { 
+    // Marcar como en progreso con el ID del usuario
+    loadUserDataRef.current = u.id;
+    
+    logger.info('🔵 CARGA DE DATOS DE USUARIO', { 
       userId: u.id, 
       email: u.email,
+      source,
       timestamp: new Date().toISOString()
     });
     
     try {
-      logger.info('🔄 Loading user data for', { email: u.email });
+      // PASO 1: Establecer usuario y estado
       setUser(u);
       setStatus('signed_in');
+      logger.info('✅ Usuario establecido en contexto');
       
-      // CRÍTICO: Cargar restaurant para que todas las páginas funcionen
+      // PASO 2: Cargar información del restaurante
       logger.info('🏢 Cargando información del restaurante...');
       await fetchRestaurantInfo(u.id);
       
-      // Verificar qué se cargó
-      logger.info('📋 Estado después de fetchRestaurantInfo:', {
-        restaurant: restaurant,
-        restaurantId: restaurantId
-      });
-      
-      // ENTERPRISE ARCHITECTURE: Restaurant creation handled by PostgreSQL trigger
-      // NO JavaScript migration needed - trigger guarantees restaurant exists
-      logger.info('🏗️ ENTERPRISE: Arquitectura trigger-based, no migration needed');
-      
-      // Simple verification: Restaurant should exist due to trigger
+      // PASO 3: Verificar que el restaurante existe (arquitectura enterprise)
       const { data: userMapping, error: mappingError } = await supabase
         .from('user_restaurant_mapping')
         .select('restaurant_id')
@@ -259,34 +258,36 @@ const AuthProvider = ({ children }) => {
         .maybeSingle();
       
       if (mappingError) {
-        logger.error('❌ Error verificando mapping de usuario:', mappingError);
+        logger.error('❌ Error verificando mapping:', mappingError);
       } else if (!userMapping?.restaurant_id) {
-        logger.warn('🚨 ENTERPRISE ALERT: Trigger failure detected - running emergency fallback');
+        logger.warn('🚨 Trigger failure - ejecutando fallback de emergencia');
         
-        // EMERGENCY FALLBACK: Only if trigger failed
         try {
           await createRestaurantForOrphanUser(u);
-          logger.info('✅ EMERGENCY FALLBACK: Restaurant created successfully');
           await fetchRestaurantInfo(u.id);
+          logger.info('✅ Fallback completado exitosamente');
         } catch (fallbackError) {
-          logger.error('💥 EMERGENCY FALLBACK FAILED:', fallbackError);
-          toast.error('Error crítico del sistema. Contactar soporte técnico.');
+          logger.error('💥 Fallback falló:', fallbackError);
+          toast.error('Error configurando restaurante. Contactar soporte.');
+          throw fallbackError;
         }
       } else {
-        logger.info('✅ ENTERPRISE: Restaurant found via trigger architecture');
+        logger.info('✅ Restaurant verificado correctamente');
       }
       
-      logger.info('User and restaurant ready');
+      // PASO 4: Marcar como completado
+      window[userKey] = true;
+      loadUserDataRef.current = null;
+      
+      logger.info('🎉 Carga de datos completada exitosamente');
       
     } catch (error) {
       logger.error('💥 Error en loadUserData:', error);
-      // Reset flags en caso de error para permitir reintento
-      loadUserDataRef.current = false;
+      loadUserDataRef.current = null;
       delete window[userKey];
+      setStatus('error');
       throw error;
     }
-    
-    // NO resetear las flags aquí - mantener protección durante toda la sesión
   };
 
   const initSession = async () => {
@@ -341,26 +342,32 @@ const AuthProvider = ({ children }) => {
     // Inicializar inmediatamente
     initSession();
 
-    // Auth state listener SIMPLIFICADO - solo escucha cambios esenciales
+    // Auth state listener PROFESIONAL - gestión robusta de eventos
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      logger.debug('Auth state changed', { event });
+      logger.info('🔔 Auth state change', { event, hasSession: !!session });
 
-      // IGNORAR eventos que causan bucles
-      if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
+      // IGNORAR eventos que no requieren acción
+      if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        logger.debug('Evento ignorado:', event);
+        return;
+      }
 
       if (event === 'SIGNED_IN' && session?.user) {
-        // Prevenir duplicados
+        // Prevenir procesamiento duplicado del mismo usuario
         if (lastSignInRef.current === session.user.id) {
           logger.debug('SIGNED_IN duplicado ignorado'); 
           return;
         }
         lastSignInRef.current = session.user.id;
-        logger.info('User signed in - activación email', { email: session.user.email });
         
-        // DELAY para activación de email - evita bucles
-        setTimeout(async () => {
-          await loadUserData(session.user);
-        }, 1000); // 1 segundo delay
+        logger.info('🔑 Usuario autenticado', { email: session.user.email });
+        
+        // PROFESIONAL: Cargar datos inmediatamente, sin delays artificiales
+        try {
+          await loadUserData(session.user, 'auth_listener_SIGNED_IN');
+        } catch (error) {
+          logger.error('Error cargando datos en SIGNED_IN:', error);
+        }
         
       } else if (event === 'SIGNED_OUT') {
         lastSignInRef.current = null;
@@ -368,12 +375,26 @@ const AuthProvider = ({ children }) => {
         setRestaurant(null); 
         setRestaurantId(null);
         setStatus('signed_out');
-        logger.info('User signed out (status=signed_out)');
+        
+        // Limpiar flags de carga
+        loadUserDataRef.current = null;
+        
+        logger.info('👋 Usuario cerró sesión');
+        
       } else if (event === 'INITIAL_SESSION' && session?.user) {
-        // Forzar carga de datos en arranque frío
-        setTimeout(async () => {
-          await loadUserData(session.user);
-        }, 0);
+        logger.info('🚀 Sesión inicial detectada');
+        
+        // PROFESIONAL: Cargar datos solo si no están ya cargados
+        const userKey = `loadUserData_${session.user.id}`;
+        if (!window[userKey]) {
+          try {
+            await loadUserData(session.user, 'auth_listener_INITIAL');
+          } catch (error) {
+            logger.error('Error cargando datos en INITIAL_SESSION:', error);
+          }
+        } else {
+          logger.debug('Datos ya cargados, saltando INITIAL_SESSION');
+        }
       }
     });
 
@@ -400,30 +421,32 @@ const AuthProvider = ({ children }) => {
   // Helpers auth
   const login = async (email, password) => {
     try {
-      logger.info('🔑 INICIANDO LOGIN:', { email });
+      logger.info('🔑 Iniciando login', { email });
       
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
-      logger.info('✅ LOGIN EXITOSO:', { user: data.user?.email });
+      logger.info('✅ Autenticación exitosa en Supabase');
+      
+      // PROFESIONAL: Cargar datos del usuario de forma síncrona
+      if (data.user) {
+        logger.info('📊 Cargando datos del usuario...');
+        await loadUserData(data.user, 'manual_login');
+        logger.info('✅ Login completado - usuario y restaurant cargados');
+      }
+      
       toast.success('¡Bienvenido de vuelta!');
-      
-      // ENTERPRISE DEBUG: Forzar verificación de estado inmediata
-      setTimeout(() => {
-        logger.info('🔄 VERIFICANDO ESTADO POST-LOGIN...');
-        logger.info('Status actual:', status);
-        logger.info('Usuario actual:', user?.email || 'NO USER');
-        logger.info('Restaurant actual:', restaurant?.name || 'NO RESTAURANT');
-      }, 1000);
-      
       return { success: true };
-    } catch (error) {
-      logger.error('❌ LOGIN ERROR:', error);
       
-      // Traducir errores comunes al español para tests y UX
+    } catch (error) {
+      logger.error('❌ Error en login:', error);
+      
+      // Mensajes de error en español
       let errorMessage = error.message;
       if (error.message === 'Invalid login credentials' || error.message === 'Invalid credentials') {
         errorMessage = 'Email o contraseña incorrectos.';
+      } else if (error.message.includes('Email not confirmed')) {
+        errorMessage = 'Confirma tu email antes de iniciar sesión.';
       }
       
       toast.error(errorMessage || 'Error al iniciar sesión');

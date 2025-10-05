@@ -12,7 +12,7 @@ import { supabase } from '../lib/supabase';
 const WEBHOOK_CONFIG = {
     // n8n workflow endpoints
     n8n: {
-        base_url: process.env.REACT_APP_N8N_BASE_URL || 'https://n8n.tu-dominio.com',
+        base_url: import.meta.env.VITE_N8N_BASE_URL || 'https://n8n.tu-dominio.com',
         endpoints: {
             reservation_completed: '/webhook/crm/reservation-completed',
             customer_segment_changed: '/webhook/crm/segment-changed',
@@ -26,17 +26,17 @@ const WEBHOOK_CONFIG = {
     // External service integrations
     external: {
         sendgrid: {
-            api_key: process.env.REACT_APP_SENDGRID_API_KEY,
-            from_email: process.env.REACT_APP_FROM_EMAIL || 'noreply@tu-restaurante.com'
+            api_key: import.meta.env.VITE_SENDGRID_API_KEY,
+            from_email: import.meta.env.VITE_FROM_EMAIL || 'noreply@tu-restaurante.com'
         },
         twilio: {
-            account_sid: process.env.REACT_APP_TWILIO_ACCOUNT_SID,
-            auth_token: process.env.REACT_APP_TWILIO_AUTH_TOKEN,
-            phone_number: process.env.REACT_APP_TWILIO_PHONE_NUMBER
+            account_sid: import.meta.env.VITE_TWILIO_ACCOUNT_SID,
+            auth_token: import.meta.env.VITE_TWILIO_AUTH_TOKEN,
+            phone_number: import.meta.env.VITE_TWILIO_PHONE_NUMBER
         },
         whatsapp: {
-            api_url: process.env.REACT_APP_WHATSAPP_API_URL,
-            api_token: process.env.REACT_APP_WHATSAPP_API_TOKEN
+            api_url: import.meta.env.VITE_WHATSAPP_API_URL,
+            api_token: import.meta.env.VITE_WHATSAPP_API_TOKEN
         }
     }
 };
@@ -289,7 +289,7 @@ export class CRMWebhookService {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.REACT_APP_N8N_API_KEY || ''}`
+                    'Authorization': `Bearer ${import.meta.env.VITE_N8N_API_KEY || ''}`
                 },
                 body: JSON.stringify(payload)
             });
