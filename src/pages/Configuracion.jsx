@@ -72,7 +72,7 @@ const SettingSection = ({ title, description, icon, children }) => {
 };
 
 const Configuracion = () => {
-    const { restaurantId } = useAuthContext();
+    const { restaurantId, restaurant, user } = useAuthContext();
     const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('general');
     const [loading, setLoading] = useState(true);
@@ -211,8 +211,8 @@ const Configuracion = () => {
             console.log("📄 CARGANDO CONFIGURACIÓN - INICIO");
             console.log("🔍 Estado del contexto:", { 
                 restaurantId, 
-                restaurant,
-                user 
+                hasRestaurant: !!restaurant,
+                hasUser: !!user 
             });
             
             const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
@@ -266,30 +266,30 @@ const Configuracion = () => {
             }
             console.log("🏪 Restaurant ID encontrado:", currentRestaurantId);
 
-            const { data: restaurant, error: restError } = await supabase
+            const { data: restaurantData, error: restError } = await supabase
                 .from("restaurants")
                 .select("*")
                 .eq("id", currentRestaurantId)
                 .maybeSingle();
 
-            console.log("📊 DATOS DEL RESTAURANTE:", restaurant);
+            console.log("📊 DATOS DEL RESTAURANTE:", restaurantData);
             console.log("❌ ERROR AL CARGAR:", restError);
 
-            if (restaurant) {
+            if (restaurantData) {
                 
                 // Fusionar configuraciones manteniendo estructura completa
-                const dbSettings = restaurant.settings || {};
+                const dbSettings = restaurantData.settings || {};
                 console.log("⚙️ SETTINGS DB:", dbSettings);
                 
                 setSettings({
                     // ✅ DATOS DIRECTOS DE LA TABLA
-                    name: restaurant.name || "",
-                    email: restaurant.email || "",
-                    phone: restaurant.phone || "",
-                    address: restaurant.address || "",
-                    city: restaurant.city || "",
-                    postal_code: restaurant.postal_code || "",
-                    cuisine_type: restaurant.cuisine_type || "",
+                    name: restaurantData.name || "",
+                    email: restaurantData.email || "",
+                    phone: restaurantData.phone || "",
+                    address: restaurantData.address || "",
+                    city: restaurantData.city || "",
+                    postal_code: restaurantData.postal_code || "",
+                    cuisine_type: restaurantData.cuisine_type || "",
                     
                     // ✅ TODO LO DEMÁS DESDE SETTINGS (JSONB)
                     contact_name: dbSettings.contact_name || "",
@@ -300,7 +300,7 @@ const Configuracion = () => {
                     average_ticket: dbSettings.average_ticket || 45,
                     
                     // ✅ HORARIOS - Desde business_hours o settings
-                    opening_hours: restaurant.business_hours || dbSettings.opening_hours || {
+                    opening_hours: restaurantData.business_hours || dbSettings.opening_hours || {
                         monday: { open: '12:00', close: '23:00', closed: false },
                         tuesday: { open: '12:00', close: '23:00', closed: false },
                         wednesday: { open: '12:00', close: '23:00', closed: false },
@@ -319,10 +319,10 @@ const Configuracion = () => {
                     },
                     
                     // ✅ CONFIGURACIÓN TÉCNICA
-                    country: restaurant.country || "ES",
-                    timezone: restaurant.timezone || "Europe/Madrid",
-                    currency: restaurant.currency || "EUR",
-                    language: restaurant.language || "es",
+                    country: restaurantData.country || "ES",
+                    timezone: restaurantData.timezone || "Europe/Madrid",
+                    currency: restaurantData.currency || "EUR",
+                    language: restaurantData.language || "es",
                     
                     // ✅ AGENTE IA
                     agent: {
@@ -338,40 +338,40 @@ const Configuracion = () => {
                     
                     // ✅ CANALES Y NOTIFICACIONES
                     channels: {
-                        voice: { enabled: restaurant.channels?.voice?.enabled || false, phone_number: restaurant.channels?.voice?.phone_number || "" },
+                        voice: { enabled: restaurantData.channels?.voice?.enabled || false, phone_number: restaurantData.channels?.voice?.phone_number || "" },
                         whatsapp: {
-                            enabled: restaurant.channels?.whatsapp?.enabled || false,
-                            use_same_phone: restaurant.channels?.whatsapp?.use_same_phone ?? true,
-                            phone_number: restaurant.channels?.whatsapp?.phone_number || ""
+                            enabled: restaurantData.channels?.whatsapp?.enabled || false,
+                            use_same_phone: restaurantData.channels?.whatsapp?.use_same_phone ?? true,
+                            phone_number: restaurantData.channels?.whatsapp?.phone_number || ""
                         },
-                        webchat: { enabled: restaurant.channels?.webchat?.enabled !== false, site_domain: restaurant.channels?.webchat?.site_domain || "", widget_key: restaurant.channels?.webchat?.widget_key || "" },
-                        instagram: { enabled: restaurant.channels?.instagram?.enabled || false, handle: restaurant.channels?.instagram?.handle || "", invite_email: restaurant.channels?.instagram?.invite_email || "" },
-                        facebook: { enabled: restaurant.channels?.facebook?.enabled || false, page_url: restaurant.channels?.facebook?.page_url || "", invite_email: restaurant.channels?.facebook?.invite_email || "" },
-                        vapi: { enabled: restaurant.channels?.vapi?.enabled || false },
+                        webchat: { enabled: restaurantData.channels?.webchat?.enabled !== false, site_domain: restaurantData.channels?.webchat?.site_domain || "", widget_key: restaurantData.channels?.webchat?.widget_key || "" },
+                        instagram: { enabled: restaurantData.channels?.instagram?.enabled || false, handle: restaurantData.channels?.instagram?.handle || "", invite_email: restaurantData.channels?.instagram?.invite_email || "" },
+                        facebook: { enabled: restaurantData.channels?.facebook?.enabled || false, page_url: restaurantData.channels?.facebook?.page_url || "", invite_email: restaurantData.channels?.facebook?.invite_email || "" },
+                        vapi: { enabled: restaurantData.channels?.vapi?.enabled || false },
                         reservations_email: {
-                            current_inbox: restaurant.channels?.reservations_email?.current_inbox || "",
-                            forward_to: restaurant.channels?.reservations_email?.forward_to || ""
+                            current_inbox: restaurantData.channels?.reservations_email?.current_inbox || "",
+                            forward_to: restaurantData.channels?.reservations_email?.forward_to || ""
                         },
                         external: {
-                            thefork_url: restaurant.channels?.external?.thefork_url || "",
-                            google_reserve_url: restaurant.channels?.external?.google_reserve_url || ""
+                            thefork_url: restaurantData.channels?.external?.thefork_url || "",
+                            google_reserve_url: restaurantData.channels?.external?.google_reserve_url || ""
                         }
                     },
                     notifications: {
-                        reservation_emails: restaurant.notifications?.reservation_emails || [],
-                        system_emails: restaurant.notifications?.system_emails || [],
-                        quiet_hours: restaurant.notifications?.quiet_hours || { start: "", end: "", mode: "mute" },
-                        new_reservation: restaurant.notifications?.new_reservation ?? false,
-                        cancelled_reservation: restaurant.notifications?.cancelled_reservation ?? false,
-                        reservation_modified: restaurant.notifications?.reservation_modified ?? false,
+                        reservation_emails: restaurantData.notifications?.reservation_emails || [],
+                        system_emails: restaurantData.notifications?.system_emails || [],
+                        quiet_hours: restaurantData.notifications?.quiet_hours || { start: "", end: "", mode: "mute" },
+                        new_reservation: restaurantData.notifications?.new_reservation ?? false,
+                        cancelled_reservation: restaurantData.notifications?.cancelled_reservation ?? false,
+                        reservation_modified: restaurantData.notifications?.reservation_modified ?? false,
                         // daily_digest eliminado para MVP
-                        agent_offline: restaurant.notifications?.agent_offline ?? true,
-                        integration_errors: restaurant.notifications?.integration_errors ?? true,
+                        agent_offline: restaurantData.notifications?.agent_offline ?? true,
+                        integration_errors: restaurantData.notifications?.integration_errors ?? true,
                         // Nuevos errores del sistema
-                        system_save_errors: restaurant.notifications?.system_save_errors ?? true,
-                        system_connection_errors: restaurant.notifications?.system_connection_errors ?? true,
-                        system_reservation_conflicts: restaurant.notifications?.system_reservation_conflicts ?? true,
-                        system_config_incomplete: restaurant.notifications?.system_config_incomplete ?? true
+                        system_save_errors: restaurantData.notifications?.system_save_errors ?? true,
+                        system_connection_errors: restaurantData.notifications?.system_connection_errors ?? true,
+                        system_reservation_conflicts: restaurantData.notifications?.system_reservation_conflicts ?? true,
+                        system_config_incomplete: restaurantData.notifications?.system_config_incomplete ?? true
                     },
                 });
             }
