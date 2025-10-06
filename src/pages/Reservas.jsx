@@ -43,7 +43,8 @@ import {
     FileText,
     Save,
     Settings,
-    Trash2
+    Trash2,
+    MapPin
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ReservationWizard } from "../components/reservas/ReservationWizard";
