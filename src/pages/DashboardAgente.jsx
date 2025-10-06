@@ -17,7 +17,7 @@ import {
 import toast from 'react-hot-toast';
 
 // Importar componentes del dashboard antiguo
-import { NoShowWidget, ReturningCustomersWidget, TotalValueWidget, CRMOpportunitiesWidget } from '../components/DashboardRevolutionary';
+import { NoShowWidget, ReturningCustomersWidget } from '../components/DashboardRevolutionary';
 
 export default function DashboardAgente() {
     const { restaurant, user } = useAuthContext();
@@ -85,12 +85,36 @@ export default function DashboardAgente() {
             console.log('🔍 Dashboard buscando reservas para fecha:', todayStr);
             console.log('🔍 Restaurant ID:', restaurant.id);
             
+            // Fetch reservations y customers por separado para evitar ambigüedad
             const { data: todayReservations, error: todayError } = await supabase
                 .from('reservations')
-                .select('*, customers!customer_id(visits_count, name, total_spent, segment_auto)')
+                .select('*')
                 .eq('restaurant_id', restaurant.id)
                 .eq('reservation_date', todayStr)
                 .in('status', ['pending', 'pending_approval', 'confirmed', 'seated', 'completed']);
+            
+            // Obtener customer_ids únicos de las reservas
+            const customerIds = [...new Set((todayReservations || []).map(r => r.customer_id).filter(Boolean))];
+            
+            // Fetch customers por separado
+            let customersMap = {};
+            if (customerIds.length > 0) {
+                const { data: customersData } = await supabase
+                    .from('customers')
+                    .select('id, visits_count, name, total_spent, segment_auto')
+                    .in('id', customerIds);
+                
+                customersMap = (customersData || []).reduce((acc, c) => {
+                    acc[c.id] = c;
+                    return acc;
+                }, {});
+            }
+            
+            // Enriquecer reservations con datos de customers
+            const enrichedReservations = (todayReservations || []).map(r => ({
+                ...r,
+                customers: r.customer_id ? customersMap[r.customer_id] : null
+            }));
             
             console.log('📊 Reservas de HOY encontradas:', todayReservations?.length || 0);
             console.log('📊 Reservas de HOY data:', todayReservations);
@@ -156,9 +180,26 @@ export default function DashboardAgente() {
             const totalCapacity = tables?.reduce((sum, t) => sum + (t.capacity || 0), 0) || 0;
 
             // 7. CLIENTES: NUEVOS, HABITUALES, VIP
-            const newCustomers = (todayReservations || []).filter(r => r.customers?.visits_count === 1).length;
-            const returningCustomers = (todayReservations || []).filter(r => r.customers?.visits_count > 1 && r.customers?.visits_count < 10).length;
-            const vipCustomers = (todayReservations || []).filter(r => r.customers?.visits_count >= 10 || r.customers?.segment_auto === 'vip').length;
+            // LÓGICA CORRECTA: Si hay reserva, HAY CLIENTE (siempre)
+            // - Si tiene customer_id → usar visits_count de customers
+            // - Si NO tiene customer_id → es cliente nuevo (reserva sin vincular)
+            
+            const newCustomers = enrichedReservations.filter(r => {
+                // Si no tiene customer_id, es nuevo (no estaba en BD)
+                if (!r.customer_id) return true;
+                // Si tiene customer_id, verificar visits_count
+                return r.customers?.visits_count === 1;
+            }).length;
+            
+            const returningCustomers = enrichedReservations.filter(r => {
+                // Solo si tiene customer_id Y visits_count entre 2-9
+                return r.customer_id && r.customers?.visits_count > 1 && r.customers?.visits_count < 10;
+            }).length;
+            
+            const vipCustomers = enrichedReservations.filter(r => {
+                // Solo si tiene customer_id Y (visits_count >= 10 O segment_auto = vip)
+                return r.customer_id && (r.customers?.visits_count >= 10 || r.customers?.segment_auto === 'vip');
+            }).length;
 
             // 8. OCUPACIÓN
             const totalPeople = (todayReservations || []).reduce((sum, r) => sum + (r.party_size || 0), 0);
@@ -262,11 +303,6 @@ export default function DashboardAgente() {
             setRestaurantCache(restaurant);
         }
     }, [restaurant]);
-
-    const reviewCRMAction = async (opportunityId) => {
-        // Navegar al CRM con el ID específico
-        navigate('/crm-inteligente', { state: { highlightId: opportunityId } });
-    };
 
     if (loading) {
         return (
@@ -595,7 +631,7 @@ export default function DashboardAgente() {
                 </div>
 
                 {/* ====================================
-                    WIDGETS DEL DASHBOARD ANTIGUO
+                    WIDGETS ADICIONALES
                 ==================================== */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
                     <NoShowWidget 
@@ -607,15 +643,75 @@ export default function DashboardAgente() {
                     />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                    <TotalValueWidget 
-                        data={dashboardData.totalValueData} 
-                    />
-                    <CRMOpportunitiesWidget 
-                        data={dashboardData.crmOpportunitiesData}
-                        onReviewAction={reviewCRMAction}
-                    />
+                {/* ====================================
+                    ROI DE LA APLICACIÓN
+                ==================================== */}
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-md border-2 border-green-200 p-6 mb-4">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-green-600 rounded-lg p-3">
+                                <TrendingUp className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">ROI de la Aplicación</h3>
+                                <p className="text-sm text-gray-600">Valor generado esta semana</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-3xl font-bold text-green-700">{dashboardData.weeklyValue.toFixed(0)}€</div>
+                            <div className="text-xs text-gray-600 mt-1">
+                                {vsLastWeek >= 0 ? (
+                                    <span className="text-green-600 font-medium">↑ +{vsLastWeek} reservas vs sem. pasada</span>
+                                ) : (
+                                    <span className="text-red-600 font-medium">↓ {vsLastWeek} reservas vs sem. pasada</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Ticket Medio */}
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <DollarSign className="w-4 h-4 text-green-600" />
+                                <span className="text-xs font-semibold text-gray-500 uppercase">Ticket Medio</span>
+                            </div>
+                            <div className="text-2xl font-bold text-gray-900">
+                                {dashboardData.thisWeekReservations > 0 
+                                    ? (dashboardData.weeklyValue / dashboardData.thisWeekReservations).toFixed(2) 
+                                    : '0.00'}€
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1">Por reserva</p>
+                        </div>
+
+                        {/* Reservas Gestionadas */}
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Calendar className="w-4 h-4 text-green-600" />
+                                <span className="text-xs font-semibold text-gray-500 uppercase">Reservas Gestionadas</span>
+                            </div>
+                            <div className="text-2xl font-bold text-gray-900">{dashboardData.thisWeekReservations}</div>
+                            <p className="text-xs text-gray-600 mt-1">Esta semana</p>
+                        </div>
+
+                        {/* Ocupación Promedio */}
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Target className="w-4 h-4 text-green-600" />
+                                <span className="text-xs font-semibold text-gray-500 uppercase">Ocupación Promedio</span>
+                            </div>
+                            <div className="text-2xl font-bold text-gray-900">{dashboardData.occupancyPercent}%</div>
+                            <p className="text-xs text-gray-600 mt-1">Hoy</p>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-green-200">
+                        <p className="text-xs text-gray-600 text-center">
+                            💡 <strong>Cálculo:</strong> Ticket medio (30€) × Reservas gestionadas esta semana
+                        </p>
+                    </div>
                 </div>
+
             </div>
         </div>
     );
