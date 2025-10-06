@@ -64,7 +64,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     { id: 5, name: 'Mesa', field: 'tableId', icon: '🪑' }
   ];
 
-  // ===== PASO 1: BUSCAR CLIENTE POR TELÉFONO =====
+  // ===== PASO 1: BUSCAR CLIENTE POR TELÉFONO (FLEXIBLE: con o sin +34) =====
   const searchCustomerByPhone = useCallback(async (phone) => {
     if (!phone || phone.length < 9) {
       setExistingCustomer(null);
@@ -72,11 +72,28 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     }
 
     try {
+      // 🔥 NORMALIZAR TELÉFONO: Buscar con y sin +34
+      const phoneVariants = [];
+      
+      // Si tiene +34, también buscar sin él
+      if (phone.startsWith('+34')) {
+        phoneVariants.push(phone); // +34XXXXXXXXX
+        phoneVariants.push(phone.substring(3)); // XXXXXXXXX (sin +34)
+      } 
+      // Si NO tiene +34, también buscar con él
+      else {
+        phoneVariants.push(phone); // XXXXXXXXX
+        phoneVariants.push(`+34${phone}`); // +34XXXXXXXXX
+      }
+
+      console.log('🔍 Buscando cliente con variantes:', phoneVariants);
+
+      // Buscar con cualquiera de las variantes
       const { data, error } = await supabase
         .from('customers')
         .select('*')
         .eq('restaurant_id', restaurantId)
-        .eq('phone', phone)
+        .in('phone', phoneVariants)
         .maybeSingle();
 
       if (error) {
@@ -85,6 +102,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
       }
 
       if (data) {
+        console.log('✅ Cliente encontrado:', data.name);
         setExistingCustomer(data);
         setFormData(prev => ({
           ...prev,
@@ -97,6 +115,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
           birthdate: data.birthdate || ''
         }));
       } else {
+        console.log('⚠️ Cliente no encontrado');
         setExistingCustomer(null);
         setFormData(prev => ({
           ...prev,
