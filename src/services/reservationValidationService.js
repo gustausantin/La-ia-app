@@ -502,9 +502,9 @@ export class ReservationValidationService {
    * @param {number} partySize - Número de personas
    * @returns {Promise<Object>} { success: boolean, tables: array }
    */
-  static async getAvailableTables(restaurantId, date, time, partySize) {
+  static async getAvailableTables(restaurantId, date, time, partySize, excludeReservationId = null) {
     try {
-      console.log(`🔍 Buscando mesas para ${partySize} personas el ${date} a las ${time}`);
+      console.log(`🔍 Buscando mesas para ${partySize} personas el ${date} a las ${time}`, excludeReservationId ? `(excluyendo reserva ${excludeReservationId})` : '');
 
       // 1. Obtener TODAS las mesas activas con capacidad suficiente
       const { data: allTables, error: tablesError } = await supabase
@@ -548,13 +548,21 @@ export class ReservationValidationService {
       const requestedMinutes = hours * 60 + minutes;
       const endMinutes = requestedMinutes + reservationDuration;
 
-      // 4. Obtener reservas existentes en ese día
-      const { data: existingReservations, error: reservationsError } = await supabase
+      // 4. Obtener reservas existentes en ese día (EXCLUYENDO la actual si estamos editando)
+      let query = supabase
         .from('reservations')
         .select('id, table_id, reservation_time, party_size')
         .eq('restaurant_id', restaurantId)
         .eq('reservation_date', date)
         .in('status', ['confirmed', 'pending']);
+
+      // 🔥 EXCLUIR LA RESERVA ACTUAL SI ESTAMOS EDITANDO
+      if (excludeReservationId) {
+        query = query.neq('id', excludeReservationId);
+        console.log(`🔄 Excluyendo reserva actual: ${excludeReservationId}`);
+      }
+
+      const { data: existingReservations, error: reservationsError } = await query;
 
       if (reservationsError) {
         console.error('Error obteniendo reservas:', reservationsError);

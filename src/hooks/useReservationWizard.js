@@ -216,18 +216,23 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     }
 
     setLoadingTables(true);
+    
+    // 🔥 Pasar excludeReservationId si estamos editando
+    const excludeId = initialData?.id || null;
+    
     const result = await ReservationValidationService.getAvailableTables(
       restaurantId,
       date,
       time,
-      partySize
+      partySize,
+      excludeId
     );
     
     setAvailableTables(result.tables || []);
     setLoadingTables(false);
     
     return result;
-  }, [restaurantId]);
+  }, [restaurantId, initialData]);
 
   // ===== VALIDAR MESA SELECCIONADA =====
   const validateTable = useCallback(async (tableId, partySize, date, time) => {
@@ -389,7 +394,8 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
 
   // ===== BUSCAR ALTERNATIVAS SI NO HAY MESAS EN PASO 5 =====
   useEffect(() => {
-    const searchAlternativesIfNeeded = async () => {
+    // 🔥 ESPERAR 500ms después de que termine de cargar para asegurar que availableTables está actualizado
+    const timeoutId = setTimeout(async () => {
       // Solo buscar si:
       // 1. Estamos en paso 5
       // 2. No hay mesas disponibles
@@ -417,15 +423,20 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
             excludeId
           );
           console.log('✅ Alternativas encontradas:', alternatives.length);
-          setSuggestedTimes(alternatives);
+          
+          // 🔥 FILTRAR la hora actual de las alternativas (no sugerir la misma hora que falló)
+          const filteredAlternatives = alternatives.filter(alt => alt.time !== formData.time);
+          console.log('✅ Alternativas filtradas (sin hora actual):', filteredAlternatives.length);
+          
+          setSuggestedTimes(filteredAlternatives);
         } catch (error) {
           console.error('❌ Error buscando alternativas:', error);
           setSuggestedTimes([]); // Evitar bucles en caso de error
         }
       }
-    };
+    }, 500); // 🔥 Esperar 500ms
 
-    searchAlternativesIfNeeded();
+    return () => clearTimeout(timeoutId);
   }, [currentStep, availableTables.length, loadingTables, formData.date, formData.time, formData.partySize, suggestedTimes.length, restaurantId, initialData]);
 
   // ===== RE-VALIDAR EN MODO EDICIÓN CUANDO CAMBIAN LOS CAMPOS =====
