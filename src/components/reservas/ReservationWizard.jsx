@@ -71,7 +71,7 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
       last_name2: formData.lastName2 || null,
       customer_email: formData.customerEmail || null,
       customer_phone: formData.customerPhone,
-      birthdate: formData.birthdate || null,
+      // birthdate NO va en reservations, va en customers
       reservation_date: formData.date,
       reservation_time: formData.time,
       party_size: parseInt(formData.partySize),
@@ -82,6 +82,7 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
       source: 'dashboard'
     };
 
+    console.log('📝 Guardando reserva:', finalData);
     await onSave(finalData);
   };
 
