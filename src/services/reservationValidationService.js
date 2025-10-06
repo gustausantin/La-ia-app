@@ -660,34 +660,67 @@ export class ReservationValidationService {
         };
       }
 
-      // 3. Verificar que hay slot libre para esa mesa en fecha/hora
-      const { data: slot, error: slotError } = await supabase
-        .from('availability_slots')
-        .select('*')
+      // 3. 🔥 Verificar que NO haya conflictos con reservas existentes (SIN availability_slots)
+      const { data: restaurant } = await supabase
+        .from('restaurants')
+        .select('settings')
+        .eq('id', restaurantId)
+        .single();
+
+      const reservationDuration = restaurant?.settings?.reservation_duration || 60;
+
+      // Calcular rango de tiempo de la nueva reserva
+      const [hours, minutes] = time.split(':').map(Number);
+      const requestedMinutes = hours * 60 + minutes;
+      const endMinutes = requestedMinutes + reservationDuration;
+
+      // Obtener reservas existentes para esta mesa en ese día
+      const { data: existingReservations, error: reservationsError } = await supabase
+        .from('reservations')
+        .select('id, reservation_time')
         .eq('restaurant_id', restaurantId)
         .eq('table_id', tableId)
-        .eq('slot_date', date)
-        .lte('start_time', time)
-        .gte('end_time', time)
-        .eq('status', 'free')
-        .maybeSingle();
+        .eq('reservation_date', date)
+        .in('status', ['confirmed', 'pending']);
 
-      if (slotError) {
-        console.error('Error verificando slot:', slotError);
+      if (reservationsError) {
+        console.error('Error verificando reservas:', reservationsError);
         return {
           valid: false,
           message: 'Error al verificar disponibilidad de la mesa',
-          code: 'SLOT_CHECK_ERROR'
+          code: 'RESERVATION_CHECK_ERROR'
         };
       }
 
-      if (!slot) {
+      // Verificar si hay conflictos
+      const hasConflict = existingReservations?.some(reservation => {
+        const [resHours, resMinutes] = reservation.reservation_time.split(':').map(Number);
+        const resStartMinutes = resHours * 60 + resMinutes;
+        const resEndMinutes = resStartMinutes + reservationDuration;
+
+        // Verificar si hay solapamiento
+        const overlaps = (
+          (requestedMinutes >= resStartMinutes && requestedMinutes < resEndMinutes) ||
+          (endMinutes > resStartMinutes && endMinutes <= resEndMinutes) ||
+          (requestedMinutes <= resStartMinutes && endMinutes >= resEndMinutes)
+        );
+
+        if (overlaps) {
+          console.log(`❌ Mesa ${table.table_number} ocupada: reserva a las ${reservation.reservation_time}`);
+        }
+
+        return overlaps;
+      });
+
+      if (hasConflict) {
         return {
           valid: false,
           message: `La mesa ${table.table_number} no está disponible en ese horario`,
           code: 'TABLE_NOT_AVAILABLE'
         };
       }
+
+      console.log(`✅ Mesa ${table.table_number} disponible`);
 
       return {
         valid: true,

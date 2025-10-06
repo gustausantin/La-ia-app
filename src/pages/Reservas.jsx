@@ -2023,25 +2023,6 @@ export default function Reservas() {
                 </div>
             </div>
 
-            {/* Botón para limpiar filtros - MÁS GRANDE Y PROMINENTE */}
-            <div className="flex justify-center mt-6">
-                <button 
-                    onClick={() => setFilters({
-                        search: "",
-                        status: "",
-                        channel: "",
-                        source: "",
-                        period: "last_month",
-                        dateRange: '',
-                        startDate: '',
-                        endDate: ''
-                    })}
-                    className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
-                >
-                    🔄 Ver Todas las Reservas
-                </button>
-            </div>
-
             {/* Controles de selección */}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
