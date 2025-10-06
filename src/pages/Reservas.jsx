@@ -319,10 +319,20 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                             <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-900 rounded-lg font-bold text-sm">
                                 <Shield className="w-5 h-5" />
                                 <span>
-                                    {reservation.tables?.name || 
-                                     (reservation.tables?.table_number ? `Mesa ${reservation.tables.table_number}` : null) ||
-                                     (reservation.table_number ? `Mesa ${reservation.table_number}` : null) ||
-                                     'Mesa null'}
+                                    {(() => {
+                                        // 🆕 Si tiene múltiples mesas (reservation_tables)
+                                        if (reservation.reservation_tables && reservation.reservation_tables.length > 0) {
+                                            const tableNames = reservation.reservation_tables
+                                                .map(rt => rt.tables?.name || `Mesa ${rt.tables?.table_number}`)
+                                                .join(' + ');
+                                            return `${tableNames} (${reservation.reservation_tables.length} mesas)`;
+                                        }
+                                        // Fallback: mesa única
+                                        return reservation.tables?.name || 
+                                               (reservation.tables?.table_number ? `Mesa ${reservation.tables.table_number}` : null) ||
+                                               (reservation.table_number ? `Mesa ${reservation.table_number}` : null) ||
+                                               'Sin mesa asignada';
+                                    })()}
                                 </span>
                             </div>
                             
@@ -824,7 +834,7 @@ export default function Reservas() {
 
             const dateRange = calculateDateRange(filters.period);
 
-            // 🔥 QUERY DIRECTA CON JOIN DE TABLES (más confiable que RPC)
+            // 🔥 QUERY DIRECTA CON JOIN DE TABLES Y RESERVATION_TABLES (múltiples mesas)
             const { data, error } = await supabase
                 .from('reservations')
                 .select(`
@@ -836,6 +846,17 @@ export default function Reservas() {
                         capacity,
                         zone,
                         location
+                    ),
+                    reservation_tables (
+                        table_id,
+                        tables (
+                            id,
+                            table_number,
+                            name,
+                            capacity,
+                            zone,
+                            location
+                        )
                     )
                 `)
                 .eq('restaurant_id', restaurantId)
@@ -2153,12 +2174,17 @@ export default function Reservas() {
                     initialData={null}
                     onSave={async (reservationData) => {
                         try {
-                            // 🔥 Extraer datos del cliente (NO van a la tabla reservations)
+                            // 🔥 Extraer datos que NO van a la tabla reservations
                             const customerData = reservationData._customerData || {};
-                            delete reservationData._customerData; // Eliminar antes de insertar
+                            const tableIds = reservationData._tableIds || [];
+                            const zone = reservationData._zone;
                             
-                            // Crear reserva en Supabase
-                            const { data, error } = await supabase
+                            delete reservationData._customerData;
+                            delete reservationData._tableIds;
+                            delete reservationData._zone;
+                            
+                            // 1. Crear reserva en Supabase
+                            const { data: newReservation, error } = await supabase
                                 .from('reservations')
                                 .insert([reservationData])
                                 .select()
@@ -2166,7 +2192,24 @@ export default function Reservas() {
 
                             if (error) throw error;
 
-                            // Vincular con cliente y actualizar métricas
+                            // 2. 🆕 Insertar mesas en reservation_tables
+                            if (tableIds && tableIds.length > 0) {
+                                const reservationTables = tableIds.map(tableId => ({
+                                    reservation_id: newReservation.id,
+                                    table_id: tableId
+                                }));
+
+                                const { error: tablesError } = await supabase
+                                    .from('reservation_tables')
+                                    .insert(reservationTables);
+
+                                if (tablesError) {
+                                    console.error('Error insertando mesas:', tablesError);
+                                    // No lanzar error, la reserva ya se creó
+                                }
+                            }
+
+                            // 3. Vincular con cliente y actualizar métricas
                             await handleCustomerLinking(reservationData, {
                                 first_name: customerData.first_name || reservationData.customer_name?.split(' ')[0],
                                 last_name1: customerData.last_name1 || reservationData.customer_name?.split(' ')[1],
@@ -2179,11 +2222,16 @@ export default function Reservas() {
 
                             setShowCreateModal(false);
                             loadReservations();
-                            toast.success("Reserva creada correctamente");
+                            toast.success(tableIds.length > 1 
+                                ? `Reserva creada con ${tableIds.length} mesas (PENDIENTE de confirmación)` 
+                                : "Reserva creada correctamente"
+                            );
                             addNotification({
                                 type: "system",
-                                message: "Nueva reserva manual creada",
-                                priority: "low",
+                                message: tableIds.length > 1 
+                                    ? `Nueva reserva GRUPO GRANDE: ${tableIds.length} mesas en ${zone}` 
+                                    : "Nueva reserva manual creada",
+                                priority: tableIds.length > 1 ? "high" : "low",
                             });
                         } catch (error) {
                             console.error('Error creando reserva:', error);

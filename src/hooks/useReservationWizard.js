@@ -33,8 +33,10 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     date: initialData?.reservation_date || '',
     time: initialData?.reservation_time || '',
     partySize: initialData?.party_size || 2,
-    tableId: initialData?.table_id || null,
-    status: initialData?.status || 'pending',  // 🆕 Estado de la reserva
+    zone: initialData?.zone || null,  // 🆕 Zona seleccionada (interior, terraza, etc.)
+    tableIds: initialData?.table_ids || [],  // 🆕 Array de IDs de mesas seleccionadas
+    tableId: initialData?.table_id || null,  // Mantener para compatibilidad
+    status: initialData?.status || 'pending',
     specialRequests: initialData?.special_requests || ''
   });
 
@@ -44,6 +46,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     date: { valid: initialData ? true : null, message: '', alternatives: [] },
     time: { valid: initialData ? true : null, message: '', alternatives: [] },
     partySize: { valid: initialData ? true : null, message: '' },
+    zone: { valid: initialData ? true : null, message: '', zones: [] },  // 🆕 Validación de zona
     table: { valid: initialData ? true : null, message: '' }
   });
 
@@ -56,6 +59,9 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
   const [suggestedTimes, setSuggestedTimes] = useState([]);
   const [showAlternativesModal, setShowAlternativesModal] = useState(false);
   const hasSearchedAlternativesRef = useRef(false); // 🔥 Ref para evitar búsquedas repetidas
+  
+  // ===== ESTADO PARA COMBINACIÓN DE MESAS =====
+  const [tableCombinationInfo, setTableCombinationInfo] = useState(null);
 
   // ===== PASOS DEL WIZARD =====
   const STEPS = [
@@ -63,7 +69,8 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     { id: 2, name: 'Fecha', field: 'date', icon: '📅' },
     { id: 3, name: 'Hora', field: 'time', icon: '🕐' },
     { id: 4, name: 'Personas', field: 'partySize', icon: '👥' },
-    { id: 5, name: 'Mesa', field: 'tableId', icon: '🪑' }
+    { id: 5, name: 'Zona', field: 'zone', icon: '📍' },  // 🆕 NUEVO PASO
+    { id: 6, name: 'Mesas', field: 'tableIds', icon: '🪑' }  // 🔄 MODIFICADO
   ];
 
   // ===== PASO 1: BUSCAR CLIENTE POR TELÉFONO (FLEXIBLE: con o sin +34) =====
@@ -209,8 +216,99 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     return result;
   }, [restaurantId]);
 
-  // ===== PASO 5: CARGAR MESAS DISPONIBLES =====
-  const loadAvailableTables = useCallback(async (date, time, partySize) => {
+  // ===== PASO 5: VALIDAR Y CARGAR ZONAS DISPONIBLES =====
+  const validateZone = useCallback(async (partySize, date, time) => {
+    if (!partySize || !date || !time) {
+      setValidations(prev => ({
+        ...prev,
+        zone: { valid: null, message: '', zones: [] }
+      }));
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // 🔥 OBTENER MESAS REALMENTE DISPONIBLES para esta fecha/hora/personas
+      const excludeId = initialData?.id || null;
+      const availableTablesResult = await ReservationValidationService.getAvailableTables(
+        restaurantId,
+        date,
+        time,
+        partySize,
+        excludeId
+      );
+
+      console.log('🔍 validateZone: Resultado de getAvailableTables:', availableTablesResult);
+
+      // Extraer mesas del resultado
+      const availableTables = Array.isArray(availableTablesResult) 
+        ? availableTablesResult 
+        : (availableTablesResult?.tables || []);
+
+      console.log('📊 validateZone: Mesas disponibles:', availableTables.length);
+
+      if (availableTables.length === 0) {
+        setValidations(prev => ({
+          ...prev,
+          zone: {
+            valid: false,
+            message: 'No hay mesas disponibles para esta fecha/hora',
+            zones: []
+          }
+        }));
+        setIsLoading(false);
+        return { valid: false, zones: [] };
+      }
+
+      // 🔥 AGRUPAR SOLO LAS MESAS DISPONIBLES por zona
+      const zoneCapacity = {};
+      availableTables.forEach(table => {
+        const zone = table.zone || 'main';
+        if (!zoneCapacity[zone]) {
+          zoneCapacity[zone] = {
+            zone,
+            totalCapacity: 0,
+            tableCount: 0,
+            tables: []
+          };
+        }
+        zoneCapacity[zone].totalCapacity += table.capacity;
+        zoneCapacity[zone].tableCount += 1;
+        zoneCapacity[zone].tables.push(table);
+      });
+
+      // Calcular si cada zona tiene capacidad suficiente
+      const availableZones = Object.values(zoneCapacity).map(z => ({
+        ...z,
+        sufficient: z.totalCapacity >= partySize
+      }));
+
+      console.log('✅ validateZone: Zonas disponibles:', availableZones);
+
+      setValidations(prev => ({
+        ...prev,
+        zone: {
+          valid: availableZones.some(z => z.sufficient),
+          message: availableZones.some(z => z.sufficient) 
+            ? 'Selecciona una zona' 
+            : 'No hay capacidad suficiente en ninguna zona',
+          zones: availableZones
+        }
+      }));
+
+      setIsLoading(false);
+      return { valid: availableZones.some(z => z.sufficient), zones: availableZones };
+
+    } catch (error) {
+      console.error('❌ Error validando zona:', error);
+      setIsLoading(false);
+      return { valid: false, zones: [] };
+    }
+  }, [restaurantId, initialData]);
+
+  // ===== PASO 6: CARGAR MESAS DISPONIBLES DE UNA ZONA =====
+  const loadAvailableTables = useCallback(async (date, time, partySize, zone = null) => {
     if (!date || !time || !partySize) {
       setAvailableTables([]);
       return;
@@ -226,21 +324,54 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
       date,
       time,
       partySize,
-      excludeId
+      excludeId,
+      zone  // 🆕 Filtrar por zona
     );
     
     console.log('📊 Resultado completo de getAvailableTables:', result);
     
     // 🔥 FIX: getAvailableTables puede devolver un array directamente O un objeto con tables
-    const tables = Array.isArray(result) ? result : (result?.tables || []);
+    let tables = Array.isArray(result) ? result : (result?.tables || []);
+    
+    // 🆕 Filtrar por zona si se especificó
+    if (zone) {
+      tables = tables.filter(t => (t.zone || 'main') === zone);
+      console.log(`📍 Filtrando por zona "${zone}":`, tables.length, 'mesas');
+    }
+    
+    const requiresCombination = result?.requiresCombination || false;
+    const resultZone = result?.zone || zone || null;
+    const totalCapacity = result?.totalCapacity || null;
+    const message = result?.message || '';
     
     console.log('📊 Mesas extraídas:', tables);
+    console.log('📊 Requiere combinación:', requiresCombination);
     console.log('📊 Actualizando availableTables con:', tables);
     setAvailableTables(tables);
     setLoadingTables(false);
     
+    // Guardar info de combinación si aplica
+    if (requiresCombination) {
+      setTableCombinationInfo({
+        requiresCombination: true,
+        zone,
+        totalCapacity,
+        message,
+        tableCount: tables.length
+      });
+    } else {
+      setTableCombinationInfo(null);
+    }
+    
     // Devolver en formato consistente
-    return { success: tables.length > 0, tables };
+    return { 
+      success: tables.length > 0, 
+      tables,
+      requiresCombination,
+      zone,
+      totalCapacity,
+      message
+    };
   }, [restaurantId, initialData]);
 
   // ===== VALIDAR MESA SELECCIONADA =====
@@ -387,29 +518,38 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
         return validations.time.valid === true;
       case 4: // Personas
         return formData.partySize >= 1 && validations.partySize.valid !== false;
-      case 5: // Mesa
-        return validations.table.valid === true;
+      case 5: // Zona
+        return formData.zone !== null;
+      case 6: // Mesas
+        return formData.tableIds && formData.tableIds.length > 0;
       default:
         return false;
     }
   }, [currentStep, formData, validations]);
 
-  // ===== CARGAR MESAS AL LLEGAR AL PASO 5 =====
+  // ===== CARGAR ZONAS AL LLEGAR AL PASO 5 =====
   useEffect(() => {
     if (currentStep === 5 && formData.date && formData.time && formData.partySize) {
-      loadAvailableTables(formData.date, formData.time, formData.partySize);
+      validateZone(formData.partySize, formData.date, formData.time);
     }
-  }, [currentStep, formData.date, formData.time, formData.partySize, loadAvailableTables]);
+  }, [currentStep, formData.date, formData.time, formData.partySize, validateZone]);
 
-  // ===== BUSCAR ALTERNATIVAS SI NO HAY MESAS EN PASO 5 (SOLO LA PRIMERA VEZ) =====
+  // ===== CARGAR MESAS AL LLEGAR AL PASO 6 =====
+  useEffect(() => {
+    if (currentStep === 6 && formData.zone && formData.date && formData.time && formData.partySize) {
+      loadAvailableTables(formData.date, formData.time, formData.partySize, formData.zone);
+    }
+  }, [currentStep, formData.zone, formData.date, formData.time, formData.partySize, loadAvailableTables]);
+
+  // ===== BUSCAR ALTERNATIVAS SI NO HAY MESAS EN PASO 6 (SOLO LA PRIMERA VEZ) =====
   useEffect(() => {
     // 🔥 NO buscar alternativas si ya buscamos para esta hora
     if (hasSearchedAlternativesRef.current) {
       console.log('⏭️ Ya buscamos alternativas para esta hora, saltando...');
       return;
     }
-    
-    if (currentStep !== 5) return; // Solo en paso 5
+
+    if (currentStep !== 6) return; // Solo en paso 6
     
     const timeoutId = setTimeout(async () => {
       if (
@@ -569,10 +709,14 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     suggestedTimes,
     showAlternativesModal,
     
+    // Estado de combinación de mesas (NUEVO)
+    tableCombinationInfo,
+    
     // Métodos de validación
     validateDate,
     validateTime,
     validatePartySize,
+    validateZone,  // 🆕 NUEVO
     validateTable,
     loadAvailableTables,
     searchCustomerByPhone,

@@ -205,10 +205,28 @@ export class ReservationValidationService {
       console.log(`📅 Horario del ${dayName}: ${openTime} - ${closeTime}`);
 
       if (requestedTime < openTime || requestedTime >= closeTime) {
+        // 🆕 Generar alternativas dentro del horario
+        const alternatives = [];
+        const slotInterval = settings.slot_interval || 30;
+        
+        const [openHours, openMinutes] = openTime.split(':').map(Number);
+        const [closeHours, closeMinutes] = closeTime.split(':').map(Number);
+        const openTotalMinutes = openHours * 60 + openMinutes;
+        const closeTotalMinutes = closeHours * 60 + closeMinutes;
+        
+        for (let minutes = openTotalMinutes; minutes <= closeTotalMinutes; minutes += slotInterval) {
+          const hours = Math.floor(minutes / 60);
+          const mins = minutes % 60;
+          const timeStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:00`;
+          const displayTime = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+          alternatives.push({ time: timeStr, displayTime });
+        }
+        
         return {
           valid: false,
           message: `El restaurante solo acepta reservas entre ${openTime} y ${closeTime}`,
-          code: 'TIME_OUTSIDE_HOURS'
+          code: 'TIME_OUTSIDE_HOURS',
+          alternatives: alternatives.slice(0, 6) // Máximo 6 alternativas
         };
       }
 
@@ -462,19 +480,20 @@ export class ReservationValidationService {
       if (partySize > maxPartySize) {
         return {
           valid: false,
-          message: `Para grupos de más de ${maxPartySize} personas, contacte directamente con el restaurante`,
+          message: `El número máximo de personas permitido es ${maxPartySize}. Para grupos más grandes, contacte directamente con el restaurante.`,
           code: 'PARTY_SIZE_TOO_LARGE',
           requiresContact: true
         };
       }
 
-      if (partySize >= largeGroupThreshold) {
+      // 🔥 Grupos grandes (≥ 6 personas) pueden requerir juntar mesas
+      if (partySize >= 6) {
         return {
           valid: true,
-          message: 'Grupo grande detectado',
+          message: `Grupo grande: ${partySize} personas`,
           code: 'PARTY_SIZE_LARGE_GROUP',
           isLargeGroup: true,
-          warning: `Grupos de ${partySize} personas pueden requerir confirmación adicional`
+          warning: `Grupos de ${partySize} personas pueden requerir juntar mesas. La reserva quedará pendiente de confirmación.`
         };
       }
 
@@ -928,6 +947,62 @@ export class ReservationValidationService {
   }
 
   /**
+   * 🔧 BUSCAR COMBINACIÓN DE MESAS
+   * Encuentra combinaciones de 2-3 mesas en la misma zona que sumen la capacidad necesaria
+   * @param {Array} tables - Array de mesas disponibles
+   * @param {number} targetCapacity - Capacidad objetivo
+   * @returns {Object|null} Objeto con tables, zone, totalCapacity o null si no encuentra
+   */
+  static findTableCombination(tables, targetCapacity) {
+    // Agrupar mesas por zona
+    const tablesByZone = {};
+    tables.forEach(table => {
+      const zone = table.zone || 'main';
+      if (!tablesByZone[zone]) tablesByZone[zone] = [];
+      tablesByZone[zone].push(table);
+    });
+
+    // Buscar combinaciones en cada zona
+    for (const zone in tablesByZone) {
+      const zoneTables = tablesByZone[zone];
+      
+      // Intentar con 2 mesas
+      for (let i = 0; i < zoneTables.length; i++) {
+        for (let j = i + 1; j < zoneTables.length; j++) {
+          const totalCapacity = zoneTables[i].capacity + zoneTables[j].capacity;
+          if (totalCapacity >= targetCapacity) {
+            return {
+              tables: [zoneTables[i], zoneTables[j]],
+              zone: zone,
+              totalCapacity: totalCapacity
+            };
+          }
+        }
+      }
+      
+      // Intentar con 3 mesas (solo si el grupo es muy grande)
+      if (targetCapacity >= 10) {
+        for (let i = 0; i < zoneTables.length; i++) {
+          for (let j = i + 1; j < zoneTables.length; j++) {
+            for (let k = j + 1; k < zoneTables.length; k++) {
+              const totalCapacity = zoneTables[i].capacity + zoneTables[j].capacity + zoneTables[k].capacity;
+              if (totalCapacity >= targetCapacity) {
+                return {
+                  tables: [zoneTables[i], zoneTables[j], zoneTables[k]],
+                  zone: zone,
+                  totalCapacity: totalCapacity
+                };
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * 🔍 OBTENER MESAS DISPONIBLES
    * Encuentra todas las mesas disponibles para una fecha/hora/tamaño específicos
    * @param {string} restaurantId - ID del restaurante
@@ -939,21 +1014,50 @@ export class ReservationValidationService {
    */
   static async getAvailableTables(restaurantId, date, time, partySize, excludeReservationId = null) {
     try {
-      // 1. Obtener todas las mesas activas con capacidad suficiente
-      const { data: tables, error: tablesError } = await supabase
-        .from('tables')
-        .select('*')
-        .eq('restaurant_id', restaurantId)
-        .eq('is_active', true)
-        .gte('capacity', partySize)
-        .order('table_number');
+      // 🔥 CAMBIO: Para grupos grandes (≥6), obtener TODAS las mesas desde el inicio
+      // Para grupos pequeños, solo las que tienen capacidad individual suficiente
+      let allTables = [];
+      let needsCombination = false;
 
-      if (tablesError) {
-        console.error('Error obteniendo mesas:', tablesError);
-        return [];
+      if (partySize >= 6) {
+        // 🆕 Grupo grande: obtener TODAS las mesas activas
+        needsCombination = true;
+        const { data: allTablesData, error: allTablesError } = await supabase
+          .from('tables')
+          .select('*')
+          .eq('restaurant_id', restaurantId)
+          .eq('is_active', true)
+          .order('zone, table_number');
+
+        if (allTablesError) {
+          console.error('Error obteniendo mesas:', allTablesError);
+          return [];
+        }
+
+        allTables = allTablesData || [];
+        console.log(`🔍 Grupo grande (${partySize} personas): Obteniendo TODAS las mesas (${allTables.length})`);
+
+      } else {
+        // Grupo pequeño: solo mesas con capacidad individual suficiente
+        const { data: tables, error: tablesError } = await supabase
+          .from('tables')
+          .select('*')
+          .eq('restaurant_id', restaurantId)
+          .eq('is_active', true)
+          .gte('capacity', partySize)
+          .order('table_number');
+
+        if (tablesError) {
+          console.error('Error obteniendo mesas:', tablesError);
+          return [];
+        }
+
+        allTables = tables || [];
+        console.log(`🔍 Grupo pequeño (${partySize} personas): Mesas con capacidad suficiente: ${allTables.length}`);
       }
 
-      if (!tables || tables.length === 0) {
+      if (allTables.length === 0) {
+        console.log('❌ No hay mesas disponibles en el restaurante');
         return [];
       }
 
@@ -992,7 +1096,7 @@ export class ReservationValidationService {
       }
 
       // 5. Filtrar mesas que NO tienen conflictos
-      const availableTables = tables.filter(table => {
+      const availableTables = allTables.filter(table => {
         // Verificar si esta mesa tiene alguna reserva que se solape
         const hasConflict = existingReservations?.some(reservation => {
           if (reservation.table_id !== table.id) return false;
@@ -1014,6 +1118,10 @@ export class ReservationValidationService {
         return !hasConflict;
       });
 
+      // 6. 🔥 SIEMPRE devolver TODAS las mesas disponibles
+      // El agrupamiento por zona se hace en validateZone
+      console.log(`✅ Mesas disponibles (sin conflictos): ${availableTables.length}`);
+      
       return availableTables;
 
     } catch (error) {
