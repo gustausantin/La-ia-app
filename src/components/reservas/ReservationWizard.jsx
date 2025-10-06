@@ -735,17 +735,54 @@ const StepTable = ({ formData, validation, availableTables, loadingTables, onCha
         )}
 
         {!loadingTables && availableTables.length === 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-red-800">
-              <AlertCircle className="w-5 h-5" />
-              <span className="font-medium">
-                No hay mesas disponibles para {formData.partySize} persona(s) a las{' '}
-                {formData.time ? formData.time.substring(0, 5) : ''}
-              </span>
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 text-red-800">
+                <AlertCircle className="w-5 h-5" />
+                <span className="font-medium">
+                  No hay mesas disponibles para {formData.partySize} persona(s) a las{' '}
+                  {formData.time ? formData.time.substring(0, 5) : ''}
+                </span>
+              </div>
             </div>
-            <p className="text-sm text-red-700 mt-2">
-              💡 Prueba con otra hora o reduce el número de comensales
-            </p>
+
+            {/* 🚀 MOSTRAR ALTERNATIVAS SI LAS HAY */}
+            {suggestedTimes && suggestedTimes.length > 0 && (
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                  <p className="font-medium text-gray-900">¿Prefieres alguna de estas horas?</p>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {suggestedTimes.slice(0, 4).map((alternative, index) => (
+                    <button
+                      key={index}
+                      onClick={() => onSelectAlternative(alternative)}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-purple-300 text-purple-700 font-semibold rounded-lg hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all transform hover:scale-105 shadow-sm"
+                    >
+                      <Clock className="w-4 h-4" />
+                      {alternative.displayTime}
+                      {alternative.availableTables && (
+                        <span className="text-xs opacity-75">
+                          ({alternative.availableTables} mesa{alternative.availableTables > 1 ? 's' : ''})
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {suggestedTimes.length > 4 && (
+                  <button
+                    onClick={onShowMore}
+                    className="w-full px-4 py-2 bg-white border border-purple-300 text-purple-700 font-medium rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Ver más opciones ({suggestedTimes.length - 4} más)
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
