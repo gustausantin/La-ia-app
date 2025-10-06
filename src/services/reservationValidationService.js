@@ -356,7 +356,7 @@ export class ReservationValidationService {
       const closeTotalMinutes = closeHours * 60 + closeMinutes;
 
       const possibleTimes = [];
-      for (let minutes = openTotalMinutes; minutes < closeTotalMinutes; minutes += slotInterval) {
+      for (let minutes = openTotalMinutes; minutes <= closeTotalMinutes; minutes += slotInterval) {
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         const timeStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:00`;
