@@ -208,6 +208,9 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
               availableTables={availableTables}
               loadingTables={loadingTables}
               onChange={handleFieldChange}
+              suggestedTimes={suggestedTimes}
+              onSelectAlternative={handleSelectAlternative}
+              onShowMore={openAlternativesModal}
             />
           )}
         </div>
@@ -650,7 +653,7 @@ const StepPartySize = ({ formData, validation, isLoading, onChange }) => {
 // ======================================================================
 // PASO 5: MESA
 // ======================================================================
-const StepTable = ({ formData, validation, availableTables, loadingTables, onChange }) => {
+const StepTable = ({ formData, validation, availableTables, loadingTables, onChange, suggestedTimes, onSelectAlternative, onShowMore }) => {
   return (
     <div className="space-y-6">
       <div>
