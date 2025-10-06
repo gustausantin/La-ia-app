@@ -1,0 +1,35 @@
+[1mdiff --git a/src/pages/Reservas.jsx b/src/pages/Reservas.jsx[m
+[1mindex ccc1f5a..4ab9878 100644[m
+[1m--- a/src/pages/Reservas.jsx[m
+[1m+++ b/src/pages/Reservas.jsx[m
+[36m@@ -43,11 +43,17 @@[m [mimport {[m
+     FileText,[m
+     Save,[m
+     Settings,[m
+[31m-    Trash2[m
+[32m+[m[32m    Trash2,[m
+[32m+[m[32m    MapPin[m
+ } from "lucide-react";[m
+ import toast from "react-hot-toast";[m
+ import { ReservationWizard } from "../components/reservas/ReservationWizard";[m
+ import { ReservationDetailsModal } from "../components/reservas/ReservationDetailsModal";[m
+[32m+[m[32mimport { processReservationCompletion } from "../services/CRMService";[m
+[32m+[m[32mimport AvailabilityManager from "../components/AvailabilityManager";[m
+[32m+[m[32mimport { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';[m
+[32m+[m[32mimport { useRegenerationModal } from '../hooks/useRegenerationModal';[m
+[32m+[m[32mimport RegenerationRequiredModal from '../components/RegenerationRequiredModal';[m
+ [m
+ // 📧 FUNCIÓN PARA ENVIAR MENSAJE NO-SHOW[m
+ const sendNoShowMessage = async (reservation) => {[m
+[36m@@ -117,11 +123,6 @@[m [mconst sendNoShowMessage = async (reservation) => {[m
+         throw error;[m
+     }[m
+ };[m
+[31m-import { processReservationCompletion } from "../services/CRMService";[m
+[31m-import AvailabilityManager from "../components/AvailabilityManager";[m
+[31m-import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';[m
+[31m-import { useRegenerationModal } from '../hooks/useRegenerationModal';[m
+[31m-import RegenerationRequiredModal from '../components/RegenerationRequiredModal';[m
+ [m
+ // DATOS NECESARIOS DE SUPABASE:[m
+ // - tabla: reservations (con campos 'source' y 'channel')[m
