@@ -12,6 +12,7 @@ import {
   Users,
   UtensilsCrossed,
   Check,
+  CheckCircle2,
   AlertCircle,
   Loader2,
   ChevronRight,
@@ -73,7 +74,7 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
       party_size: parseInt(formData.partySize),  // ✅ Existe
       table_id: formData.tableId,  // ✅ Existe
       special_requests: formData.specialRequests || null,  // ✅ Existe
-      status: 'confirmed',  // ✅ Existe
+      status: formData.status || 'pending',  // ✅ Existe - AHORA DINÁMICO
       channel: 'manual',  // ✅ Existe
       source: 'dashboard'  // ✅ Existe
       // ❌ first_name, last_name1, last_name2, birthdate NO existen en reservations
@@ -651,6 +652,57 @@ const StepTable = ({ formData, validation, availableTables, loadingTables, onCha
         <p className="text-sm text-gray-600">
           Elige la mesa para la reserva (solo se muestran mesas disponibles con capacidad suficiente)
         </p>
+      </div>
+
+      {/* Estado de la reserva */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          <CheckCircle2 className="w-4 h-4 inline mr-2" />
+          Estado de la reserva *
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => onChange('status', 'pending')}
+            className={`p-4 border-2 rounded-lg text-left transition-all ${
+              formData.status === 'pending'
+                ? 'border-yellow-600 bg-yellow-50'
+                : 'border-gray-200 hover:border-yellow-300 hover:bg-gray-50'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <AlertCircle className="w-5 h-5 text-yellow-600" />
+              <span className="font-semibold text-gray-900">Pendiente</span>
+              {formData.status === 'pending' && (
+                <Check className="w-5 h-5 text-yellow-600 ml-auto" />
+              )}
+            </div>
+            <p className="text-sm text-gray-600">
+              Requiere confirmación posterior
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onChange('status', 'confirmed')}
+            className={`p-4 border-2 rounded-lg text-left transition-all ${
+              formData.status === 'confirmed'
+                ? 'border-green-600 bg-green-50'
+                : 'border-gray-200 hover:border-green-300 hover:bg-gray-50'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <span className="font-semibold text-gray-900">Confirmada</span>
+              {formData.status === 'confirmed' && (
+                <Check className="w-5 h-5 text-green-600 ml-auto" />
+              )}
+            </div>
+            <p className="text-sm text-gray-600">
+              Reserva confirmada y lista
+            </p>
+          </button>
+        </div>
       </div>
 
       {/* Peticiones especiales */}
