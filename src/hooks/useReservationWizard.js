@@ -230,12 +230,17 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     );
     
     console.log('📊 Resultado completo de getAvailableTables:', result);
-    console.log('📊 result.tables:', result?.tables);
-    console.log('📊 Actualizando availableTables con:', result?.tables || []);
-    setAvailableTables(result?.tables || []);
+    
+    // 🔥 FIX: getAvailableTables puede devolver un array directamente O un objeto con tables
+    const tables = Array.isArray(result) ? result : (result?.tables || []);
+    
+    console.log('📊 Mesas extraídas:', tables);
+    console.log('📊 Actualizando availableTables con:', tables);
+    setAvailableTables(tables);
     setLoadingTables(false);
     
-    return result;
+    // Devolver en formato consistente
+    return { success: tables.length > 0, tables };
   }, [restaurantId, initialData]);
 
   // ===== VALIDAR MESA SELECCIONADA =====

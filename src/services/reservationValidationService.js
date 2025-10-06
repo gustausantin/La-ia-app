@@ -870,7 +870,8 @@ export class ReservationValidationService {
       const closeMinutesTotal = closeHours * 60 + closeMinutes;
 
       const allSlots = [];
-      for (let minutes = openMinutesTotal; minutes < closeMinutesTotal - reservationDuration; minutes += slotInterval) {
+      // 🔥 Incluir hasta la hora de cierre INCLUSIVE (si cierran a las 22:00, aceptan reservas a las 22:00)
+      for (let minutes = openMinutesTotal; minutes <= closeMinutesTotal; minutes += slotInterval) {
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         const timeStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:00`;
