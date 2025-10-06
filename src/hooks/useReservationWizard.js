@@ -488,21 +488,27 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
   const handleSelectAlternative = useCallback(async (alternative) => {
     console.log('✅ Alternativa seleccionada:', alternative);
     
+    // 🔥 Limpiar sugerencias PRIMERO para evitar bucles
+    setSuggestedTimes([]);
+    
+    // Cerrar modal
+    setShowAlternativesModal(false);
+    
     // Actualizar la hora con la alternativa seleccionada
     setFormData(prev => ({
       ...prev,
       time: alternative.time
     }));
     
-    // Cerrar modal
-    setShowAlternativesModal(false);
-    
     // Validar la nueva hora automáticamente
     await validateTime(formData.date, alternative.time);
     
-    // Limpiar mesas para forzar recarga
-    setAvailableTables([]);
-  }, [formData.date, validateTime]);
+    // 🔥 Cargar mesas disponibles para la nueva hora
+    await loadAvailableTables(formData.date, alternative.time, formData.partySize);
+    
+    // Mantener en paso 5 para que vea las mesas disponibles
+    setCurrentStep(5);
+  }, [formData.date, formData.partySize, validateTime, loadAvailableTables]);
 
   const openAlternativesModal = useCallback(() => {
     setShowAlternativesModal(true);
