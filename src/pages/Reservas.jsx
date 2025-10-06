@@ -1331,7 +1331,7 @@ export default function Reservas() {
                     last_name2: customerData.last_name2 || reservationData.customer_name?.split(' ')[2] || '',
                     phone: reservationData.customer_phone,
                     email: reservationData.customer_email || null,
-                    birthdate: customerData.birthdate || null,
+                    birthday: customerData.birthdate || null, // 🔥 FIX: El campo se llama "birthday" en la BD
                     notes: customerData.notes || "Cliente creado automáticamente desde reserva",
                     consent_email: customerData.consent_email || false,
                     consent_sms: customerData.consent_sms || false,
@@ -1347,11 +1347,18 @@ export default function Reservas() {
                     },
                 };
 
-                await supabase
+                const { data: insertedCustomer, error: insertError } = await supabase
                     .from("customers")
-                    .insert([newCustomer]);
+                    .insert([newCustomer])
+                    .select()
+                    .single();
 
-                console.log(`Nuevo cliente ${newCustomer.name} creado automáticamente`);
+                if (insertError) {
+                    console.error('❌ Error creando cliente:', insertError);
+                    console.error('❌ Datos que intentamos insertar:', newCustomer);
+                } else {
+                    console.log(`✅ Nuevo cliente ${newCustomer.name} creado automáticamente`, insertedCustomer);
+                }
             }
         } catch (error) {
             console.error("Error in customer linking:", error);
