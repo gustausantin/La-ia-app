@@ -55,6 +55,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
   // ===== ESTADO PARA ALTERNATIVAS (NUEVO) =====
   const [suggestedTimes, setSuggestedTimes] = useState([]);
   const [showAlternativesModal, setShowAlternativesModal] = useState(false);
+  const [justSelectedAlternative, setJustSelectedAlternative] = useState(false); // 🔥 Flag para evitar bucle
 
   // ===== PASOS DEL WIZARD =====
   const STEPS = [
@@ -402,6 +403,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
       // 3. NO estamos cargando
       // 4. Tenemos todos los datos necesarios
       // 5. AÚN NO hemos buscado alternativas (para evitar bucles)
+      // 6. 🔥 NO acabamos de seleccionar una alternativa
       if (
         currentStep === 5 && 
         availableTables.length === 0 && 
@@ -409,7 +411,8 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
         formData.date && 
         formData.time && 
         formData.partySize &&
-        suggestedTimes.length === 0 // 🔥 Solo buscar si NO hay alternativas ya
+        suggestedTimes.length === 0 && // 🔥 Solo buscar si NO hay alternativas ya
+        !justSelectedAlternative // 🔥 NO buscar si acabamos de seleccionar una alternativa
       ) {
         console.log('🔍 No hay mesas en Paso 5, buscando alternativas...');
         try {
@@ -437,7 +440,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     }, 500); // 🔥 Esperar 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [currentStep, availableTables.length, loadingTables, formData.date, formData.time, formData.partySize, suggestedTimes.length, restaurantId, initialData]);
+  }, [currentStep, availableTables.length, loadingTables, formData.date, formData.time, formData.partySize, suggestedTimes.length, justSelectedAlternative, restaurantId, initialData]);
 
   // ===== RE-VALIDAR EN MODO EDICIÓN CUANDO CAMBIAN LOS CAMPOS =====
   useEffect(() => {
@@ -468,6 +471,9 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
   const handleSelectAlternative = useCallback(async (alternative) => {
     console.log('✅ Alternativa seleccionada:', alternative);
     
+    // 🔥 MARCAR QUE ACABAMOS DE SELECCIONAR UNA ALTERNATIVA
+    setJustSelectedAlternative(true);
+    
     // 🔥 Limpiar sugerencias PRIMERO para evitar bucles
     setSuggestedTimes([]);
     
@@ -493,6 +499,9 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     
     // 🔥 Cargar mesas disponibles para la nueva hora DIRECTAMENTE
     await loadAvailableTables(formData.date, alternative.time, formData.partySize);
+    
+    // 🔥 RESETEAR EL FLAG DESPUÉS DE CARGAR LAS MESAS
+    setTimeout(() => setJustSelectedAlternative(false), 1000);
     
     // Mantener en paso 5 para que vea las mesas disponibles
     setCurrentStep(5);
