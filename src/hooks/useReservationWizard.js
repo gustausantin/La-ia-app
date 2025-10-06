@@ -5,7 +5,7 @@
 // en tiempo real y sugerencias inteligentes
 // ======================================================================
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { ReservationValidationService } from '../services/reservationValidationService';
 import { AvailabilityService } from '../services/AvailabilityService';
@@ -55,7 +55,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
   // ===== ESTADO PARA ALTERNATIVAS (NUEVO) =====
   const [suggestedTimes, setSuggestedTimes] = useState([]);
   const [showAlternativesModal, setShowAlternativesModal] = useState(false);
-  const [justSelectedAlternative, setJustSelectedAlternative] = useState(false); // 🔥 Flag para evitar bucle
+  const hasSearchedAlternativesRef = useRef(false); // 🔥 Ref para evitar búsquedas repetidas
 
   // ===== PASOS DEL WIZARD =====
   const STEPS = [
@@ -395,17 +395,11 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
 
   // ===== BUSCAR ALTERNATIVAS SI NO HAY MESAS EN PASO 5 (SOLO LA PRIMERA VEZ) =====
   useEffect(() => {
-    // 🔥 NO buscar alternativas si acabamos de seleccionar una
-    if (justSelectedAlternative) {
-      console.log('⏭️ Saltando búsqueda de alternativas (acabamos de seleccionar una)');
+    // 🔥 NO buscar alternativas si ya buscamos para esta hora
+    if (hasSearchedAlternativesRef.current) {
+      console.log('⏭️ Ya buscamos alternativas para esta hora, saltando...');
       return;
     }
-    
-    // 🔥 SOLO buscar alternativas si:
-    // 1. Acabamos de llegar al Paso 5 (currentStep cambió a 5)
-    // 2. NO hay mesas disponibles
-    // 3. NO estamos cargando
-    // 4. NO hay alternativas ya buscadas
     
     if (currentStep !== 5) return; // Solo en paso 5
     
@@ -416,9 +410,11 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
         formData.date && 
         formData.time && 
         formData.partySize &&
-        suggestedTimes.length === 0 // 🔥 Solo buscar si NO hay alternativas ya
+        suggestedTimes.length === 0
       ) {
         console.log('🔍 Primera vez en Paso 5 sin mesas, buscando alternativas...');
+        hasSearchedAlternativesRef.current = true; // 🔥 Marcar que ya buscamos
+        
         try {
           const excludeId = initialData?.id || null;
           const alternatives = await ReservationValidationService.findNearestAlternatives(
@@ -431,20 +427,19 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
           );
           console.log('✅ Alternativas encontradas:', alternatives.length);
           
-          // 🔥 FILTRAR la hora actual de las alternativas (no sugerir la misma hora que falló)
           const filteredAlternatives = alternatives.filter(alt => alt.time !== formData.time);
           console.log('✅ Alternativas filtradas (sin hora actual):', filteredAlternatives.length);
           
           setSuggestedTimes(filteredAlternatives);
         } catch (error) {
           console.error('❌ Error buscando alternativas:', error);
-          setSuggestedTimes([]); // Evitar bucles en caso de error
+          setSuggestedTimes([]);
         }
       }
-    }, 800); // 🔥 Esperar 800ms para que termine de cargar
+    }, 800);
 
     return () => clearTimeout(timeoutId);
-  }, [currentStep, justSelectedAlternative]); // 🔥 Depende de currentStep Y justSelectedAlternative
+  }, [currentStep]); // 🔥 SOLO depende de currentStep
 
   // ===== RE-VALIDAR EN MODO EDICIÓN CUANDO CAMBIAN LOS CAMPOS =====
   useEffect(() => {
@@ -476,9 +471,6 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     console.log('✅ Alternativa seleccionada:', alternative);
     console.log('📊 Datos actuales:', { date: formData.date, partySize: formData.partySize });
     
-    // 🔥 MARCAR QUE ACABAMOS DE SELECCIONAR UNA ALTERNATIVA
-    setJustSelectedAlternative(true);
-    
     // 🔥 Limpiar sugerencias PRIMERO para evitar bucles
     setSuggestedTimes([]);
     
@@ -508,12 +500,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     const result = await loadAvailableTables(formData.date, alternative.time, formData.partySize);
     
     console.log('📊 Resultado de loadAvailableTables:', result);
-    
-    // 🔥 RESETEAR EL FLAG DESPUÉS DE CARGAR LAS MESAS (2 segundos para asegurar)
-    setTimeout(() => {
-      console.log('🔄 Reseteando flag justSelectedAlternative');
-      setJustSelectedAlternative(false);
-    }, 2000);
+    console.log('✅ Mesas cargadas, NO buscar alternativas de nuevo');
     
     // Mantener en paso 5 para que vea las mesas disponibles
     setCurrentStep(5);
