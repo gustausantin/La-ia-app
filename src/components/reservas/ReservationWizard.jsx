@@ -75,8 +75,8 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
       party_size: parseInt(formData.partySize),
       table_id: formData.tableIds && formData.tableIds.length > 0 ? formData.tableIds[0] : null,  // 🔄 Primera mesa (compatibilidad)
       special_requests: formData.specialRequests || null,
-      // 🆕 Si son múltiples mesas, forzar status 'pending'
-      status: (formData.tableIds && formData.tableIds.length > 1) ? 'pending' : (formData.status || 'pending'),
+      // 🆕 Si son múltiples mesas, forzar status 'pending_approval' (requiere aprobación del restaurante)
+      status: (formData.tableIds && formData.tableIds.length > 1) ? 'pending_approval' : (formData.status || 'pending'),
       channel: 'manual',
       source: 'dashboard',
       // 🆕 ARRAY DE IDS DE MESAS (para insertar en reservation_tables)

@@ -403,6 +403,108 @@ export const sendCancelledReservationEmail = async (reservation, restaurant) => 
   }
 };
 
+// 🆕 Enviar email de GRUPO GRANDE (pending_approval)
+const sendPendingApprovalEmail = async (reservation, restaurant) => {
+  try {
+    console.log('📧 Preparando email de grupo grande para:', restaurant.email);
+    
+    // Obtener mesas de la reserva
+    const { data: reservationTables } = await supabase
+      .from('reservation_tables')
+      .select(`
+        table_id,
+        tables (
+          id,
+          table_number,
+          name,
+          capacity,
+          zone
+        )
+      `)
+      .eq('reservation_id', reservation.id);
+    
+    // Construir lista de mesas
+    let tablesList = '';
+    let totalCapacity = 0;
+    let zone = '';
+    
+    if (reservationTables && reservationTables.length > 0) {
+      zone = reservationTables[0].tables.zone || 'Principal';
+      reservationTables.forEach(rt => {
+        const tableName = rt.tables.name || `Mesa ${rt.tables.table_number}`;
+        const capacity = rt.tables.capacity || 0;
+        tablesList += `<li>🪑 ${tableName} (${capacity} personas)</li>`;
+        totalCapacity += capacity;
+      });
+    }
+    
+    // Verificar horario silencioso
+    const quietHours = restaurant.settings?.notifications?.quiet_hours;
+    if (isQuietHours(quietHours)) {
+      console.log('🔕 Horario silencioso activo, no se envía email');
+      return { success: false, reason: 'quiet_hours' };
+    }
+    
+    // Obtener emails de notificación
+    const notificationEmails = restaurant.settings?.notifications?.email_recipients || [restaurant.email];
+    
+    // Leer template HTML
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const templatePath = path.join(process.cwd(), 'email-templates', 'pending_approval_notification.html');
+    let html = await fs.readFile(templatePath, 'utf-8');
+    
+    // Reemplazar variables
+    const variables = {
+      RestaurantName: restaurant.name,
+      ContactName: restaurant.contact_name || 'Equipo',
+      CustomerName: reservation.customer_name,
+      CustomerPhone: reservation.customer_phone,
+      CustomerEmail: reservation.customer_email || '',
+      ReservationDate: formatDate(reservation.reservation_date),
+      ReservationTime: reservation.reservation_time,
+      PartySize: reservation.party_size,
+      Zone: zone,
+      TablesList: tablesList,
+      TotalCapacity: totalCapacity,
+      SpecialRequests: reservation.special_requests || '',
+      ApproveURL: `https://la-ia-app.vercel.app/reservas?action=approve&id=${reservation.id}`,
+      RejectURL: `https://la-ia-app.vercel.app/reservas?action=reject&id=${reservation.id}`,
+      AppURL: `https://la-ia-app.vercel.app/reservas?id=${reservation.id}`,
+    };
+    
+    // Reemplazar todas las variables en el HTML
+    Object.keys(variables).forEach(key => {
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      html = html.replace(regex, variables[key]);
+    });
+    
+    const transporter = createTransporter();
+    const info = await transporter.sendMail({
+      from: `La-IA - ${restaurant.name} <noreply@la-ia.site>`,
+      replyTo: restaurant.email,
+      to: notificationEmails,
+      subject: `⚠️ GRUPO GRANDE - Requiere tu Aprobación - ${reservation.customer_name}`,
+      html,
+    });
+    
+    console.log('✅ Email de grupo grande enviado:', info.messageId);
+    return { success: true, messageId: info.messageId };
+    
+  } catch (error) {
+    console.error('❌ Error enviando email de grupo grande:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// 🔥 NOTA: Los mensajes de aprobación/rechazo al CLIENTE se envían por WhatsApp desde N8n
+// Los templates están en la tabla message_templates de Supabase
+// N8n se encarga de:
+// 1. Detectar cambios de estado (pending_approval → pending o cancelled)
+// 2. Obtener el template correspondiente de message_templates
+// 3. Reemplazar variables
+// 4. Enviar WhatsApp al cliente
+
 // Cache de reservas para detectar cambios (cuando payload.old no funciona)
 const reservationsCache = new Map();
 
@@ -440,7 +542,14 @@ export const startRealtimeEmailListener = () => {
             .single();
           
           if (restaurant) {
-            await sendNewReservationEmail(payload.new, restaurant);
+            // 🆕 Si es pending_approval (grupo grande), enviar email especial
+            if (payload.new.status === 'pending_approval') {
+              console.log('⚠️ Reserva de GRUPO GRANDE detectada, enviando email de aprobación...');
+              await sendPendingApprovalEmail(payload.new, restaurant);
+            } else {
+              // Email normal para reservas regulares
+              await sendNewReservationEmail(payload.new, restaurant);
+            }
           }
         } catch (error) {
           console.error('Error procesando nueva reserva:', error);
@@ -479,10 +588,23 @@ export const startRealtimeEmailListener = () => {
             fromCache: !payload.old?.status && cachedOld?.status
           });
           
+          // 🆕 Aprobación: detectar cambio de pending_approval a pending
+          if (oldStatus === 'pending_approval' && payload.new.status === 'pending') {
+            console.log('✅ Reserva de grupo grande APROBADA:', payload.new.id);
+            console.log('📱 N8n se encargará de enviar WhatsApp al cliente');
+            // N8n detectará este cambio y enviará WhatsApp usando template 'aprobacion_grupo'
+          }
           // Cancelación: detectar cambio a 'cancelled'
-          if (payload.new.status === 'cancelled' && oldStatus !== 'cancelled') {
+          else if (payload.new.status === 'cancelled' && oldStatus !== 'cancelled') {
             console.log('❌ Reserva cancelada detectada:', payload.new.id);
-            await sendCancelledReservationEmail(payload.new, restaurant);
+            // 🆕 Si venía de pending_approval, es un rechazo
+            if (oldStatus === 'pending_approval') {
+              console.log('❌ Reserva de grupo grande RECHAZADA:', payload.new.id);
+              console.log('📱 N8n se encargará de enviar WhatsApp al cliente');
+              // N8n detectará este cambio y enviará WhatsApp usando template 'rechazo_grupo'
+            } else {
+              await sendCancelledReservationEmail(payload.new, restaurant);
+            }
           }
           // Modificación (cambios en campos relevantes, pero NO cancelación)
           else if (payload.new.status !== 'cancelled') {

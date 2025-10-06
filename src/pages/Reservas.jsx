@@ -141,6 +141,12 @@ const RESERVATION_STATES = {
         actions: ["confirm", "cancel", "edit"],
         icon: <AlertCircle className="w-4 h-4" />,
     },
+    pending_approval: {
+        label: "⚠️ Pendiente de Aprobación",
+        color: "bg-orange-100 text-orange-900 border-orange-300",
+        actions: ["approve", "reject", "edit"],
+        icon: <AlertCircle className="w-5 h-5" />,
+    },
     confirmada: {
         label: "Confirmada",
         color: "bg-green-100 text-green-800 border-green-200",
@@ -440,6 +446,32 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                                 >
                                     <Edit className="w-4 h-4" />
                                     Editar
+                                </button>
+                            )}
+
+                            {state.actions.includes("approve") && (
+                                <button
+                                    onClick={() => {
+                                        onAction("approve", reservation);
+                                        setShowActions(false);
+                                    }}
+                                    className="w-full px-3 py-2 text-left hover:bg-green-50 flex items-center gap-2 text-green-700 font-semibold"
+                                >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    ✅ Aprobar Reserva
+                                </button>
+                            )}
+
+                            {state.actions.includes("reject") && (
+                                <button
+                                    onClick={() => {
+                                        onAction("reject", reservation);
+                                        setShowActions(false);
+                                    }}
+                                    className="w-full px-3 py-2 text-left hover:bg-red-50 flex items-center gap-2 text-red-700 font-semibold"
+                                >
+                                    <XCircle className="w-4 h-4" />
+                                    ❌ Rechazar Reserva
                                 </button>
                             )}
 
@@ -1500,6 +1532,39 @@ export default function Reservas() {
                     setEditingReservation(reservation);
                     setShowEditModal(true);
                     return;
+                case "approve":
+                    // 🆕 APROBAR GRUPO GRANDE
+                    if (!window.confirm("¿Aprobar esta reserva de grupo grande?\n\nEl cliente recibirá un mensaje de confirmación.")) {
+                        return;
+                    }
+                    newStatus = "pending";
+                    message = "Reserva aprobada - Cliente notificado";
+                    break;
+                case "reject":
+                    // 🆕 RECHAZAR GRUPO GRANDE
+                    const reason = window.prompt("¿Por qué rechazas esta reserva?\n\n(El motivo se enviará al cliente)");
+                    if (!reason) return;
+                    
+                    try {
+                        // Actualizar a cancelled con motivo
+                        const { error } = await supabase
+                            .from('reservations')
+                            .update({ 
+                                status: 'cancelled',
+                                cancellation_reason: reason
+                            })
+                            .eq('id', reservation.id);
+
+                        if (error) throw error;
+
+                        toast.success("Reserva rechazada - Cliente notificado");
+                        loadReservations();
+                        return;
+                    } catch (error) {
+                        console.error('Error rechazando reserva:', error);
+                        toast.error('Error al rechazar la reserva');
+                        return;
+                    }
                 case "view":
                     // 🎯 CORRECCIÓN: "Ver detalles" ahora abre el modal de SOLO LECTURA
                     setViewingReservation(reservation);

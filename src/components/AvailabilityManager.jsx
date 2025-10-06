@@ -43,6 +43,8 @@ const AvailabilityManager = () => {
     const [showAvailabilityGrid, setShowAvailabilityGrid] = useState(false);
     const [availabilityGrid, setAvailabilityGrid] = useState([]);
     const [restaurantSettings, setRestaurantSettings] = useState(null);
+    const [showConflictModal, setShowConflictModal] = useState(false);
+    const [conflictData, setConflictData] = useState(null);
     const [generationSuccess, setGenerationSuccess] = useState(() => {
         // Cargar estado persistente del localStorage
         try {
@@ -247,6 +249,73 @@ const AvailabilityManager = () => {
         }
     };
 
+    // 🛡️ VALIDAR RESERVAS EN DÍAS QUE SE QUIEREN CERRAR
+    const validateReservationsOnClosedDays = async (operatingHours) => {
+        try {
+            // 1. Detectar días que están marcados como cerrados
+            const closedDays = [];
+            const dayMap = {
+                'monday': 1, 'tuesday': 2, 'wednesday': 3, 'thursday': 4,
+                'friday': 5, 'saturday': 6, 'sunday': 0
+            };
+            
+            Object.entries(operatingHours).forEach(([day, hours]) => {
+                if (hours.closed) {
+                    closedDays.push({
+                        day,
+                        dayNumber: dayMap[day],
+                        displayName: day.charAt(0).toUpperCase() + day.slice(1)
+                    });
+                }
+            });
+            
+            if (closedDays.length === 0) {
+                return { valid: true, conflicts: [] };
+            }
+            
+            console.log('🔍 Días marcados como cerrados:', closedDays);
+            
+            // 2. Buscar reservas activas en esos días de la semana
+            const { data: reservations, error } = await supabase
+                .from('reservations')
+                .select('id, customer_name, customer_phone, reservation_date, reservation_time, party_size, status')
+                .eq('restaurant_id', restaurantId)
+                .in('status', ['pending', 'confirmed', 'pending_approval'])
+                .gte('reservation_date', format(new Date(), 'yyyy-MM-dd'));
+            
+            if (error) throw error;
+            
+            // 3. Filtrar reservas que caen en días cerrados
+            const conflictingReservations = [];
+            closedDays.forEach(closedDay => {
+                const dayReservations = reservations.filter(r => {
+                    const reservationDay = new Date(r.reservation_date).getDay();
+                    return reservationDay === closedDay.dayNumber;
+                });
+                
+                if (dayReservations.length > 0) {
+                    conflictingReservations.push({
+                        day: closedDay.day,
+                        displayName: closedDay.displayName,
+                        reservations: dayReservations
+                    });
+                }
+            });
+            
+            console.log('⚠️ Conflictos encontrados:', conflictingReservations);
+            
+            return {
+                valid: conflictingReservations.length === 0,
+                conflicts: conflictingReservations,
+                closedDays
+            };
+            
+        } catch (error) {
+            console.error('❌ Error validando reservas:', error);
+            return { valid: false, conflicts: [], error: error.message };
+        }
+    };
+    
     // 🔒 REGLA SAGRADA: NUNCA ELIMINAR RESERVAS
     // Esta función SOLO regenera availability_slots PROTEGIENDO reservas existentes
     // Las reservas son SAGRADAS y solo se eliminan manualmente desde Reservas.jsx
@@ -254,6 +323,23 @@ const AvailabilityManager = () => {
         if (!restaurantId) {
             toast.error('❌ No se encontró el ID del restaurante');
             return;
+        }
+
+        // 🛡️ VALIDACIÓN CRÍTICA: Verificar reservas en días cerrados
+        if (restaurantSettings?.operating_hours) {
+            const validation = await validateReservationsOnClosedDays(restaurantSettings.operating_hours);
+            
+            if (!validation.valid && validation.conflicts.length > 0) {
+                // Mostrar modal de advertencia
+                setConflictData({
+                    conflicts: validation.conflicts,
+                    closedDays: validation.closedDays,
+                    changeType,
+                    changeData
+                });
+                setShowConflictModal(true);
+                return; // NO regenerar hasta que el usuario confirme
+            }
         }
 
         try {
@@ -1456,6 +1542,187 @@ const AvailabilityManager = () => {
                             ))}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* 🛡️ MODAL DE PROTECCIÓN: RESERVAS EN DÍAS CERRADOS */}
+            {showConflictModal && conflictData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6">
+                            <div className="flex items-center gap-4">
+                                <AlertTriangle className="w-12 h-12 text-white" />
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white">
+                                        ⚠️ Reservas Detectadas en Días que Quieres Cerrar
+                                    </h2>
+                                    <p className="text-orange-100 mt-1">
+                                        Protección automática de reservas activada
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 overflow-y-auto max-h-[60vh]">
+                            <p className="text-gray-700 mb-4 text-lg">
+                                Has marcado <strong>{conflictData.closedDays.map(d => d.displayName).join(', ')}</strong> como cerrados,
+                                pero hay <strong className="text-red-600">{conflictData.conflicts.reduce((sum, c) => sum + c.reservations.length, 0)} reservas activas</strong> en esos días:
+                            </p>
+
+                            {/* Lista de conflictos por día */}
+                            <div className="space-y-4">
+                                {conflictData.conflicts.map(dayConflict => {
+                                    // Agrupar reservas por fecha
+                                    const byDate = {};
+                                    dayConflict.reservations.forEach(r => {
+                                        if (!byDate[r.reservation_date]) {
+                                            byDate[r.reservation_date] = [];
+                                        }
+                                        byDate[r.reservation_date].push(r);
+                                    });
+
+                                    return (
+                                        <div key={dayConflict.day} className="bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
+                                            <h3 className="font-bold text-orange-900 mb-3 text-lg capitalize flex items-center gap-2">
+                                                <Calendar className="w-5 h-5" />
+                                                {dayConflict.displayName}s con reservas:
+                                            </h3>
+
+                                            {/* Por cada fecha específica */}
+                                            {Object.entries(byDate).map(([date, reservations]) => (
+                                                <div key={date} className="mb-3 last:mb-0 bg-white rounded-lg p-3">
+                                                    <p className="text-sm font-semibold text-orange-800 mb-2 flex items-center gap-2">
+                                                        <Clock className="w-4 h-4" />
+                                                        📅 {format(new Date(date), "EEEE d 'de' MMMM, yyyy", { locale: es })}
+                                                        <span className="ml-auto bg-orange-200 px-2 py-0.5 rounded-full text-xs">
+                                                            {reservations.length} reserva{reservations.length > 1 ? 's' : ''}
+                                                        </span>
+                                                    </p>
+                                                    <ul className="ml-4 space-y-2">
+                                                        {reservations.map(r => (
+                                                            <li key={r.id} className="text-sm text-gray-700 flex items-center gap-2 bg-gray-50 p-2 rounded">
+                                                                <Users className="w-4 h-4 text-gray-500" />
+                                                                <span className="font-medium">{r.customer_name}</span>
+                                                                <span className="text-gray-500">•</span>
+                                                                <span>{r.reservation_time.slice(0, 5)}</span>
+                                                                <span className="text-gray-500">•</span>
+                                                                <span>{r.party_size} personas</span>
+                                                                <span className="ml-auto text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                                                                    {r.status === 'confirmed' ? 'Confirmada' : r.status === 'pending' ? 'Pendiente' : 'Pend. Aprobación'}
+                                                                </span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Explicación */}
+                            <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 mt-6">
+                                <p className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                                    <CheckCircle2 className="w-5 h-5" />
+                                    🛡️ PROTECCIÓN AUTOMÁTICA ACTIVADA
+                                </p>
+                                <p className="text-sm text-blue-800 mb-2">
+                                    Si continúas, el sistema hará lo siguiente:
+                                </p>
+                                <ul className="text-sm text-blue-800 ml-4 list-disc space-y-1">
+                                    <li>
+                                        ⚠️ <strong>NO cerrará</strong> los días específicos que tienen reservas (ej: jueves 9, 16, 23 de octubre)
+                                    </li>
+                                    <li>
+                                        ✅ <strong>SÍ cerrará</strong> los demás días de la semana sin reservas
+                                    </li>
+                                    <li>
+                                        📋 Podrás gestionar estas reservas manualmente y cerrar esos días después
+                                    </li>
+                                    <li>
+                                        🔒 Las reservas existentes quedan <strong>100% protegidas</strong>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* Advertencia final */}
+                            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mt-4">
+                                <p className="text-sm text-yellow-900">
+                                    <strong>💡 Recomendación:</strong> Contacta a estos clientes para cancelar/mover sus reservas antes de cerrar definitivamente esos días.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="bg-gray-50 p-6 flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowConflictModal(false);
+                                    setConflictData(null);
+                                }}
+                                className="flex-1 px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    setShowConflictModal(false);
+                                    setConflictData(null);
+                                    
+                                    // Continuar con regeneración
+                                    // La función SQL cleanup_and_regenerate_availability ya protege automáticamente
+                                    // las reservas existentes, así que solo necesitamos continuar
+                                    toast.loading('Regenerando con protección de reservas...', { id: 'protected-regen' });
+                                    
+                                    try {
+                                        const today = format(new Date(), 'yyyy-MM-dd');
+                                        const advanceDays = restaurantSettings?.advance_booking_days || 30;
+                                        const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
+
+                                        const { data, error } = await supabase.rpc('cleanup_and_regenerate_availability', {
+                                            p_restaurant_id: restaurantId,
+                                            p_start_date: today,
+                                            p_end_date: endDate
+                                        });
+
+                                        if (error) throw error;
+
+                                        toast.dismiss('protected-regen');
+                                        toast.success(
+                                            `✅ Regeneración completada\n\n🛡️ ${conflictData.conflicts.reduce((sum, c) => sum + c.reservations.length, 0)} reservas protegidas\n\nLos días con reservas NO se cerraron`,
+                                            { duration: 6000, style: { whiteSpace: 'pre-line' } }
+                                        );
+                                        
+                                        // Actualizar estado
+                                        const successData = {
+                                            slotsCreated: data?.slots_created || data?.affected_count || 0,
+                                            dateRange: `HOY hasta ${format(addDays(new Date(), advanceDays), 'dd/MM/yyyy')}`,
+                                            duration: restaurantSettings?.reservation_duration || 90,
+                                            timestamp: new Date().toLocaleString(),
+                                            protectedReservations: conflictData.conflicts.reduce((sum, c) => sum + c.reservations.length, 0)
+                                        };
+                                        
+                                        setGenerationSuccess(successData);
+                                        localStorage.setItem(`generationSuccess_${restaurantId}`, JSON.stringify(successData));
+                                        
+                                        // Recargar estadísticas
+                                        await loadAvailabilityStats();
+                                        
+                                    } catch (error) {
+                                        toast.dismiss('protected-regen');
+                                        console.error('Error en regeneración protegida:', error);
+                                        toast.error('Error al regenerar: ' + error.message);
+                                    }
+                                }}
+                                className="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                                <CheckCircle2 className="w-5 h-5" />
+                                Continuar (Proteger Reservas)
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
