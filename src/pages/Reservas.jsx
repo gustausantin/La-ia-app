@@ -48,6 +48,11 @@ import {
 import toast from "react-hot-toast";
 import { ReservationWizard } from "../components/reservas/ReservationWizard";
 import { ReservationDetailsModal } from "../components/reservas/ReservationDetailsModal";
+import { processReservationCompletion } from "../services/CRMService";
+import AvailabilityManager from "../components/AvailabilityManager";
+import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
+import { useRegenerationModal } from '../hooks/useRegenerationModal';
+import RegenerationRequiredModal from '../components/RegenerationRequiredModal';
 
 // 📧 FUNCIÓN PARA ENVIAR MENSAJE NO-SHOW
 const sendNoShowMessage = async (reservation) => {
@@ -117,11 +122,6 @@ const sendNoShowMessage = async (reservation) => {
         throw error;
     }
 };
-import { processReservationCompletion } from "../services/CRMService";
-import AvailabilityManager from "../components/AvailabilityManager";
-import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
-import { useRegenerationModal } from '../hooks/useRegenerationModal';
-import RegenerationRequiredModal from '../components/RegenerationRequiredModal';
 
 // DATOS NECESARIOS DE SUPABASE:
 // - tabla: reservations (con campos 'source' y 'channel')
