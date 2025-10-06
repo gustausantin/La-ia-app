@@ -81,13 +81,20 @@ export default function DashboardAgente() {
             const todayStr = format(today, 'yyyy-MM-dd');
             const yesterdayStr = format(subDays(today, 1), 'yyyy-MM-dd');
 
-            // 1. RESERVAS DE HOY
-            const { data: todayReservations } = await supabase
+            // 1. RESERVAS DE HOY - TODAS LAS ACTIVAS
+            console.log('🔍 Dashboard buscando reservas para fecha:', todayStr);
+            console.log('🔍 Restaurant ID:', restaurant.id);
+            
+            const { data: todayReservations, error: todayError } = await supabase
                 .from('reservations')
-                .select('*, customers(visits_count, name, total_spent, segment_auto)')
+                .select('*, customers!customer_id(visits_count, name, total_spent, segment_auto)')
                 .eq('restaurant_id', restaurant.id)
                 .eq('reservation_date', todayStr)
-                .in('status', ['confirmed', 'completed']);
+                .in('status', ['pending', 'pending_approval', 'confirmed', 'seated', 'completed']);
+            
+            console.log('📊 Reservas de HOY encontradas:', todayReservations?.length || 0);
+            console.log('📊 Reservas de HOY data:', todayReservations);
+            if (todayError) console.error('❌ Error:', todayError);
 
             // 2. RESERVAS DE AYER
             const { data: yesterdayReservations } = await supabase
@@ -95,7 +102,7 @@ export default function DashboardAgente() {
                 .select('id')
                 .eq('restaurant_id', restaurant.id)
                 .eq('reservation_date', yesterdayStr)
-                .in('status', ['confirmed', 'completed']);
+                .in('status', ['pending', 'pending_approval', 'confirmed', 'seated', 'completed']);
 
             // 3. RESERVAS ESTA SEMANA Y SEMANA PASADA
             const startThisWeek = startOfWeek(today, { weekStartsOn: 1 });
@@ -103,13 +110,17 @@ export default function DashboardAgente() {
             const startLastWeek = startOfWeek(subDays(today, 7), { weekStartsOn: 1 });
             const endLastWeek = endOfWeek(subDays(today, 7), { weekStartsOn: 1 });
 
-            const { data: thisWeekRes } = await supabase
+            const { data: thisWeekRes, error: weekError } = await supabase
                 .from('reservations')
-                .select('spend_amount')
+                .select('spend_amount, status, reservation_date')
                 .eq('restaurant_id', restaurant.id)
                 .gte('reservation_date', format(startThisWeek, 'yyyy-MM-dd'))
                 .lte('reservation_date', format(endThisWeek, 'yyyy-MM-dd'))
-                .in('status', ['confirmed', 'completed']);
+                .in('status', ['pending', 'pending_approval', 'confirmed', 'seated', 'completed']);
+            
+            console.log('📊 Reservas ESTA SEMANA encontradas:', thisWeekRes?.length || 0);
+            console.log('📊 Reservas ESTA SEMANA data:', thisWeekRes);
+            if (weekError) console.error('❌ Error semana:', weekError);
 
             const { data: lastWeekRes } = await supabase
                 .from('reservations')
@@ -117,7 +128,7 @@ export default function DashboardAgente() {
                 .eq('restaurant_id', restaurant.id)
                 .gte('reservation_date', format(startLastWeek, 'yyyy-MM-dd'))
                 .lte('reservation_date', format(endLastWeek, 'yyyy-MM-dd'))
-                .in('status', ['confirmed', 'completed']);
+                .in('status', ['pending', 'pending_approval', 'confirmed', 'seated', 'completed']);
 
             // 4. NO-SHOWS DE RIESGO HOY
             const { data: noShowRisk } = await supabase

@@ -624,13 +624,20 @@ const DashboardRevolutionary = () => {
             const startWeek = startOfWeek(today);
             const endWeek = endOfWeek(today);
 
-            // Reservas de hoy
-            const { data: todayReservations } = await supabase
+            // Reservas de hoy - TODAS LAS ACTIVAS (pending, pending_approval, confirmed, seated)
+            const todayDate = format(today, 'yyyy-MM-dd');
+            console.log('🔍 Dashboard buscando reservas para fecha:', todayDate);
+            
+            const { data: todayReservations, error: reservationsError } = await supabase
                 .from('reservations')
                 .select('*')
                 .eq('restaurant_id', restaurant.id)
-                .gte('reservation_date', startToday.toISOString().split('T')[0])
-                .lte('reservation_date', endToday.toISOString().split('T')[0]);
+                .eq('reservation_date', todayDate)
+                .in('status', ['pending', 'pending_approval', 'confirmed', 'seated']);
+            
+            console.log('📊 Dashboard - Reservas encontradas:', todayReservations?.length || 0);
+            console.log('📊 Dashboard - Reservas data:', todayReservations);
+            if (reservationsError) console.error('❌ Error buscando reservas:', reservationsError);
 
             // Clientes activos (todos los que NO son inactivos)
             const { data: activeCustomers } = await supabase

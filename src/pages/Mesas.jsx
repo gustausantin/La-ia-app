@@ -551,7 +551,7 @@ export default function Mesas() {
                 .select("*")
                 .eq("restaurant_id", restaurantId)
                 .eq("reservation_date", today)
-                .in("status", ["confirmada", "sentada"]);
+                .in("status", ["pending", "pending_approval", "confirmed", "seated"]);
 
             if (error) throw error;
             setReservations(data || []);
@@ -907,7 +907,7 @@ export default function Mesas() {
         ).length;
         
         const reserved = reservations.filter(
-            (r) => r.status === "confirmed",
+            (r) => r.status === "confirmed" || r.status === "pending" || r.status === "pending_approval",
         ).length;
         const occupied = reservations.filter(
             (r) => r.status === "seated",
