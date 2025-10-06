@@ -422,8 +422,9 @@ export const startRealtimeEmailListener = () => {
       async (payload) => {
         console.log('🆕 Nueva reserva detectada:', payload.new.id);
         
-        // Guardar en cache para futuras comparaciones
+        // Guardar en cache para futuras comparaciones (INCLUIR STATUS)
         reservationsCache.set(payload.new.id, {
+          status: payload.new.status,
           reservation_date: payload.new.reservation_date,
           reservation_time: payload.new.reservation_time,
           party_size: payload.new.party_size,
@@ -468,8 +469,18 @@ export const startRealtimeEmailListener = () => {
             return;
           }
           
-          // Cancelación
-          if (payload.new.status === 'cancelled' && (!payload.old.status || payload.old.status !== 'cancelled')) {
+          // 🔥 OBTENER ESTADO ANTERIOR DEL CACHE O PAYLOAD.OLD
+          const cachedOld = reservationsCache.get(payload.new.id);
+          const oldStatus = payload.old?.status || cachedOld?.status;
+          
+          console.log('📊 Comparación de estados:', {
+            oldStatus,
+            newStatus: payload.new.status,
+            fromCache: !payload.old?.status && cachedOld?.status
+          });
+          
+          // Cancelación: detectar cambio a 'cancelled'
+          if (payload.new.status === 'cancelled' && oldStatus !== 'cancelled') {
             console.log('❌ Reserva cancelada detectada:', payload.new.id);
             await sendCancelledReservationEmail(payload.new, restaurant);
           }
@@ -478,12 +489,11 @@ export const startRealtimeEmailListener = () => {
             console.log('📝 Posible modificación detectada:', payload.new.id);
             
             // Intentar obtener valores antiguos del cache o de payload.old
-            const cachedOld = reservationsCache.get(payload.new.id);
             const oldReservation = {
-              reservation_date: payload.old.reservation_date || cachedOld?.reservation_date,
-              reservation_time: payload.old.reservation_time || cachedOld?.reservation_time,
-              party_size: payload.old.party_size || cachedOld?.party_size,
-              special_requests: payload.old.special_requests || cachedOld?.special_requests,
+              reservation_date: payload.old?.reservation_date || cachedOld?.reservation_date,
+              reservation_time: payload.old?.reservation_time || cachedOld?.reservation_time,
+              party_size: payload.old?.party_size || cachedOld?.party_size,
+              special_requests: payload.old?.special_requests || cachedOld?.special_requests,
             };
             
             console.log('  Valores antiguos (cache):', cachedOld);
@@ -495,15 +505,16 @@ export const startRealtimeEmailListener = () => {
             });
             
             await sendModifiedReservationEmail(payload.new, oldReservation, restaurant);
-            
-            // Actualizar cache con los nuevos valores
-            reservationsCache.set(payload.new.id, {
-              reservation_date: payload.new.reservation_date,
-              reservation_time: payload.new.reservation_time,
-              party_size: payload.new.party_size,
-              special_requests: payload.new.special_requests,
-            });
           }
+          
+          // 🔥 ACTUALIZAR CACHE CON TODOS LOS VALORES (INCLUIR STATUS)
+          reservationsCache.set(payload.new.id, {
+            status: payload.new.status,
+            reservation_date: payload.new.reservation_date,
+            reservation_time: payload.new.reservation_time,
+            party_size: payload.new.party_size,
+            special_requests: payload.new.special_requests,
+          });
         } catch (error) {
           console.error('Error procesando actualización de reserva:', error);
         }

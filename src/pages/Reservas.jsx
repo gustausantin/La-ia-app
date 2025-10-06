@@ -823,11 +823,25 @@ export default function Reservas() {
 
             const dateRange = calculateDateRange(filters.period);
 
-            const { data, error } = await supabase.rpc("get_reservations_safe", {
-                p_restaurant_id: restaurantId,
-                p_start_date: dateRange.start,
-                p_end_date: dateRange.end
-            });
+            // 🔥 QUERY DIRECTA CON JOIN DE TABLES (más confiable que RPC)
+            const { data, error } = await supabase
+                .from('reservations')
+                .select(`
+                    *,
+                    tables (
+                        id,
+                        table_number,
+                        name,
+                        capacity,
+                        zone,
+                        location
+                    )
+                `)
+                .eq('restaurant_id', restaurantId)
+                .gte('reservation_date', dateRange.start)
+                .lte('reservation_date', dateRange.end)
+                .order('reservation_date', { ascending: true })
+                .order('reservation_time', { ascending: true });
 
             if (error) {
                 console.error('❌ ERROR CARGANDO RESERVAS:', error);
@@ -840,37 +854,6 @@ export default function Reservas() {
             });
 
             let reservations = data || [];
-
-            // Fallback de diagnóstico: si RPC devuelve 0, probar lectura directa CON JOIN de tables
-            if ((!reservations || reservations.length === 0)) {
-                try {
-                    const { data: directData, error: directError } = await supabase
-                        .from('reservations')
-                        .select(`
-                            *,
-                            tables (
-                                id,
-                                table_number,
-                                name,
-                                capacity,
-                                zone,
-                                location
-                            )
-                        `)
-                        .eq('restaurant_id', restaurantId)
-                        .gte('reservation_date', dateRange.start)
-                        .lte('reservation_date', dateRange.end)
-                        .order('reservation_date', { ascending: true })
-                        .order('reservation_time', { ascending: true });
-
-                    if (!directError && directData && directData.length > 0) {
-                        reservations = directData;
-                        toast.success('Modo diagnóstico: mostrando reservas directamente de la tabla');
-                    }
-                } catch (fallbackErr) {
-                    console.log('Fallback directo falló:', fallbackErr);
-                }
-            }
             
             // Log específico para debugging
             const targetReservation = reservations.find(r => r.customer_name?.includes('Kiku'));
