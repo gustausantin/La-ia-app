@@ -61,25 +61,23 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
     // Construir nombre completo
     const fullName = `${formData.firstName} ${formData.lastName1} ${formData.lastName2 || ''}`.trim();
 
-    // Validar todos los campos antes de guardar
+    // 🔥 SOLO COLUMNAS QUE EXISTEN EN LA TABLA RESERVATIONS
     const finalData = {
       restaurant_id: restaurantId,
       customer_id: formData.customerId,
-      customer_name: fullName,
-      first_name: formData.firstName,
-      last_name1: formData.lastName1,
-      last_name2: formData.lastName2 || null,
-      customer_email: formData.customerEmail || null,
-      customer_phone: formData.customerPhone,
-      // birthdate NO va en reservations, va en customers
-      reservation_date: formData.date,
-      reservation_time: formData.time,
-      party_size: parseInt(formData.partySize),
-      table_id: formData.tableId,
-      special_requests: formData.specialRequests || null,
-      status: 'confirmed',
-      channel: 'manual',
-      source: 'dashboard'
+      customer_name: fullName,  // ✅ Existe
+      customer_email: formData.customerEmail || null,  // ✅ Existe
+      customer_phone: formData.customerPhone,  // ✅ Existe
+      reservation_date: formData.date,  // ✅ Existe
+      reservation_time: formData.time,  // ✅ Existe
+      party_size: parseInt(formData.partySize),  // ✅ Existe
+      table_id: formData.tableId,  // ✅ Existe
+      special_requests: formData.specialRequests || null,  // ✅ Existe
+      status: 'confirmed',  // ✅ Existe
+      channel: 'manual',  // ✅ Existe
+      source: 'dashboard'  // ✅ Existe
+      // ❌ first_name, last_name1, last_name2, birthdate NO existen en reservations
+      // ✅ Esos campos van en customers (se manejan en handleCustomerLinking)
     };
 
     console.log('📝 Guardando reserva:', finalData);
