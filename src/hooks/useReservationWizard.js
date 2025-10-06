@@ -178,10 +178,11 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
         date,
         time,
         formData.partySize,
-        6 // Máximo 6 alternativas
+        6, // Máximo 6 alternativas
+        excludeId // 🔥 Excluir reserva actual si estamos editando
       );
       
-      console.log('✅ Alternativas encontradas:', alternatives.length);
+      console.log('✅ Alternativas encontradas:', alternatives.length, alternatives);
       setSuggestedTimes(alternatives);
       
       setValidations(prev => ({
@@ -416,6 +417,28 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
       loadAvailableTables(formData.date, formData.time, formData.partySize);
     }
   }, [currentStep, formData.date, formData.time, formData.partySize, loadAvailableTables]);
+
+  // ===== BUSCAR ALTERNATIVAS SI NO HAY MESAS EN PASO 5 =====
+  useEffect(() => {
+    const searchAlternativesIfNeeded = async () => {
+      if (currentStep === 5 && availableTables.length === 0 && formData.date && formData.time && formData.partySize && !loadingTables) {
+        console.log('🔍 No hay mesas en Paso 5, buscando alternativas...');
+        const excludeId = initialData?.id || null;
+        const alternatives = await ReservationValidationService.findNearestAlternatives(
+          restaurantId,
+          formData.date,
+          formData.time,
+          formData.partySize,
+          6,
+          excludeId
+        );
+        console.log('✅ Alternativas encontradas:', alternatives.length);
+        setSuggestedTimes(alternatives);
+      }
+    };
+
+    searchAlternativesIfNeeded();
+  }, [currentStep, availableTables.length, formData.date, formData.time, formData.partySize, loadingTables, restaurantId, initialData]);
 
   // ===== RE-VALIDAR EN MODO EDICIÓN CUANDO CAMBIAN LOS CAMPOS =====
   useEffect(() => {
