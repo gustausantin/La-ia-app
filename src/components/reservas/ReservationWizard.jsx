@@ -113,12 +113,14 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
               <React.Fragment key={step.id}>
                 <button
                   onClick={() => goToStep(step.id)}
-                  disabled={index >= currentStep}
+                  disabled={!initialData && index >= currentStep}
                   className={`flex flex-col items-center gap-1 ${
                     index < currentStep - 1
                       ? 'text-green-600 cursor-pointer hover:text-green-700'
                       : index === currentStep - 1
                       ? 'text-blue-600'
+                      : initialData
+                      ? 'text-gray-400 cursor-pointer hover:text-gray-600'
                       : 'text-gray-300'
                   } transition-colors disabled:cursor-not-allowed`}
                 >

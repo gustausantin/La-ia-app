@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ReservationWizard } from "../components/reservas/ReservationWizard";
+import { ReservationDetailsModal } from "../components/reservas/ReservationDetailsModal";
 
 // 📧 FUNCIÓN PARA ENVIAR MENSAJE NO-SHOW
 const sendNoShowMessage = async (reservation) => {
@@ -317,7 +318,10 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                             <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-900 rounded-lg font-bold text-sm">
                                 <Shield className="w-5 h-5" />
                                 <span>
-                                    {reservation.tables?.name || `Mesa ${reservation.table_number}` || 'Sin asignar'}
+                                    {reservation.tables?.name || 
+                                     (reservation.tables?.table_number ? `Mesa ${reservation.tables.table_number}` : null) ||
+                                     (reservation.table_number ? `Mesa ${reservation.table_number}` : null) ||
+                                     'Mesa null'}
                                 </span>
                             </div>
                             
@@ -572,8 +576,10 @@ export default function Reservas() {
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [showInsightsModal, setShowInsightsModal] = useState(false);
     const [editingReservation, setEditingReservation] = useState(null);
+    const [viewingReservation, setViewingReservation] = useState(null);
 
     // Subscription de real-time
     const [realtimeSubscription, setRealtimeSubscription] = useState(null);
@@ -835,12 +841,22 @@ export default function Reservas() {
 
             let reservations = data || [];
 
-            // Fallback de diagnóstico: si RPC devuelve 0, probar lectura directa
+            // Fallback de diagnóstico: si RPC devuelve 0, probar lectura directa CON JOIN de tables
             if ((!reservations || reservations.length === 0)) {
                 try {
                     const { data: directData, error: directError } = await supabase
                         .from('reservations')
-                        .select('*')
+                        .select(`
+                            *,
+                            tables (
+                                id,
+                                table_number,
+                                name,
+                                capacity,
+                                zone,
+                                location
+                            )
+                        `)
                         .eq('restaurant_id', restaurantId)
                         .gte('reservation_date', dateRange.start)
                         .lte('reservation_date', dateRange.end)
@@ -1473,9 +1489,9 @@ export default function Reservas() {
                     setShowEditModal(true);
                     return;
                 case "view":
-                    // 🎯 CORRECCIÓN: "Ver detalles" ahora abre el modal de edición
-                    setEditingReservation(reservation);
-                    setShowEditModal(true);
+                    // 🎯 CORRECCIÓN: "Ver detalles" ahora abre el modal de SOLO LECTURA
+                    setViewingReservation(reservation);
+                    setShowDetailsModal(true);
                     return;
                 default:
                     return;
@@ -2210,6 +2226,18 @@ export default function Reservas() {
                         }
                     }}
                     onCancel={() => setShowEditModal(false)}
+                />
+            )}
+
+            {/* Modal de Detalles (Solo Lectura) */}
+            {showDetailsModal && viewingReservation && (
+                <ReservationDetailsModal
+                    reservation={viewingReservation}
+                    isOpen={showDetailsModal}
+                    onClose={() => {
+                        setShowDetailsModal(false);
+                        setViewingReservation(null);
+                    }}
                 />
             )}
 
