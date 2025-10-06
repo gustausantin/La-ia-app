@@ -151,7 +151,7 @@ export class ReservationValidationService {
    * @param {string} time - Hora en formato HH:MM:SS
    * @returns {Promise<Object>} { valid: boolean, message: string, alternatives: array }
    */
-  static async validateTime(restaurantId, date, time) {
+  static async validateTime(restaurantId, date, time, excludeReservationId = null) {
     try {
       if (!time) {
         return {
@@ -229,7 +229,7 @@ export class ReservationValidationService {
       console.log(`⏱️ Reserva ocuparía: ${time} - ${endTime} (${reservationDuration} min)`);
 
       // Buscar reservas confirmadas que se solapen con este horario
-      const { data: existingReservations, error: reservationsError } = await supabase
+      let query = supabase
         .from('reservations')
         .select('id, reservation_time, party_size, table_id')
         .eq('restaurant_id', restaurantId)
@@ -237,11 +237,19 @@ export class ReservationValidationService {
         .in('status', ['confirmed', 'pending'])
         .order('reservation_time');
 
+      // 🔥 EXCLUIR LA RESERVA ACTUAL SI ESTAMOS EDITANDO
+      if (excludeReservationId) {
+        query = query.neq('id', excludeReservationId);
+        console.log(`🔄 Excluyendo reserva actual de la validación: ${excludeReservationId}`);
+      }
+
+      const { data: existingReservations, error: reservationsError } = await query;
+
       if (reservationsError) {
         console.error('Error verificando reservas:', reservationsError);
       }
 
-      console.log(`📋 Reservas existentes en ${date}:`, existingReservations?.length || 0);
+      console.log(`📋 Reservas existentes en ${date} (excluyendo actual):`, existingReservations?.length || 0);
 
       return {
         valid: true,
@@ -617,7 +625,7 @@ export class ReservationValidationService {
    * @param {string} time - Hora en formato HH:MM:SS
    * @returns {Promise<Object>} { valid: boolean, message: string }
    */
-  static async validateTable(restaurantId, tableId, partySize, date, time) {
+  static async validateTable(restaurantId, tableId, partySize, date, time, excludeReservationId = null) {
     try {
       if (!tableId) {
         return {
@@ -675,13 +683,21 @@ export class ReservationValidationService {
       const endMinutes = requestedMinutes + reservationDuration;
 
       // Obtener reservas existentes para esta mesa en ese día
-      const { data: existingReservations, error: reservationsError } = await supabase
+      let query = supabase
         .from('reservations')
         .select('id, reservation_time')
         .eq('restaurant_id', restaurantId)
         .eq('table_id', tableId)
         .eq('reservation_date', date)
         .in('status', ['confirmed', 'pending']);
+
+      // 🔥 EXCLUIR LA RESERVA ACTUAL SI ESTAMOS EDITANDO
+      if (excludeReservationId) {
+        query = query.neq('id', excludeReservationId);
+        console.log(`🔄 Excluyendo reserva actual de validación de mesa: ${excludeReservationId}`);
+      }
+
+      const { data: existingReservations, error: reservationsError } = await query;
 
       if (reservationsError) {
         console.error('Error verificando reservas:', reservationsError);
