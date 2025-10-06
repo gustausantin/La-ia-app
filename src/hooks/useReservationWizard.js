@@ -421,24 +421,43 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
   // ===== BUSCAR ALTERNATIVAS SI NO HAY MESAS EN PASO 5 =====
   useEffect(() => {
     const searchAlternativesIfNeeded = async () => {
-      if (currentStep === 5 && availableTables.length === 0 && formData.date && formData.time && formData.partySize && !loadingTables) {
+      // Solo buscar si:
+      // 1. Estamos en paso 5
+      // 2. No hay mesas disponibles
+      // 3. NO estamos cargando
+      // 4. Tenemos todos los datos necesarios
+      // 5. AÚN NO hemos buscado alternativas (para evitar bucles)
+      if (
+        currentStep === 5 && 
+        availableTables.length === 0 && 
+        !loadingTables &&
+        formData.date && 
+        formData.time && 
+        formData.partySize &&
+        suggestedTimes.length === 0 // 🔥 Solo buscar si NO hay alternativas ya
+      ) {
         console.log('🔍 No hay mesas en Paso 5, buscando alternativas...');
-        const excludeId = initialData?.id || null;
-        const alternatives = await ReservationValidationService.findNearestAlternatives(
-          restaurantId,
-          formData.date,
-          formData.time,
-          formData.partySize,
-          6,
-          excludeId
-        );
-        console.log('✅ Alternativas encontradas:', alternatives.length);
-        setSuggestedTimes(alternatives);
+        try {
+          const excludeId = initialData?.id || null;
+          const alternatives = await ReservationValidationService.findNearestAlternatives(
+            restaurantId,
+            formData.date,
+            formData.time,
+            formData.partySize,
+            6,
+            excludeId
+          );
+          console.log('✅ Alternativas encontradas:', alternatives.length);
+          setSuggestedTimes(alternatives);
+        } catch (error) {
+          console.error('❌ Error buscando alternativas:', error);
+          setSuggestedTimes([]); // Evitar bucles en caso de error
+        }
       }
     };
 
     searchAlternativesIfNeeded();
-  }, [currentStep, availableTables.length, formData.date, formData.time, formData.partySize, loadingTables, restaurantId, initialData]);
+  }, [currentStep, availableTables.length, loadingTables, formData.date, formData.time, formData.partySize, suggestedTimes.length, restaurantId, initialData]);
 
   // ===== RE-VALIDAR EN MODO EDICIÓN CUANDO CAMBIAN LOS CAMPOS =====
   useEffect(() => {

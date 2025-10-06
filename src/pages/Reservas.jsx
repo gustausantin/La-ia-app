@@ -2146,6 +2146,10 @@ export default function Reservas() {
                     initialData={null}
                     onSave={async (reservationData) => {
                         try {
+                            // 🔥 Extraer datos del cliente (NO van a la tabla reservations)
+                            const customerData = reservationData._customerData || {};
+                            delete reservationData._customerData; // Eliminar antes de insertar
+                            
                             // Crear reserva en Supabase
                             const { data, error } = await supabase
                                 .from('reservations')
@@ -2157,10 +2161,10 @@ export default function Reservas() {
 
                             // Vincular con cliente y actualizar métricas
                             await handleCustomerLinking(reservationData, {
-                                first_name: reservationData.first_name || reservationData.customer_name?.split(' ')[0],
-                                last_name1: reservationData.last_name1 || reservationData.customer_name?.split(' ')[1],
-                                last_name2: reservationData.last_name2 || reservationData.customer_name?.split(' ')[2],
-                                birthdate: reservationData.birthdate || null,
+                                first_name: customerData.first_name || reservationData.customer_name?.split(' ')[0],
+                                last_name1: customerData.last_name1 || reservationData.customer_name?.split(' ')[1],
+                                last_name2: customerData.last_name2 || reservationData.customer_name?.split(' ')[2],
+                                birthdate: customerData.birthdate || null,
                                 consent_email: false,
                                 consent_sms: false,
                                 consent_whatsapp: false

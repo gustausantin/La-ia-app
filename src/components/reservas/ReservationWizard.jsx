@@ -76,9 +76,15 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
       special_requests: formData.specialRequests || null,  // ✅ Existe
       status: formData.status || 'pending',  // ✅ Existe - AHORA DINÁMICO
       channel: 'manual',  // ✅ Existe
-      source: 'dashboard'  // ✅ Existe
-      // ❌ first_name, last_name1, last_name2, birthdate NO existen en reservations
-      // ✅ Esos campos van en customers (se manejan en handleCustomerLinking)
+      source: 'dashboard',  // ✅ Existe
+      // 🔥 DATOS DEL CLIENTE (para handleCustomerLinking)
+      // Estos NO se insertan en reservations, pero se pasan para crear/actualizar el customer
+      _customerData: {
+        first_name: formData.firstName,
+        last_name1: formData.lastName1,
+        last_name2: formData.lastName2 || null,
+        birthdate: formData.birthdate || null
+      }
     };
 
     console.log('📝 Guardando reserva:', finalData);
