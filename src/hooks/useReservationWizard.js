@@ -469,15 +469,23 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
       time: alternative.time
     }));
     
-    // Validar la nueva hora automáticamente
-    await validateTime(formData.date, alternative.time);
+    // 🔥 NO VALIDAR DE NUEVO - La alternativa YA está validada
+    // Marcar validaciones como válidas
+    setValidations(prev => ({
+      ...prev,
+      time: {
+        valid: true,
+        message: `Hora ${alternative.displayTime} disponible`,
+        code: 'TIME_AVAILABLE'
+      }
+    }));
     
-    // 🔥 Cargar mesas disponibles para la nueva hora
+    // 🔥 Cargar mesas disponibles para la nueva hora DIRECTAMENTE
     await loadAvailableTables(formData.date, alternative.time, formData.partySize);
     
     // Mantener en paso 5 para que vea las mesas disponibles
     setCurrentStep(5);
-  }, [formData.date, formData.partySize, validateTime, loadAvailableTables]);
+  }, [formData.date, formData.partySize, loadAvailableTables]);
 
   const openAlternativesModal = useCallback(() => {
     setShowAlternativesModal(true);
