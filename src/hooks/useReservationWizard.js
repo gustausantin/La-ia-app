@@ -393,28 +393,26 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     }
   }, [currentStep, formData.date, formData.time, formData.partySize, loadAvailableTables]);
 
-  // ===== BUSCAR ALTERNATIVAS SI NO HAY MESAS EN PASO 5 =====
+  // ===== BUSCAR ALTERNATIVAS SI NO HAY MESAS EN PASO 5 (SOLO LA PRIMERA VEZ) =====
   useEffect(() => {
-    // 🔥 ESPERAR 500ms después de que termine de cargar para asegurar que availableTables está actualizado
+    // 🔥 SOLO buscar alternativas si:
+    // 1. Acabamos de llegar al Paso 5 (currentStep cambió a 5)
+    // 2. NO hay mesas disponibles
+    // 3. NO estamos cargando
+    // 4. NO hay alternativas ya buscadas
+    
+    if (currentStep !== 5) return; // Solo en paso 5
+    
     const timeoutId = setTimeout(async () => {
-      // Solo buscar si:
-      // 1. Estamos en paso 5
-      // 2. No hay mesas disponibles
-      // 3. NO estamos cargando
-      // 4. Tenemos todos los datos necesarios
-      // 5. AÚN NO hemos buscado alternativas (para evitar bucles)
-      // 6. 🔥 NO acabamos de seleccionar una alternativa
       if (
-        currentStep === 5 && 
         availableTables.length === 0 && 
         !loadingTables &&
         formData.date && 
         formData.time && 
         formData.partySize &&
-        suggestedTimes.length === 0 && // 🔥 Solo buscar si NO hay alternativas ya
-        !justSelectedAlternative // 🔥 NO buscar si acabamos de seleccionar una alternativa
+        suggestedTimes.length === 0 // 🔥 Solo buscar si NO hay alternativas ya
       ) {
-        console.log('🔍 No hay mesas en Paso 5, buscando alternativas...');
+        console.log('🔍 Primera vez en Paso 5 sin mesas, buscando alternativas...');
         try {
           const excludeId = initialData?.id || null;
           const alternatives = await ReservationValidationService.findNearestAlternatives(
@@ -437,10 +435,10 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
           setSuggestedTimes([]); // Evitar bucles en caso de error
         }
       }
-    }, 500); // 🔥 Esperar 500ms
+    }, 800); // 🔥 Esperar 800ms para que termine de cargar
 
     return () => clearTimeout(timeoutId);
-  }, [currentStep, availableTables.length, loadingTables, formData.date, formData.time, formData.partySize, suggestedTimes.length, justSelectedAlternative, restaurantId, initialData]);
+  }, [currentStep]); // 🔥 SOLO depende de currentStep
 
   // ===== RE-VALIDAR EN MODO EDICIÓN CUANDO CAMBIAN LOS CAMPOS =====
   useEffect(() => {
