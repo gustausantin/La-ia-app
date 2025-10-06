@@ -395,6 +395,12 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
 
   // ===== BUSCAR ALTERNATIVAS SI NO HAY MESAS EN PASO 5 (SOLO LA PRIMERA VEZ) =====
   useEffect(() => {
+    // 🔥 NO buscar alternativas si acabamos de seleccionar una
+    if (justSelectedAlternative) {
+      console.log('⏭️ Saltando búsqueda de alternativas (acabamos de seleccionar una)');
+      return;
+    }
+    
     // 🔥 SOLO buscar alternativas si:
     // 1. Acabamos de llegar al Paso 5 (currentStep cambió a 5)
     // 2. NO hay mesas disponibles
@@ -438,7 +444,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     }, 800); // 🔥 Esperar 800ms para que termine de cargar
 
     return () => clearTimeout(timeoutId);
-  }, [currentStep]); // 🔥 SOLO depende de currentStep
+  }, [currentStep, justSelectedAlternative]); // 🔥 Depende de currentStep Y justSelectedAlternative
 
   // ===== RE-VALIDAR EN MODO EDICIÓN CUANDO CAMBIAN LOS CAMPOS =====
   useEffect(() => {
@@ -468,6 +474,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
   // ===== MANEJO DE ALTERNATIVAS (NUEVO) =====
   const handleSelectAlternative = useCallback(async (alternative) => {
     console.log('✅ Alternativa seleccionada:', alternative);
+    console.log('📊 Datos actuales:', { date: formData.date, partySize: formData.partySize });
     
     // 🔥 MARCAR QUE ACABAMOS DE SELECCIONAR UNA ALTERNATIVA
     setJustSelectedAlternative(true);
@@ -495,11 +502,18 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
       }
     }));
     
-    // 🔥 Cargar mesas disponibles para la nueva hora DIRECTAMENTE
-    await loadAvailableTables(formData.date, alternative.time, formData.partySize);
+    console.log('🚀 Llamando a loadAvailableTables con:', formData.date, alternative.time, formData.partySize);
     
-    // 🔥 RESETEAR EL FLAG DESPUÉS DE CARGAR LAS MESAS
-    setTimeout(() => setJustSelectedAlternative(false), 1000);
+    // 🔥 Cargar mesas disponibles para la nueva hora DIRECTAMENTE
+    const result = await loadAvailableTables(formData.date, alternative.time, formData.partySize);
+    
+    console.log('📊 Resultado de loadAvailableTables:', result);
+    
+    // 🔥 RESETEAR EL FLAG DESPUÉS DE CARGAR LAS MESAS (2 segundos para asegurar)
+    setTimeout(() => {
+      console.log('🔄 Reseteando flag justSelectedAlternative');
+      setJustSelectedAlternative(false);
+    }, 2000);
     
     // Mantener en paso 5 para que vea las mesas disponibles
     setCurrentStep(5);
