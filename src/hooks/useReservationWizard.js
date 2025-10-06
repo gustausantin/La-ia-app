@@ -166,7 +166,9 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     }
 
     setIsLoading(true);
-    const result = await ReservationValidationService.validateTime(restaurantId, date, time);
+    // 🔥 Pasar el ID de la reserva actual si estamos editando
+    const excludeId = initialData?.id || null;
+    const result = await ReservationValidationService.validateTime(restaurantId, date, time, excludeId);
     
     // 🚀 SI NO HAY DISPONIBILIDAD → Buscar alternativas cercanas
     if (!result.valid && formData.partySize) {
