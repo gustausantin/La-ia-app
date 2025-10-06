@@ -34,16 +34,17 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     time: initialData?.reservation_time || '',
     partySize: initialData?.party_size || 2,
     tableId: initialData?.table_id || null,
+    status: initialData?.status || 'pending',  // 🆕 Estado de la reserva
     specialRequests: initialData?.special_requests || ''
   });
 
   // ===== ESTADO DE VALIDACIONES =====
   const [validations, setValidations] = useState({
-    phone: { valid: null, message: '' },
-    date: { valid: null, message: '', alternatives: [] },
-    time: { valid: null, message: '', alternatives: [] },
-    partySize: { valid: null, message: '' },
-    table: { valid: null, message: '' }
+    phone: { valid: initialData ? true : null, message: '' },
+    date: { valid: initialData ? true : null, message: '', alternatives: [] },
+    time: { valid: initialData ? true : null, message: '', alternatives: [] },
+    partySize: { valid: initialData ? true : null, message: '' },
+    table: { valid: initialData ? true : null, message: '' }
   });
 
   // ===== ESTADO DE DATOS DINÁMICOS =====
@@ -394,6 +395,31 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
       loadAvailableTables(formData.date, formData.time, formData.partySize);
     }
   }, [currentStep, formData.date, formData.time, formData.partySize, loadAvailableTables]);
+
+  // ===== RE-VALIDAR EN MODO EDICIÓN CUANDO CAMBIAN LOS CAMPOS =====
+  useEffect(() => {
+    if (!initialData) return; // Solo en modo edición
+
+    // Re-validar fecha si cambió
+    if (formData.date && formData.date !== initialData.reservation_date) {
+      validateDate(formData.date);
+    }
+
+    // Re-validar hora si cambió
+    if (formData.time && formData.time !== initialData.reservation_time && formData.date) {
+      validateTime(formData.date, formData.time);
+    }
+
+    // Re-validar personas si cambió
+    if (formData.partySize && formData.partySize !== initialData.party_size) {
+      validatePartySize(formData.partySize);
+    }
+
+    // Re-validar mesa si cambió
+    if (formData.tableId && formData.tableId !== initialData.table_id && formData.date && formData.time && formData.partySize) {
+      validateTable(formData.tableId, formData.partySize, formData.date, formData.time);
+    }
+  }, [formData.date, formData.time, formData.partySize, formData.tableId, initialData, validateDate, validateTime, validatePartySize, validateTable]);
 
   // ===== MANEJO DE ALTERNATIVAS (NUEVO) =====
   const handleSelectAlternative = useCallback(async (alternative) => {
