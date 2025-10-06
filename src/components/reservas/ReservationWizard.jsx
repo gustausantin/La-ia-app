@@ -43,6 +43,7 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
     STEPS,
     suggestedTimes,
     showAlternativesModal,
+    tableCombinationInfo,
     handleFieldChange,
     goToNextStep,
     goToPreviousStep,
@@ -66,19 +67,23 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
     const finalData = {
       restaurant_id: restaurantId,
       customer_id: formData.customerId,
-      customer_name: fullName,  // ✅ Existe
-      customer_email: formData.customerEmail || null,  // ✅ Existe
-      customer_phone: formData.customerPhone,  // ✅ Existe
-      reservation_date: formData.date,  // ✅ Existe
-      reservation_time: formData.time,  // ✅ Existe
-      party_size: parseInt(formData.partySize),  // ✅ Existe
-      table_id: formData.tableId,  // ✅ Existe
-      special_requests: formData.specialRequests || null,  // ✅ Existe
-      status: formData.status || 'pending',  // ✅ Existe - AHORA DINÁMICO
-      channel: 'manual',  // ✅ Existe
-      source: 'dashboard',  // ✅ Existe
+      customer_name: fullName,
+      customer_email: formData.customerEmail || null,
+      customer_phone: formData.customerPhone,
+      reservation_date: formData.date,
+      reservation_time: formData.time,
+      party_size: parseInt(formData.partySize),
+      table_id: formData.tableIds && formData.tableIds.length > 0 ? formData.tableIds[0] : null,  // 🔄 Primera mesa (compatibilidad)
+      special_requests: formData.specialRequests || null,
+      // 🆕 Si son múltiples mesas, forzar status 'pending'
+      status: (formData.tableIds && formData.tableIds.length > 1) ? 'pending' : (formData.status || 'pending'),
+      channel: 'manual',
+      source: 'dashboard',
+      // 🆕 ARRAY DE IDS DE MESAS (para insertar en reservation_tables)
+      _tableIds: formData.tableIds || [],
+      // 🆕 ZONA SELECCIONADA
+      _zone: formData.zone,
       // 🔥 DATOS DEL CLIENTE (para handleCustomerLinking)
-      // Estos NO se insertan en reservations, pero se pasan para crear/actualizar el customer
       _customerData: {
         first_name: formData.firstName,
         last_name1: formData.lastName1,
@@ -86,6 +91,15 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
         birthdate: formData.birthdate || null
       }
     };
+    
+    // 🆕 Si son múltiples mesas, agregar info en special_requests
+    if (formData.tableIds && formData.tableIds.length > 1) {
+      const selectedTables = availableTables.filter(t => formData.tableIds.includes(t.id));
+      const tableNames = selectedTables.map(t => t.name || `Mesa ${t.table_number}`).join(' + ');
+      const totalCapacity = selectedTables.reduce((sum, t) => sum + t.capacity, 0);
+      const combinationNote = `\n\n⚠️ GRUPO GRANDE: Juntar ${formData.tableIds.length} mesas (${tableNames}) en ${formData.zone}. Capacidad total: ${totalCapacity} personas.`;
+      finalData.special_requests = (finalData.special_requests || '') + combinationNote;
+    }
 
     console.log('📝 Guardando reserva:', finalData);
     await onSave(finalData);
@@ -197,8 +211,18 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
             />
           )}
 
-          {/* PASO 5: MESA */}
+          {/* PASO 5: ZONA */}
           {currentStep === 5 && (
+            <StepZone
+              formData={formData}
+              validation={validations.zone}
+              isLoading={isLoading}
+              onChange={handleFieldChange}
+            />
+          )}
+
+          {/* PASO 6: MESAS */}
+          {currentStep === 6 && (
             <StepTable
               formData={formData}
               validation={validations.table}
@@ -208,6 +232,7 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
               suggestedTimes={suggestedTimes}
               onSelectAlternative={handleSelectAlternative}
               onShowMore={openAlternativesModal}
+              tableCombinationInfo={tableCombinationInfo}
             />
           )}
         </div>
@@ -513,9 +538,31 @@ const StepTime = ({ formData, validation, isLoading, onChange }) => {
             <AlertCircle className="w-5 h-5" />
             <span className="font-medium">{validation.message}</span>
           </div>
-          <p className="text-sm text-gray-600 mt-2">
-            💡 Continúa al siguiente paso para ver alternativas disponibles
-          </p>
+          
+          {/* 🆕 MOSTRAR ALTERNATIVAS INMEDIATAMENTE */}
+          {validation.alternatives && validation.alternatives.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Horarios disponibles:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {validation.alternatives.slice(0, 4).map((alt) => (
+                  <button
+                    key={alt.time}
+                    onClick={() => onChange('time', alt.time)}
+                    className="px-3 py-2 bg-white border-2 border-blue-500 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
+                  >
+                    {alt.displayTime}
+                  </button>
+                ))}
+              </div>
+              {validation.alternatives.length > 4 && (
+                <p className="text-xs text-gray-600 mt-2">
+                  +{validation.alternatives.length - 4} horarios más disponibles
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -591,9 +638,85 @@ const StepPartySize = ({ formData, validation, isLoading, onChange }) => {
 };
 
 // ======================================================================
-// PASO 5: MESA
+// PASO 5: ZONA
 // ======================================================================
-const StepTable = ({ formData, validation, availableTables, loadingTables, onChange, suggestedTimes, onSelectAlternative, onShowMore }) => {
+const StepZone = ({ formData, validation, isLoading, onChange }) => {
+  const zones = validation?.zones || [];
+  
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">📍 Selecciona la Zona</h3>
+        <p className="text-sm text-gray-600">
+          ¿Dónde prefieres sentarte?
+        </p>
+      </div>
+
+      {isLoading && (
+        <div className="flex items-center gap-2 text-gray-600 py-8 justify-center">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Cargando zonas disponibles...
+        </div>
+      )}
+
+      {!isLoading && zones.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {zones.map((zone) => (
+            <button
+              key={zone.zone}
+              onClick={() => zone.sufficient && onChange('zone', zone.zone)}
+              disabled={!zone.sufficient}
+              className={`p-5 border-2 rounded-xl text-left transition-all ${
+                formData.zone === zone.zone
+                  ? 'border-blue-600 bg-blue-50 shadow-md'
+                  : zone.sufficient
+                  ? 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                  : 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-lg font-semibold text-gray-900 capitalize">
+                  {zone.zone}
+                </span>
+                {formData.zone === zone.zone && (
+                  <Check className="w-6 h-6 text-blue-600" />
+                )}
+              </div>
+              
+              <div className="space-y-1 text-sm">
+                <p className="text-gray-600">
+                  🪑 {zone.tableCount} mesa{zone.tableCount > 1 ? 's' : ''} disponible{zone.tableCount > 1 ? 's' : ''}
+                </p>
+                <p className={zone.sufficient ? 'text-green-700 font-medium' : 'text-red-700 font-medium'}>
+                  👥 Capacidad total: {zone.totalCapacity} personas
+                </p>
+                {!zone.sufficient && (
+                  <p className="text-red-600 text-xs mt-2">
+                    ⚠️ Insuficiente para {formData.partySize} personas
+                  </p>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!isLoading && zones.length === 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-red-800">
+            <AlertCircle className="w-5 h-5" />
+            <span className="font-medium">No hay zonas disponibles</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ======================================================================
+// PASO 6: MESAS
+// ======================================================================
+const StepTable = ({ formData, validation, availableTables, loadingTables, onChange, suggestedTimes, onSelectAlternative, onShowMore, tableCombinationInfo }) => {
   return (
     <div className="space-y-6">
       <div>
@@ -683,6 +806,25 @@ const StepTable = ({ formData, validation, availableTables, loadingTables, onCha
           </div>
         )}
 
+        {/* 🆕 MOSTRAR INFO DE COMBINACIÓN DE MESAS */}
+        {!loadingTables && availableTables.length > 0 && tableCombinationInfo?.requiresCombination && (
+          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-2 text-yellow-800 mb-2">
+              <AlertCircle className="w-5 h-5" />
+              <span className="font-semibold">Grupo grande: Se juntarán {tableCombinationInfo.tableCount} mesas</span>
+            </div>
+            <p className="text-sm text-yellow-700 mb-1">
+              📍 Zona: <span className="font-medium">{tableCombinationInfo.zone}</span>
+            </p>
+            <p className="text-sm text-yellow-700 mb-2">
+              👥 Capacidad total: <span className="font-medium">{tableCombinationInfo.totalCapacity} personas</span>
+            </p>
+            <p className="text-xs text-yellow-600 bg-yellow-100 rounded px-2 py-1 inline-block">
+              ⚠️ La reserva quedará <strong>PENDIENTE</strong> de confirmación
+            </p>
+          </div>
+        )}
+
         {!loadingTables && availableTables.length === 0 && (
           <div className="space-y-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -736,31 +878,89 @@ const StepTable = ({ formData, validation, availableTables, loadingTables, onCha
         )}
 
         {!loadingTables && availableTables.length > 0 && (
-          <div className="grid grid-cols-2 gap-3">
-            {availableTables.map((table) => (
-              <button
-                key={table.id}
-                onClick={() => onChange('tableId', table.id)}
-                className={`p-4 border-2 rounded-lg text-left transition-all ${
-                  formData.tableId === table.id
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold text-gray-900">
-                    Mesa {table.table_number || table.name}
-                  </span>
-                  {formData.tableId === table.id && (
-                    <Check className="w-5 h-5 text-blue-600" />
-                  )}
+          <div>
+            {/* 🆕 Mostrar capacidad total seleccionada */}
+            {formData.tableIds && formData.tableIds.length > 0 && (
+              <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">
+                      {formData.tableIds.length} mesa{formData.tableIds.length > 1 ? 's' : ''} seleccionada{formData.tableIds.length > 1 ? 's' : ''}
+                    </p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      👥 Capacidad total: {
+                        availableTables
+                          .filter(t => formData.tableIds.includes(t.id))
+                          .reduce((sum, t) => sum + t.capacity, 0)
+                      } personas
+                      {formData.partySize && (
+                        <span className={
+                          availableTables
+                            .filter(t => formData.tableIds.includes(t.id))
+                            .reduce((sum, t) => sum + t.capacity, 0) >= formData.partySize
+                            ? ' text-green-700 font-semibold'
+                            : ' text-red-700 font-semibold'
+                        }>
+                          {' '}
+                          ({availableTables
+                            .filter(t => formData.tableIds.includes(t.id))
+                            .reduce((sum, t) => sum + t.capacity, 0) >= formData.partySize
+                            ? '✅ Suficiente'
+                            : `⚠️ Faltan ${formData.partySize - availableTables
+                                .filter(t => formData.tableIds.includes(t.id))
+                                .reduce((sum, t) => sum + t.capacity, 0)} plazas`
+                          })
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onChange('tableIds', [])}
+                    className="text-blue-700 hover:text-blue-900 text-sm font-medium"
+                  >
+                    Limpiar
+                  </button>
                 </div>
-                <div className="text-sm text-gray-600">
-                  <p>👥 Capacidad: {table.capacity} personas</p>
-                  {table.zone && <p>📍 {table.zone}</p>}
-                </div>
-              </button>
-            ))}
+              </div>
+            )}
+
+            {/* 🔄 Checkboxes para selección múltiple */}
+            <div className="grid grid-cols-2 gap-3">
+              {availableTables.map((table) => {
+                const isSelected = formData.tableIds && formData.tableIds.includes(table.id);
+                
+                return (
+                  <button
+                    key={table.id}
+                    onClick={() => {
+                      const currentIds = formData.tableIds || [];
+                      const newIds = isSelected
+                        ? currentIds.filter(id => id !== table.id)
+                        : [...currentIds, table.id];
+                      onChange('tableIds', newIds);
+                    }}
+                    className={`p-4 border-2 rounded-lg text-left transition-all ${
+                      isSelected
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-gray-900">
+                        {table.name || `Mesa ${table.table_number}`}
+                      </span>
+                      {isSelected && (
+                        <Check className="w-5 h-5 text-blue-600" />
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <p>👥 Capacidad: {table.capacity} personas</p>
+                      {table.location && <p className="text-xs">📍 {table.location}</p>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
