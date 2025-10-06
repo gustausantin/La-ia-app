@@ -317,12 +317,31 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
       case 'time':
         if (formData.date) {
           await validateTime(formData.date, value);
-          // Reset mesa
-          setValidations(prev => ({
-            ...prev,
-            table: { valid: null, message: '' }
-          }));
-          setAvailableTables([]);
+          
+          // 🔥 Si estamos editando Y ya hay mesa seleccionada → Re-validarla
+          if (initialData && formData.tableId && formData.partySize) {
+            console.log('🔄 Re-validando mesa después de cambiar hora...');
+            const excludeId = initialData?.id || null;
+            const tableResult = await ReservationValidationService.validateTable(
+              restaurantId,
+              formData.tableId,
+              formData.partySize,
+              formData.date,
+              value, // Nueva hora
+              excludeId
+            );
+            setValidations(prev => ({
+              ...prev,
+              table: { valid: tableResult.valid, message: tableResult.message }
+            }));
+          } else {
+            // Reset mesa solo si NO estamos editando
+            setValidations(prev => ({
+              ...prev,
+              table: { valid: null, message: '' }
+            }));
+            setAvailableTables([]);
+          }
         }
         break;
 
