@@ -184,9 +184,6 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
               validation={validations.time}
               isLoading={isLoading}
               onChange={handleFieldChange}
-              suggestedTimes={suggestedTimes}
-              onSelectAlternative={handleSelectAlternative}
-              onShowMore={openAlternativesModal}
             />
           )}
 
@@ -465,7 +462,7 @@ const StepDate = ({ formData, validation, isLoading, onChange }) => {
 // ======================================================================
 // PASO 3: HORA
 // ======================================================================
-const StepTime = ({ formData, validation, isLoading, onChange, suggestedTimes = [], onSelectAlternative, onShowMore }) => {
+const StepTime = ({ formData, validation, isLoading, onChange }) => {
   return (
     <div className="space-y-6">
       <div>
@@ -511,71 +508,14 @@ const StepTime = ({ formData, validation, isLoading, onChange, suggestedTimes = 
       )}
 
       {!isLoading && validation.valid === false && (
-        <div className="space-y-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-red-800">
-              <AlertCircle className="w-5 h-5" />
-              <span className="font-medium">{validation.message}</span>
-            </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-red-800">
+            <AlertCircle className="w-5 h-5" />
+            <span className="font-medium">{validation.message}</span>
           </div>
-
-          {/* 🚀 CHIPS DE SUGERENCIAS INMEDIATAS */}
-          {suggestedTimes && suggestedTimes.length > 0 && (
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-5 h-5 text-purple-600" />
-                <p className="font-medium text-gray-900">¿Te va alguna de estas horas?</p>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 mb-3">
-                {suggestedTimes.slice(0, 4).map((alternative, index) => (
-                  <button
-                    key={index}
-                    onClick={() => onSelectAlternative(alternative)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-purple-300 text-purple-700 font-semibold rounded-lg hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all transform hover:scale-105 shadow-sm"
-                  >
-                    <Clock className="w-4 h-4" />
-                    {alternative.displayTime}
-                    {alternative.availableTables && (
-                      <span className="text-xs opacity-75">
-                        ({alternative.availableTables} mesa{alternative.availableTables > 1 ? 's' : ''})
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {suggestedTimes.length > 4 && (
-                <button
-                  onClick={onShowMore}
-                  className="w-full px-4 py-2 bg-white border border-purple-300 text-purple-700 font-medium rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Ver más opciones ({suggestedTimes.length - 4} más)
-                </button>
-              )}
-            </div>
-          )}
-          
-          {/* Alternativas legacy (por compatibilidad) */}
-          {validation.alternatives && validation.alternatives.length > 0 && suggestedTimes.length === 0 && (
-            <div className="mt-3">
-              <p className="text-sm text-gray-700 font-medium mb-2">
-                Horarios alternativos disponibles:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {validation.alternatives.map((alt, index) => (
-                  <button
-                    key={index}
-                    onClick={() => onChange('time', alt.time)}
-                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm font-medium transition-colors"
-                  >
-                    {alt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <p className="text-sm text-gray-600 mt-2">
+            💡 Continúa al siguiente paso para ver alternativas disponibles
+          </p>
         </div>
       )}
     </div>
