@@ -229,8 +229,10 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
       excludeId
     );
     
-    console.log('📊 Actualizando availableTables con:', result.tables || []);
-    setAvailableTables(result.tables || []);
+    console.log('📊 Resultado completo de getAvailableTables:', result);
+    console.log('📊 result.tables:', result?.tables);
+    console.log('📊 Actualizando availableTables con:', result?.tables || []);
+    setAvailableTables(result?.tables || []);
     setLoadingTables(false);
     
     return result;
