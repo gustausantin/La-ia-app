@@ -335,14 +335,21 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
 
       case 'tableId':
         if (formData.date && formData.time && formData.partySize) {
+          console.log('🔍 Validando mesa:', { tableId: value, partySize: formData.partySize, date: formData.date, time: formData.time });
           await validateTable(value, formData.partySize, formData.date, formData.time);
+        } else {
+          console.warn('⚠️ No se puede validar mesa: faltan datos', { 
+            date: formData.date, 
+            time: formData.time, 
+            partySize: formData.partySize 
+          });
         }
         break;
 
       default:
         break;
     }
-  }, [formData.date, searchCustomerByPhone, validateDate, validateTime, validatePartySize, validateTable]);
+  }, [formData.date, formData.time, formData.partySize, searchCustomerByPhone, validateDate, validateTime, validatePartySize, validateTable]);
 
   // ===== NAVEGACIÓN DEL WIZARD =====
   const goToNextStep = useCallback(() => {
