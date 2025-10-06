@@ -804,6 +804,214 @@ export class ReservationValidationService {
       warnings: []
     };
   }
+
+  /**
+   * 🚀 BUSCAR ALTERNATIVAS CERCANAS
+   * Encuentra horarios disponibles cercanos a la hora solicitada
+   * @param {string} restaurantId - ID del restaurante
+   * @param {string} date - Fecha en formato YYYY-MM-DD
+   * @param {string} requestedTime - Hora solicitada en formato HH:MM:SS
+   * @param {number} partySize - Número de personas
+   * @param {number} k - Número máximo de alternativas a retornar
+   * @param {string} excludeReservationId - ID de reserva a excluir (modo edición)
+   * @returns {Promise<Array>} Array de alternativas ordenadas por proximidad
+   */
+  static async findNearestAlternatives(restaurantId, date, requestedTime, partySize, k = 6, excludeReservationId = null) {
+    try {
+      console.log(`🔍 Buscando ${k} alternativas para ${date} ${requestedTime} (${partySize} personas)`);
+
+      // 1. Obtener configuración del restaurante
+      const { data: restaurant, error: restaurantError } = await supabase
+        .from('restaurants')
+        .select('settings')
+        .eq('id', restaurantId)
+        .single();
+
+      if (restaurantError) {
+        console.error('Error obteniendo configuración:', restaurantError);
+        return [];
+      }
+
+      const settings = restaurant?.settings || {};
+      const operatingHours = settings.operating_hours || {};
+      const reservationDuration = settings.reservation_duration || 60;
+      const slotInterval = settings.slot_interval || 30;
+
+      // 2. Obtener horario del día
+      const selectedDate = new Date(date + 'T00:00:00');
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayOfWeek = selectedDate.getDay();
+      const dayName = dayNames[dayOfWeek];
+      const dayConfig = operatingHours[dayName];
+
+      if (!dayConfig || dayConfig.closed === true) {
+        console.log('❌ Restaurante cerrado ese día');
+        return [];
+      }
+
+      const openTime = dayConfig.open || '09:00';
+      const closeTime = dayConfig.close || '22:00';
+
+      console.log(`📅 Horario del ${dayName}: ${openTime} - ${closeTime}`);
+
+      // 3. Generar todos los slots posibles del día
+      const [openHours, openMinutes] = openTime.split(':').map(Number);
+      const [closeHours, closeMinutes] = closeTime.split(':').map(Number);
+      
+      const openMinutesTotal = openHours * 60 + openMinutes;
+      const closeMinutesTotal = closeHours * 60 + closeMinutes;
+
+      const allSlots = [];
+      for (let minutes = openMinutesTotal; minutes < closeMinutesTotal - reservationDuration; minutes += slotInterval) {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        const timeStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:00`;
+        allSlots.push(timeStr);
+      }
+
+      console.log(`🕐 Slots generados: ${allSlots.length}`);
+
+      // 4. Obtener mesas disponibles para cada slot
+      const alternatives = [];
+
+      for (const slotTime of allSlots) {
+        // Obtener mesas disponibles para este slot
+        const availableTables = await this.getAvailableTables(
+          restaurantId,
+          date,
+          slotTime,
+          partySize,
+          excludeReservationId
+        );
+
+        if (availableTables.length > 0) {
+          // Calcular proximidad a la hora solicitada
+          const [reqHours, reqMinutes] = requestedTime.split(':').map(Number);
+          const [slotHours, slotMinutes] = slotTime.split(':').map(Number);
+          
+          const requestedMinutes = reqHours * 60 + reqMinutes;
+          const slotMinutesTotal = slotHours * 60 + slotMinutes;
+          
+          const proximityMinutes = Math.abs(slotMinutesTotal - requestedMinutes);
+
+          alternatives.push({
+            time: slotTime,
+            displayTime: slotTime.substring(0, 5), // HH:MM
+            availableTables: availableTables.length,
+            proximityMinutes,
+            tables: availableTables
+          });
+        }
+      }
+
+      // 5. Ordenar por proximidad y tomar las k más cercanas
+      alternatives.sort((a, b) => a.proximityMinutes - b.proximityMinutes);
+      const nearest = alternatives.slice(0, k);
+
+      console.log(`✅ Encontradas ${nearest.length} alternativas:`, nearest.map(a => `${a.displayTime} (${a.availableTables} mesas)`));
+
+      return nearest;
+
+    } catch (error) {
+      console.error('Error buscando alternativas:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 🔍 OBTENER MESAS DISPONIBLES
+   * Encuentra todas las mesas disponibles para una fecha/hora/tamaño específicos
+   * @param {string} restaurantId - ID del restaurante
+   * @param {string} date - Fecha en formato YYYY-MM-DD
+   * @param {string} time - Hora en formato HH:MM:SS
+   * @param {number} partySize - Número de personas
+   * @param {string} excludeReservationId - ID de reserva a excluir (modo edición)
+   * @returns {Promise<Array>} Array de mesas disponibles
+   */
+  static async getAvailableTables(restaurantId, date, time, partySize, excludeReservationId = null) {
+    try {
+      // 1. Obtener todas las mesas activas con capacidad suficiente
+      const { data: tables, error: tablesError } = await supabase
+        .from('tables')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('is_active', true)
+        .gte('capacity', partySize)
+        .order('table_number');
+
+      if (tablesError) {
+        console.error('Error obteniendo mesas:', tablesError);
+        return [];
+      }
+
+      if (!tables || tables.length === 0) {
+        return [];
+      }
+
+      // 2. Obtener duración de reserva
+      const { data: restaurant } = await supabase
+        .from('restaurants')
+        .select('settings')
+        .eq('id', restaurantId)
+        .single();
+
+      const reservationDuration = restaurant?.settings?.reservation_duration || 60;
+
+      // 3. Calcular rango de tiempo de la nueva reserva
+      const [hours, minutes] = time.split(':').map(Number);
+      const requestedMinutes = hours * 60 + minutes;
+      const endMinutes = requestedMinutes + reservationDuration;
+
+      // 4. Obtener todas las reservas confirmadas/pendientes para ese día
+      let query = supabase
+        .from('reservations')
+        .select('id, table_id, reservation_time')
+        .eq('restaurant_id', restaurantId)
+        .eq('reservation_date', date)
+        .in('status', ['confirmed', 'pending']);
+
+      // Excluir la reserva actual si estamos editando
+      if (excludeReservationId) {
+        query = query.neq('id', excludeReservationId);
+      }
+
+      const { data: existingReservations, error: reservationsError } = await query;
+
+      if (reservationsError) {
+        console.error('Error obteniendo reservas:', reservationsError);
+        return [];
+      }
+
+      // 5. Filtrar mesas que NO tienen conflictos
+      const availableTables = tables.filter(table => {
+        // Verificar si esta mesa tiene alguna reserva que se solape
+        const hasConflict = existingReservations?.some(reservation => {
+          if (reservation.table_id !== table.id) return false;
+
+          const [resHours, resMinutes] = reservation.reservation_time.split(':').map(Number);
+          const resStartMinutes = resHours * 60 + resMinutes;
+          const resEndMinutes = resStartMinutes + reservationDuration;
+
+          // Verificar si hay solapamiento
+          const overlaps = (
+            (requestedMinutes >= resStartMinutes && requestedMinutes < resEndMinutes) ||
+            (endMinutes > resStartMinutes && endMinutes <= resEndMinutes) ||
+            (requestedMinutes <= resStartMinutes && endMinutes >= resEndMinutes)
+          );
+
+          return overlaps;
+        });
+
+        return !hasConflict;
+      });
+
+      return availableTables;
+
+    } catch (error) {
+      console.error('Error obteniendo mesas disponibles:', error);
+      return [];
+    }
+  }
 }
 
 export default ReservationValidationService;
