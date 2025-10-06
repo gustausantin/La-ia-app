@@ -204,7 +204,28 @@ export class ReservationValidationService {
 
       console.log(`📅 Horario del ${dayName}: ${openTime} - ${closeTime}`);
 
-      if (requestedTime < openTime || requestedTime >= closeTime) {
+      // 🆕 3. VALIDAR ANTELACIÓN MÍNIMA (min_advance_hours en MINUTOS)
+      const minAdvanceMinutes = settings.min_advance_hours || 0; // Ahora en MINUTOS
+      
+      if (minAdvanceMinutes > 0) {
+        const now = new Date();
+        const reservationDateTime = new Date(`${date}T${requestedTime}:00`);
+        const minutesUntilReservation = Math.floor((reservationDateTime - now) / (1000 * 60));
+        
+        console.log(`⏰ Antelación: ${minutesUntilReservation} minutos (mínimo requerido: ${minAdvanceMinutes} minutos)`);
+        
+        if (minutesUntilReservation < minAdvanceMinutes) {
+          return {
+            valid: false,
+            message: `Lo siento, no se admiten reservas con una antelación inferior a ${minAdvanceMinutes} minutos. Por favor, reserva con al menos ${minAdvanceMinutes} minutos de antelación.`,
+            code: 'MIN_ADVANCE_TIME_NOT_MET',
+            requiredMinutes: minAdvanceMinutes,
+            currentMinutes: minutesUntilReservation
+          };
+        }
+      }
+
+      if (requestedTime < openTime || requestedTime > closeTime) {
         // 🆕 Generar alternativas dentro del horario
         const alternatives = [];
         const slotInterval = settings.slot_interval || 30;

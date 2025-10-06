@@ -17,6 +17,7 @@ import {
     CheckCircle2,
     XCircle,
     AlertCircle,
+    AlertTriangle,
     MoreVertical,
     Edit,
     MessageSquare,
@@ -341,6 +342,14 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                                     })()}
                                 </span>
                             </div>
+                            
+                            {/* 🚨 ICONO GRUPO GRANDE - MUY VISIBLE */}
+                            {reservation.reservation_tables && reservation.reservation_tables.length > 1 && (
+                                <div className="flex items-center gap-2 px-3 py-2 bg-red-100 border-2 border-red-400 text-red-900 rounded-lg font-bold text-sm animate-pulse">
+                                    <AlertTriangle className="w-6 h-6" />
+                                    <span>GRUPO GRANDE</span>
+                                </div>
+                            )}
                             
                             {reservation.tables?.zone && (
                                 <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium">
@@ -2474,21 +2483,22 @@ export default function Reservas() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Horas mínimas de antelación
+                                    ⏰ Minutos mínimos de antelación
                                 </label>
                                 <input
                                     type="number"
                                     value={policySettings.min_advance_hours}
                                     onChange={(e) => setPolicySettings(prev => ({
                                         ...prev,
-                                        min_advance_hours: parseInt(e.target.value) || 2
+                                        min_advance_hours: parseInt(e.target.value) || 0
                                     }))}
                                     min="0"
-                                    max="48"
+                                    max="1440"
+                                    step="15"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">
-                                    Tiempo mínimo para hacer una reserva
+                                    Tiempo mínimo en MINUTOS para hacer una reserva (ej: 60 = 1 hora, 120 = 2 horas)
                                 </p>
                             </div>
                         </div>
