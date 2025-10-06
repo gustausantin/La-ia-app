@@ -229,6 +229,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
       excludeId
     );
     
+    console.log('📊 Actualizando availableTables con:', result.tables || []);
     setAvailableTables(result.tables || []);
     setLoadingTables(false);
     
@@ -471,9 +472,6 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     console.log('✅ Alternativa seleccionada:', alternative);
     console.log('📊 Datos actuales:', { date: formData.date, partySize: formData.partySize });
     
-    // 🔥 Limpiar sugerencias PRIMERO para evitar bucles
-    setSuggestedTimes([]);
-    
     // Cerrar modal
     setShowAlternativesModal(false);
     
@@ -491,7 +489,8 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
         valid: true,
         message: `Hora ${alternative.displayTime} disponible`,
         code: 'TIME_AVAILABLE'
-      }
+      },
+      table: { valid: null, message: '' } // Reset table validation
     }));
     
     console.log('🚀 Llamando a loadAvailableTables con:', formData.date, alternative.time, formData.partySize);
@@ -500,7 +499,10 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     const result = await loadAvailableTables(formData.date, alternative.time, formData.partySize);
     
     console.log('📊 Resultado de loadAvailableTables:', result);
-    console.log('✅ Mesas cargadas, NO buscar alternativas de nuevo');
+    console.log('✅ Mesas cargadas:', result?.tables?.length || 0);
+    
+    // 🔥 Limpiar sugerencias DESPUÉS de cargar las mesas
+    setSuggestedTimes([]);
     
     // Mantener en paso 5 para que vea las mesas disponibles
     setCurrentStep(5);
