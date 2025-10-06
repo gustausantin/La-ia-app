@@ -170,43 +170,12 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     const excludeId = initialData?.id || null;
     const result = await ReservationValidationService.validateTime(restaurantId, date, time, excludeId);
     
-    // 🚀 SI NO HAY DISPONIBILIDAD → Buscar alternativas cercanas
-    if (!result.valid && formData.partySize) {
-      console.log('⚠️ Sin disponibilidad, buscando alternativas cercanas...');
-      const alternatives = await ReservationValidationService.findNearestAlternatives(
-        restaurantId,
-        date,
-        time,
-        formData.partySize,
-        6, // Máximo 6 alternativas
-        excludeId // 🔥 Excluir reserva actual si estamos editando
-      );
-      
-      console.log('✅ Alternativas encontradas:', alternatives.length, alternatives);
-      setSuggestedTimes(alternatives);
-      
-      setValidations(prev => ({
-        ...prev,
-        time: {
-          valid: result.valid,
-          message: result.message,
-          alternatives: alternatives,
-          code: result.code
-        }
-      }));
-    } else {
-      // Si hay disponibilidad, limpiar sugerencias
-      setSuggestedTimes([]);
-      setValidations(prev => ({
-        ...prev,
-        time: {
-          valid: result.valid,
-          message: result.message,
-          alternatives: result.alternatives || [],
-          code: result.code
-        }
-      }));
-    }
+    // ❌ NO buscar alternativas en Paso 3 (aún no sabemos partySize)
+    // ✅ Las alternativas se buscan SOLO en Paso 5 cuando ya tenemos todos los datos
+    setValidations(prev => ({
+      ...prev,
+      time: result
+    }));
     
     setIsLoading(false);
     return result;
