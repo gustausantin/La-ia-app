@@ -317,9 +317,9 @@ export class ReservationValidationService {
    * REGLA 2: Solo datos REALES (mesas + reservas)
    * REGLA 3: Multi-tenant (filtrado por restaurant_id)
    */
-  static async findNearestAlternatives(restaurantId, date, requestedTime, partySize, k = 6) {
+  static async findNearestAlternatives(restaurantId, date, requestedTime, partySize, k = 6, excludeReservationId = null) {
     try {
-      console.log('🔍 Buscando alternativas cercanas:', { restaurantId, date, requestedTime, partySize, k });
+      console.log('🔍 Buscando alternativas cercanas:', { restaurantId, date, requestedTime, partySize, k, excludeReservationId });
 
       // 1. Obtener configuración del restaurante
       const { data: restaurant } = await supabase
@@ -369,7 +369,7 @@ export class ReservationValidationService {
       const alternatives = [];
       
       for (const time of possibleTimes) {
-        const result = await this.getAvailableTables(restaurantId, date, time, partySize);
+        const result = await this.getAvailableTables(restaurantId, date, time, partySize, excludeReservationId);
         
         if (result.success && result.tables.length > 0) {
           alternatives.push({
