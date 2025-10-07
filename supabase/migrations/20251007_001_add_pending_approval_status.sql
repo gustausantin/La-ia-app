@@ -35,3 +35,4 @@ COMMENT ON COLUMN reservations.status IS 'Estado de la reserva. pending_approval
 -- ========================================
 -- MIGRACIÓN COMPLETADA ✅
 -- ========================================
+

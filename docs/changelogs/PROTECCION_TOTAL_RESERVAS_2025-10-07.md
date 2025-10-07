@@ -231,3 +231,4 @@ SELECT verificar_integridad_reservas('TU_RESTAURANT_ID');
 ---
 
 **🎯 OBJETIVO CUMPLIDO: PROTECCIÓN TOTAL IMPLEMENTADA**
+

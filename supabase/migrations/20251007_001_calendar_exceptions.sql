@@ -100,3 +100,4 @@ COMMENT ON COLUMN calendar_exceptions.created_by IS 'Origen de la excepción: "s
 -- MIGRACIÓN COMPLETADA ✅
 -- Tabla calendar_exceptions creada sin tocar nada existente
 -- ========================================
+
