@@ -376,10 +376,11 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
 
                         {/* DERECHA: BADGES */}
                         <div className="flex items-center gap-2">
-                            {reservation.reservation_tables && reservation.reservation_tables.length > 1 && (
+                            {/* 🚨 GRUPO GRANDE: Solo para ≥10 personas */}
+                            {reservation.party_size >= 10 && (
                                 <div className="flex items-center gap-1 px-2 py-1 bg-red-100 border border-red-400 text-red-900 rounded font-bold text-xs animate-pulse">
                                     <AlertTriangle className="w-4 h-4" />
-                                    <span>GRUPO</span>
+                                    <span>GRUPO GRANDE</span>
                                 </div>
                             )}
 
@@ -602,11 +603,13 @@ export default function Reservas() {
     const [reservations, setReservations] = useState([]);
     const [selectedReservations, setSelectedReservations] = useState(new Set());
     const [activeTab, setActiveTab] = useState('reservas'); // 'reservas' o 'disponibilidades'
+    const [autoTriggerRegeneration, setAutoTriggerRegeneration] = useState(false);
 
     // 🚨 Auto-abrir tab de disponibilidades si viene desde el modal de regeneración
     useEffect(() => {
         if (location.state?.autoOpenAvailability) {
             setActiveTab('disponibilidades');
+            setAutoTriggerRegeneration(true); // Activar auto-trigger
             // Limpiar el state para que no se repita
             window.history.replaceState({}, document.title);
         }
@@ -1535,7 +1538,29 @@ export default function Reservas() {
                         return;
                     }
                 case "edit":
-                    setEditingReservation(reservation);
+                    // 🔥 Cargar datos completos del cliente antes de editar
+                    if (reservation.customer_id) {
+                        const { data: customerData, error: customerError } = await supabase
+                            .from('customers')
+                            .select('first_name, last_name1, last_name2, birthday')
+                            .eq('id', reservation.customer_id)
+                            .single();
+                        
+                        if (!customerError && customerData) {
+                            // Enriquecer la reserva con datos del cliente
+                            setEditingReservation({
+                                ...reservation,
+                                firstName: customerData.first_name,
+                                lastName1: customerData.last_name1,
+                                lastName2: customerData.last_name2,
+                                birthdate: customerData.birthday
+                            });
+                        } else {
+                            setEditingReservation(reservation);
+                        }
+                    } else {
+                        setEditingReservation(reservation);
+                    }
                     setShowEditModal(true);
                     return;
                 case "approve":
@@ -2292,10 +2317,12 @@ export default function Reservas() {
                             );
                             addNotification({
                                 type: "system",
-                                message: tableIds.length > 1 
-                                    ? `Nueva reserva GRUPO GRANDE: ${tableIds.length} mesas en ${zone}` 
-                                    : "Nueva reserva manual creada",
-                                priority: tableIds.length > 1 ? "high" : "low",
+                                message: parseInt(reservationData.party_size) >= 10
+                                    ? `⚠️ GRUPO GRANDE (${reservationData.party_size} personas): Pendiente de aprobación` 
+                                    : tableIds.length > 1
+                                        ? `Nueva reserva: ${tableIds.length} mesas combinadas en ${zone}`
+                                        : "Nueva reserva manual creada",
+                                priority: parseInt(reservationData.party_size) >= 10 ? "high" : "low",
                             });
                         } catch (error) {
                             console.error('Error creando reserva:', error);
@@ -2312,6 +2339,15 @@ export default function Reservas() {
                     initialData={editingReservation}
                     onSave={async (reservationData) => {
                         try {
+                            // 🔥 Extraer datos que NO van a la tabla reservations
+                            const customerData = reservationData._customerData || {};
+                            const tableIds = reservationData._tableIds || [];
+                            const zone = reservationData._zone;
+                            
+                            delete reservationData._customerData;
+                            delete reservationData._tableIds;
+                            delete reservationData._zone;
+                            
                             // Actualizar reserva en Supabase
                             const { error } = await supabase
                                 .from('reservations')
@@ -2319,6 +2355,35 @@ export default function Reservas() {
                                 .eq('id', editingReservation.id);
 
                             if (error) throw error;
+
+                            // 🔥 Actualizar datos del cliente si existen
+                            if (reservationData.customer_id && Object.keys(customerData).length > 0) {
+                                // Construir objeto completo para handleCustomerLinking
+                                const fullReservationData = {
+                                    ...reservationData,
+                                    id: editingReservation.id
+                                };
+                                await handleCustomerLinking(fullReservationData, customerData);
+                            }
+
+                            // 🔥 Actualizar reservation_tables si hay múltiples mesas
+                            if (tableIds.length > 0) {
+                                // Eliminar relaciones antiguas
+                                await supabase
+                                    .from('reservation_tables')
+                                    .delete()
+                                    .eq('reservation_id', editingReservation.id);
+                                
+                                // Insertar nuevas relaciones
+                                const reservationTables = tableIds.map(tableId => ({
+                                    reservation_id: editingReservation.id,
+                                    table_id: tableId
+                                }));
+                                
+                                await supabase
+                                    .from('reservation_tables')
+                                    .insert(reservationTables);
+                            }
 
                             setShowEditModal(false);
                             loadReservations();
@@ -2362,7 +2427,7 @@ export default function Reservas() {
             {/* Pestaña de Horarios de Reserva */}
             {activeTab === 'disponibilidades' && (
                 <div className="space-y-6">
-                    <AvailabilityManager />
+                    <AvailabilityManager autoTriggerRegeneration={autoTriggerRegeneration} />
                 </div>
             )}
 

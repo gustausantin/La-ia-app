@@ -75,8 +75,8 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
       party_size: parseInt(formData.partySize),
       table_id: formData.tableIds && formData.tableIds.length > 0 ? formData.tableIds[0] : null,  // 🔄 Primera mesa (compatibilidad)
       special_requests: formData.specialRequests || null,
-      // 🆕 Si son múltiples mesas, forzar status 'pending_approval' (requiere aprobación del restaurante)
-      status: (formData.tableIds && formData.tableIds.length > 1) ? 'pending_approval' : (formData.status || 'pending'),
+      // 🆕 Grupos grandes (≥10 personas) requieren aprobación del restaurante
+      status: parseInt(formData.partySize) >= 10 ? 'pending_approval' : (formData.status || 'pending'),
       channel: 'manual',
       source: 'dashboard',
       // 🆕 ARRAY DE IDS DE MESAS (para insertar en reservation_tables)
@@ -92,13 +92,31 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
       }
     };
     
-    // 🆕 Si son múltiples mesas, agregar info en special_requests
+    // 🆕 Limpiar mensajes antiguos de combinación de mesas
+    let cleanedRequests = (finalData.special_requests || '');
+    // Eliminar mensajes previos de combinación (tanto GRUPO GRANDE como Mesas combinadas)
+    cleanedRequests = cleanedRequests
+      .replace(/\n\n⚠️ GRUPO GRANDE.*?REQUIERE APROBACIÓN\./s, '')
+      .replace(/\n\n📋 Mesas combinadas:.*?personas\./s, '')
+      .trim();
+    
+    // 🆕 Si son múltiples mesas, agregar info actualizada en special_requests
     if (formData.tableIds && formData.tableIds.length > 1) {
       const selectedTables = availableTables.filter(t => formData.tableIds.includes(t.id));
       const tableNames = selectedTables.map(t => t.name || `Mesa ${t.table_number}`).join(' + ');
       const totalCapacity = selectedTables.reduce((sum, t) => sum + t.capacity, 0);
-      const combinationNote = `\n\n⚠️ GRUPO GRANDE: Juntar ${formData.tableIds.length} mesas (${tableNames}) en ${formData.zone}. Capacidad total: ${totalCapacity} personas.`;
-      finalData.special_requests = (finalData.special_requests || '') + combinationNote;
+      const partySize = parseInt(formData.partySize);
+      
+      // Solo marcar como "GRUPO GRANDE" si son ≥10 personas
+      const isLargeGroup = partySize >= 10;
+      const combinationNote = isLargeGroup
+        ? `\n\n⚠️ GRUPO GRANDE (${partySize} personas): Juntar ${formData.tableIds.length} mesas (${tableNames}) en ${formData.zone}. Capacidad total: ${totalCapacity} personas. REQUIERE APROBACIÓN.`
+        : `\n\n📋 Mesas combinadas: ${tableNames} en ${formData.zone}. Capacidad total: ${totalCapacity} personas.`;
+      
+      finalData.special_requests = cleanedRequests + combinationNote;
+    } else {
+      // Si ya NO se combinan mesas, usar solo las peticiones limpias
+      finalData.special_requests = cleanedRequests || null;
     }
 
     console.log('📝 Guardando reserva:', finalData);

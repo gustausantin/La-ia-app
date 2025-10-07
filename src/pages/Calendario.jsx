@@ -98,6 +98,7 @@ export default function Calendario() {
 
     // Estados principales
     const [loading, setLoading] = useState(true);
+    const [calendarExceptions, setCalendarExceptions] = useState([]);
     const [saving, setSaving] = useState(false);
     const [schedule, setSchedule] = useState([]);
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -200,6 +201,21 @@ export default function Calendario() {
 
             if (scheduleError) {
                 console.error("❌ Error cargando horarios:", scheduleError);
+            }
+
+            // 🛡️ Cargar excepciones de calendario (días protegidos)
+            const { data: exceptions, error: exceptionsError } = await supabase
+                .from("calendar_exceptions")
+                .select("*")
+                .eq("restaurant_id", restaurantId)
+                .eq("is_open", true); // Solo días que deben estar abiertos
+
+            if (exceptionsError) {
+                console.error("❌ Error cargando excepciones:", exceptionsError);
+            } else {
+                console.log("🛡️ Excepciones cargadas:", exceptions);
+                // Guardar excepciones en estado para usarlas en getDaySchedule
+                setCalendarExceptions(exceptions || []);
             }
 
             let savedHours = restaurantData?.settings?.operating_hours || {};
@@ -329,6 +345,25 @@ export default function Calendario() {
 
     // SOLUCIÓN DEFINITIVA - MATEMÁTICAMENTE IMPOSIBLE QUE FALLE
     const getDaySchedule = useCallback((date) => {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        
+        // 🛡️ PRIORIDAD 1: Verificar si hay una excepción para esta fecha específica
+        const exception = calendarExceptions.find(ex => ex.exception_date === dateStr);
+        
+        if (exception) {
+            console.log(`🛡️ EXCEPCIÓN ENCONTRADA para ${dateStr}:`, exception);
+            return {
+                day_of_week: format(date, 'EEEE', { locale: es }).toLowerCase(),
+                day_name: format(date, 'EEEE', { locale: es }),
+                is_open: exception.is_open,
+                open_time: exception.open_time || "09:00",
+                close_time: exception.close_time || "22:00",
+                is_exception: true,
+                exception_reason: exception.reason
+            };
+        }
+        
+        // PRIORIDAD 2: Usar horario semanal normal
         // getDay() SIEMPRE devuelve 0=domingo, 1=lunes, 2=martes, 3=miércoles, 4=jueves, 5=viernes, 6=sábado
         const dayIndex = getDay(date);
         
@@ -370,9 +405,10 @@ export default function Calendario() {
             day_name: dayName,
             is_open: isOpen,
             open_time: isOpen ? (dayConfig?.open_time || "09:00") : null,
-            close_time: isOpen ? (dayConfig?.close_time || "22:00") : null
+            close_time: isOpen ? (dayConfig?.close_time || "22:00") : null,
+            is_exception: false
         };
-    }, [schedule]);
+    }, [schedule, calendarExceptions]);
 
     // Funciones de navegación del calendario
     const navigateMonth = (direction) => {

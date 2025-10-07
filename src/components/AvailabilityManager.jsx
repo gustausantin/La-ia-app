@@ -16,17 +16,20 @@ import {
     Plus,
     Eye,
     EyeOff,
-    AlertCircle
+    AlertCircle,
+    Info,
+    X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
 
-const AvailabilityManager = () => {
+const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
     const { restaurantId } = useAuthContext();
     const changeDetection = useAvailabilityChangeDetection(restaurantId);
     const [loading, setLoading] = useState(false);
     const [showNoSlotsModal, setShowNoSlotsModal] = useState(false);
     const [noSlotsReason, setNoSlotsReason] = useState(null);
+    const [validationExecuted, setValidationExecuted] = useState(false); // 🔒 Flag para evitar validación doble
     
     // 🚨 Forzar verificación del estado cuando se monta el componente
     useEffect(() => {
@@ -35,8 +38,10 @@ const AvailabilityManager = () => {
             console.log('🔍 needsRegeneration:', changeDetection.needsRegeneration);
             console.log('🔍 changeType:', changeDetection.changeType);
             console.log('🔍 changeDetails:', changeDetection.changeDetails);
+            console.log('🔍 autoTriggerRegeneration:', autoTriggerRegeneration);
         }
-    }, [restaurantId, changeDetection.needsRegeneration, changeDetection.changeType]);
+    }, [restaurantId, changeDetection.needsRegeneration, changeDetection.changeType, autoTriggerRegeneration]);
+    
     const [availabilityStats, setAvailabilityStats] = useState(null);
     const [conflictingReservations, setConflictingReservations] = useState([]);
     const [showDetails, setShowDetails] = useState(false);
@@ -56,6 +61,7 @@ const AvailabilityManager = () => {
     });
     const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [dayAvailability, setDayAvailability] = useState([]);
+    const [calendarExceptions, setCalendarExceptions] = useState([]);
     const [loadingDayView, setLoadingDayView] = useState(false);
     const [generationSettings, setGenerationSettings] = useState({
         startDate: format(new Date(), 'yyyy-MM-dd'), // Siempre desde hoy
@@ -95,6 +101,25 @@ const AvailabilityManager = () => {
             }
         } catch (error) {
             console.error('Error cargando configuración:', error);
+        }
+    };
+
+    // 🛡️ Cargar excepciones de calendario
+    const loadCalendarExceptions = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('calendar_exceptions')
+                .select('*')
+                .eq('restaurant_id', restaurantId)
+                .gte('exception_date', format(new Date(), 'yyyy-MM-dd'))
+                .order('exception_date', { ascending: true });
+
+            if (error) throw error;
+
+            setCalendarExceptions(data || []);
+            console.log(`🛡️ ${data?.length || 0} excepciones de calendario cargadas`);
+        } catch (error) {
+            console.error('Error cargando excepciones:', error);
         }
     };
 
@@ -285,19 +310,33 @@ const AvailabilityManager = () => {
             
             if (error) throw error;
             
-            // 3. Filtrar reservas que caen en días cerrados
+            console.log('📋 Reservas activas encontradas:', reservations?.length || 0);
+            console.log('📋 Detalle de reservas:', reservations);
+            
+            // 3. Filtrar reservas que caen en días cerrados y agrupar por fecha
             const conflictingReservations = [];
             closedDays.forEach(closedDay => {
                 const dayReservations = reservations.filter(r => {
-                    const reservationDay = new Date(r.reservation_date).getDay();
+                    // Usar parseISO para evitar problemas de zona horaria
+                    const reservationDate = new Date(r.reservation_date + 'T00:00:00');
+                    const reservationDay = reservationDate.getDay();
+                    console.log(`🔍 Reserva ${r.id}: fecha=${r.reservation_date}, día=${reservationDay}, buscando=${closedDay.dayNumber}`);
                     return reservationDay === closedDay.dayNumber;
                 });
                 
+                console.log(`🔍 Día ${closedDay.displayName} (${closedDay.dayNumber}): ${dayReservations.length} reservas`);
+                
                 if (dayReservations.length > 0) {
-                    conflictingReservations.push({
-                        day: closedDay.day,
-                        displayName: closedDay.displayName,
-                        reservations: dayReservations
+                    // Agrupar por fecha específica (sin duplicados)
+                    const uniqueDates = [...new Set(dayReservations.map(r => r.reservation_date))];
+                    uniqueDates.forEach(date => {
+                        const reservationsForDate = dayReservations.filter(r => r.reservation_date === date);
+                        conflictingReservations.push({
+                            day: closedDay.day,
+                            displayName: closedDay.displayName,
+                            date: date, // ✅ FECHA ESPECÍFICA
+                            reservations: reservationsForDate
+                        });
                     });
                 }
             });
@@ -315,7 +354,7 @@ const AvailabilityManager = () => {
             return { valid: false, conflicts: [], error: error.message };
         }
     };
-    
+
     // 🔒 REGLA SAGRADA: NUNCA ELIMINAR RESERVAS
     // Esta función SOLO regenera availability_slots PROTEGIENDO reservas existentes
     // Las reservas son SAGRADAS y solo se eliminan manualmente desde Reservas.jsx
@@ -325,21 +364,45 @@ const AvailabilityManager = () => {
             return;
         }
 
+        // 🔄 SIEMPRE recargar settings desde Supabase para tener los horarios actualizados
+        console.log('🔄 Recargando settings desde Supabase antes de validar...');
+        const { data: freshSettings, error: settingsError } = await supabase
+            .from('restaurants')
+            .select('settings')
+            .eq('id', restaurantId)
+            .single();
+        
+        if (settingsError) {
+            console.error('❌ Error recargando settings:', settingsError);
+            toast.error('❌ Error al verificar configuración del restaurante');
+            return;
+        }
+        
+        const currentSettings = freshSettings?.settings || restaurantSettings;
+        console.log('🔍 Settings actualizados:', currentSettings);
+        console.log('🔍 Operating hours que se usarán en regeneración:', currentSettings?.operating_hours);
+
         // 🛡️ VALIDACIÓN CRÍTICA: Verificar reservas en días cerrados
-        if (restaurantSettings?.operating_hours) {
-            const validation = await validateReservationsOnClosedDays(restaurantSettings.operating_hours);
+        if (currentSettings?.operating_hours) {
+            console.log('🛡️ Validando reservas en días cerrados...');
+            const validation = await validateReservationsOnClosedDays(currentSettings.operating_hours);
             
             if (!validation.valid && validation.conflicts.length > 0) {
-                // Mostrar modal de advertencia
+                console.log('⚠️ CONFLICTOS DETECTADOS - Mostrando modal informativo:', validation.conflicts);
+                
+                // Mostrar modal informativo
                 setConflictData({
                     conflicts: validation.conflicts,
                     closedDays: validation.closedDays,
-                    changeType,
-                    changeData
+                    isGenerating: false // Indica que viene de smartRegeneration
                 });
                 setShowConflictModal(true);
-                return; // NO regenerar hasta que el usuario confirme
+                return; // Esperar a que el usuario confirme en el modal
+            } else {
+                console.log('✅ No hay conflictos - procediendo con regeneración');
             }
+        } else {
+            console.warn('⚠️ No se encontraron operating_hours - saltando validación');
         }
 
         try {
@@ -447,15 +510,60 @@ const AvailabilityManager = () => {
         }
     };
 
+    // 🚨 AUTO-TRIGGER: Ejecutar regeneración automáticamente si viene desde el modal
+    useEffect(() => {
+        if (autoTriggerRegeneration && restaurantId && !loading) {
+            console.log('🚨 AUTO-TRIGGER ACTIVADO - Ejecutando smartRegeneration...');
+            // Pequeño delay para que el componente termine de montar
+            const timer = setTimeout(() => {
+                smartRegeneration('schedule_change', { source: 'auto_trigger' });
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [autoTriggerRegeneration, restaurantId]);
+
     // 🔒 REGLA SAGRADA: NUNCA ELIMINAR RESERVAS
     // Esta función SOLO genera availability_slots - JAMÁS toca la tabla 'reservations'
     // Las reservas son SAGRADAS y solo se eliminan manualmente desde Reservas.jsx
     const generateAvailability = async () => {
+        // 🔒 Evitar ejecución doble
+        if (validationExecuted) {
+            console.log('⚠️ Validación ya ejecutada, saltando...');
+            return;
+        }
+        
         try {
+            setValidationExecuted(true); // Marcar como ejecutado
             setLoading(true);
             toast.loading('Generando tabla de disponibilidades...', { id: 'generating' });
 
-            // 1. Detectar conflictos si se va a sobrescribir
+            // 1. VALIDAR RESERVAS EN DÍAS CERRADOS (igual que smartRegeneration)
+            console.log('🛡️ Validando reservas existentes antes de generar...');
+            const { data: restaurantData, error: settingsError } = await supabase
+                .from('restaurants')
+                .select('settings')
+                .eq('id', restaurantId)
+                .single();
+
+            if (!settingsError && restaurantData?.settings?.operating_hours) {
+                const validation = await validateReservationsOnClosedDays(restaurantData.settings.operating_hours);
+                
+                if (!validation.valid && validation.conflicts.length > 0) {
+                    console.log('⚠️ CONFLICTOS DETECTADOS - Mostrando modal informativo:', validation.conflicts);
+                    toast.dismiss('generating');
+                    
+                    // Mostrar modal informativo
+                    setConflictData({
+                        conflicts: validation.conflicts,
+                        closedDays: validation.closedDays,
+                        isGenerating: true // Flag para saber que viene de generateAvailability
+                    });
+                    setShowConflictModal(true);
+                    return; // Esperar a que el usuario confirme en el modal
+                }
+            }
+
+            // 2. Detectar conflictos si se va a sobrescribir
             if (generationSettings.overwriteExisting) {
                 const conflicts = await detectConflicts(
                     generationSettings.startDate,
@@ -472,7 +580,7 @@ const AvailabilityManager = () => {
                 }
             }
 
-            // 2. CARGAR POLÍTICA DE RESERVAS REAL ANTES DE GENERAR
+            // 3. CARGAR POLÍTICA DE RESERVAS REAL ANTES DE GENERAR
             console.log('📋 Cargando política de reservas REAL...');
             const { useReservationStore } = await import('../stores/reservationStore.js');
             
@@ -692,26 +800,16 @@ const AvailabilityManager = () => {
                 // Silencioso - no es crítico
             }
             
-            // 🔒 CARGAR ESTADÍSTICAS REALES INMEDIATAMENTE
-            console.log('🔄 Recargando estadísticas después de generar...');
+            // 🔒 FORZAR RECARGA DE PÁGINA PARA MOSTRAR ESTADÍSTICAS CORRECTAS
+            console.log('🔄 Forzando recarga de página para actualizar estadísticas...');
             
-            // Forzar recarga inmediata
-            try {
-                await loadAvailabilityStats(); // Esto cargará los datos reales
-                console.log('✅ Estadísticas recargadas');
-            } catch (statsError) {
-                console.error('❌ Error recargando estadísticas:', statsError);
-            }
+            // Guardar flag de éxito en localStorage
+            localStorage.setItem(`generation_just_completed_${restaurantId}`, 'true');
             
-            // Recargar grid también
-            setTimeout(async () => {
-                try {
-                    await loadAvailabilityGrid();
-                    console.log('✅ Grid recargado');
-                } catch (gridError) {
-                    console.error('❌ Error recargando grid:', gridError);
-                }
-            }, 1000);
+            // Recargar la página después de un breve delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
 
         } catch (error) {
             console.error('Error generando disponibilidades:', error);
@@ -719,6 +817,7 @@ const AvailabilityManager = () => {
             toast.error('❌ Error: ' + error.message);
         } finally {
             setLoading(false);
+            setValidationExecuted(false); // Reset para permitir siguiente ejecución
         }
     };
 
@@ -1669,29 +1768,85 @@ const AvailabilityManager = () => {
                             <button
                                 onClick={async () => {
                                     setShowConflictModal(false);
+                                    const conflictsCopy = conflictData; // Guardar antes de limpiar
                                     setConflictData(null);
                                     
-                                    // Continuar con regeneración
-                                    // La función SQL cleanup_and_regenerate_availability ya protege automáticamente
-                                    // las reservas existentes, así que solo necesitamos continuar
-                                    toast.loading('Regenerando con protección de reservas...', { id: 'protected-regen' });
+                                    toast.loading('Creando excepciones para proteger reservas...', { id: 'protected-regen' });
                                     
                                     try {
+                                        // 🛡️ PASO 1: CREAR EXCEPCIONES para cada fecha con reservas
+                                        const exceptionsToCreate = [];
+                                        
+                                        conflictsCopy.conflicts.forEach(dayConflict => {
+                                            dayConflict.reservations.forEach(reservation => {
+                                                const exceptionDate = reservation.reservation_date;
+                                                
+                                                // Evitar duplicados en el mismo batch
+                                                if (!exceptionsToCreate.find(e => e.exception_date === exceptionDate)) {
+                                                    exceptionsToCreate.push({
+                                                        restaurant_id: restaurantId,
+                                                        exception_date: exceptionDate,
+                                                        is_open: true, // Forzar abierto para proteger la reserva
+                                                        reason: `Reserva existente protegida (${reservation.customer_name} - ${reservation.party_size} personas)`,
+                                                        created_by: 'system'
+                                                    });
+                                                }
+                                            });
+                                        });
+                                        
+                                        console.log('🛡️ Creando excepciones:', exceptionsToCreate);
+                                        
+                                        // Insertar excepciones en batch
+                                        if (exceptionsToCreate.length > 0) {
+                                            const { error: exceptionsError } = await supabase
+                                                .from('calendar_exceptions')
+                                                .upsert(exceptionsToCreate, {
+                                                    onConflict: 'restaurant_id,exception_date',
+                                                    ignoreDuplicates: false
+                                                });
+                                            
+                                            if (exceptionsError) {
+                                                console.error('❌ Error creando excepciones:', exceptionsError);
+                                                throw new Error('Error al crear excepciones de calendario');
+                                            }
+                                            
+                                            console.log(`✅ ${exceptionsToCreate.length} excepciones creadas`);
+                                        }
+                                        
+                                        toast.loading('Regenerando disponibilidades con protección...', { id: 'protected-regen' });
+                                        
+                                        // 🔄 PASO 2: REGENERAR o GENERAR DISPONIBILIDADES (ahora respetará las excepciones)
                                         const today = format(new Date(), 'yyyy-MM-dd');
                                         const advanceDays = restaurantSettings?.advance_booking_days || 30;
                                         const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
 
-                                        const { data, error } = await supabase.rpc('cleanup_and_regenerate_availability', {
-                                            p_restaurant_id: restaurantId,
-                                            p_start_date: today,
-                                            p_end_date: endDate
-                                        });
+                                        let data, error;
+                                        
+                                        if (conflictData.isGenerating) {
+                                            // Viene de generateAvailability - usar función simple
+                                            const result = await supabase.rpc('generate_availability_slots_simple', {
+                                                p_restaurant_id: restaurantId,
+                                                p_start_date: today,
+                                                p_end_date: endDate
+                                            });
+                                            data = result.data;
+                                            error = result.error;
+                                        } else {
+                                            // Viene de smartRegeneration - usar función de limpieza
+                                            const result = await supabase.rpc('cleanup_and_regenerate_availability', {
+                                                p_restaurant_id: restaurantId,
+                                                p_start_date: today,
+                                                p_end_date: endDate
+                                            });
+                                            data = result.data;
+                                            error = result.error;
+                                        }
 
                                         if (error) throw error;
 
                                         toast.dismiss('protected-regen');
                                         toast.success(
-                                            `✅ Regeneración completada\n\n🛡️ ${conflictData.conflicts.reduce((sum, c) => sum + c.reservations.length, 0)} reservas protegidas\n\nLos días con reservas NO se cerraron`,
+                                            `✅ ${conflictData.isGenerating ? 'Generación' : 'Regeneración'} completada\n\n🛡️ ${exceptionsToCreate.length} excepciones creadas\n📋 ${conflictsCopy.conflicts.reduce((sum, c) => sum + c.reservations.length, 0)} reservas protegidas\n\nLos días con reservas permanecen ABIERTOS`,
                                             { duration: 6000, style: { whiteSpace: 'pre-line' } }
                                         );
                                         
@@ -1707,13 +1862,44 @@ const AvailabilityManager = () => {
                                         setGenerationSuccess(successData);
                                         localStorage.setItem(`generationSuccess_${restaurantId}`, JSON.stringify(successData));
                                         
-                                        // Recargar estadísticas
-                                        await loadAvailabilityStats();
+                                        // Recargar estadísticas y excepciones
+                                        await loadCalendarExceptions();
+                                        
+                                        // 🔄 FORZAR RECARGA DE ESTADÍSTICAS CON RETRASO
+                                        console.log('🔄 Forzando recarga de estadísticas...');
+                                        
+                                        // Primero limpiar el estado actual
+                                        setAvailabilityStats(null);
+                                        setGenerationSuccess(null);
+                                        
+                                        // Luego recargar con un pequeño delay para asegurar que la BD está actualizada
+                                        setTimeout(async () => {
+                                            try {
+                                                await loadAvailabilityStats();
+                                                console.log('✅ Estadísticas recargadas después de regeneración');
+                                                
+                                                // Actualizar generationSuccess con las estadísticas reales
+                                                setGenerationSuccess({
+                                                    ...successData,
+                                                    totalAvailable: availabilityStats?.free || 0,
+                                                    totalOccupied: availabilityStats?.occupied || 0,
+                                                    totalReserved: availabilityStats?.reserved || 0
+                                                });
+                                            } catch (error) {
+                                                console.error('❌ Error recargando estadísticas:', error);
+                                            }
+                                        }, 500);
+                                        
+                                        // Cerrar modal
+                                        setShowConflictModal(false);
+                                        setConflictData(null);
                                         
                                     } catch (error) {
                                         toast.dismiss('protected-regen');
                                         console.error('Error en regeneración protegida:', error);
                                         toast.error('Error al regenerar: ' + error.message);
+                                    } finally {
+                                        setLoading(false);
                                     }
                                 }}
                                 className="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors flex items-center justify-center gap-2"
@@ -1723,6 +1909,81 @@ const AvailabilityManager = () => {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* 🛡️ SECCIÓN: EXCEPCIONES DE CALENDARIO */}
+            {calendarExceptions.length > 0 && (
+                <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 mb-4">
+                    <h3 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                        <Calendar className="w-5 h-5" />
+                        🛡️ Días Protegidos (Excepciones Activas)
+                    </h3>
+                    <p className="text-sm text-blue-800 mb-3">
+                        Estos días permanecerán <strong>abiertos</strong> aunque tu horario semanal indique lo contrario:
+                    </p>
+                    <div className="space-y-2">
+                        {calendarExceptions.map(exception => (
+                            <div key={exception.id} className="bg-white rounded-lg p-3 flex items-center justify-between border border-blue-200 hover:border-blue-400 transition-colors">
+                                <div className="flex items-center gap-3 flex-1">
+                                    <div className={`w-3 h-3 rounded-full ${exception.is_open ? 'bg-green-500' : 'bg-red-500'}`} />
+                                    <div className="flex-1">
+                                        <p className="font-medium text-gray-900">
+                                            📅 {format(new Date(exception.exception_date), "EEEE d 'de' MMMM, yyyy", { locale: es })}
+                                        </p>
+                                        <p className="text-xs text-gray-600 mt-1">
+                                            <span className="font-semibold">Motivo:</span> {exception.reason}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${exception.is_open ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        {exception.is_open ? '✅ Abierto' : '❌ Cerrado'}
+                                    </span>
+                                    <button
+                                        onClick={async () => {
+                                            if (!window.confirm(`¿Eliminar la excepción para ${format(new Date(exception.exception_date), "d 'de' MMMM", { locale: es })}?\n\nEste día volverá a seguir el horario semanal normal.`)) {
+                                                return;
+                                            }
+                                            
+                                            try {
+                                                toast.loading('Eliminando excepción...', { id: 'delete-exception' });
+                                                
+                                                const { error } = await supabase
+                                                    .from('calendar_exceptions')
+                                                    .delete()
+                                                    .eq('id', exception.id);
+                                                
+                                                if (error) throw error;
+                                                
+                                                toast.dismiss('delete-exception');
+                                                toast.success('✅ Excepción eliminada correctamente');
+                                                
+                                                // Recargar excepciones
+                                                await loadCalendarExceptions();
+                                                
+                                                // Sugerir regeneración
+                                                toast.info('💡 Recuerda regenerar las disponibilidades para aplicar el cambio', { duration: 5000 });
+                                                
+                                            } catch (error) {
+                                                toast.dismiss('delete-exception');
+                                                console.error('Error eliminando excepción:', error);
+                                                toast.error('❌ Error al eliminar la excepción');
+                                            }
+                                        }}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Eliminar excepción"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="text-xs text-blue-700 mt-3 flex items-center gap-1">
+                        <Info className="w-3 h-3" />
+                        <span>Las excepciones se eliminan automáticamente cuando se cancelan todas las reservas del día.</span>
+                    </p>
                 </div>
             )}
 

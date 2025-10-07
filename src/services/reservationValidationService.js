@@ -507,14 +507,19 @@ export class ReservationValidationService {
         };
       }
 
-      // 🔥 Grupos grandes (≥ 6 personas) pueden requerir juntar mesas
-      if (partySize >= 6) {
+      // 🔥 Cualquier grupo puede requerir juntar mesas si no hay individual suficiente
+      if (partySize >= 1) {
+        const isLargeGroup = partySize >= 10;
         return {
           valid: true,
-          message: `Grupo grande: ${partySize} personas`,
-          code: 'PARTY_SIZE_LARGE_GROUP',
-          isLargeGroup: true,
-          warning: `Grupos de ${partySize} personas pueden requerir juntar mesas. La reserva quedará pendiente de confirmación.`
+          message: isLargeGroup ? `Grupo grande: ${partySize} personas - Requiere aprobación` : `Grupo de ${partySize} personas`,
+          code: isLargeGroup ? 'PARTY_SIZE_LARGE_GROUP' : 'PARTY_SIZE_OK',
+          isLargeGroup: isLargeGroup,
+          warning: isLargeGroup 
+            ? `⚠️ Grupos de ${partySize} personas requieren aprobación del restaurante. La reserva quedará PENDIENTE DE APROBACIÓN.`
+            : partySize >= 6 
+              ? `Puede requerir juntar mesas. La reserva quedará pendiente de confirmación.`
+              : null
         };
       }
 
@@ -1035,14 +1040,13 @@ export class ReservationValidationService {
    */
   static async getAvailableTables(restaurantId, date, time, partySize, excludeReservationId = null) {
     try {
-      // 🔥 CAMBIO: Para grupos grandes (≥6), obtener TODAS las mesas desde el inicio
-      // Para grupos pequeños, solo las que tienen capacidad individual suficiente
+      // 🔥 CAMBIO: Para CUALQUIER grupo, intentar buscar combinaciones si no hay mesa individual
+      // Primero intentamos con mesas individuales, si no hay, buscamos combinaciones
       let allTables = [];
       let needsCombination = false;
 
-      if (partySize >= 6) {
-        // 🆕 Grupo grande: obtener TODAS las mesas activas
-        needsCombination = true;
+      // Siempre obtener TODAS las mesas para poder buscar combinaciones
+      needsCombination = true;
         const { data: allTablesData, error: allTablesError } = await supabase
           .from('tables')
           .select('*')
@@ -1055,27 +1059,8 @@ export class ReservationValidationService {
           return [];
         }
 
-        allTables = allTablesData || [];
-        console.log(`🔍 Grupo grande (${partySize} personas): Obteniendo TODAS las mesas (${allTables.length})`);
-
-      } else {
-        // Grupo pequeño: solo mesas con capacidad individual suficiente
-        const { data: tables, error: tablesError } = await supabase
-          .from('tables')
-          .select('*')
-          .eq('restaurant_id', restaurantId)
-          .eq('is_active', true)
-          .gte('capacity', partySize)
-          .order('table_number');
-
-        if (tablesError) {
-          console.error('Error obteniendo mesas:', tablesError);
-          return [];
-        }
-
-        allTables = tables || [];
-        console.log(`🔍 Grupo pequeño (${partySize} personas): Mesas con capacidad suficiente: ${allTables.length}`);
-      }
+      allTables = allTablesData || [];
+      console.log(`🔍 Grupo de ${partySize} personas: Obteniendo TODAS las mesas (${allTables.length}) para buscar combinaciones`);
 
       if (allTables.length === 0) {
         console.log('❌ No hay mesas disponibles en el restaurante');
