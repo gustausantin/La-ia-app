@@ -138,3 +138,4 @@ Los cambios en `src/components/AvailabilityManager.jsx` ya están guardados:
 
 **Estado:** ✅ Listo para aplicar  
 **Prioridad:** 🔴 CRÍTICA (previene dobles reservas)
+

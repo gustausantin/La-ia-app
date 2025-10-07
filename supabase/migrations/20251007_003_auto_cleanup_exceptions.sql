@@ -56,3 +56,4 @@ COMMENT ON TRIGGER trigger_cleanup_exceptions_on_cancel ON reservations IS 'Limp
 -- MIGRACIÓN COMPLETADA ✅
 -- Limpieza automática de excepciones configurada
 -- ========================================
+
