@@ -260,9 +260,9 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 // Mostrar modal con datos REALES
                 setRegenerationResult({
                     action: 'borrado_completado',
-                    slotsCreated: 0,
+                    slotsCreated: 0, // Correcto: en borrado no se crean
                     slotsMarked: realStats?.reserved || 0, // REAL de BD
-                    daysProtected: 0,
+                    daysProtected: data?.days_protected || 0, // REAL del SQL
                     slotsDeleted: slotsDeleted,
                     totalSlots: realStats?.total || 0,
                     availableSlots: realStats?.free || 0,
@@ -795,7 +795,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 action: 'generación_completada',
                 slotsCreated: data?.slots_created || 0,
                 slotsMarked: realStats?.reserved || 0,
-                daysProtected: 0,
+                daysProtected: data?.days_protected || 0, // REAL del SQL
                 totalSlots: realStats?.total || 0,
                 availableSlots: realStats?.free || 0,
                 message: data?.message || 'Disponibilidades generadas correctamente',
@@ -890,9 +890,9 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 // Mostrar modal con datos REALES
                 setRegenerationResult({
                     action: 'limpieza_simple',
-                    slotsCreated: 0,
+                    slotsCreated: 0, // Correcto: en limpieza no se crean
                     slotsMarked: realStats?.reserved || 0, // REAL de BD
-                    daysProtected: 0,
+                    daysProtected: data?.days_protected || 0, // REAL del SQL
                     slotsDeleted: slotsDeleted,
                     totalSlots: realStats?.total || 0,
                     availableSlots: realStats?.free || 0,
