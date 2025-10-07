@@ -303,122 +303,136 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
 
     return (
         <div
-            className={`bg-white border rounded-lg p-2 hover:shadow-md transition-all duration-200 ${
+            className={`bg-white border rounded-lg p-3 hover:shadow-md transition-all duration-200 ${
                 isSelected
                     ? "ring-2 ring-blue-500 border-blue-200"
                     : "border-gray-200"
             } ${isAgentReservation ? "border-l-4 border-l-purple-500" : ""}`}
         >
-            <div className="flex items-start justify-between">
-                <div className="flex items-start gap-2 flex-1">
-                    <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) =>
-                            onSelect(reservation.id, e.target.checked)
-                        }
-                        className="mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                    />
+            <div className="flex items-start justify-between gap-2">
+                {/* Checkbox */}
+                <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => onSelect(reservation.id, e.target.checked)}
+                    className="mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                />
 
-                    <div className="flex-1">
-                        {/* 🎯 MESA Y ZONA PRIMERO - MÁS VISIBLE */}
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-900 rounded-lg font-bold text-sm">
+                {/* Contenido Principal - DISEÑO HORIZONTAL EQUILIBRADO */}
+                <div className="flex-1">
+                    {/* 🔥 LÍNEA 1: TIEMPO + ESPACIO (DOS COORDENADAS CRÍTICAS) */}
+                    <div className="flex items-center justify-between gap-4 mb-2">
+                        {/* IZQUIERDA: COORDENADAS TIEMPO Y ESPACIO */}
+                        <div className="flex items-center gap-3">
+                            {/* 🕐 CÁPSULA DE TIEMPO (HORA + FECHA) */}
+                            <div className="flex items-center gap-3 px-3 py-1 bg-orange-100 border-2 border-orange-300 rounded-lg">
+                                {/* HORA */}
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className="w-5 h-5 text-orange-700" />
+                                    <span className="font-bold text-base text-orange-900">
+                                        {formatTime(reservation.reservation_time)}
+                                    </span>
+                                </div>
+
+                                {/* FECHA */}
+                                <div className="flex items-center gap-1.5">
+                                    <CalendarIcon className="w-5 h-5 text-orange-700" />
+                                    <span className="font-bold text-base text-orange-900">
+                                        {format(parseISO(reservation.reservation_date), 'dd/MM/yyyy', { locale: es })}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* 📍 CÁPSULA DE ESPACIO (MESA + ZONA) */}
+                            <div className="flex items-center gap-2 px-3 py-1 bg-blue-600 border-2 border-blue-700 text-white rounded-lg">
                                 <Shield className="w-5 h-5" />
-                                <span>
+                                <span className="font-bold text-base">
                                     {(() => {
-                                        // 🆕 Si tiene múltiples mesas (reservation_tables)
                                         if (reservation.reservation_tables && reservation.reservation_tables.length > 0) {
                                             const tableNames = reservation.reservation_tables
                                                 .map(rt => rt.tables?.name || `Mesa ${rt.tables?.table_number}`)
                                                 .join(' + ');
-                                            return `${tableNames} (${reservation.reservation_tables.length} mesas)`;
+                                            return `${tableNames}`;
                                         }
-                                        // Fallback: mesa única
                                         return reservation.tables?.name || 
                                                (reservation.tables?.table_number ? `Mesa ${reservation.tables.table_number}` : null) ||
                                                (reservation.table_number ? `Mesa ${reservation.table_number}` : null) ||
-                                               'Sin mesa asignada';
+                                               'Sin mesa';
                                     })()}
                                 </span>
+                                
+                                {/* ZONA dentro de la misma cápsula */}
+                                {reservation.tables?.zone && (
+                                    <>
+                                        <span className="text-blue-200">•</span>
+                                        <div className="flex items-center gap-1">
+                                            <MapPin className="w-4 h-4" />
+                                            <span className="font-semibold text-sm">{reservation.tables.zone}</span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
-                            
-                            {/* 🚨 ICONO GRUPO GRANDE - MUY VISIBLE */}
+                        </div>
+
+                        {/* DERECHA: BADGES */}
+                        <div className="flex items-center gap-2">
                             {reservation.reservation_tables && reservation.reservation_tables.length > 1 && (
-                                <div className="flex items-center gap-2 px-3 py-2 bg-red-100 border-2 border-red-400 text-red-900 rounded-lg font-bold text-sm animate-pulse">
-                                    <AlertTriangle className="w-6 h-6" />
-                                    <span>GRUPO GRANDE</span>
+                                <div className="flex items-center gap-1 px-2 py-1 bg-red-100 border border-red-400 text-red-900 rounded font-bold text-xs animate-pulse">
+                                    <AlertTriangle className="w-4 h-4" />
+                                    <span>GRUPO</span>
                                 </div>
                             )}
-                            
-                            {reservation.tables?.zone && (
-                                <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium">
-                                    <MapPin className="w-4 h-4" />
-                                    {reservation.tables.zone}
-                                </div>
-                            )}
-                            
-                            <span
-                                className={`text-xs px-2 py-0.5 rounded-full border ${state.color} flex items-center gap-1`}
-                            >
+
+                            <span className={`px-2 py-1 rounded-full border ${state.color} flex items-center gap-1 text-xs`}>
                                 {state.icon}
                                 <span>{state.label}</span>
                             </span>
-                        </div>
 
-                        {/* INFORMACIÓN SECUNDARIA */}
-                        <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-medium text-gray-700">
-                                {reservation.customer_name}
-                            </h4>
                             {isAgentReservation && (
-                                <div className="flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs">
+                                <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
                                     <Bot className="w-3 h-3" />
                                     <span>IA</span>
                                 </div>
                             )}
                         </div>
+                    </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
-                            {/* 🔧 FECHA - NUEVA INFORMACIÓN */}
-                            <div className="flex items-center gap-2">
-                                <CalendarIcon className="w-4 h-4" />
-                                <span className="font-medium">{format(parseISO(reservation.reservation_date), 'dd/MM/yyyy', { locale: es })}</span>
-                            </div>
-                            
-                            {/* HORA */}
-                            <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4" />
-                                <span className="font-medium">{formatTime(reservation.reservation_time)}</span>
-                            </div>
+                    {/* 🎯 LÍNEA 2: CLIENTE + COMENSALES + TELÉFONO + CANAL */}
+                    <div className="flex items-center justify-between gap-4">
+                        {/* IZQUIERDA: CLIENTE + COMENSALES (MÁS GRANDE) */}
+                        <div className="flex items-center gap-4">
+                            <span className="font-semibold text-gray-900 text-base">
+                                {reservation.customer_name}
+                            </span>
 
-                            {/* PERSONAS */}
                             <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4" />
-                                <span>{reservation.party_size} personas</span>
-                            </div>
-
-
-                            {/* TELÉFONO */}
-                            <div className="flex items-center gap-2">
-                                <Phone className="w-4 h-4" />
-                                <span>{reservation.customer_phone}</span>
-                            </div>
-
-                            {/* CANAL */}
-                            <div className="flex items-center gap-2">
-                                {channel.icon}
-                                <span>{channel.label}</span>
+                                <Users className="w-5 h-5 text-gray-600" />
+                                <span className="font-bold text-base text-gray-900">
+                                    {reservation.party_size} personas
+                                </span>
                             </div>
                         </div>
 
-                        {reservation.special_requests && (
-                            <div className="mt-2 text-sm text-gray-500 italic">
-                                "{reservation.special_requests}"
+                        {/* DERECHA: TELÉFONO + CANAL */}
+                        <div className="flex items-center gap-3 text-sm text-gray-600">
+                            <div className="flex items-center gap-2">
+                                <Phone className="w-4 h-4" />
+                                <span className="font-medium">{reservation.customer_phone}</span>
                             </div>
-                        )}
 
+                            <div className="flex items-center gap-1">
+                                {channel.icon}
+                                <span className="text-xs">{channel.label}</span>
+                            </div>
+                        </div>
                     </div>
+
+                    {/* 📝 LÍNEA 3 (OPCIONAL): NOTAS - MÁS LEGIBLES */}
+                    {reservation.special_requests && (
+                        <div className="mt-2 text-sm text-gray-700 italic pl-2 border-l-2 border-amber-400">
+                            "{reservation.special_requests}"
+                        </div>
+                    )}
                 </div>
 
                 <div className="relative">
@@ -619,12 +633,12 @@ export default function Reservas() {
         search: "",
         status: "",
         channel: "",
-        source: "",
-        period: "this_month", // 🔧 Por defecto: mes en curso (incluye próximos días)
-        dateRange: '',
-        startDate: '',
-        endDate: ''
+        source: ""
     });
+
+    // 🆕 Nuevo sistema de vistas principales
+    const [activeView, setActiveView] = useState('hoy'); // hoy | proximas | pasadas
+    const [proximasFilter, setProximasFilter] = useState('todas'); // todas | manana | esta_semana | este_mes
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -636,56 +650,6 @@ export default function Reservas() {
     // Subscription de real-time
     const [realtimeSubscription, setRealtimeSubscription] = useState(null);
 
-    // Calcular rango de fechas
-    const calculateDateRange = useCallback((period) => {
-        const today = new Date();
-
-        switch (period) {
-            case "this_month":
-                return {
-                    start: format(startOfMonth(today), "yyyy-MM-dd"),
-                    end: format(endOfMonth(today), "yyyy-MM-dd"),
-                };
-            case "today":
-                return {
-                    start: format(today, "yyyy-MM-dd"),
-                    end: format(today, "yyyy-MM-dd"),
-                };
-            case "tomorrow":
-                const tomorrow = addDays(today, 1);
-                return {
-                    start: format(tomorrow, "yyyy-MM-dd"),
-                    end: format(tomorrow, "yyyy-MM-dd"),
-                };
-            case "week":
-                // Esta semana (desde lunes hasta domingo)
-                const startOfWeek = subDays(today, today.getDay() === 0 ? 6 : today.getDay() - 1);
-                const endOfWeek = addDays(startOfWeek, 6);
-                return {
-                    start: format(startOfWeek, "yyyy-MM-dd"),
-                    end: format(endOfWeek, "yyyy-MM-dd"),
-                };
-            case "last_month":
-                // Último mes (30 días hacia atrás desde hoy)
-                const startLastMonth = subDays(today, 30);
-                return {
-                    start: format(startLastMonth, "yyyy-MM-dd"),
-                    end: format(today, "yyyy-MM-dd"),
-                };
-            case "last_two_months":
-                // Últimos 2 meses (60 días hacia atrás desde hoy)
-                const startLastTwoMonths = subDays(today, 60);
-                return {
-                    start: format(startLastTwoMonths, "yyyy-MM-dd"),
-                    end: format(today, "yyyy-MM-dd"),
-                };
-            default:
-                return {
-                    start: format(today, "yyyy-MM-dd"),
-                    end: format(today, "yyyy-MM-dd"),
-                };
-        }
-    }, []);
     
     // 🤖 AUTOMATIZACIÓN: Completar reservas automáticamente
     const autoCompleteReservations = useCallback(async () => {
@@ -873,9 +837,8 @@ export default function Reservas() {
         try {
             setLoading(true);
 
-            const dateRange = calculateDateRange(filters.period);
-
             // 🔥 QUERY DIRECTA CON JOIN DE TABLES Y RESERVATION_TABLES (múltiples mesas)
+            // Cargamos TODAS las reservas, el filtrado lo hace filteredReservations
             const { data, error } = await supabase
                 .from('reservations')
                 .select(`
@@ -901,8 +864,6 @@ export default function Reservas() {
                     )
                 `)
                 .eq('restaurant_id', restaurantId)
-                .gte('reservation_date', dateRange.start)
-                .lte('reservation_date', dateRange.end)
                 .order('reservation_date', { ascending: true })
                 .order('reservation_time', { ascending: true });
 
@@ -971,9 +932,7 @@ export default function Reservas() {
         restaurantId,
         filters.status,
         filters.channel,
-        filters.source,
-        filters.period,
-        calculateDateRange,
+        filters.source
     ]);
 
     // Cargar mesas
@@ -1271,25 +1230,64 @@ export default function Reservas() {
             });
         }
 
+        // 🆕 FILTRADO POR VISTA PRINCIPAL (HOY, PRÓXIMAS, PASADAS)
+        const today = format(new Date(), 'yyyy-MM-dd');
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        if (activeView === 'hoy') {
+            // Vista HOY: Solo reservas de hoy
+            filtered = filtered.filter(r => r.reservation_date === today);
+        } else if (activeView === 'proximas') {
+            // Vista PRÓXIMAS: Hoy + futuro (excluyendo completed, cancelled, no_show)
+            filtered = filtered.filter(r => {
+                const resDate = new Date(r.reservation_date);
+                return resDate >= now && 
+                       !['completed', 'cancelled', 'no_show'].includes(r.status);
+            });
+
+            // Aplicar sub-filtro de PRÓXIMAS
+            if (proximasFilter === 'manana') {
+                const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+                filtered = filtered.filter(r => r.reservation_date === tomorrow);
+            } else if (proximasFilter === 'esta_semana') {
+                const weekEnd = format(addDays(new Date(), 7), 'yyyy-MM-dd');
+                filtered = filtered.filter(r => r.reservation_date >= today && r.reservation_date <= weekEnd);
+            } else if (proximasFilter === 'este_mes') {
+                const monthEnd = format(addDays(new Date(), 30), 'yyyy-MM-dd');
+                filtered = filtered.filter(r => r.reservation_date >= today && r.reservation_date <= monthEnd);
+            }
+        } else if (activeView === 'pasadas') {
+            // Vista PASADAS: Fecha < hoy O estados finales
+            filtered = filtered.filter(r => {
+                const resDate = new Date(r.reservation_date);
+                return resDate < now || 
+                       ['completed', 'no_show'].includes(r.status);
+            });
+        }
+
         // 🔧 ORDENAMIENTO CRONOLÓGICO: Por fecha y hora
         filtered.sort((a, b) => {
             // Primero por fecha
             const dateA = new Date(a.reservation_date);
             const dateB = new Date(b.reservation_date);
             
+            // Para PASADAS, ordenar DESC (más recientes primero)
+            const sortDirection = activeView === 'pasadas' ? -1 : 1;
+            
             if (dateA.getTime() !== dateB.getTime()) {
-                return dateA.getTime() - dateB.getTime();
+                return (dateA.getTime() - dateB.getTime()) * sortDirection;
             }
             
             // Si la fecha es igual, ordenar por hora
             const timeA = a.reservation_time || '00:00';
             const timeB = b.reservation_time || '00:00';
             
-            return timeA.localeCompare(timeB);
+            return timeA.localeCompare(timeB) * sortDirection;
         });
 
         return filtered;
-    }, [reservations, filters]);
+    }, [reservations, filters, activeView, proximasFilter]);
 
     // Cargar configuración de política de reservas
     const loadPolicySettings = useCallback(async () => {
@@ -1331,13 +1329,12 @@ export default function Reservas() {
 
     // Recargar cuando cambien los filtros - SIN BUCLES
     useEffect(() => {
-        if (isReady && restaurantId && filters.period) {
+        if (isReady && restaurantId) {
             loadReservations();
         }
     }, [
         isReady,
         restaurantId,
-        filters.period,
         filters.status,
         filters.channel,
         filters.source,
@@ -1834,82 +1831,92 @@ export default function Reservas() {
             {/* Panel de insights del agente */}
             <AgentStatsPanel stats={agentStats} insights={agentInsights} />
 
-                    {/* Filtros rápidos por fecha */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 mb-2">
-                        <h3 className="text-sm font-medium text-gray-700 mb-2">🚀 Filtros Rápidos</h3>
-                        <div className="flex flex-wrap gap-2">
+                    {/* 🆕 Nuevo sistema de vistas principales */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">📌 Vista</h3>
+                        
+                        {/* Botones principales */}
+                        <div className="flex flex-wrap gap-2 mb-3">
                             <button
-                                onClick={() => setFilters(prev => ({
-                                    ...prev,
-                                    dateRange: 'today',
-                                    startDate: format(new Date(), 'yyyy-MM-dd'),
-                                    endDate: format(new Date(), 'yyyy-MM-dd')
-                                }))}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                    filters.dateRange === 'today'
-                                        ? 'bg-blue-600 text-white'
+                                onClick={() => setActiveView('hoy')}
+                                className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                                    activeView === 'hoy'
+                                        ? 'bg-blue-600 text-white shadow-md'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                             >
                                 📅 HOY
                             </button>
                             <button
-                                onClick={() => setFilters(prev => ({
-                                    ...prev,
-                                    dateRange: 'tomorrow',
-                                    startDate: format(addDays(new Date(), 1), 'yyyy-MM-dd'),
-                                    endDate: format(addDays(new Date(), 1), 'yyyy-MM-dd')
-                                }))}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                    filters.dateRange === 'tomorrow'
-                                        ? 'bg-green-600 text-white'
+                                onClick={() => setActiveView('proximas')}
+                                className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                                    activeView === 'proximas'
+                                        ? 'bg-purple-600 text-white shadow-md'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                             >
-                                🌅 MAÑANA
+                                📆 PRÓXIMAS
                             </button>
                             <button
-                                onClick={() => setFilters(prev => ({
-                                    ...prev,
-                                    dateRange: 'week',
-                                    startDate: format(new Date(), 'yyyy-MM-dd'),
-                                    endDate: format(addDays(new Date(), 7), 'yyyy-MM-dd')
-                                }))}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                    filters.dateRange === 'week'
-                                        ? 'bg-purple-600 text-white'
+                                onClick={() => setActiveView('pasadas')}
+                                className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                                    activeView === 'pasadas'
+                                        ? 'bg-gray-600 text-white shadow-md'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                             >
-                                📊 ESTA SEMANA
-                            </button>
-                            <button
-                                onClick={() => setFilters(prev => ({
-                                    ...prev,
-                                    dateRange: 'month',
-                                    startDate: format(new Date(), 'yyyy-MM-dd'),
-                                    endDate: format(addDays(new Date(), 30), 'yyyy-MM-dd')
-                                }))}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                    filters.dateRange === 'month'
-                                        ? 'bg-orange-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                            >
-                                📆 ESTE MES
-                            </button>
-                            <button
-                                onClick={() => setFilters(prev => ({
-                                    ...prev,
-                                    dateRange: '',
-                                    startDate: '',
-                                    endDate: ''
-                                }))}
-                                className="px-4 py-2 rounded-lg font-medium bg-gray-200 text-gray-700 hover:bg-gray-300"
-                            >
-                                🔄 TODAS
+                                ✅ PASADAS
                             </button>
                         </div>
+
+                        {/* Sub-botones táctiles para PRÓXIMAS */}
+                        {activeView === 'proximas' && (
+                            <div className="pl-4 border-l-4 border-purple-600">
+                                <p className="text-xs text-gray-600 mb-2 font-medium">Mostrar:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        onClick={() => setProximasFilter('todas')}
+                                        className={`px-5 py-2 rounded-lg font-medium transition-all text-sm ${
+                                            proximasFilter === 'todas'
+                                                ? 'bg-purple-600 text-white shadow-md'
+                                                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                                        }`}
+                                    >
+                                        📋 TODAS
+                                    </button>
+                                    <button
+                                        onClick={() => setProximasFilter('manana')}
+                                        className={`px-5 py-2 rounded-lg font-medium transition-all text-sm ${
+                                            proximasFilter === 'manana'
+                                                ? 'bg-purple-600 text-white shadow-md'
+                                                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                                        }`}
+                                    >
+                                        🌅 MAÑANA
+                                    </button>
+                                    <button
+                                        onClick={() => setProximasFilter('esta_semana')}
+                                        className={`px-5 py-2 rounded-lg font-medium transition-all text-sm ${
+                                            proximasFilter === 'esta_semana'
+                                                ? 'bg-purple-600 text-white shadow-md'
+                                                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                                        }`}
+                                    >
+                                        📊 ESTA SEMANA
+                                    </button>
+                                    <button
+                                        onClick={() => setProximasFilter('este_mes')}
+                                        className={`px-5 py-2 rounded-lg font-medium transition-all text-sm ${
+                                            proximasFilter === 'este_mes'
+                                                ? 'bg-purple-600 text-white shadow-md'
+                                                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                                        }`}
+                                    >
+                                        📆 ESTE MES
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
             {/* Filtros */}
@@ -1988,23 +1995,6 @@ export default function Reservas() {
                                     {channel.label}
                                 </option>
                             ))}
-                        </select>
-
-                        <select
-                            value={filters.period}
-                            onChange={(e) =>
-                                setFilters((prev) => ({
-                                    ...prev,
-                                    period: e.target.value,
-                                }))
-                            }
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="today">📅 Hoy</option>
-                            <option value="tomorrow">📆 Mañana</option>
-                            <option value="week">📅 Esta semana</option>
-                            <option value="last_month">📅 Último mes</option>
-                            <option value="last_two_months">📅 Últimos 2 meses</option>
                         </select>
                     </div>
                 </div>
