@@ -1779,30 +1779,30 @@ export default function Reservas() {
                         <div className="flex gap-2 mt-4">
                             <button
                                 onClick={() => setActiveTab('reservas')}
-                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-sm ${
+                                className={`px-8 py-4 rounded-xl font-semibold transition-all text-base shadow-sm ${
                                     activeTab === 'reservas'
-                                        ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? 'bg-blue-500 text-white border-2 border-blue-600 shadow-md scale-105'
+                                        : 'bg-white text-gray-700 border-2 border-gray-200 hover:bg-blue-50 hover:border-blue-300'
                                 }`}
                             >
                                 📅 Reservas
                             </button>
                             <button
                                 onClick={() => setActiveTab('disponibilidades')}
-                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-sm ${
+                                className={`px-8 py-4 rounded-xl font-semibold transition-all text-base shadow-sm ${
                                     activeTab === 'disponibilidades'
-                                        ? 'bg-purple-100 text-purple-700 border-2 border-purple-200'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? 'bg-purple-500 text-white border-2 border-purple-600 shadow-md scale-105'
+                                        : 'bg-white text-gray-700 border-2 border-gray-200 hover:bg-purple-50 hover:border-purple-300'
                                 }`}
                             >
                                 🗓️ Horarios de Reserva
                             </button>
                             <button
                                 onClick={() => setActiveTab('politica')}
-                                className={`px-6 py-3 rounded-lg font-medium transition-colors text-sm ${
+                                className={`px-8 py-4 rounded-xl font-semibold transition-all text-base shadow-sm ${
                                     activeTab === 'politica'
-                                        ? 'bg-green-100 text-green-700 border-2 border-green-200'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? 'bg-green-500 text-white border-2 border-green-600 shadow-md scale-105'
+                                        : 'bg-white text-gray-700 border-2 border-gray-200 hover:bg-green-50 hover:border-green-300'
                                 }`}
                             >
                                 ⚙️ Política de Reservas
