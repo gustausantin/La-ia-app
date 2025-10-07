@@ -693,12 +693,39 @@ export const useReservationStore = create()(
           // Calcular estadísticas REALES
           const totalSlots = slotsData?.length || 0;
           
-          // Calcular ocupación basada en reservas activas (sin slot_id por ahora)
-          const activeReservations = reservationsData.length;
+          // 🎯 OBTENER DURACIÓN DE RESERVA REAL DE LA BD
+          let reservationDuration = 60; // Default temporal
+          let slotDuration = 30; // Default temporal
           
-          // Estimación conservadora: cada reserva ocupa al menos 1 slot
-          const occupiedSlots = Math.min(activeReservations, totalSlots);
+          try {
+            const { data: settingsData, error: settingsError } = await supabase
+              .from('restaurants')
+              .select('settings')
+              .eq('id', restaurantId)
+              .single();
+            
+            if (!settingsError && settingsData?.settings) {
+              reservationDuration = settingsData.settings.reservation_duration || 60;
+              slotDuration = settingsData.settings.slot_duration || 30;
+            }
+          } catch (err) {
+            log.warn('⚠️ Could not load reservation duration, using defaults');
+          }
+          
+          // 🎯 CALCULAR SLOTS OCUPADOS CORRECTAMENTE
+          // Cada reserva ocupa: duración_reserva / duración_slot
+          const activeReservations = reservationsData.length;
+          const slotsPerReservation = Math.ceil(reservationDuration / slotDuration);
+          const occupiedSlots = Math.min(activeReservations * slotsPerReservation, totalSlots);
           const availableSlots = Math.max(0, totalSlots - occupiedSlots);
+          
+          log.info('📊 Cálculo de slots:', {
+            reservas: activeReservations,
+            duracion_reserva: reservationDuration,
+            duracion_slot: slotDuration,
+            slots_por_reserva: slotsPerReservation,
+            slots_ocupados: occupiedSlots
+          });
           
           // Consultar mesas REALES
           let tablesCount = 0;
