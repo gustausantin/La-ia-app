@@ -121,7 +121,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
           lastName1: data.last_name1 || data.name?.split(' ')[1] || '',
           lastName2: data.last_name2 || data.name?.split(' ')[2] || '',
           customerEmail: data.email || '',
-          birthdate: data.birthdate || ''
+          birthdate: data.birthday || ''  // 🔥 FIX: El campo en BD se llama "birthday"
         }));
       } else {
         console.log('⚠️ Cliente no encontrado');

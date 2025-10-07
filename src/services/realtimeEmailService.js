@@ -251,6 +251,15 @@ export const sendNewReservationEmail = async (reservation, restaurant) => {
   }
 };
 
+// Función helper para limpiar mensajes automáticos de special_requests
+const cleanAutomaticMessages = (text) => {
+  if (!text) return '';
+  return text
+    .replace(/\n\n⚠️ GRUPO GRANDE.*?REQUIERE APROBACIÓN\./s, '')
+    .replace(/\n\n📋 Mesas combinadas:.*?personas\./s, '')
+    .trim();
+};
+
 // Enviar email de reserva modificada
 export const sendModifiedReservationEmail = async (newReservation, oldReservation, restaurant) => {
   try {
@@ -270,13 +279,19 @@ export const sendModifiedReservationEmail = async (newReservation, oldReservatio
       return { success: true, skipped: true, reason: 'quiet_hours' };
     }
     
-    // Detectar cambios
+    // Detectar cambios (limpiando mensajes automáticos de special_requests)
     const changes = {};
     const fieldsToCheck = ['reservation_date', 'reservation_time', 'party_size', 'special_requests'];
     
     fieldsToCheck.forEach(field => {
-      const oldValue = oldReservation[field];
-      const newValue = newReservation[field];
+      let oldValue = oldReservation[field];
+      let newValue = newReservation[field];
+      
+      // 🔥 Limpiar mensajes automáticos de special_requests antes de comparar
+      if (field === 'special_requests') {
+        oldValue = cleanAutomaticMessages(oldValue);
+        newValue = cleanAutomaticMessages(newValue);
+      }
       
       // Registrar cambio si los valores son diferentes (incluso si uno es null/undefined)
       // Convertir a string para comparación
