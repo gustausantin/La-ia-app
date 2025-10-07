@@ -812,10 +812,10 @@ export default function Calendario() {
                 const dayName = day.day_of_week;
                 
                 if (!day.is_open) {
-                    // Día cerrado - formato simple
+                    // Día cerrado - MANTENER horarios originales
                     operating_hours[dayName] = {
-                        open: "09:00",
-                        close: "22:00",
+                        open: day.open_time || "09:00",
+                        close: day.close_time || "22:00",
                         closed: true
                     };
                     calendar_schedule.push({
@@ -1237,7 +1237,7 @@ export default function Calendario() {
                                                             // Si hay evento pero NO está cerrado, mostrar evento especial
                                                             <div>
                                                                 <span className="text-green-600 bg-green-100 px-2 py-1 rounded block mb-1">
-                                                                    Abierto {dayEvent.start_time || daySchedule.open_time || '09:00'}-{dayEvent.end_time || daySchedule.close_time || '22:00'}
+                                                                    Abierto {(dayEvent.start_time || daySchedule.open_time || '09:00').substring(0, 5)}-{(dayEvent.end_time || daySchedule.close_time || '22:00').substring(0, 5)}
                                                                 </span>
                                                                 <div className="flex items-center justify-between text-orange-600 bg-orange-100 px-2 py-1 rounded">
                                                                     <span className="text-xs">🎉 {dayEvent.title}</span>
@@ -1260,7 +1260,7 @@ export default function Calendario() {
                                                                     ? 'text-green-600 bg-green-100' 
                                                                     : 'text-red-600 bg-red-100'
                                                             }`}>
-                                                                {daySchedule.is_open ? `Abierto ${daySchedule.open_time || '09:00'}-${daySchedule.close_time || '22:00'}` : 'Cerrado'}
+                                                                {daySchedule.is_open ? `Abierto ${(daySchedule.open_time || '09:00').substring(0, 5)}-${(daySchedule.close_time || '22:00').substring(0, 5)}` : 'Cerrado'}
                                                             </span>
                                                         )}
                                                     </div>

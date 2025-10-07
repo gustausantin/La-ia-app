@@ -382,28 +382,8 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
         console.log('🔍 Settings actualizados:', currentSettings);
         console.log('🔍 Operating hours que se usarán en regeneración:', currentSettings?.operating_hours);
 
-        // 🛡️ VALIDACIÓN CRÍTICA: Verificar reservas en días cerrados
-        if (currentSettings?.operating_hours) {
-            console.log('🛡️ Validando reservas en días cerrados...');
-            const validation = await validateReservationsOnClosedDays(currentSettings.operating_hours);
-            
-            if (!validation.valid && validation.conflicts.length > 0) {
-                console.log('⚠️ CONFLICTOS DETECTADOS - Mostrando modal informativo:', validation.conflicts);
-                
-                // Mostrar modal informativo
-                setConflictData({
-                    conflicts: validation.conflicts,
-                    closedDays: validation.closedDays,
-                    isGenerating: false // Indica que viene de smartRegeneration
-                });
-                setShowConflictModal(true);
-                return; // Esperar a que el usuario confirme en el modal
-            } else {
-                console.log('✅ No hay conflictos - procediendo con regeneración');
-            }
-        } else {
-            console.warn('⚠️ No se encontraron operating_hours - saltando validación');
-        }
+        // 🔒 NO VALIDAR - La función SQL ya protege los días con reservas
+        console.log('✅ Procediendo con regeneración (protección en SQL)');
 
         try {
             setLoading(true);
@@ -800,16 +780,12 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 // Silencioso - no es crítico
             }
             
-            // 🔒 FORZAR RECARGA DE PÁGINA PARA MOSTRAR ESTADÍSTICAS CORRECTAS
-            console.log('🔄 Forzando recarga de página para actualizar estadísticas...');
-            
-            // Guardar flag de éxito en localStorage
-            localStorage.setItem(`generation_just_completed_${restaurantId}`, 'true');
-            
-            // Recargar la página después de un breve delay
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            // 🔒 RECARGAR ESTADÍSTICAS DIRECTAMENTE
+            console.log('🔄 Recargando estadísticas...');
+            setTimeout(async () => {
+                await loadAvailabilityStats();
+                console.log('✅ Estadísticas recargadas');
+            }, 1000);
 
         } catch (error) {
             console.error('Error generando disponibilidades:', error);
@@ -1117,6 +1093,8 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 `)
                 .eq('restaurant_id', restaurantId)
                 .eq('slot_date', date)
+                .eq('status', 'free')  // 🔥 SOLO slots libres
+                .eq('is_available', true)  // 🔥 SOLO disponibles
                 .order('start_time', { ascending: true })
                 .order('table_id', { ascending: true });
 
@@ -1160,6 +1138,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             }
 
             // Agrupar por mesa (slots normales)
+            // ✅ La query ya filtró solo slots libres (status='free' y is_available=true)
             const groupedByTable = {};
             data.forEach(slot => {
                 const tableKey = `${slot.tables.name} (Zona: ${slot.tables.zone || 'Sin zona'}) - Cap: ${slot.tables.capacity}`;
@@ -1167,7 +1146,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 
                 groupedByTable[tableKey].push({
                     ...slot,
-                    hasReservation: slot.metadata?.reservation_id ? true : false
+                    hasReservation: false
                 });
             });
 
@@ -1282,37 +1261,31 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                         ✅ Disponibilidades Activas
                     </h3>
                     
-                    {/* Estadísticas completas */}
+                    {/* Estadísticas completas - SIEMPRE MOSTRAR DATOS REALES */}
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
                         <div className="text-center bg-white rounded-lg p-2 border border-green-200">
                             <div className="text-lg font-bold text-green-700">
-                                {generationSuccess ? generationSuccess.slotsCreated : (availabilityStats?.total || 0)}
+                                {availabilityStats?.total || 0}
                             </div>
                             <div className="text-xs text-green-600">
-                                {generationSuccess ? 'Slots Creados' : 'Total Slots'}
+                                Slots Creados
                             </div>
                         </div>
                         <div className="text-center bg-white rounded-lg p-2 border border-green-200">
                             <div className="text-lg font-bold text-blue-700">
-                                {generationSuccess?.totalAvailable !== null && generationSuccess?.totalAvailable !== undefined 
-                                    ? generationSuccess.totalAvailable 
-                                    : (availabilityStats?.free || 0)}
+                                {availabilityStats?.free || 0}
                             </div>
                             <div className="text-xs text-blue-600">Disponibles</div>
                         </div>
                         <div className="text-center bg-white rounded-lg p-2 border border-green-200">
                             <div className="text-lg font-bold text-red-700">
-                                {generationSuccess?.totalOccupied !== null && generationSuccess?.totalOccupied !== undefined 
-                                    ? generationSuccess.totalOccupied 
-                                    : (availabilityStats?.occupied || 0)}
+                                {availabilityStats?.occupied || 0}
                             </div>
                             <div className="text-xs text-red-600">Ocupados</div>
                         </div>
                         <div className="text-center bg-white rounded-lg p-2 border border-green-200">
                             <div className="text-lg font-bold text-purple-700">
-                                {generationSuccess?.totalReserved !== null && generationSuccess?.totalReserved !== undefined 
-                                    ? generationSuccess.totalReserved 
-                                    : (availabilityStats?.occupied || 0)}
+                                {availabilityStats?.reserved || 0}
                             </div>
                             <div className="text-xs text-purple-600">Con Reservas</div>
                         </div>
@@ -1783,10 +1756,18 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                                                 
                                                 // Evitar duplicados en el mismo batch
                                                 if (!exceptionsToCreate.find(e => e.exception_date === exceptionDate)) {
+                                                    // 🔑 OBTENER HORARIOS DEL DÍA CERRADO
+                                                    const dayOfWeek = new Date(exceptionDate).getDay();
+                                                    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                                                    const dayName = dayNames[dayOfWeek];
+                                                    const dayConfig = restaurantSettings?.operating_hours?.[dayName];
+                                                    
                                                     exceptionsToCreate.push({
                                                         restaurant_id: restaurantId,
                                                         exception_date: exceptionDate,
                                                         is_open: true, // Forzar abierto para proteger la reserva
+                                                        open_time: dayConfig?.open || '09:00', // Usar horario del día
+                                                        close_time: dayConfig?.close || '22:00', // Usar horario del día
                                                         reason: `Reserva existente protegida (${reservation.customer_name} - ${reservation.party_size} personas)`,
                                                         created_by: 'system'
                                                     });
