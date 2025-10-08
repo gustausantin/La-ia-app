@@ -213,7 +213,7 @@ const TableCard = ({
     if (viewMode === "list") {
         return (
             <div
-                className={`bg-white border rounded-lg p-2 hover:shadow-md transition-all duration-200 ${stateInfo.color} ${
+                className={`bg-white border rounded-xl p-2 shadow-sm hover:shadow-md transition-all duration-200 ${stateInfo.color} ${
                     agentPreference && agentPreference.score > 80
                         ? "ring-2 ring-purple-400"
                         : ""

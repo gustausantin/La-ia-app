@@ -414,14 +414,16 @@ export default function DashboardAgente() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-4">
                     
                     {/* MÉTRICA 1: Reservas de Hoy */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col hover:shadow-md transition-shadow">
+                    <div className="bg-white rounded-xl shadow-md border border-gray-200 flex flex-col hover:shadow-lg transition-all">
                         <div className="p-6 flex-1">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
                                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Reservas de Hoy</p>
                                     <h3 className="text-4xl font-bold text-gray-900">{dashboardData.reservationsToday}</h3>
                                 </div>
-                                <Calendar className="w-8 h-8 text-gray-400" />
+                                <div className="p-2 bg-purple-50 rounded-lg">
+                                    <Calendar className="w-6 h-6 text-purple-600" />
+                                </div>
                             </div>
                             
                             <div className="flex items-center gap-2 text-sm">
@@ -445,14 +447,16 @@ export default function DashboardAgente() {
                     </div>
 
                     {/* MÉTRICA 2: Ocupación */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col hover:shadow-md transition-shadow">
+                    <div className="bg-white rounded-xl shadow-md border border-gray-200 flex flex-col hover:shadow-lg transition-all">
                         <div className="p-6 flex-1">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
                                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ocupación Hoy</p>
                                     <h3 className="text-4xl font-bold text-gray-900">{dashboardData.occupancyPercent}%</h3>
                                 </div>
-                                <Target className="w-8 h-8 text-gray-400" />
+                                <div className="p-2 bg-blue-50 rounded-lg">
+                                    <Target className="w-6 h-6 text-blue-600" />
+                                </div>
                             </div>
                             
                             <div>
@@ -481,7 +485,7 @@ export default function DashboardAgente() {
                     </div>
 
                     {/* MÉTRICA 3: Clientes de Hoy */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col hover:shadow-md transition-shadow">
+                    <div className="bg-white rounded-xl shadow-md border border-gray-200 flex flex-col hover:shadow-lg transition-all">
                         <div className="p-6 flex-1">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
@@ -490,7 +494,9 @@ export default function DashboardAgente() {
                                         {dashboardData.newCustomers + dashboardData.returningCustomers + dashboardData.vipCustomers}
                                     </h3>
                                 </div>
-                                <Users className="w-8 h-8 text-gray-400" />
+                                <div className="p-2 bg-green-50 rounded-lg">
+                                    <Users className="w-6 h-6 text-green-600" />
+                                </div>
                             </div>
                             
                             <div className="grid grid-cols-3 gap-2">

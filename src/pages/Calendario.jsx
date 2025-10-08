@@ -968,7 +968,7 @@ export default function Calendario() {
                     </div>
 
                                     {/* Estadísticas rápidas - Diseño vertical mejorado */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
                     <h2 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                         <Activity className="w-5 h-5 text-blue-600" />
                         Resumen de actividad
@@ -1013,7 +1013,7 @@ export default function Calendario() {
                 </div>
 
                 {/* Tabs de navegación */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+                <div className="bg-white rounded-xl shadow-md border border-gray-200 mb-6">
                     <div className="border-b border-gray-200">
                         <nav className="flex space-x-8 px-6" aria-label="Tabs">
                             {[
@@ -1044,7 +1044,7 @@ export default function Calendario() {
                         <div className="p-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                                 {schedule.map((day, index) => (
-                                    <div key={day.day_of_week} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                                    <div key={day.day_of_week} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all">
                                         <div className="flex items-center justify-between mb-2">
                                             <h3 className="font-medium text-gray-900">{day.day_name}</h3>
                                                     <button
