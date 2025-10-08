@@ -111,8 +111,9 @@ export default function Calendario() {
     const [stats, setStats] = useState({
         daysOpen: 0,
         weeklyHours: 0,
-        activeChannels: 5,
-        occupancy: 0
+        activeChannels: 0,
+        activeReservations: 0,
+        upcomingEvents: 0
     });
 
     // Estados para eventos especiales
@@ -303,39 +304,92 @@ export default function Calendario() {
             // 1. Días abiertos
             const daysOpen = scheduleData.filter(day => day.is_open).length;
             
-            // 2. Horas semanales
+            // 2. Horas semanales - CALCULAR CORRECTAMENTE CON MINUTOS
             const weeklyHours = scheduleData.reduce((total, day) => {
                 if (!day.is_open || !day.open_time || !day.close_time) return total;
-                const startHour = parseInt(day.open_time.split(':')[0]);
-                const endHour = parseInt(day.close_time.split(':')[0]);
-                const hours = endHour - startHour;
-                return total + hours;
+                
+                // Parsear horas y minutos correctamente
+                const [openHour, openMin] = day.open_time.split(':').map(Number);
+                const [closeHour, closeMin] = day.close_time.split(':').map(Number);
+                
+                // Calcular minutos totales
+                const openMinutes = openHour * 60 + openMin;
+                const closeMinutes = closeHour * 60 + closeMin;
+                const dayMinutes = closeMinutes - openMinutes;
+                
+                // Convertir a horas (con decimales)
+                return total + (dayMinutes / 60);
             }, 0);
 
-            // 3. Canales activos (calculado desde configuración real)
+            // 3. Canales activos - LEER DE channel_credentials (TABLA REAL)
             let activeChannels = 0;
             try {
-                const { data: restaurantData } = await supabase
-                    .from("restaurants")
-                    .select("settings")
-                    .eq("id", restaurantId)
-                    .single();
+                const { data: channelsData, error: channelsError } = await supabase
+                    .from("channel_credentials")
+                    .select("*")
+                    .eq("restaurant_id", restaurantId)
+                    .eq("is_active", true);
                 
-                const channels = restaurantData?.settings?.channels || {};
-                activeChannels = Object.values(channels).filter(channel => channel.enabled === true).length;
+                if (channelsError) throw channelsError;
+                
+                activeChannels = channelsData?.length || 0;
+                console.log('📊 Canales activos REALES desde channel_credentials:', activeChannels);
             } catch (error) {
-                console.error("Error calculando canales activos:", error);
-                activeChannels = channelStats.active; // fallback
+                console.error("Error leyendo canales activos:", error);
+                activeChannels = 0;
             }
 
-            // 4. Ocupación promedio (desde hook)
-            const occupancy = occupancyData.average;
+            // 4. Reservas activas (próximos 7 días)
+            let activeReservations = 0;
+            try {
+                const today = format(new Date(), 'yyyy-MM-dd');
+                const sevenDaysLater = format(addDays(new Date(), 7), 'yyyy-MM-dd');
+                
+                const { data: reservationsData, error: reservationsError } = await supabase
+                    .from("reservations")
+                    .select("id")
+                    .eq("restaurant_id", restaurantId)
+                    .gte("reservation_date", today)
+                    .lte("reservation_date", sevenDaysLater)
+                    .not('status', 'in', '(cancelled,completed)');
+                
+                if (reservationsError) throw reservationsError;
+                
+                activeReservations = reservationsData?.length || 0;
+                console.log('📊 Reservas activas próximos 7 días:', activeReservations);
+            } catch (error) {
+                console.error("Error leyendo reservas activas:", error);
+                activeReservations = 0;
+            }
+
+            // 5. Eventos especiales (próximos 30 días)
+            let upcomingEvents = 0;
+            try {
+                const today = format(new Date(), 'yyyy-MM-dd');
+                const thirtyDaysLater = format(addDays(new Date(), 30), 'yyyy-MM-dd');
+                
+                const { data: eventsData, error: eventsError } = await supabase
+                    .from("special_events")
+                    .select("id")
+                    .eq("restaurant_id", restaurantId)
+                    .gte("event_date", today)
+                    .lte("event_date", thirtyDaysLater);
+                
+                if (eventsError) throw eventsError;
+                
+                upcomingEvents = eventsData?.length || 0;
+                console.log('📊 Eventos especiales próximos 30 días:', upcomingEvents);
+            } catch (error) {
+                console.error("Error leyendo eventos especiales:", error);
+                upcomingEvents = 0;
+            }
 
             setStats({
                 daysOpen,
-                weeklyHours,
+                weeklyHours: Math.round(weeklyHours),
                 activeChannels,
-                occupancy
+                activeReservations,
+                upcomingEvents
             });
 
         } catch (error) {
@@ -986,35 +1040,16 @@ export default function Calendario() {
                                 Gestiona los horarios del restaurante y eventos especiales
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={saveWeeklySchedule}
-                                disabled={saving}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-                            >
-                                {saving ? (
-                                    <>
-                                        <RefreshCw className="w-4 h-4 animate-spin" />
-                                        Guardando...
-                                    </>
-                                ) : (
-                                    <>
-                                <Save className="w-4 h-4" />
-                                Guardar cambios
-                                    </>
-                                )}
-                            </button>
-                        </div>
                         </div>
                     </div>
 
                                     {/* Estadísticas rápidas - Diseño vertical mejorado */}
                 <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
-                    <h2 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                         <Activity className="w-5 h-5 text-blue-600" />
-                        Resumen de actividad
+                        RESUMEN DE ACTIVIDAD
                     </h2>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                         <div className="text-center">
                             <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-2">
                                 <CheckCircle className="w-6 h-6 text-green-600" />
@@ -1043,12 +1078,21 @@ export default function Calendario() {
                         </div>
 
                         <div className="text-center">
-                            <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mx-auto mb-2">
-                                <TrendingUp className="w-6 h-6 text-orange-600" />
+                            <div className="flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-lg mx-auto mb-2">
+                                <Users className="w-6 h-6 text-indigo-600" />
                                 </div>
-                            <p className="text-base font-bold text-gray-900">{stats.occupancy}%</p>
-                            <p className="text-sm text-gray-600">Ocupación</p>
-                            <p className="text-sm text-gray-500">última semana</p>
+                            <p className="text-base font-bold text-gray-900">{stats.activeReservations}</p>
+                            <p className="text-sm text-gray-600">Reservas activas</p>
+                            <p className="text-sm text-gray-500">próximos 7 días</p>
+                        </div>
+
+                        <div className="text-center">
+                            <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-lg mx-auto mb-2">
+                                <Star className="w-6 h-6 text-amber-600" />
+                                </div>
+                            <p className="text-base font-bold text-gray-900">{stats.upcomingEvents}</p>
+                            <p className="text-sm text-gray-600">Eventos especiales</p>
+                            <p className="text-sm text-gray-500">próximos 30 días</p>
                         </div>
                     </div>
                 </div>
