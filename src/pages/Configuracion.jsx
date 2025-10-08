@@ -48,7 +48,7 @@ const ToggleSwitch = ({ enabled, onChange, label }) => {
 
 const SettingSection = ({ title, description, icon, children }) => {
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             <div className="border-b border-gray-100 p-6">
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
