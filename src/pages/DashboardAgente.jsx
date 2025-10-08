@@ -418,7 +418,7 @@ export default function DashboardAgente() {
                         <div className="p-6 flex-1">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Reservas de Hoy</p>
+                                    <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Reservas de Hoy</p>
                                     <h3 className="text-4xl font-bold text-gray-900">{dashboardData.reservationsToday}</h3>
                                 </div>
                                 <div className="p-2 bg-purple-50 rounded-lg">
@@ -451,7 +451,7 @@ export default function DashboardAgente() {
                         <div className="p-6 flex-1">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ocupación Hoy</p>
+                                    <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Ocupación Hoy</p>
                                     <h3 className="text-4xl font-bold text-gray-900">{dashboardData.occupancyPercent}%</h3>
                                 </div>
                                 <div className="p-2 bg-blue-50 rounded-lg">
@@ -489,7 +489,7 @@ export default function DashboardAgente() {
                         <div className="p-6 flex-1">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Clientes de Hoy</p>
+                                    <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Clientes de Hoy</p>
                                     <h3 className="text-4xl font-bold text-gray-900">
                                         {dashboardData.newCustomers + dashboardData.returningCustomers + dashboardData.vipCustomers}
                                     </h3>
@@ -536,7 +536,7 @@ export default function DashboardAgente() {
                         <div className="p-6 flex-1">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Alertas No-Show</p>
+                                    <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Alertas No-Show</p>
                                     <h3 className="text-4xl font-bold text-gray-900">{dashboardData.noShowsRisk}</h3>
                                 </div>
                                 <AlertTriangle className="w-8 h-8 text-gray-400" />
@@ -569,7 +569,7 @@ export default function DashboardAgente() {
                         <div className="p-6 flex-1">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Esta Semana</p>
+                                    <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Esta Semana</p>
                                     <h3 className="text-4xl font-bold text-gray-900">{dashboardData.thisWeekReservations}</h3>
                                 </div>
                                 <TrendingUp className="w-8 h-8 text-gray-400" />
@@ -609,7 +609,7 @@ export default function DashboardAgente() {
                         <div className="p-6 flex-1">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Acciones CRM</p>
+                                    <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Acciones CRM</p>
                                     <h3 className="text-4xl font-bold text-gray-900">{dashboardData.pendingCRMAlerts}</h3>
                                 </div>
                                 <MessageSquare className="w-8 h-8 text-gray-400" />
@@ -680,7 +680,7 @@ export default function DashboardAgente() {
                         <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
                             <div className="flex items-center gap-2 mb-2">
                                 <DollarSign className="w-4 h-4 text-green-600" />
-                                <span className="text-xs font-semibold text-gray-500 uppercase">Ticket Medio</span>
+                                <span className="text-sm font-bold text-gray-700 uppercase">Ticket Medio</span>
                             </div>
                             <div className="text-2xl font-bold text-gray-900">
                                 {dashboardData.thisWeekReservations > 0 
@@ -694,7 +694,7 @@ export default function DashboardAgente() {
                         <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
                             <div className="flex items-center gap-2 mb-2">
                                 <Calendar className="w-4 h-4 text-green-600" />
-                                <span className="text-xs font-semibold text-gray-500 uppercase">Reservas Gestionadas</span>
+                                <span className="text-sm font-bold text-gray-700 uppercase">Reservas Gestionadas</span>
                             </div>
                             <div className="text-2xl font-bold text-gray-900">{dashboardData.thisWeekReservations}</div>
                             <p className="text-xs text-gray-600 mt-1">Esta semana</p>
@@ -704,7 +704,7 @@ export default function DashboardAgente() {
                         <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
                             <div className="flex items-center gap-2 mb-2">
                                 <Target className="w-4 h-4 text-green-600" />
-                                <span className="text-xs font-semibold text-gray-500 uppercase">Ocupación Promedio</span>
+                                <span className="text-sm font-bold text-gray-700 uppercase">Ocupación Promedio</span>
                             </div>
                             <div className="text-2xl font-bold text-gray-900">{dashboardData.occupancyPercent}%</div>
                             <p className="text-xs text-gray-600 mt-1">Hoy</p>
