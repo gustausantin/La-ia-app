@@ -40,6 +40,8 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
     const [showConfirmRegenerate, setShowConfirmRegenerate] = useState(false); // 🔄 Modal confirmación regeneración
     const [dayStats, setDayStats] = useState(null); // 📊 Estadísticas de días (nueva versión simplificada)
     const [autoTriggerShown, setAutoTriggerShown] = useState(false); // 🔒 Flag para evitar modal repetido
+    const [protectedDaysData, setProtectedDaysData] = useState([]); // 🛡️ Datos de días protegidos para el modal
+    const [dateRangeInfo, setDateRangeInfo] = useState(null); // 📅 Rango de fechas para el modal
     
     // 🚨 Forzar verificación del estado cuando se monta el componente
     useEffect(() => {
@@ -198,21 +200,43 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
 
             if (slotsError) throw slotsError;
 
-            // 4. Calcular días únicos con slots
+            // 3.5. Obtener días CERRADOS manualmente (festivos, vacaciones) desde special_events
+            const { data: closedDays, error: closedError } = await supabase
+                .from('special_events')
+                .select('event_date')
+                .eq('restaurant_id', restaurantId)
+                .eq('is_closed', true)
+                .gte('event_date', today)
+                .lte('event_date', endDate);
+
+            if (closedError) console.warn('⚠️ Error obteniendo días cerrados:', closedError);
+
+            // Crear set de días cerrados
+            const closedDaysSet = new Set(
+                closedDays?.map(d => d.event_date) || []
+            );
+
+            console.log('🚫 DEBUG - Días cerrados manualmente (desde special_events):', Array.from(closedDaysSet));
+
+            // 4. Calcular días únicos con slots, EXCLUYENDO días cerrados manualmente
             const uniqueDaysWithSlots = new Set(
-                slotsData?.map(s => s.slot_date) || []
+                slotsData?.filter(s => !closedDaysSet.has(s.slot_date)).map(s => s.slot_date) || []
             );
             const diasTotales = uniqueDaysWithSlots.size;
 
-            console.log('📊 DEBUG - Días con SLOTS REALES:', diasTotales);
+            // Debug: Mostrar TODOS los días con slots
+            const diasArray = Array.from(uniqueDaysWithSlots).sort();
+            console.log('📊 DEBUG - Días con SLOTS REALES (sin cerrados):', diasTotales);
+            console.log('📅 DEBUG - Días específicos:', diasArray);
 
-            // 5. Obtener reservas ACTIVAS en el rango
+            // 5. Obtener TODAS las reservas ACTIVAS (sin filtro de rango)
+            // ⚠️ CRÍTICO: NO filtrar por endDate porque puede haber reservas futuras
+            // que protegen días aunque estén fuera del rango de configuración
             const { data: reservations, error: resError } = await supabase
                 .from('reservations')
                 .select('reservation_date, status')
                 .eq('restaurant_id', restaurantId)
-                .gte('reservation_date', today)
-                .lte('reservation_date', endDate);
+                .gte('reservation_date', today);  // Solo desde hoy en adelante
 
             if (resError) throw resError;
 
@@ -221,15 +245,28 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 r.status !== 'cancelled' && r.status !== 'completed'
             ) || [];
 
-            // 7. Calcular días únicos con reservas activas
+            // 7. Calcular días únicos con reservas activas QUE TIENEN SLOTS
+            // ⚠️ CRÍTICO: Solo contar reservas en días que TIENEN slots generados
+            const reservationsInSlotsRange = activeReservations.filter(r => 
+                uniqueDaysWithSlots.has(r.reservation_date)
+            );
+            
             const uniqueDaysWithReservations = new Set(
-                activeReservations.map(r => r.reservation_date)
+                reservationsInSlotsRange.map(r => r.reservation_date)
             ).size;
 
-            // 8. Calcular días libres = días con slots - días con reservas
-            const diasLibres = diasTotales - uniqueDaysWithReservations;
+            // 8. Calcular días libres = días con slots - días con reservas (en rango)
+            const diasLibres = Math.max(0, diasTotales - uniqueDaysWithReservations);
 
-            // 9. Total de reservas activas
+            console.log('📊 DEBUG - Cálculo de días:', {
+                diasConSlots: diasTotales,
+                diasConReservasEnRango: uniqueDaysWithReservations,
+                diasLibres: diasLibres,
+                totalReservasActivas: activeReservations.length,
+                reservasFueraDeRango: activeReservations.length - reservationsInSlotsRange.length
+            });
+
+            // 9. Total de reservas activas (TODAS, incluidas fuera de rango)
             const reservasActivas = activeReservations.length;
 
             // 10. Obtener número de mesas
@@ -307,8 +344,83 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             return;
         }
 
+        // 🛡️ Preparar datos de días protegidos
+        const protectedDays = await prepareProtectedDaysData();
+        setProtectedDaysData(protectedDays);
+
         // Mostrar modal de confirmación
         setShowConfirmDelete(true);
+    };
+
+    // 🔄 Preparar y mostrar modal de regeneración
+    const handleShowRegenerateModal = async () => {
+        // 🛡️ Preparar datos de días protegidos
+        const protectedDays = await prepareProtectedDaysData();
+        setProtectedDaysData(protectedDays);
+
+        // 📅 Calcular rango de fechas
+        try {
+            const { data: settings } = await supabase
+                .from('restaurants')
+                .select('settings')
+                .eq('id', restaurantId)
+                .single();
+            
+            const advanceDays = settings?.settings?.advance_booking_days || 20;
+            const endDate = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
+            setDateRangeInfo(`hasta el ${endDate} (${advanceDays} días)`);
+        } catch (error) {
+            console.error('Error calculando rango:', error);
+        }
+
+        // Mostrar modal de confirmación
+        setShowConfirmRegenerate(true);
+    };
+
+    // 📊 Preparar datos de días protegidos para el modal
+    const prepareProtectedDaysData = async () => {
+        if (!restaurantId) return [];
+
+        try {
+            const today = format(new Date(), 'yyyy-MM-dd');
+            
+            // Obtener TODAS las reservas futuras agrupadas por día
+            const { data: reservations, error } = await supabase
+                .from('reservations')
+                .select('reservation_date, customer_name, status')
+                .eq('restaurant_id', restaurantId)
+                .gte('reservation_date', today)
+                .not('status', 'in', '(cancelled,completed)');  // Solo activas
+            
+            if (error) {
+                console.error('❌ Error obteniendo reservas:', error);
+                return [];
+            }
+
+            // Agrupar por fecha
+            const groupedByDate = {};
+            reservations?.forEach(res => {
+                if (!groupedByDate[res.reservation_date]) {
+                    groupedByDate[res.reservation_date] = [];
+                }
+                groupedByDate[res.reservation_date].push(res);
+            });
+
+            // Convertir a array ordenado con formato
+            const protectedDays = Object.keys(groupedByDate)
+                .sort()
+                .map(date => ({
+                    date: format(new Date(date), 'dd/MM/yyyy', { locale: es }),
+                    count: groupedByDate[date].length,
+                    rawDate: date
+                }));
+
+            console.log('🛡️ Días protegidos preparados:', protectedDays);
+            return protectedDays;
+        } catch (error) {
+            console.error('❌ Error preparando días protegidos:', error);
+            return [];
+        }
     };
 
     // 🗑️ Ejecutar borrado después de confirmar
@@ -342,30 +454,36 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
 
             console.log('📊 TODAS las reservas del restaurante:', allReservationsDebug);
             
-            // TODAS las reservas en rango (sin filtrar por status)
+            // ⚠️ TODAS las reservas futuras (SIN filtrar por endDate)
+            // CRÍTICO: Incluir reservas fuera del rango porque también protegen días
             const { data: reservationsDataBefore, error: resError } = await supabase
                 .from('reservations')
                 .select('id, reservation_date, status, customer_name')
                 .eq('restaurant_id', restaurantId)
-                .gte('reservation_date', today)
-                .lte('reservation_date', endDate);
+                .gte('reservation_date', today);  // Solo desde hoy, SIN límite superior
 
             if (resError) {
                 console.error('❌ Error consultando reservas:', resError);
             }
 
-            console.log('📊 TODAS las reservas en rango (cualquier status):', reservationsDataBefore);
+            console.log('📊 TODAS las reservas consultadas:', reservationsDataBefore);
 
-            const activeReservations = reservationsDataBefore?.length || 0;
+            // ✅ FILTRAR: Solo contar las ACTIVAS (excluir cancelled y completed)
+            const activeReservationsArray = reservationsDataBefore?.filter(r => 
+                r.status !== 'cancelled' && r.status !== 'completed'
+            ) || [];
+
+            const activeReservations = activeReservationsArray.length;
             
-            // Contar días únicos con reservas (días protegidos)
+            // Contar días únicos con reservas ACTIVAS (días protegidos)
             const uniqueDaysBefore = new Set(
-                reservationsDataBefore?.map(r => r.reservation_date) || []
+                activeReservationsArray.map(r => r.reservation_date)
             );
             const daysProtected = uniqueDaysBefore.size;
 
-            console.log('📊 ANTES de borrar:', {
-                reservas: activeReservations,
+            console.log('📊 ANTES de borrar (SOLO ACTIVAS):', {
+                reservasActivas: activeReservations,
+                reservasCanceladas: reservationsDataBefore?.filter(r => r.status === 'cancelled' || r.status === 'completed').length || 0,
                 diasProtegidos: daysProtected,
                 fechas: Array.from(uniqueDaysBefore)
             });
@@ -645,13 +763,18 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 console.error('❌ Error consultando reservas:', reservationsError);
             }
 
-            console.log('📊 TODAS las reservas en rango (cualquier status):', reservationsData);
+            console.log('📊 TODAS las reservas consultadas:', reservationsData);
 
-            const activeReservations = reservationsData?.length || 0;
+            // ✅ FILTRAR: Solo contar las ACTIVAS (excluir cancelled y completed)
+            const activeReservationsArray = reservationsData?.filter(r => 
+                r.status !== 'cancelled' && r.status !== 'completed'
+            ) || [];
+
+            const activeReservations = activeReservationsArray.length;
             
-            // Contar días únicos con reservas (días protegidos)
+            // Contar días únicos con reservas ACTIVAS (días protegidos)
             const uniqueDays = new Set(
-                reservationsData?.map(r => r.reservation_date) || []
+                activeReservationsArray.map(r => r.reservation_date)
             );
             const daysProtectedCount = uniqueDays.size;
 
@@ -661,11 +784,12 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             // Días regenerados = Total - Protegidos
             const daysRegenerated = totalDays - daysProtectedCount;
             
-            console.log('📊 Estadísticas REALES para modal:', {
+            console.log('📊 Estadísticas REALES para modal (SOLO ACTIVAS):', {
                 totalDays,
                 daysProtectedCount,
                 daysRegenerated,
-                activeReservations,
+                reservasActivas: activeReservations,
+                reservasCanceladas: reservationsData?.filter(r => r.status === 'cancelled' || r.status === 'completed').length || 0,
                 fechasProtegidas: Array.from(uniqueDays)
             });
             
@@ -681,6 +805,10 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 duration: `${duration} min por reserva`
             });
             setShowRegenerationModal(true);
+
+            // ✅ LIMPIAR FLAG DE REGENERACIÓN REQUERIDA
+            changeDetection.clearRegenerationFlag();
+            console.log('✅ Flag de regeneración limpiado');
             console.log('✅ Modal de resultado activado');
 
         } catch (error) {
@@ -697,8 +825,8 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
         if (autoTriggerRegeneration && restaurantId && !loading && !autoTriggerShown) {
             console.log('🚨 AUTO-TRIGGER: Mostrando modal de confirmación (PRIMERA VEZ)...');
             // Pequeño delay para que el componente termine de montar
-            const timer = setTimeout(() => {
-                setShowConfirmRegenerate(true); // MOSTRAR MODAL, NO ejecutar directo
+            const timer = setTimeout(async () => {
+                await handleShowRegenerateModal(); // Preparar datos y mostrar modal
                 setAutoTriggerShown(true); // 🔒 MARCAR COMO MOSTRADO para no repetir
             }, 500);
             return () => clearTimeout(timer);
@@ -1475,13 +1603,24 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                                 <CheckCircle2 className="w-6 h-6 text-green-600" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900">
-                                    Disponibilidades Activas
-                                </h3>
-                                <p className="text-sm text-gray-600 mt-1 font-medium">
-                                    {dayStats?.mesas || 0} mesas • {dayStats?.duracionReserva || 60} min/reserva
-                                    {dayStats?.fechaHasta && ` • hasta ${dayStats.fechaHasta}`}
-                                </p>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900">
+                                        Disponibilidades Activas
+                                    </h3>
+                                    <div className="flex items-center gap-3 mt-2">
+                                        <p className="text-sm text-gray-600 font-medium">
+                                            {dayStats?.mesas || 0} mesas • {dayStats?.duracionReserva || 60} min/reserva
+                                        </p>
+                                        {dayStats?.fechaHasta && (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+                                                <CalendarCheck className="w-4 h-4 text-blue-600" />
+                                                <span className="text-sm font-bold text-blue-900">
+                                                    Hasta: <span className="text-base">{dayStats.fechaHasta}</span>
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <button 
@@ -1601,7 +1740,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                     {/* Botón para generar */}
                     <div className="p-6 text-center bg-white">
                         <button
-                            onClick={() => setShowConfirmRegenerate(true)}
+                            onClick={handleShowRegenerateModal}
                             className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
                         >
                             <Plus className="w-5 h-5" />
@@ -1615,7 +1754,8 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             )}
 
             {/* Aviso de regeneración necesaria - BANNER CRÍTICO */}
-            {changeDetection.needsRegeneration && (
+            {/* ⚠️ NO mostrar si el modal de confirmación O resultado está abierto */}
+            {changeDetection.needsRegeneration && !showConfirmRegenerate && !showRegenerationModal && (
                 <div className="border-2 border-red-500 rounded-lg p-6 mb-6 bg-red-50 shadow-lg animate-pulse">
                     <div className="flex items-start gap-4">
                         <div className="flex-shrink-0">
@@ -1708,7 +1848,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             {/* Acciones principales */}
             <div className="flex flex-wrap gap-3">
                 <button
-                    onClick={() => setShowConfirmRegenerate(true)}
+                    onClick={handleShowRegenerateModal}
                     disabled={loading}
                     className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
@@ -2349,6 +2489,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 onClose={() => setShowConfirmDelete(false)}
                 onConfirm={executeDelete}
                 type="delete"
+                protectedDays={protectedDaysData}
             />
 
             <ConfirmActionModal
@@ -2359,6 +2500,8 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                     smartRegeneration('schedule_change', { source: 'manual_confirm' });
                 }}
                 type="regenerate"
+                protectedDays={protectedDaysData}
+                dateRange={dateRangeInfo}
             />
 
             {/* Modal de Resultado Unificado */}

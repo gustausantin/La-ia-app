@@ -476,6 +476,22 @@ export default function Calendario() {
             
             if (error) throw error;
             
+            // 🔥 ELIMINAR TAMBIÉN DE calendar_exceptions si era un día cerrado
+            if (event.is_closed) {
+                const { error: exceptionDeleteError } = await supabase
+                    .from('calendar_exceptions')
+                    .delete()
+                    .eq('restaurant_id', restaurantId)
+                    .eq('exception_date', event.event_date)
+                    .eq('is_open', false);
+                
+                if (exceptionDeleteError) {
+                    console.error('⚠️ Error eliminando excepción:', exceptionDeleteError);
+                } else {
+                    console.log('✅ Excepción eliminada de calendar_exceptions');
+                }
+            }
+            
             // Actualizar estado local
             setEvents(prev => prev.filter(e => e.id !== event.id));
             
@@ -592,6 +608,31 @@ export default function Calendario() {
                 end_time: eventForm.closed ? null : eventForm.end_time,
                 is_closed: eventForm.closed
             };
+            
+            // 🔥 GUARDAR TAMBIÉN EN calendar_exceptions para que el backend lo respete
+            if (eventForm.closed) {
+                const exceptionData = {
+                    restaurant_id: restaurantId,
+                    exception_date: eventDate,
+                    is_open: false,  // ← DÍA CERRADO
+                    open_time: null,
+                    close_time: null,
+                    reason: eventForm.title || 'Cerrado',
+                    created_by: user?.id || 'user'
+                };
+                
+                const { error: exceptionError } = await supabase
+                    .from('calendar_exceptions')
+                    .upsert(exceptionData, {
+                        onConflict: 'restaurant_id,exception_date'
+                    });
+                
+                if (exceptionError) {
+                    console.error('⚠️ Error guardando excepción:', exceptionError);
+                } else {
+                    console.log('✅ Excepción guardada en calendar_exceptions');
+                }
+            }
             
             // Verificar si ya existe un evento en esta fecha para actualizar o crear
             const existingEvent = getDayEvent(selectedDay);

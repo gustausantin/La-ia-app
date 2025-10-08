@@ -11,7 +11,9 @@ const ConfirmActionModal = ({
     onClose, 
     onConfirm, 
     type = 'delete', // 'delete' | 'regenerate'
-    stats = {}
+    stats = {},
+    protectedDays = [],  // ✅ Array de días protegidos con reservas
+    dateRange = null  // ✅ Rango de fechas (e.g., "hasta 18/10/2025")
 }) => {
     if (!isOpen) return null;
 
@@ -126,6 +128,21 @@ const ConfirmActionModal = ({
 
                     {/* Content */}
                     <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                        {/* 📅 Rango de Fechas (solo para regeneración) */}
+                        {type === 'regenerate' && dateRange && (
+                            <div className="bg-indigo-50 border-2 border-indigo-200 rounded-lg p-4">
+                                <div className="flex items-center space-x-2 mb-2">
+                                    <Calendar className="w-5 h-5 text-indigo-600" />
+                                    <h4 className="font-semibold text-indigo-900">
+                                        📅 CONFIGURACIÓN ACTUAL
+                                    </h4>
+                                </div>
+                                <p className="text-sm text-indigo-700">
+                                    Se generarán disponibilidades <span className="font-bold">{dateRange}</span>
+                                </p>
+                            </div>
+                        )}
+
                         {currentConfig.sections.map((section, idx) => (
                             <div key={idx} className="bg-gray-50 rounded-lg p-4">
                                 <div className="flex items-center space-x-2 mb-3">
@@ -144,6 +161,39 @@ const ConfirmActionModal = ({
                                 </ul>
                             </div>
                         ))}
+
+                        {/* 🛡️ DÍAS PROTEGIDOS CON RESERVAS */}
+                        {protectedDays && protectedDays.length > 0 && (
+                            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                                <div className="flex items-center space-x-2 mb-3">
+                                    <Shield className="w-5 h-5 text-blue-600" />
+                                    <h4 className="font-semibold text-blue-900">
+                                        🛡️ DÍAS PROTEGIDOS ({protectedDays.length})
+                                    </h4>
+                                </div>
+                                <p className="text-sm text-blue-700 mb-3">
+                                    <strong>Estos días tienen reservas y NO se modificarán:</strong>
+                                    {type === 'regenerate' && (
+                                        <span className="block mt-1 text-xs italic">
+                                            * Incluye días fuera del rango configurado pero con reservas activas
+                                        </span>
+                                    )}
+                                </p>
+                                <div className="space-y-2 max-h-40 overflow-y-auto">
+                                    {protectedDays.map((day, idx) => (
+                                        <div key={idx} className="bg-white rounded p-2 flex items-center justify-between text-sm">
+                                            <div className="flex items-center space-x-2">
+                                                <Calendar className="w-4 h-4 text-blue-600" />
+                                                <span className="font-medium text-gray-900">{day.date}</span>
+                                            </div>
+                                            <span className="text-blue-600 font-semibold">
+                                                {day.count} {day.count === 1 ? 'reserva' : 'reservas'}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Info adicional - ADVERTENCIA SERIA */}
                         <div className={`${type === 'delete' ? 'bg-red-50 border-red-300' : 'bg-orange-50 border-orange-300'} border-2 rounded-lg p-4`}>

@@ -38,6 +38,7 @@ DECLARE
     v_exception_close_time TIME;
     v_has_reservations BOOLEAN;
     v_slot_is_occupied BOOLEAN;
+    v_is_day_open BOOLEAN;
 BEGIN
     -- 1. Obtener configuración del restaurante
     SELECT settings INTO v_settings
@@ -62,7 +63,20 @@ BEGIN
     v_current_date := p_start_date;
     
     WHILE v_current_date <= p_end_date LOOP
-        -- 🛡️ PROTECCIÓN: Si el día tiene reservas activas, NO TOCAR NADA
+        -- 🛡️ PROTECCIÓN 1: Si el día está cerrado manualmente en calendario, SALTAR
+        SELECT is_open INTO v_is_day_open
+        FROM calendar_exceptions
+        WHERE restaurant_id = p_restaurant_id
+          AND exception_date = v_current_date;
+        
+        IF v_is_day_open IS NOT NULL AND v_is_day_open = FALSE THEN
+            RAISE NOTICE '🚫 Día % está CERRADO manualmente (vacaciones/festivo) - SALTADO', v_current_date;
+            v_days_protected := v_days_protected + 1;
+            v_current_date := v_current_date + 1;
+            CONTINUE;
+        END IF;
+        
+        -- 🛡️ PROTECCIÓN 2: Si el día tiene reservas activas, NO TOCAR NADA
         SELECT EXISTS(
             SELECT 1 FROM reservations
             WHERE restaurant_id = p_restaurant_id
