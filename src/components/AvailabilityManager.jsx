@@ -6,6 +6,8 @@ import { format, addDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
     Calendar,
+    CalendarCheck,
+    CalendarClock,
     RefreshCw,
     Settings,
     AlertTriangle,
@@ -22,6 +24,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
+import ConfirmActionModal from './ConfirmActionModal';
+import ResultModal from './ResultModal';
 
 const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
     const { restaurantId } = useAuthContext();
@@ -32,6 +36,10 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
     const [validationExecuted, setValidationExecuted] = useState(false); // 🔒 Flag para evitar validación doble
     const [showRegenerationModal, setShowRegenerationModal] = useState(false); // 🎯 Modal de resultado
     const [regenerationResult, setRegenerationResult] = useState(null); // 📊 Datos del resultado
+    const [showConfirmDelete, setShowConfirmDelete] = useState(false); // 🗑️ Modal confirmación borrado
+    const [showConfirmRegenerate, setShowConfirmRegenerate] = useState(false); // 🔄 Modal confirmación regeneración
+    const [dayStats, setDayStats] = useState(null); // 📊 Estadísticas de días (nueva versión simplificada)
+    const [autoTriggerShown, setAutoTriggerShown] = useState(false); // 🔒 Flag para evitar modal repetido
     
     // 🚨 Forzar verificación del estado cuando se monta el componente
     useEffect(() => {
@@ -41,6 +49,10 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             console.log('🔍 changeType:', changeDetection.changeType);
             console.log('🔍 changeDetails:', changeDetection.changeDetails);
             console.log('🔍 autoTriggerRegeneration:', autoTriggerRegeneration);
+            
+            // 🎯 LIMPIAR modal de resultado al montar (evitar que aparezca sin acción)
+            setShowRegenerationModal(false);
+            setRegenerationResult(null);
         }
     }, [restaurantId, changeDetection.needsRegeneration, changeDetection.changeType, autoTriggerRegeneration]);
     
@@ -150,6 +162,111 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
         }
     };
 
+    // 📊 Calcular estadísticas de DÍAS basadas en SLOTS REALES (no configuración)
+    const loadDayStats = async () => {
+        try {
+            console.log('📊 Calculando estadísticas de DÍAS para restaurant:', restaurantId);
+            
+            if (!restaurantId) {
+                console.warn('⚠️ Restaurant ID required');
+                return;
+            }
+
+            // 1. Obtener configuración del restaurante (solo para duración y período)
+            const { data: restaurantData, error: restError } = await supabase
+                .from('restaurants')
+                .select('settings')
+                .eq('id', restaurantId)
+                .single();
+
+            if (restError) throw restError;
+
+            const advanceDays = restaurantData?.settings?.advance_booking_days || 30;
+            const reservationDuration = restaurantData?.settings?.reservation_duration || 60;
+
+            // 2. Calcular rango de fechas
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
+
+            // 3. Obtener DÍAS ÚNICOS con slots REALES en availability_slots
+            const { data: slotsData, error: slotsError } = await supabase
+                .from('availability_slots')
+                .select('slot_date')
+                .eq('restaurant_id', restaurantId)
+                .gte('slot_date', today)
+                .lte('slot_date', endDate);
+
+            if (slotsError) throw slotsError;
+
+            // 4. Calcular días únicos con slots
+            const uniqueDaysWithSlots = new Set(
+                slotsData?.map(s => s.slot_date) || []
+            );
+            const diasTotales = uniqueDaysWithSlots.size;
+
+            console.log('📊 DEBUG - Días con SLOTS REALES:', diasTotales);
+
+            // 5. Obtener reservas ACTIVAS en el rango
+            const { data: reservations, error: resError } = await supabase
+                .from('reservations')
+                .select('reservation_date, status')
+                .eq('restaurant_id', restaurantId)
+                .gte('reservation_date', today)
+                .lte('reservation_date', endDate);
+
+            if (resError) throw resError;
+
+            // 6. Filtrar solo las que NO están canceladas o completadas
+            const activeReservations = reservations?.filter(r => 
+                r.status !== 'cancelled' && r.status !== 'completed'
+            ) || [];
+
+            // 7. Calcular días únicos con reservas activas
+            const uniqueDaysWithReservations = new Set(
+                activeReservations.map(r => r.reservation_date)
+            ).size;
+
+            // 8. Calcular días libres = días con slots - días con reservas
+            const diasLibres = diasTotales - uniqueDaysWithReservations;
+
+            // 9. Total de reservas activas
+            const reservasActivas = activeReservations.length;
+
+            // 10. Obtener número de mesas
+            const mesas = availabilityStats?.tablesCount || 0;
+
+            // 11. Calcular la fecha máxima de disponibilidades REALES
+            const maxSlotDate = slotsData && slotsData.length > 0
+                ? Math.max(...slotsData.map(s => new Date(s.slot_date).getTime()))
+                : null;
+
+            const maxDate = maxSlotDate ? format(new Date(maxSlotDate), 'dd/MM/yyyy') : null;
+
+            const stats = {
+                diasTotales: diasTotales,  // ← AHORA basado en SLOTS REALES, no configuración
+                diasConReservas: uniqueDaysWithReservations,
+                diasLibres: diasLibres,  // ← AHORA basado en SLOTS REALES
+                reservasActivas: reservasActivas,
+                mesas: mesas,
+                duracionReserva: reservationDuration,
+                advanceDaysConfig: advanceDays,  // Guardamos la config para el modal de generar
+                fechaHasta: maxDate  // ← Fecha máxima REAL de disponibilidades
+            };
+
+            console.log('✅ Estadísticas de DÍAS calculadas (BASADAS EN SLOTS REALES):', stats);
+            console.log('📊 DEBUG - Días con slots:', diasTotales);
+            console.log('📊 DEBUG - Días con reservas:', uniqueDaysWithReservations);
+            console.log('📊 DEBUG - Días libres:', diasLibres);
+            console.log('📊 DEBUG - Reservas activas:', reservasActivas);
+            console.log('📊 DEBUG - Fecha hasta:', maxDate);
+            setDayStats(stats);
+
+        } catch (error) {
+            console.error('❌ Error calculando estadísticas de días:', error);
+            setDayStats(null);
+        }
+    };
+
     // Detectar reservas que entrarían en conflicto
     const detectConflicts = async (startDate, endDate) => {
         try {
@@ -190,23 +307,13 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             return;
         }
 
-        const confirmed = confirm(
-            '🗑️ BORRAR DISPONIBILIDADES\n\n' +
-            '✅ ACCIÓN:\n' +
-            '• Eliminará slots disponibles (sin reservas)\n' +
-            '• Mantendrá slots ocupados (con reservas)\n' +
-            '• Resultado: Solo quedarán las reservas confirmadas\n\n' +
-            '🛡️ PROTECCIÓN TOTAL DE RESERVAS:\n' +
-            '• Los días con reservas activas NO se tocarán\n' +
-            '• Los slots ocupados permanecerán intactos\n' +
-            '• Los horarios de días con reservas se respetarán\n' +
-            '• Solo se eliminarán slots libres sin reservas\n\n' +
-            '📊 Si quedan slots después del borrado, es porque hay reservas en esos días.\n' +
-            'Para eliminarlos, primero debes cancelar las reservas manualmente.\n\n' +
-            '¿Continuar?'
-        );
+        // Mostrar modal de confirmación
+        setShowConfirmDelete(true);
+    };
 
-        if (!confirmed) return;
+    // 🗑️ Ejecutar borrado después de confirmar
+    const executeDelete = async () => {
+        if (!restaurantId) return;
 
         try {
             setLoading(true);
@@ -218,7 +325,52 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
 
             console.log('🗑️ BORRAR DISPONIBILIDADES:');
             console.log('   🏪 Restaurante:', restaurantId);
+            console.log('🔍 QUERY PARAMETERS:', {
+                today,
+                endDate,
+                advanceDays,
+                restaurantId
+            });
 
+            // 🎯 PASO 1: Consultar reservas ANTES de borrar (para contar días protegidos)
+            
+            // Debug: Todas las reservas
+            const { data: allReservationsDebug } = await supabase
+                .from('reservations')
+                .select('id, reservation_date, status, customer_name')
+                .eq('restaurant_id', restaurantId);
+
+            console.log('📊 TODAS las reservas del restaurante:', allReservationsDebug);
+            
+            // TODAS las reservas en rango (sin filtrar por status)
+            const { data: reservationsDataBefore, error: resError } = await supabase
+                .from('reservations')
+                .select('id, reservation_date, status, customer_name')
+                .eq('restaurant_id', restaurantId)
+                .gte('reservation_date', today)
+                .lte('reservation_date', endDate);
+
+            if (resError) {
+                console.error('❌ Error consultando reservas:', resError);
+            }
+
+            console.log('📊 TODAS las reservas en rango (cualquier status):', reservationsDataBefore);
+
+            const activeReservations = reservationsDataBefore?.length || 0;
+            
+            // Contar días únicos con reservas (días protegidos)
+            const uniqueDaysBefore = new Set(
+                reservationsDataBefore?.map(r => r.reservation_date) || []
+            );
+            const daysProtected = uniqueDaysBefore.size;
+
+            console.log('📊 ANTES de borrar:', {
+                reservas: activeReservations,
+                diasProtegidos: daysProtected,
+                fechas: Array.from(uniqueDaysBefore)
+            });
+
+            // 🎯 PASO 2: Ejecutar borrado
             const { data, error } = await supabase.rpc('borrar_disponibilidades_simple', {
                 p_restaurant_id: restaurantId
             });
@@ -233,13 +385,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             toast.dismiss('cleanup');
 
             if (data?.success) {
-                const slotsDeleted = data?.slots_deleted || 0;
-                const slotsPreserved = data?.slots_preserved || 0;
-                const slotsAfter = data?.slots_after || 0;
-
-                toast.success('✅ Disponibilidades borradas correctamente');
-
-                // Limpiar estado local y recargar
+                // Limpiar estado local
                 setGenerationSuccess(null);
                 setAvailabilityStats(null);
                 setAvailabilityGrid([]);
@@ -250,27 +396,32 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                     console.warn('No se pudo limpiar localStorage:', error);
                 }
 
-                // Recargar datos reales
+                // 🎯 PASO 3: Recargar stats
                 await loadAvailabilityStats();
+                await loadDayStats(); // 📊 Recargar estadísticas de días
+
+                // Total de días en el período
+                const totalDays = advanceDays;
                 
-                // 🎯 Obtener estadísticas REALES de la BD
-                const reservationStore3 = await import('../stores/reservationStore.js');
-                const realStats = await reservationStore3.useReservationStore.getState().getAvailabilityStats(restaurantId);
-                
-                // Mostrar modal con datos REALES
+                // Días eliminados = Total - Protegidos
+                const daysDeleted = totalDays - daysProtected;
+
+                const duration = restaurantSettings?.reservation_duration || 60;
+                const endDateFormatted = format(addDays(new Date(), advanceDays), 'dd/MM/yyyy');
+
+                // Mostrar modal con terminología de DÍAS
+                console.log('🎯 MOSTRANDO MODAL DE RESULTADO - BORRAR');
                 setRegenerationResult({
-                    action: 'borrado_completado',
-                    slotsCreated: 0, // Correcto: en borrado no se crean
-                    slotsMarked: realStats?.reserved || 0, // REAL de BD
-                    daysProtected: data?.days_protected || 0, // REAL del SQL
-                    slotsDeleted: slotsDeleted,
-                    totalSlots: realStats?.total || 0,
-                    availableSlots: realStats?.free || 0,
-                    message: `${slotsDeleted} slots eliminados. ${realStats?.reserved || 0} reservas mantenidas intactas. ${slotsAfter === 0 ? 'Sin disponibilidades - Solo quedan reservas.' : 'Solo quedan las reservas confirmadas.'}`,
-                    period: 'Borrado completado',
-                    duration: `${realStats?.total || 0} slots totales`
+                    type: 'delete',
+                    totalDays: totalDays,
+                    daysProtected: daysProtected,
+                    daysAvailable: daysDeleted, // Días eliminados
+                    activeReservations: activeReservations,
+                    period: `HOY hasta ${endDateFormatted} (${advanceDays} días)`,
+                    duration: `${duration} min por reserva`
                 });
                 setShowRegenerationModal(true);
+                console.log('✅ Modal de resultado activado');
 
             } else {
                 throw new Error(data?.error || 'Error desconocido');
@@ -462,27 +613,75 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             // 🔒 RECARGAR ESTADÍSTICAS INMEDIATAMENTE
             console.log('🔄 Recargando estadísticas después de regenerar...');
             await loadAvailabilityStats();
+            await loadDayStats(); // 📊 Recargar estadísticas de días
             console.log('✅ Estadísticas recargadas');
             
-            // 🎯 Obtener estadísticas REALES después de recargar
-            const reservationStore = await import('../stores/reservationStore.js');
-            const realStats = await reservationStore.useReservationStore.getState().getAvailabilityStats(restaurantId);
+            // 🎯 CALCULAR DÍAS Y RESERVAS REALES
             
-            console.log('📊 Estadísticas REALES para modal:', realStats);
+            console.log('🔍 QUERY PARAMETERS:', {
+                today,
+                endDate,
+                advanceDays,
+                restaurantId
+            });
             
-            // 🎯 Mostrar modal con datos REALES
+            // Obtener TODAS las reservas primero (para debug)
+            const { data: allReservations } = await supabase
+                .from('reservations')
+                .select('id, reservation_date, status, customer_name')
+                .eq('restaurant_id', restaurantId);
+
+            console.log('📊 TODAS las reservas del restaurante:', allReservations);
+            
+            // TODAS las reservas en el rango (sin filtrar por status)
+            const { data: reservationsData, error: reservationsError } = await supabase
+                .from('reservations')
+                .select('id, reservation_date, status, customer_name')
+                .eq('restaurant_id', restaurantId)
+                .gte('reservation_date', today)
+                .lte('reservation_date', endDate);
+
+            if (reservationsError) {
+                console.error('❌ Error consultando reservas:', reservationsError);
+            }
+
+            console.log('📊 TODAS las reservas en rango (cualquier status):', reservationsData);
+
+            const activeReservations = reservationsData?.length || 0;
+            
+            // Contar días únicos con reservas (días protegidos)
+            const uniqueDays = new Set(
+                reservationsData?.map(r => r.reservation_date) || []
+            );
+            const daysProtectedCount = uniqueDays.size;
+
+            // Total de días en el período
+            const totalDays = advanceDays;
+            
+            // Días regenerados = Total - Protegidos
+            const daysRegenerated = totalDays - daysProtectedCount;
+            
+            console.log('📊 Estadísticas REALES para modal:', {
+                totalDays,
+                daysProtectedCount,
+                daysRegenerated,
+                activeReservations,
+                fechasProtegidas: Array.from(uniqueDays)
+            });
+            
+            // 🎯 Mostrar modal con terminología de DÍAS
+            console.log('🎯 MOSTRANDO MODAL DE RESULTADO - REGENERAR');
             setRegenerationResult({
-                action: 'regeneración_completada',
-                slotsCreated: slotsCreated,
-                slotsMarked: realStats?.reserved || 0, // DATO REAL de la BD
-                daysProtected: daysProtected,
-                totalSlots: realStats?.total || 0,
-                availableSlots: realStats?.free || 0,
-                message: results?.message || 'Regeneración completada correctamente',
+                type: 'regenerate',
+                totalDays: totalDays,
+                daysProtected: daysProtectedCount,
+                daysAvailable: daysRegenerated, // Días regenerados
+                activeReservations: activeReservations,
                 period: `HOY hasta ${endDateFormatted} (${advanceDays} días)`,
                 duration: `${duration} min por reserva`
             });
             setShowRegenerationModal(true);
+            console.log('✅ Modal de resultado activado');
 
         } catch (error) {
             console.error('Error en regeneración inteligente:', error);
@@ -493,17 +692,18 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
         }
     };
 
-    // 🚨 AUTO-TRIGGER: Ejecutar regeneración automáticamente si viene desde el modal
+    // 🚨 AUTO-TRIGGER: Mostrar modal de confirmación si viene desde cambio de horarios (SOLO UNA VEZ)
     useEffect(() => {
-        if (autoTriggerRegeneration && restaurantId && !loading) {
-            console.log('🚨 AUTO-TRIGGER ACTIVADO - Ejecutando smartRegeneration...');
+        if (autoTriggerRegeneration && restaurantId && !loading && !autoTriggerShown) {
+            console.log('🚨 AUTO-TRIGGER: Mostrando modal de confirmación (PRIMERA VEZ)...');
             // Pequeño delay para que el componente termine de montar
             const timer = setTimeout(() => {
-                smartRegeneration('schedule_change', { source: 'auto_trigger' });
+                setShowConfirmRegenerate(true); // MOSTRAR MODAL, NO ejecutar directo
+                setAutoTriggerShown(true); // 🔒 MARCAR COMO MOSTRADO para no repetir
             }, 500);
             return () => clearTimeout(timer);
         }
-    }, [autoTriggerRegeneration, restaurantId]);
+    }, [autoTriggerRegeneration, restaurantId, loading, autoTriggerShown]);
 
     // 🔒 REGLA SAGRADA: NUNCA ELIMINAR RESERVAS
     // Esta función SOLO genera availability_slots - JAMÁS toca la tabla 'reservations'
@@ -784,6 +984,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             // 🔒 RECARGAR ESTADÍSTICAS INMEDIATAMENTE
             console.log('🔄 Recargando estadísticas después de generar...');
             await loadAvailabilityStats();
+            await loadDayStats(); // 📊 Recargar estadísticas de días
             console.log('✅ Estadísticas recargadas');
             
             // 🎯 Obtener estadísticas REALES
@@ -882,6 +1083,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
 
                 // Recargar stats reales
                 await loadAvailabilityStats();
+                await loadDayStats(); // 📊 Recargar estadísticas de días
                 
                 // 🎯 Obtener estadísticas REALES de la BD
                 const reservationStore4 = await import('../stores/reservationStore.js');
@@ -1179,7 +1381,10 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             }
             
             loadRestaurantSettings();
-            loadAvailabilityStats();
+            loadAvailabilityStats().then(() => {
+                // Cargar estadísticas de días después de las stats normales
+                loadDayStats();
+            });
         }
     }, [restaurantId]);
 
@@ -1233,25 +1438,24 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
 
             {/* Información de Política de Reservas */}
             {restaurantSettings && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-6">
-                    <h3 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 mb-6 shadow-sm">
+                    <h3 className="text-base font-semibold text-blue-900 mb-4 flex items-center gap-2">
                         <Settings className="w-5 h-5" />
                         Política de Reservas Actual
                     </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                            <div className="text-blue-700 font-medium">Días de Antelación</div>
-                            <div className="text-blue-900">{restaurantSettings.advance_booking_days || 30} días</div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+                            <div className="text-blue-700 font-semibold text-sm mb-1">Días de Antelación</div>
+                            <div className="text-gray-900 text-lg font-bold">{restaurantSettings.advance_booking_days || 30} días</div>
                         </div>
-                        <div>
-                            <div className="text-blue-700 font-medium">Duración Reserva</div>
-                            <div className="text-blue-900">{restaurantSettings.reservation_duration || 90} min</div>
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+                            <div className="text-blue-700 font-semibold text-sm mb-1">Duración Reserva</div>
+                            <div className="text-gray-900 text-lg font-bold">{restaurantSettings.reservation_duration || 90} min</div>
                         </div>
-                        <div>
-                            <div className="text-blue-700 font-medium">Tamaño Grupo</div>
-                            <div className="text-blue-900">{restaurantSettings.min_party_size || 1}-{restaurantSettings.max_party_size || 12} personas</div>
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+                            <div className="text-blue-700 font-semibold text-sm mb-1">Tamaño Grupo</div>
+                            <div className="text-gray-900 text-lg font-bold">{restaurantSettings.min_party_size || 1}-{restaurantSettings.max_party_size || 12} personas</div>
                         </div>
-                        {/* Buffer eliminado */}
                     </div>
                     <div className="mt-3 text-xs text-blue-600">
                         💡 Estas configuraciones se aplican automáticamente al generar disponibilidades
@@ -1259,76 +1463,153 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 </div>
             )}
 
-            {/* Panel de Estado de Disponibilidades - PERSISTENTE */}
-            {(generationSuccess || availabilityStats?.total > 0) && (
-                <div className="border border-green-200 rounded-lg p-2 mb-6 bg-green-50">
-                    <h3 className="font-medium text-green-900 mb-3 flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5" />
-                        ✅ Disponibilidades Activas
-                    </h3>
+            {/* Panel de Estado de Disponibilidades - CONDICIONAL */}
+            
+            {/* 🎯 CASO 1: SÍ HAY SLOTS GENERADOS (libres, no solo protegidos) */}
+            {availabilityStats?.free > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all mb-6">
+                    {/* Header con más presencia */}
+                    <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 shadow-sm">
+                                <CheckCircle2 className="w-6 h-6 text-green-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">
+                                    Disponibilidades Activas
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1 font-medium">
+                                    {dayStats?.mesas || 0} mesas • {dayStats?.duracionReserva || 60} min/reserva
+                                    {dayStats?.fechaHasta && ` • hasta ${dayStats.fechaHasta}`}
+                                </p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={handleSmartCleanup}
+                            disabled={loading}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Borrar
+                        </button>
+                    </div>
                     
-                    {/* Estadísticas completas - SIEMPRE MOSTRAR DATOS REALES */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-                        <div className="text-center bg-white rounded-lg p-2 border border-green-200">
-                            <div className="text-lg font-bold text-green-700">
-                                {availabilityStats?.total || 0}
+                    {/* Grid de estadísticas - CON MÁS VIDA */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-5 p-6 bg-gray-50">
+                        <div className="bg-white rounded-lg p-5 shadow-sm hover:shadow-md transition-all border border-gray-100">
+                            <div className="flex items-center justify-center gap-2 mb-3 text-blue-600">
+                                <Calendar className="w-5 h-5" />
+                                <span className="text-xs font-semibold uppercase tracking-wider">Días Totales</span>
                             </div>
-                            <div className="text-xs text-green-600">
-                                Slots Creados
+                            <div className="text-4xl font-bold text-gray-900 text-center">
+                                {dayStats?.diasTotales || 0}
                             </div>
                         </div>
-                        <div className="text-center bg-white rounded-lg p-2 border border-green-200">
-                            <div className="text-lg font-bold text-blue-700">
-                                {availabilityStats?.free || 0}
+                        <div className="bg-white rounded-lg p-5 shadow-sm hover:shadow-md transition-all border border-gray-100">
+                            <div className="flex items-center justify-center gap-2 mb-3 text-green-600">
+                                <CalendarCheck className="w-5 h-5" />
+                                <span className="text-xs font-semibold uppercase tracking-wider">Días Libres</span>
                             </div>
-                            <div className="text-xs text-blue-600">Disponibles</div>
+                            <div className="text-4xl font-bold text-gray-900 text-center">
+                                {dayStats?.diasLibres || 0}
+                            </div>
                         </div>
-                        <div className="text-center bg-white rounded-lg p-2 border border-green-200">
-                            <div className="text-lg font-bold text-red-700">
-                                {availabilityStats?.occupied || 0}
+                        <div className="bg-white rounded-lg p-5 shadow-sm hover:shadow-md transition-all border border-gray-100">
+                            <div className="flex items-center justify-center gap-2 mb-3 text-amber-600">
+                                <CalendarClock className="w-5 h-5" />
+                                <span className="text-xs font-semibold uppercase tracking-wider">Días Ocupados</span>
                             </div>
-                            <div className="text-xs text-red-600">Ocupados</div>
+                            <div className="text-4xl font-bold text-gray-900 text-center">
+                                {dayStats?.diasConReservas || 0}
+                            </div>
                         </div>
-                        <div className="text-center bg-white rounded-lg p-2 border border-green-200">
-                            <div className="text-lg font-bold text-purple-700">
-                                {availabilityStats?.reserved || 0}
+                        <div className="bg-white rounded-lg p-5 shadow-sm hover:shadow-md transition-all border border-gray-100">
+                            <div className="flex items-center justify-center gap-2 mb-3 text-purple-600">
+                                <Users className="w-5 h-5" />
+                                <span className="text-xs font-semibold uppercase tracking-wider">Reservas</span>
                             </div>
-                            <div className="text-xs text-purple-600">Con Reservas</div>
-                        </div>
-                        <div className="text-center bg-white rounded-lg p-2 border border-green-200">
-                            <div className="text-lg font-bold text-gray-700">
-                                {availabilityStats?.tablesCount || 0}
+                            <div className="text-4xl font-bold text-gray-900 text-center">
+                                {dayStats?.reservasActivas || 0}
                             </div>
-                            <div className="text-xs text-gray-600">Mesas</div>
                         </div>
                     </div>
                     
-                    {/* Información de configuración */}
-                    <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
-                        <div>
-                            <span className="text-green-700 font-medium">📅 Período:</span>
-                            <span className="text-green-600 ml-1">
-                                {generationSuccess?.dateRange || `${availabilityStats?.dateRange?.start || 'HOY'} hasta ${availabilityStats?.dateRange?.end || 'Configurado'}`}
-                            </span>
+                    {/* Footer con última generación */}
+                    {generationSuccess?.timestamp && (
+                        <div className="px-6 py-3 bg-white border-t border-gray-200 rounded-b-xl">
+                            <p className="text-sm text-gray-600 text-center font-medium">
+                                Última actualización: {generationSuccess.timestamp}
+                            </p>
                         </div>
-                        <div>
-                            <span className="text-green-700 font-medium">⏰ Configuración:</span>
-                            <span className="text-green-600 ml-1">
-                                {generationSuccess?.duration || restaurantSettings?.reservation_duration || 90} min por reserva
-                            </span>
+                    )}
+                </div>
+            )}
+
+            {/* 🎯 CASO 2: NO HAY SLOTS LIBRES - CON MÁS PRESENCIA */}
+            {availabilityStats?.free === 0 && dayStats && (
+                <div className="bg-white rounded-xl border border-amber-200 shadow-md mb-6">
+                    {/* Header con advertencia */}
+                    <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-gradient-to-br from-amber-100 to-orange-50 rounded-xl border border-amber-300 shadow-sm">
+                                <AlertCircle className="w-6 h-6 text-amber-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">
+                                    Sin Disponibilidades Generadas
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1 font-medium">
+                                    No hay horarios activos para nuevas reservas
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div className="text-xs text-green-600 border-t border-green-200 pt-2 flex justify-between items-center">
-                        <span>
-                            🕒 <strong>Última generación:</strong> {generationSuccess?.timestamp || 'Disponibilidades cargadas del sistema'}
-                        </span>
-                    <button 
-                        onClick={handleSmartCleanup}
-                        className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors shadow-sm ml-4 text-sm"
-                    >
-                        🗑️ Borrar Disponibilidades
-                    </button>
+
+                    {/* Info de reservas protegidas (si las hay) */}
+                    {dayStats.diasConReservas > 0 && (
+                        <div className="p-6 border-b border-gray-200 bg-gray-50">
+                            <h4 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                Reservas Protegidas
+                            </h4>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                                    <div className="flex items-center justify-center gap-2 mb-2 text-amber-600">
+                                        <CalendarClock className="w-5 h-5" />
+                                        <span className="text-xs font-semibold uppercase tracking-wider">Días Ocupados</span>
+                                    </div>
+                                    <div className="text-3xl font-bold text-gray-900 text-center">
+                                        {dayStats.diasConReservas}
+                                    </div>
+                                </div>
+                                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                                    <div className="flex items-center justify-center gap-2 mb-2 text-purple-600">
+                                        <Users className="w-5 h-5" />
+                                        <span className="text-xs font-semibold uppercase tracking-wider">Reservas</span>
+                                    </div>
+                                    <div className="text-3xl font-bold text-gray-900 text-center">
+                                        {dayStats.reservasActivas}
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-3 text-center font-medium">
+                                Estos días y reservas están protegidos
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Botón para generar */}
+                    <div className="p-6 text-center bg-white">
+                        <button
+                            onClick={() => setShowConfirmRegenerate(true)}
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Generar Horarios de Reserva
+                        </button>
+                        <p className="text-sm text-gray-600 mt-3 font-medium">
+                            Crear disponibilidades para los próximos {dayStats.advanceDaysConfig || 20} días
+                        </p>
                     </div>
                 </div>
             )}
@@ -1427,7 +1708,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             {/* Acciones principales */}
             <div className="flex flex-wrap gap-3">
                 <button
-                    onClick={generateAvailability}
+                    onClick={() => setShowConfirmRegenerate(true)}
                     disabled={loading}
                     className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
@@ -1860,6 +2141,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                                         setTimeout(async () => {
                                             try {
                                                 await loadAvailabilityStats();
+                                                await loadDayStats(); // 📊 Recargar estadísticas de días
                                                 console.log('✅ Estadísticas recargadas después de regeneración');
                                                 
                                                 // Actualizar generationSuccess con las estadísticas reales
@@ -2061,149 +2343,31 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 </div>
             )}
 
-            {/* 🎯 MODAL DE RESULTADO DE REGENERACIÓN */}
-            {showRegenerationModal && regenerationResult && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 animate-bounceIn">
-                        {/* Header */}
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                                    <CheckCircle2 className="w-7 h-7 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold text-gray-900">
-                                        🧠 Regeneración Completada
-                                    </h3>
-                                    <p className="text-sm text-gray-500">Sistema inteligente aplicado exitosamente</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setShowRegenerationModal(false)}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
+            {/* Modales de Confirmación */}
+            <ConfirmActionModal
+                isOpen={showConfirmDelete}
+                onClose={() => setShowConfirmDelete(false)}
+                onConfirm={executeDelete}
+                type="delete"
+            />
 
-                        {/* Resultado */}
-                        <div className="space-y-6">
-                            {/* Estadísticas principales */}
-                            <div className="grid grid-cols-3 gap-4">
-                                {regenerationResult.action === 'borrado_completado' ? (
-                                    <>
-                                        <div className="bg-red-50 rounded-xl p-4 border border-red-200">
-                                            <div className="text-3xl font-bold text-red-600">
-                                                {regenerationResult.slotsDeleted || 0}
-                                            </div>
-                                            <div className="text-sm text-red-700 font-medium mt-1">
-                                                Slots Eliminados
-                                            </div>
-                                        </div>
-                                        <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                                            <div className="text-3xl font-bold text-green-600">
-                                                {regenerationResult.slotsMarked}
-                                            </div>
-                                            <div className="text-sm text-green-700 font-medium mt-1">
-                                                Reservas Protegidas
-                                            </div>
-                                        </div>
-                                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                                            <div className="text-3xl font-bold text-blue-600">
-                                                {regenerationResult.duration.match(/\d+/)?.[0] || 0}
-                                            </div>
-                                            <div className="text-sm text-blue-700 font-medium mt-1">
-                                                Slots Restantes
-                                            </div>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                                            <div className="text-3xl font-bold text-blue-600">
-                                                {regenerationResult.slotsCreated}
-                                            </div>
-                                            <div className="text-sm text-blue-700 font-medium mt-1">
-                                                Slots Creados
-                                            </div>
-                                        </div>
-                                        <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
-                                            <div className="text-3xl font-bold text-orange-600">
-                                                {regenerationResult.slotsMarked}
-                                            </div>
-                                            <div className="text-sm text-orange-700 font-medium mt-1">
-                                                Slots Ocupados
-                                            </div>
-                                        </div>
-                                        <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                                            <div className="text-3xl font-bold text-green-600">
-                                                {regenerationResult.daysProtected}
-                                            </div>
-                                            <div className="text-sm text-green-700 font-medium mt-1">
-                                                Días Protegidos
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+            <ConfirmActionModal
+                isOpen={showConfirmRegenerate}
+                onClose={() => setShowConfirmRegenerate(false)}
+                onConfirm={() => {
+                    // Ejecutar regeneración
+                    smartRegeneration('schedule_change', { source: 'manual_confirm' });
+                }}
+                type="regenerate"
+            />
 
-                            {/* Mensaje detallado */}
-                            <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                                <div className="flex items-start gap-3">
-                                    <Info className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                                    <div className="text-sm text-gray-700">
-                                        <p className="font-semibold mb-2">📊 Detalle de la operación:</p>
-                                        <p>{regenerationResult.message}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Configuración aplicada */}
-                            <div className="bg-purple-50 rounded-xl p-5 border border-purple-200">
-                                <p className="font-semibold text-purple-900 mb-3">⚙️ Configuración aplicada:</p>
-                                <div className="space-y-2 text-sm text-purple-800">
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="w-4 h-4" />
-                                        <span><strong>Período:</strong> {regenerationResult.period}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="w-4 h-4" />
-                                        <span><strong>Duración:</strong> {regenerationResult.duration}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle2 className="w-4 h-4" />
-                                        <span><strong>Reservas existentes:</strong> PRESERVADAS automáticamente</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Protección de días */}
-                            {regenerationResult.daysProtected > 0 && (
-                                <div className="bg-green-50 rounded-xl p-5 border border-green-200">
-                                    <div className="flex items-start gap-3">
-                                        <AlertCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                                        <div className="text-sm text-green-800">
-                                            <p className="font-semibold mb-2">🛡️ Días protegidos:</p>
-                                            <p>
-                                                Se detectaron <strong>{regenerationResult.daysProtected} días con reservas activas</strong>.
-                                                Estos días NO fueron modificados y mantienen sus horarios y slots originales.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Botón de cerrar */}
-                        <button
-                            onClick={() => setShowRegenerationModal(false)}
-                            className="w-full mt-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200"
-                        >
-                            ✅ Perfecto, entendido
-                        </button>
-                    </div>
-                </div>
-            )}
+            {/* Modal de Resultado Unificado */}
+            <ResultModal
+                isOpen={showRegenerationModal}
+                onClose={() => setShowRegenerationModal(false)}
+                type={regenerationResult?.type || 'delete'}
+                result={regenerationResult || {}}
+            />
 
             {/* Estilos de animación inline */}
             <style>{`
@@ -2230,3 +2394,4 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
 };
 
 export default AvailabilityManager;
+
