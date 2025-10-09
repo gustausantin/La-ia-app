@@ -322,18 +322,22 @@ export default function Calendario() {
             }, 0);
 
             // 3. Canales activos - LEER DE channel_credentials (TABLA REAL)
+            // Contar canales IA activos desde settings.channels
             let activeChannels = 0;
             try {
-                const { data: channelsData, error: channelsError } = await supabase
-                    .from("channel_credentials")
-                    .select("*")
-                    .eq("restaurant_id", restaurantId)
-                    .eq("is_active", true);
+                const { data: restaurantData, error: restaurantError } = await supabase
+                    .from("restaurants")
+                    .select("settings")
+                    .eq("id", restaurantId)
+                    .single();
                 
-                if (channelsError) throw channelsError;
+                if (restaurantError) throw restaurantError;
                 
-                activeChannels = channelsData?.length || 0;
-                console.log('📊 Canales activos REALES desde channel_credentials:', activeChannels);
+                const channels = restaurantData?.settings?.channels || {};
+                // Contar solo canales IA (no teléfono/móvil que son solo info)
+                const iaChannels = ['vapi', 'whatsapp', 'instagram', 'facebook', 'webchat'];
+                activeChannels = iaChannels.filter(ch => channels[ch]?.enabled).length;
+                console.log('📊 Canales IA activos desde settings.channels:', activeChannels, channels);
             } catch (error) {
                 console.error("Error leyendo canales activos:", error);
                 activeChannels = 0;
