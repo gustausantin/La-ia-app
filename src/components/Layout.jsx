@@ -67,6 +67,7 @@ export default function Layout() {
     const menuItems = [
         { name: "Dashboard", path: "/dashboard-agente", icon: Home, badge: null },
         { name: "Reservas", path: "/reservas", icon: Calendar, badge: null },
+        { name: "🆕 No-Shows", path: "/no-shows-nuevo", icon: Activity, badge: "NUEVO", badgeColor: "bg-purple-500" },
         {
             name: "Comunicación",
             path: "/comunicacion",

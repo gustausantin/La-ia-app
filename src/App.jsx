@@ -40,6 +40,7 @@ const AvailabilityTester = lazy(() => import('./components/AvailabilityTester'))
 
 // 🛡️ Sistema de No-Shows Revolucionario
 const NoShowControl = lazy(() => import('./pages/NoShowControl'));
+const NoShowControlNuevo = lazy(() => import('./pages/NoShowControlNuevo'));
 
 // 🤖 Dashboard del Agente IA
 const DashboardAgente = lazy(() => import('./pages/DashboardAgente'));
@@ -136,7 +137,14 @@ function AppContent() {
                   </Suspense>
                 } 
               />
-              {/* Rutas de prueba eliminadas - funcionalidad migrada */}
+              <Route 
+                path="/no-shows-nuevo" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <NoShowControlNuevo />
+                  </Suspense>
+                } 
+              />
               <Route 
                 path="/clientes" 
                 element={
