@@ -44,6 +44,10 @@ const NoShowControl = lazy(() => import('./pages/NoShowControl'));
 // 🤖 Dashboard del Agente IA
 const DashboardAgente = lazy(() => import('./pages/DashboardAgente'));
 
+// 🆕 Páginas de prueba para No-Shows
+const DashboardAgenteNuevo = lazy(() => import('./pages/DashboardAgenteNuevo'));
+const NoShowControlNuevo = lazy(() => import('./pages/NoShowControlNuevo'));
+
 // Componente de carga mejorado
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -131,6 +135,23 @@ function AppContent() {
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <NoShowControl />
+                  </Suspense>
+                } 
+              />
+              {/* 🆕 Rutas de prueba para nuevo sistema No-Shows */}
+              <Route 
+                path="/dashboard-nuevo" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <DashboardAgenteNuevo />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/no-shows-nuevo" 
+                element={
+                  <Suspense fallback={<PageLoading />}>
+                    <NoShowControlNuevo />
                   </Suspense>
                 } 
               />
