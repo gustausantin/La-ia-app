@@ -66,7 +66,9 @@ export default function Layout() {
 
     const menuItems = [
         { name: "Dashboard", path: "/dashboard-agente", icon: Home, badge: null },
+        { name: "🆕 Dashboard Nuevo", path: "/dashboard-nuevo", icon: Home, badge: "PRUEBA", badgeColor: "bg-purple-500" },
         { name: "Reservas", path: "/reservas", icon: Calendar, badge: null },
+        { name: "🆕 No-Shows Nuevo", path: "/no-shows-nuevo", icon: Activity, badge: "PRUEBA", badgeColor: "bg-purple-500" },
         {
             name: "Comunicación",
             path: "/comunicacion",
@@ -199,8 +201,8 @@ await signOut();
                                     <item.icon className="w-5 h-5" />
                                     <span className="font-medium md:hidden lg:inline">{item.name}</span>
                                 </div>
-                                {item.badge && item.badge > 0 && (
-                                    <span className="px-2 py-1 text-xs rounded-full font-medium bg-blue-100 text-blue-700 group-hover:bg-blue-200">
+                                {item.badge && (
+                                    <span className={`px-2 py-1 text-xs rounded-full font-bold ${item.badgeColor || 'bg-blue-100 text-blue-700'} text-white`}>
                                         {item.badge}
                                     </span>
                                 )}
