@@ -19,6 +19,13 @@ import toast from 'react-hot-toast';
 // Importar componentes del dashboard antiguo
 import { NoShowWidget, ReturningCustomersWidget } from '../components/DashboardRevolutionary';
 
+// 🆕 Importar nuevo componente de Canales Activos
+import { CanalesActivosWidget } from '../components/CanalesActivosWidget';
+import { useChannelStats } from '../hooks/useChannelStats';
+
+// 🆕 Importar componente de Alarmas No-Shows
+import NoShowAlertCard from '../components/noshows/NoShowAlertCard';
+
 export default function DashboardAgente() {
     const { restaurant, user } = useAuthContext();
     const navigate = useNavigate();
@@ -26,6 +33,12 @@ export default function DashboardAgente() {
     const [lastUpdate, setLastUpdate] = useState(new Date());
     const [restaurantCache, setRestaurantCache] = useState(restaurant);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    
+    // 🆕 Estados para Canales Activos y Alarmas No-Shows
+    const [channelCounts, setChannelCounts] = useState({});
+    const [activeAlerts, setActiveAlerts] = useState([]);
+    const { channelStats } = useChannelStats();
+    
     const [dashboardData, setDashboardData] = useState({
         // Métricas del día
         reservationsToday: 0,
@@ -241,6 +254,48 @@ export default function DashboardAgente() {
                 totalPending: (crmAlerts || []).length
             };
 
+            // 🆕 Cargar contador de reservas por canal HOY
+            const { data: channelReservations, error: channelError } = await supabase
+                .from('reservations')
+                .select('reservation_channel')
+                .eq('restaurant_id', restaurant.id)
+                .eq('reservation_date', todayStr)
+                .in('status', ['pending', 'pending_approval', 'confirmed', 'seated', 'completed']);
+
+            if (channelError) {
+                console.error('Error cargando reservas por canal:', channelError);
+            }
+
+            // Contar reservas por canal
+            const counts = (channelReservations || []).reduce((acc, r) => {
+                // ✅ Si reservation_channel es NULL o vacío → "manual"
+                // Las reservas sin canal son reservas manuales desde el Dashboard
+                const channel = r.reservation_channel || 'manual';
+                acc[channel] = (acc[channel] || 0) + 1;
+                return acc;
+            }, {});
+
+            console.log('📊 Dashboard - Reservas por canal HOY:', counts);
+            console.log('📊 Dashboard - Total reservas consultadas:', channelReservations?.length || 0);
+
+            setChannelCounts(counts);
+
+            // 🆕 Cargar ALARMAS ACTIVAS de No-Shows (T-2h 15min)
+            const { data: alerts, error: alertsError } = await supabase
+                .from('noshow_alerts')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .eq('status', 'active')
+                .gt('auto_release_at', new Date().toISOString())
+                .order('auto_release_at', { ascending: true });
+
+            if (alertsError) {
+                console.error('Error cargando alarmas:', alertsError);
+            }
+
+            setActiveAlerts(alerts || []);
+            console.log('🚨 Alarmas activas:', alerts?.length || 0);
+
             setDashboardData({
                 reservationsToday: (todayReservations || []).length,
                 occupancyPercent,
@@ -269,6 +324,28 @@ export default function DashboardAgente() {
             toast.error('Error al cargar datos del dashboard');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // 🆕 Función para resolver alarma de No-Show (después de llamar al cliente)
+    const handleResolveAlert = async (alertId, resolutionMethod, notes) => {
+        try {
+            const { error } = await supabase
+                .rpc('resolve_noshow_alert', {
+                    p_alert_id: alertId,
+                    p_resolution_method: resolutionMethod,
+                    p_resolution_notes: notes
+                });
+
+            if (error) throw error;
+
+            // Recargar dashboard para actualizar alarmas
+            loadDashboardData();
+            toast.success('Alarma resuelta correctamente');
+        } catch (error) {
+            console.error('Error resolviendo alarma:', error);
+            toast.error('Error al resolver alarma');
+            throw error;
         }
     };
 
@@ -407,6 +484,37 @@ export default function DashboardAgente() {
                         </div>
                     </div>
                 </div>
+
+                {/* ====================================
+                    🚨 SECCIÓN DE ALARMAS URGENTES (T-2h 15min)
+                ==================================== */}
+                {activeAlerts.length > 0 && (
+                    <div className="mb-6">
+                        <div className="mb-4">
+                            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                <AlertTriangle className="w-6 h-6 text-red-600 animate-pulse" />
+                                🚨 Alarmas Urgentes - Requieren Acción Inmediata
+                            </h2>
+                            <p className="text-gray-600 mt-1">
+                                {activeAlerts.length} {activeAlerts.length === 1 ? 'reserva requiere' : 'reservas requieren'} confirmación telefónica ahora
+                            </p>
+                        </div>
+
+                        <div className="space-y-4">
+                            {activeAlerts.map(alert => (
+                                <NoShowAlertCard
+                                    key={alert.id}
+                                    alert={alert}
+                                    onResolve={handleResolveAlert}
+                                    onAutoRelease={() => {
+                                        toast.error('Reserva liberada automáticamente');
+                                        loadDashboardData();
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* ====================================
                     GRID DE MÉTRICAS - DISEÑO PROFESIONAL
@@ -558,7 +666,7 @@ export default function DashboardAgente() {
                                 onClick={() => navigate('/no-shows')}
                                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all text-sm font-medium shadow-sm"
                             >
-                                {dashboardData.noShowsRisk > 0 ? 'Ver alertas' : 'Ver historial'}
+                                Ver No-Shows
                                 <ArrowRight className="w-4 h-4" />
                             </button>
                         </div>
@@ -640,9 +748,10 @@ export default function DashboardAgente() {
                     WIDGETS ADICIONALES
                 ==================================== */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
-                    <NoShowWidget 
-                        data={dashboardData.noShowWidgetData} 
-                        onViewDetails={() => navigate('/no-shows')} 
+                    {/* 🆕 Widget de Canales Activos (reemplaza NoShowWidget) */}
+                    <CanalesActivosWidget 
+                        channelStats={channelStats}
+                        channelCounts={channelCounts}
                     />
                     <ReturningCustomersWidget 
                         data={dashboardData.returningCustomersData} 

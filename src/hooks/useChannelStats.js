@@ -29,16 +29,31 @@ export const useChannelStats = () => {
             if (error) throw error;
 
             const channels = restaurant?.settings?.channels || {};
-            const totalChannels = Object.keys(channels).length || 5;
+            // ✅ Siempre 5 canales principales: VAPI, WhatsApp, Instagram, Facebook, Web Chat
+            const totalChannels = 5;
+            
+            console.log('🔍 useChannelStats - channels desde DB:', channels);
             
             // Validar cada canal
             const activeChannels = [];
             
             Object.entries(channels).forEach(([channelType, channelSettings]) => {
-                if (channelSettings.enabled && isChannelValid(channelType, channelSettings)) {
+                const isEnabled = channelSettings?.enabled === true;
+                
+                // ✅ SIMPLIFICADO: Solo miramos enabled, sin validar credenciales
+                // La validación de credenciales es responsabilidad de Configuración
+                console.log(`🔍 Canal "${channelType}":`, {
+                    enabled: isEnabled,
+                    settings: channelSettings
+                });
+                
+                if (isEnabled) {
                     activeChannels.push(channelType);
+                    console.log(`✅ Canal "${channelType}" → ACTIVO`);
                 }
             });
+
+            console.log('✅ useChannelStats - Canales activos:', activeChannels);
 
             setChannelStats({
                 active: activeChannels.length,
@@ -51,29 +66,6 @@ export const useChannelStats = () => {
             setChannelStats({ active: 0, total: 5, validChannels: [] });
         } finally {
             setLoading(false);
-        }
-    };
-
-    // Función para validar canales (similar a la de Configuración)
-    const isChannelValid = (channelType, channelSettings) => {
-        switch (channelType) {
-            case 'vapi':
-                return channelSettings.api_key?.trim() && channelSettings.phone_number?.trim();
-            case 'whatsapp':
-                return channelSettings.phone_number?.trim() && channelSettings.api_key?.trim();
-            case 'email':
-                return channelSettings.smtp_host?.trim() && 
-                       channelSettings.smtp_user?.trim() && 
-                       channelSettings.smtp_password?.trim() && 
-                       channelSettings.from_email?.trim();
-            case 'facebook':
-                return channelSettings.page_id?.trim() && channelSettings.access_token?.trim();
-            case 'instagram':
-                return channelSettings.page_id?.trim() && channelSettings.access_token?.trim();
-            case 'web_chat':
-                return true; // Web chat no requiere credenciales externas
-            default:
-                return false;
         }
     };
 

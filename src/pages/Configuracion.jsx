@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import {
     Settings as SettingsIcon,
     Building2,
@@ -77,17 +77,25 @@ const SettingSection = ({ title, description, icon, children }) => {
 const Configuracion = () => {
     const { restaurantId, restaurant, user } = useAuthContext();
     const [searchParams] = useSearchParams();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState('general');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     
-    // Leer tab de la URL al cargar
+    // Leer tab de la URL o del state al cargar
     useEffect(() => {
-        const tabFromUrl = searchParams.get('tab');
-        if (tabFromUrl && ['general', 'agent', 'channels', 'notifications'].includes(tabFromUrl)) {
-            setActiveTab(tabFromUrl);
+        // Prioridad 1: state de navegación (desde navigate con state)
+        if (location.state?.activeTab && ['general', 'agent', 'channels', 'notifications'].includes(location.state.activeTab)) {
+            setActiveTab(location.state.activeTab);
         }
-    }, [searchParams]);
+        // Prioridad 2: parámetro de URL
+        else {
+            const tabFromUrl = searchParams.get('tab');
+            if (tabFromUrl && ['general', 'agent', 'channels', 'notifications'].includes(tabFromUrl)) {
+                setActiveTab(tabFromUrl);
+            }
+        }
+    }, [searchParams, location.state]);
     
     const [settings, setSettings] = useState({
         name: "",

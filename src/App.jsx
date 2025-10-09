@@ -44,9 +44,7 @@ const NoShowControl = lazy(() => import('./pages/NoShowControl'));
 // 🤖 Dashboard del Agente IA
 const DashboardAgente = lazy(() => import('./pages/DashboardAgente'));
 
-// 🆕 Páginas de prueba para No-Shows
-const DashboardAgenteNuevo = lazy(() => import('./pages/DashboardAgenteNuevo'));
-const NoShowControlNuevo = lazy(() => import('./pages/NoShowControlNuevo'));
+// Páginas de prueba eliminadas - funcionalidad migrada al Dashboard original
 
 // Componente de carga mejorado
 const LoadingScreen = () => (
@@ -138,23 +136,7 @@ function AppContent() {
                   </Suspense>
                 } 
               />
-              {/* 🆕 Rutas de prueba para nuevo sistema No-Shows */}
-              <Route 
-                path="/dashboard-nuevo" 
-                element={
-                  <Suspense fallback={<PageLoading />}>
-                    <DashboardAgenteNuevo />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/no-shows-nuevo" 
-                element={
-                  <Suspense fallback={<PageLoading />}>
-                    <NoShowControlNuevo />
-                  </Suspense>
-                } 
-              />
+              {/* Rutas de prueba eliminadas - funcionalidad migrada */}
               <Route 
                 path="/clientes" 
                 element={
