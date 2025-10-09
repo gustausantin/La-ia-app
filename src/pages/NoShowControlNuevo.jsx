@@ -1,72 +1,726 @@
-// NoShowControlNuevo.jsx - Nueva página de control de No-Shows (EN CONSTRUCCIÓN)
-import React from "react";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+// NoShowControlNuevo.jsx - Página Profesional de Control de No-Shows
+import React, { useState, useEffect } from 'react';
+import { useAuthContext } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { 
+    AlertTriangle, 
+    TrendingDown, 
+    DollarSign, 
+    Clock,
+    Shield,
+    CheckCircle,
+    Phone,
+    MessageSquare,
+    Calendar,
+    Users,
+    Activity,
+    Settings,
+    ChevronRight,
+    AlertCircle,
+    ChevronDown,
+    ChevronUp,
+    Info,
+    Brain,
+    Target,
+    History
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import { format, parseISO, subDays } from 'date-fns';
+import { es } from 'date-fns/locale';
+import NoShowTrendChart from '../components/noshows/NoShowTrendChart';
+import NoShowReservationDetail from '../components/noshows/NoShowReservationDetail';
+import NoShowAutomationConfig from '../components/noshows/NoShowAutomationConfig';
 
 export default function NoShowControlNuevo() {
-    const navigate = useNavigate();
+    const { restaurant } = useAuthContext();
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('overview'); // overview, config, history
+    
+    // Estados para secciones colapsables
+    const [showFlowExplanation, setShowFlowExplanation] = useState(false);
+    const [showAlgorithmExplanation, setShowAlgorithmExplanation] = useState(false);
+    
+    const [stats, setStats] = useState({
+        evitadosEsteMes: 0,
+        tasaNoShow: 0,
+        roiMensual: 0,
+        reservasRiesgo: 0
+    });
+    
+    const [riskReservations, setRiskReservations] = useState([]);
+    const [trendData, setTrendData] = useState([]);
+    const [recentActions, setRecentActions] = useState([]);
+    const [selectedReservation, setSelectedReservation] = useState(null);
+    const [showDetailModal, setShowDetailModal] = useState(false);
 
-    return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <div className="bg-white border-b">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate('/dashboard-nuevo')}
-                            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-                        >
-                            <ArrowLeft className="w-5 h-5" />
-                            Volver al Dashboard Nuevo
-                        </button>
-                        <div>
-                            <h1 className="text-lg font-bold text-gray-900">
-                                Control de No-Shows (Nuevo)
-                            </h1>
-                            <p className="text-gray-600">
-                                🚧 Página en construcción
-                            </p>
-                        </div>
-                    </div>
+    useEffect(() => {
+        if (restaurant?.id) {
+            loadNoShowData();
+        }
+    }, [restaurant?.id]);
+
+    const loadNoShowData = async () => {
+        try {
+            setLoading(true);
+
+            // 1. Obtener métricas generales
+            const { data: metrics } = await supabase
+                .rpc('get_restaurant_noshow_metrics', {
+                    p_restaurant_id: restaurant.id
+                });
+
+            if (metrics) {
+                setStats({
+                    evitadosEsteMes: metrics.prevented_this_month || 0,
+                    tasaNoShow: metrics.noshow_rate || 0,
+                    roiMensual: metrics.monthly_roi || 0,
+                    reservasRiesgo: metrics.high_risk_today || 0
+                });
+            }
+
+            // 2. Obtener reservas con riesgo HOY (VERSIÓN DINÁMICA)
+            const { data: predictions } = await supabase
+                .rpc('predict_upcoming_noshows_v2', {
+                    p_restaurant_id: restaurant.id,
+                    p_days_ahead: 1
+                });
+
+            setRiskReservations(predictions || []);
+
+            // 3. Obtener datos de tendencia (últimos 30 días)
+            const { data: actions } = await supabase
+                .from('noshow_actions')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .gte('action_date', format(subDays(new Date(), 30), 'yyyy-MM-dd'))
+                .order('action_date', { ascending: true });
+
+            // Agrupar por día
+            const grouped = (actions || []).reduce((acc, action) => {
+                const date = action.action_date;
+                if (!acc[date]) {
+                    acc[date] = { date, prevented: 0, occurred: 0 };
+                }
+                if (action.outcome === 'prevented') acc[date].prevented++;
+                if (action.outcome === 'occurred') acc[date].occurred++;
+                return acc;
+            }, {});
+
+            setTrendData(Object.values(grouped));
+
+            // 4. Obtener acciones recientes (últimas 10)
+            const { data: recentActionsData } = await supabase
+                .from('noshow_actions')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            setRecentActions(recentActionsData || []);
+
+        } catch (error) {
+            console.error('Error cargando datos de No-Shows:', error);
+            toast.error('Error al cargar datos');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getRiskColor = (level) => {
+        switch (level) {
+            case 'high': return 'bg-red-100 text-red-800 border-red-300';
+            case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+            default: return 'bg-green-100 text-green-800 border-green-300';
+        }
+    };
+
+    const getRiskLabel = (level) => {
+        switch (level) {
+            case 'high': return 'Alto Riesgo';
+            case 'medium': return 'Riesgo Medio';
+            default: return 'Bajo Riesgo';
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+                <div className="text-center">
+                    <Activity className="w-12 h-12 animate-spin text-purple-600 mx-auto mb-4" />
+                    <p className="text-gray-600">Cargando sistema de No-Shows...</p>
                 </div>
             </div>
+        );
+    }
 
-            {/* Contenido */}
-            <div className="max-w-7xl mx-auto p-6">
-                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-8 text-center">
-                    <AlertTriangle className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                        Página en Construcción
-                    </h2>
-                    <p className="text-gray-600 mb-6">
-                        Esta será la nueva página completa de control de No-Shows con:
-                    </p>
-                    <ul className="text-left max-w-md mx-auto space-y-2 text-gray-700">
-                        <li>✓ Sección educativa: ¿Qué es un no-show?</li>
-                        <li>✓ Sistema predictivo explicado</li>
-                        <li>✓ KPIs principales</li>
-                        <li>✓ Tabla de reservas en riesgo</li>
-                        <li>✓ Gráfico de tendencias 30 días</li>
-                        <li>✓ Panel de configuración de automatización</li>
-                    </ul>
+    return (
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+            <div className="max-w-7xl mx-auto">
+                
+                {/* Header */}
+                <div className="mb-6">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Sistema Anti No-Shows</h1>
+                    <p className="text-gray-600">Prevención inteligente con IA y automatización</p>
                 </div>
 
-                <div className="mt-6 flex gap-3">
-                    <button
-                        onClick={() => navigate('/dashboard-nuevo')}
-                        className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all"
-                    >
-                        Ir al Dashboard Nuevo
-                    </button>
-                    <button
-                        onClick={() => navigate('/no-shows')}
-                        className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-all"
-                    >
-                        Ver Página Original
-                    </button>
+                {/* KPIs Principales */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <CheckCircle className="w-8 h-8 text-green-600" />
+                            <span className="text-xs text-gray-500">Este mes</span>
+                        </div>
+                        <p className="text-3xl font-bold text-gray-900">{stats.evitadosEsteMes}</p>
+                        <p className="text-sm text-gray-600">No-Shows evitados</p>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingDown className="w-8 h-8 text-blue-600" />
+                            <span className="text-xs text-gray-500">Tasa actual</span>
+                        </div>
+                        <p className="text-3xl font-bold text-gray-900">{stats.tasaNoShow.toFixed(1)}%</p>
+                        <p className="text-sm text-gray-600">Tasa de No-Show</p>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <DollarSign className="w-8 h-8 text-green-600" />
+                            <span className="text-xs text-gray-500">ROI mensual</span>
+                        </div>
+                        <p className="text-3xl font-bold text-gray-900">{stats.roiMensual}€</p>
+                        <p className="text-sm text-gray-600">Ingresos protegidos</p>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <AlertTriangle className="w-8 h-8 text-red-600" />
+                            <span className="text-xs text-gray-500">Hoy</span>
+                        </div>
+                        <p className="text-3xl font-bold text-gray-900">{stats.reservasRiesgo}</p>
+                        <p className="text-sm text-gray-600">Reservas de riesgo</p>
+                    </div>
                 </div>
+
+                {/* Sección Colapsable: Cómo Prevenimos los No-Shows */}
+                <div className="bg-white rounded-xl shadow-sm border mb-6">
+                    <button
+                        onClick={() => setShowFlowExplanation(!showFlowExplanation)}
+                        className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Info className="w-6 h-6 text-purple-600" />
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">¿Cómo Prevenimos los No-Shows?</h2>
+                                <p className="text-sm text-gray-600">Sistema automático de prevención en 5 pasos</p>
+                            </div>
+                        </div>
+                        {showFlowExplanation ? (
+                            <ChevronUp className="w-6 h-6 text-gray-400" />
+                        ) : (
+                            <ChevronDown className="w-6 h-6 text-gray-400" />
+                        )}
+                    </button>
+
+                    {showFlowExplanation && (
+                        <div className="px-6 pb-6 border-t">
+                            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-6 mt-4">
+                                {/* Timeline Visual */}
+                                <div className="relative">
+                                    {/* Línea vertical */}
+                                    <div className="absolute left-8 top-8 bottom-8 w-1 bg-gradient-to-b from-blue-400 via-yellow-400 via-orange-400 to-red-400"></div>
+                                    
+                                    {/* Paso 1: RESERVA CREADA */}
+                                    <div className="relative pl-20 pb-8">
+                                        <div className="absolute left-5 top-0 w-7 h-7 rounded-full bg-purple-500 border-4 border-white shadow-lg flex items-center justify-center">
+                                            <Calendar className="w-4 h-4 text-white" />
+                                        </div>
+                                        <div className="bg-white rounded-lg p-4 shadow-md border-2 border-purple-200">
+                                            <h3 className="font-bold text-purple-900 mb-2 text-base">RESERVA CREADA</h3>
+                                            <p className="text-base text-gray-600">Cliente hace una reserva (cualquier día, cualquier hora)</p>
+                                            <p className="text-sm text-purple-600 font-medium mt-2">Estado: Pendiente</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Paso 2: 24 HORAS ANTES */}
+                                    <div className="relative pl-20 pb-8">
+                                        <div className="absolute left-5 top-0 w-7 h-7 rounded-full bg-blue-500 border-4 border-white shadow-lg flex items-center justify-center">
+                                            <MessageSquare className="w-4 h-4 text-white" />
+                                        </div>
+                                        <div className="bg-white rounded-lg p-4 shadow-md border-2 border-blue-200">
+                                            <h3 className="font-bold text-blue-900 mb-2 text-base">📱 CONFIRMACIÓN 24 HORAS ANTES</h3>
+                                            <p className="text-base text-gray-700 mb-3">WhatsApp automático: <span className="font-semibold">"Confirma tu reserva para mañana"</span></p>
+                                            <div className="flex gap-2 text-sm flex-wrap">
+                                                <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded font-medium">✅ Responde → Confirmada</span>
+                                                <span className="px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded font-medium">❌ No responde → Riesgo BAJO</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Paso 3: 4 HORAS ANTES */}
+                                    <div className="relative pl-20 pb-8">
+                                        <div className="absolute left-5 top-0 w-7 h-7 rounded-full bg-yellow-500 border-4 border-white shadow-lg flex items-center justify-center">
+                                            <MessageSquare className="w-4 h-4 text-white" />
+                                        </div>
+                                        <div className="bg-white rounded-lg p-4 shadow-md border-2 border-yellow-200">
+                                            <h3 className="font-bold text-yellow-900 mb-2 text-base">⏰ RECORDATORIO 4 HORAS ANTES</h3>
+                                            <p className="text-base text-gray-700 mb-3">WhatsApp recordatorio: <span className="font-semibold">"Te esperamos en 4 horas"</span></p>
+                                            <div className="flex gap-2 text-sm flex-wrap">
+                                                <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded font-medium">✅ Responde → Confirmada</span>
+                                                <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded font-medium">❌ No responde → Riesgo MEDIO</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Paso 4: 2h 15min ANTES - ALARMA */}
+                                    <div className="relative pl-20 pb-8">
+                                        <div className="absolute left-5 top-0 w-7 h-7 rounded-full bg-orange-500 border-4 border-white shadow-lg flex items-center justify-center animate-pulse">
+                                            <Phone className="w-4 h-4 text-white" />
+                                        </div>
+                                        <div className="bg-orange-50 rounded-lg p-4 shadow-md border-2 border-orange-300">
+                                            <h3 className="font-bold text-orange-900 mb-2 text-base">🚨 LLAMADA URGENTE (2h 15min antes)</h3>
+                                            <p className="text-base text-gray-700 mb-3"><span className="font-bold text-orange-600">ALARMA EN DASHBOARD</span> → Personal del restaurante LLAMA al cliente</p>
+                                            <div className="flex gap-2 text-sm flex-wrap">
+                                                <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded font-medium">✅ Confirma → Resolver alarma</span>
+                                                <span className="px-3 py-1.5 bg-red-100 text-red-700 rounded font-medium">❌ No contesta → Esperar T-2h</span>
+                                            </div>
+                                            <p className="text-sm text-orange-600 font-semibold mt-3">Riesgo: ALTO</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Paso 5: 2h ANTES (1h 59min) - AUTO-LIBERACIÓN */}
+                                    <div className="relative pl-20">
+                                        <div className="absolute left-5 top-0 w-7 h-7 rounded-full bg-red-500 border-4 border-white shadow-lg flex items-center justify-center">
+                                            <AlertCircle className="w-4 h-4 text-white" />
+                                        </div>
+                                        <div className="bg-red-50 rounded-lg p-4 shadow-md border-2 border-red-300">
+                                            <h3 className="font-bold text-red-900 mb-2 text-base">⚠️ AUTO-LIBERACIÓN (2 horas antes)</h3>
+                                            <p className="text-base text-gray-700 mb-3 font-semibold">Si no confirmó en 1h 59min:</p>
+                                            <ul className="text-base space-y-2 text-gray-700">
+                                                <li>• Estado de reserva: <span className="font-semibold text-red-600">no-show</span></li>
+                                                <li>• Slot de mesa: <span className="font-semibold text-green-600">LIBERADO</span> (disponible para otros)</li>
+                                                <li>• Reserva: <span className="font-semibold">NO se elimina</span> (queda en historial)</li>
+                                            </ul>
+                                            <p className="text-sm text-gray-500 mt-3 italic">Si el cliente aparece después, se resuelve manualmente</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Sección Colapsable: Algoritmo de Riesgo */}
+                <div className="bg-white rounded-xl shadow-sm border mb-6">
+                    <button
+                        onClick={() => setShowAlgorithmExplanation(!showAlgorithmExplanation)}
+                        className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Brain className="w-6 h-6 text-blue-600" />
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">Algoritmo Inteligente de Riesgo</h2>
+                                <p className="text-sm text-gray-600">7 factores estáticos + ajustes dinámicos en tiempo real</p>
+                            </div>
+                        </div>
+                        {showAlgorithmExplanation ? (
+                            <ChevronUp className="w-6 h-6 text-gray-400" />
+                        ) : (
+                            <ChevronDown className="w-6 h-6 text-gray-400" />
+                        )}
+                    </button>
+
+                    {showAlgorithmExplanation && (
+                        <div className="px-6 pb-6 border-t">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                {/* Factor 1 */}
+                                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-5 border-2 border-red-200">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Target className="w-6 h-6 text-red-600" />
+                                        <h3 className="font-bold text-red-900 text-base">Historial del Cliente</h3>
+                                    </div>
+                                    <p className="text-base text-gray-700 mb-2">0-40 puntos según no-shows previos</p>
+                                    <p className="text-sm text-gray-600 font-medium">Si &gt;30% no-shows → +40pts</p>
+                                </div>
+
+                                {/* Factor 2 */}
+                                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-5 border-2 border-orange-200">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Clock className="w-6 h-6 text-orange-600" />
+                                        <h3 className="font-bold text-orange-900 text-base">Inactividad</h3>
+                                    </div>
+                                    <p className="text-base text-gray-700 mb-2">0-25 puntos según última visita</p>
+                                    <p className="text-sm text-gray-600 font-medium">Si &gt;6 meses sin venir → +25pts</p>
+                                </div>
+
+                                {/* Factor 3 */}
+                                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-5 border-2 border-yellow-200">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Clock className="w-6 h-6 text-yellow-600" />
+                                        <h3 className="font-bold text-yellow-900 text-base">Horario de Riesgo</h3>
+                                    </div>
+                                    <p className="text-base text-gray-700 mb-2">0-15 puntos según hora</p>
+                                    <p className="text-sm text-gray-600 font-medium">Cenas tardías (≥21h) → +15pts</p>
+                                </div>
+
+                                {/* Factor 4 */}
+                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-5 border-2 border-blue-200">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Users className="w-6 h-6 text-blue-600" />
+                                        <h3 className="font-bold text-blue-900 text-base">Tamaño de Grupo</h3>
+                                    </div>
+                                    <p className="text-base text-gray-700 mb-2">0-10 puntos según personas</p>
+                                    <p className="text-sm text-gray-600 font-medium">Grupos ≥6 personas → +10pts</p>
+                                </div>
+
+                                {/* Factor 5 */}
+                                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-5 border-2 border-purple-200">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <MessageSquare className="w-6 h-6 text-purple-600" />
+                                        <h3 className="font-bold text-purple-900 text-base">Canal de Reserva</h3>
+                                    </div>
+                                    <p className="text-base text-gray-700 mb-2">0-10 puntos según origen</p>
+                                    <p className="text-sm text-gray-600 font-medium">Teléfono/Walk-in → +10pts</p>
+                                </div>
+
+                                {/* Factor 6 */}
+                                <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg p-5 border-2 border-pink-200">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Calendar className="w-6 h-6 text-pink-600" />
+                                        <h3 className="font-bold text-pink-900 text-base">Antelación</h3>
+                                    </div>
+                                    <p className="text-base text-gray-700 mb-2">0-20 puntos según cuándo reservó</p>
+                                    <p className="text-sm text-gray-600 font-medium">Reserva &lt;4h antes → +20pts</p>
+                                </div>
+
+                                {/* Factor 7 - NUEVO: Urgencia Temporal */}
+                                <div className="bg-gradient-to-br from-red-50 to-orange-100 rounded-lg p-5 border-2 border-red-300 shadow-lg">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <AlertTriangle className="w-6 h-6 text-red-600 animate-pulse" />
+                                        <h3 className="font-bold text-red-900 text-base">⚠️ Urgencia Temporal (NUEVO)</h3>
+                                    </div>
+                                    <p className="text-base text-gray-700 mb-2 font-semibold">0-50 puntos según proximidad sin confirmar</p>
+                                    <div className="space-y-1 text-sm text-gray-700 font-medium">
+                                        <p>• &lt;2h 15min sin confirmar → <span className="text-red-700 font-bold">+50pts 🔴</span></p>
+                                        <p>• &lt;4h sin confirmar → <span className="text-orange-700 font-bold">+35pts ⚠️</span></p>
+                                        <p>• &lt;24h sin confirmar → <span className="text-yellow-700 font-bold">+15pts</span></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Clasificación con Ejemplos */}
+                            <div className="mt-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-6 border-2 border-gray-300">
+                                <h3 className="font-bold text-gray-900 mb-4 text-lg">Clasificación de Riesgo con Ejemplos:</h3>
+                                
+                                <div className="space-y-6">
+                                    {/* RIESGO ALTO */}
+                                    <div className="bg-white rounded-lg p-5 border-2 border-red-300 shadow-sm">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <span className="w-28 px-4 py-2 bg-red-100 text-red-700 rounded-lg font-bold text-center text-base">🔴 ALTO</span>
+                                            <span className="text-gray-700 font-semibold text-base">&gt;60 puntos → Llamada obligatoria (2h 15min antes)</span>
+                                        </div>
+                                        <div className="ml-32 bg-red-50 rounded-lg p-4 border border-red-200">
+                                            <p className="font-bold text-red-900 mb-2 text-base">Ejemplo: Juan García</p>
+                                            <ul className="text-sm text-gray-700 space-y-1">
+                                                <li>• Historial: 40% no-shows → <span className="font-semibold text-red-600">+40 pts</span></li>
+                                                <li>• Inactividad: 8 meses sin venir → <span className="font-semibold text-red-600">+25 pts</span></li>
+                                                <li>• Grupo grande: 8 personas → <span className="font-semibold text-red-600">+10 pts</span></li>
+                                            </ul>
+                                            <p className="mt-3 pt-3 border-t border-red-300 font-bold text-red-700 text-base">
+                                                TOTAL: 75 puntos → ¡Llamar SÍ o SÍ 2h 15min antes!
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* RIESGO MEDIO */}
+                                    <div className="bg-white rounded-lg p-5 border-2 border-yellow-300 shadow-sm">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <span className="w-28 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-center text-base">🟡 MEDIO</span>
+                                            <span className="text-gray-700 font-semibold text-base">30-60 puntos → WhatsApp reforzado (4 horas antes)</span>
+                                        </div>
+                                        <div className="ml-32 bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                                            <p className="font-bold text-yellow-900 mb-2 text-base">Ejemplo: María López</p>
+                                            <ul className="text-sm text-gray-700 space-y-1">
+                                                <li>• Historial: 15% no-shows → <span className="font-semibold text-yellow-600">+20 pts</span></li>
+                                                <li>• Horario: Reserva a las 22h → <span className="font-semibold text-yellow-600">+15 pts</span></li>
+                                                <li>• Canal: Reserva por teléfono → <span className="font-semibold text-yellow-600">+10 pts</span></li>
+                                            </ul>
+                                            <p className="mt-3 pt-3 border-t border-yellow-300 font-bold text-yellow-700 text-base">
+                                                TOTAL: 45 puntos → Enviar WhatsApp reforzado 4 horas antes
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* RIESGO BAJO */}
+                                    <div className="bg-white rounded-lg p-5 border-2 border-green-300 shadow-sm">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <span className="w-28 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-bold text-center text-base">🟢 BAJO</span>
+                                            <span className="text-gray-700 font-semibold text-base">&lt;30 puntos → Recordatorio estándar (24 horas antes)</span>
+                                        </div>
+                                        <div className="ml-32 bg-green-50 rounded-lg p-4 border border-green-200">
+                                            <p className="font-bold text-green-900 mb-2 text-base">Ejemplo: Ana Martínez</p>
+                                            <ul className="text-sm text-gray-700 space-y-1">
+                                                <li>• Historial: 0% no-shows (cliente fiable) → <span className="font-semibold text-green-600">0 pts</span></li>
+                                                <li>• Última visita: Hace 1 mes → <span className="font-semibold text-green-600">0 pts</span></li>
+                                                <li>• Grupo: 2 personas → <span className="font-semibold text-green-600">0 pts</span></li>
+                                                <li>• Horario: 20h (normal) → <span className="font-semibold text-green-600">0 pts</span></li>
+                                            </ul>
+                                            <p className="mt-3 pt-3 border-t border-green-300 font-bold text-green-700 text-base">
+                                                TOTAL: 0 puntos → Solo recordatorio amigable 24 horas antes ✅
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Nota explicativa */}
+                                <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                    <p className="text-sm text-blue-900">
+                                        <span className="font-bold">💡 Cómo funciona:</span> El sistema calcula un <strong>Score Base</strong> sumando 7 factores estáticos (hasta 135 puntos). Luego aplica <strong>Ajustes Dinámicos</strong> según las confirmaciones del cliente (±50 puntos). El Score Final determina automáticamente qué acción tomar y cuándo.
+                                    </p>
+                                    <div className="mt-3 pt-3 border-t border-blue-200">
+                                        <p className="text-sm text-blue-900">
+                                            <span className="font-bold">🔄 Sistema Dinámico:</span> El riesgo se ajusta en tiempo real:
+                                        </p>
+                                        <ul className="mt-2 space-y-1 text-sm text-blue-800">
+                                            <li>• Cliente confirma rápido (<1h) → <strong className="text-green-700">-30 puntos</strong></li>
+                                            <li>• Cliente no responde a 24h → <strong className="text-orange-700">+20 puntos</strong></li>
+                                            <li>• Cliente confirma también a 4h → <strong className="text-green-700">-20 puntos</strong></li>
+                                            <li>• Cliente no responde a 4h → <strong className="text-red-700">+30 puntos</strong></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Tabs */}
+                <div className="mb-6">
+                    <div className="border-b border-gray-200">
+                        <nav className="flex gap-4">
+                            <button
+                                onClick={() => setActiveTab('overview')}
+                                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                    activeTab === 'overview'
+                                        ? 'border-purple-600 text-purple-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`}
+                            >
+                                Reservas de Riesgo Hoy
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('actions')}
+                                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                    activeTab === 'actions'
+                                        ? 'border-purple-600 text-purple-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-1">
+                                    <History className="w-4 h-4" />
+                                    Acciones Tomadas
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('trends')}
+                                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                    activeTab === 'trends'
+                                        ? 'border-purple-600 text-purple-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`}
+                            >
+                                Tendencias
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('config')}
+                                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                    activeTab === 'config'
+                                        ? 'border-purple-600 text-purple-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`}
+                            >
+                                Configuración
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+
+                {/* Contenido según tab */}
+                {activeTab === 'overview' && (
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Reservas HOY con Riesgo</h3>
+                        
+                        {riskReservations.length === 0 ? (
+                            <div className="text-center py-12">
+                                <Shield className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                                <p className="text-gray-600 font-medium">¡Sin riesgo detectado!</p>
+                                <p className="text-sm text-gray-500 mt-1">Todas las reservas están confirmadas</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {riskReservations.map(reservation => (
+                                    <div
+                                        key={reservation.reservation_id}
+                                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedReservation(reservation);
+                                            setShowDetailModal(true);
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`px-3 py-1 rounded-full border text-xs font-semibold ${getRiskColor(reservation.risk_level)}`}>
+                                                {getRiskLabel(reservation.risk_level)}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-gray-900">{reservation.customer_name}</p>
+                                                <p className="text-sm text-gray-600">
+                                                    {reservation.reservation_time} • {reservation.party_size} personas
+                                                </p>
+                                                {/* Estado de confirmación dinámico */}
+                                                {reservation.confirmation_status && (
+                                                    <p className="text-xs mt-1 flex items-center gap-1">
+                                                        {reservation.confirmation_status === 'Doble confirmación' && (
+                                                            <>
+                                                                <CheckCircle className="w-3 h-3 text-green-600" />
+                                                                <span className="text-green-600 font-medium">✓ {reservation.confirmation_status}</span>
+                                                            </>
+                                                        )}
+                                                        {reservation.confirmation_status === 'Confirmado 24h antes' && (
+                                                            <>
+                                                                <CheckCircle className="w-3 h-3 text-blue-600" />
+                                                                <span className="text-blue-600 font-medium">✓ {reservation.confirmation_status}</span>
+                                                            </>
+                                                        )}
+                                                        {reservation.confirmation_status === 'Sin respuesta' && (
+                                                            <>
+                                                                <AlertCircle className="w-3 h-3 text-orange-600" />
+                                                                <span className="text-orange-600 font-medium">⚠ {reservation.confirmation_status}</span>
+                                                            </>
+                                                        )}
+                                                        {reservation.confirmation_status === 'Pendiente confirmación' && (
+                                                            <>
+                                                                <Clock className="w-3 h-3 text-gray-500" />
+                                                                <span className="text-gray-500">{reservation.confirmation_status}</span>
+                                                            </>
+                                                        )}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-right">
+                                                <p className="font-bold text-purple-600">
+                                                    Score: {reservation.risk_score}
+                                                    {reservation.dynamic_adjustment !== 0 && (
+                                                        <span className={`ml-2 text-xs ${reservation.dynamic_adjustment < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                            ({reservation.dynamic_adjustment > 0 ? '+' : ''}{reservation.dynamic_adjustment})
+                                                        </span>
+                                                    )}
+                                                </p>
+                                                <p className="text-xs text-gray-500">Base: {reservation.base_score}</p>
+                                            </div>
+                                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'actions' && (
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <History className="w-5 h-5 text-purple-600" />
+                            Acciones Tomadas Recientemente
+                        </h3>
+                        
+                        {recentActions.length === 0 ? (
+                            <div className="text-center py-12">
+                                <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                                <p className="text-gray-600">No hay acciones registradas aún</p>
+                                <p className="text-sm text-gray-500 mt-1">Las acciones preventivas aparecerán aquí</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {recentActions.map(action => (
+                                    <div
+                                        key={action.id}
+                                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            {action.action_type === 'call' && (
+                                                <Phone className="w-5 h-5 text-blue-600" />
+                                            )}
+                                            {action.action_type === 'whatsapp' && (
+                                                <MessageSquare className="w-5 h-5 text-green-600" />
+                                            )}
+                                            {action.action_type === 'auto_release' && (
+                                                <AlertCircle className="w-5 h-5 text-red-600" />
+                                            )}
+                                            <div>
+                                                <p className="font-semibold text-gray-900">
+                                                    {action.customer_name || 'Cliente'}
+                                                </p>
+                                                <p className="text-sm text-gray-600">
+                                                    {format(parseISO(action.action_date), "d 'de' MMM", { locale: es })} • 
+                                                    {action.action_type === 'call' && ' Llamada realizada'}
+                                                    {action.action_type === 'whatsapp' && ' WhatsApp enviado'}
+                                                    {action.action_type === 'auto_release' && ' Auto-liberación'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            {action.outcome === 'prevented' && (
+                                                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                                                    ✅ Evitado
+                                                </span>
+                                            )}
+                                            {action.outcome === 'occurred' && (
+                                                <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
+                                                    ❌ No-Show
+                                                </span>
+                                            )}
+                                            {action.outcome === 'pending' && (
+                                                <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+                                                    ⏳ Pendiente
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'trends' && (
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Tendencia últimos 30 días</h3>
+                        <NoShowTrendChart data={trendData} />
+                    </div>
+                )}
+
+                {activeTab === 'config' && (
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Configuración de Acciones Automáticas</h3>
+                        <NoShowAutomationConfig restaurantId={restaurant.id} />
+                    </div>
+                )}
+
+                {/* Modal de detalle */}
+                {showDetailModal && selectedReservation && (
+                    <NoShowReservationDetail
+                        reservation={selectedReservation}
+                        onClose={() => {
+                            setShowDetailModal(false);
+                            setSelectedReservation(null);
+                        }}
+                        onAction={loadNoShowData}
+                    />
+                )}
+
             </div>
         </div>
     );
 }
-
