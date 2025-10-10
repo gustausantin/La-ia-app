@@ -104,7 +104,12 @@ export const useDashboardData = (restaurantId) => {
         .from("reservations")
         .select(`
           id,
-          customer_name,
+          customer_id,
+          customer:customer_id (
+            name,
+            email,
+            phone
+          ),
           reservation_date,
           reservation_time,
           party_size,
@@ -120,17 +125,15 @@ export const useDashboardData = (restaurantId) => {
 
       if (error) throw error;
 
-      // Validar que todos los campos necesarios existan
-      const reservationsWithSource = (data || []).map(res => {
-        if (res.source && res.channel) {
-          return res;
-        }
-        return {
-          ...res,
-          source: res.source || 'desconocido',
-          channel: res.channel || 'desconocido'
-        };
-      });
+      // Mapear datos del customer y validar campos
+      const reservationsWithSource = (data || []).map(res => ({
+        ...res,
+        customer_name: res.customer?.name || res.customer_name,
+        customer_email: res.customer?.email || res.customer_email,
+        customer_phone: res.customer?.phone || res.customer_phone,
+        source: res.source || 'desconocido',
+        channel: res.channel || 'desconocido'
+      }));
 
       setReservations(reservationsWithSource);
       return reservationsWithSource;
