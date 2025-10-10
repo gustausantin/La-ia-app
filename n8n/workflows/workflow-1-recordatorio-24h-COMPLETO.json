@@ -1,0 +1,269 @@
+{
+  "name": "01 - Recordatorio 24h Antes (No-Shows)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger-24h",
+      "name": "⏰ Cron Diario 10:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ktsqwvhqamedpmzkzjaz.supabase.co/rest/v1/rpc/get_reservations_tomorrow",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDM3Njc3MSwiZXhwIjoyMDY5OTUyNzcxfQ.ckmlr_TAFJ9iFtLztRhrRPnagZiNLm6XYeo1faVx-BU"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDM3Njc3MSwiZXhwIjoyMDY5OTUyNzcxfQ.ckmlr_TAFJ9iFtLztRhrRPnagZiNLm6XYeo1faVx-BU"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ p_restaurant_id: \"d6b63130-1ebf-4284-98fc-a3b31a85d9d1\" }) }}"
+      },
+      "id": "get-reservations-tomorrow",
+      "name": "📊 Obtener Reservas Mañana",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [470, 300],
+      "notes": "Llama a función SQL: get_reservations_tomorrow()\nDevuelve: id, customer_name, customer_phone, reservation_time, party_size"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-hay-reservas",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-hay-reservas",
+      "name": "❓ ¿Hay Reservas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "loop-reservas",
+      "name": "🔁 Loop Cada Reserva",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [910, 200]
+    },
+    {
+      "parameters": {
+        "fromNumber": "+14155238886",
+        "toNumber": "={{ $json.customer_phone }}",
+        "message": "=Hola {{ $json.customer_name }}! 👋\n\nTe esperamos *mañana a las {{ $json.reservation_time }}* para *{{ $json.party_size }} personas*.\n\n¿Confirmas tu asistencia?\n\n✅ Responde SÍ para confirmar\n❌ Responde NO si necesitas cancelar\n\nGracias! 🍽️",
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "📱 Enviar WhatsApp",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 2,
+      "position": [1130, 200],
+      "credentials": {
+        "twilioApi": {
+          "id": "twilio-credentials-noshows",
+          "name": "Twilio WhatsApp La-IA"
+        }
+      },
+      "notes": "Twilio WhatsApp Sandbox\nFrom: +1 415 523 8886\nTo: customer_phone"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ktsqwvhqamedpmzkzjaz.supabase.co/rest/v1/rpc/record_customer_confirmation",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDM3Njc3MSwiZXhwIjoyMDY5OTUyNzcxfQ.ckmlr_TAFJ9iFtLztRhrRPnagZiNLm6XYeo1faVx-BU"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDM3Njc3MSwiZXhwIjoyMDY5OTUyNzcxfQ.ckmlr_TAFJ9iFtLztRhrRPnagZiNLm6XYeo1faVx-BU"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ p_reservation_id: $('📊 Obtener Reservas Mañana').item.json.id, p_message_type: 'Confirmación 24h antes', p_message_channel: 'whatsapp', p_message_content: `Hola ${$('📊 Obtener Reservas Mañana').item.json.customer_name}! Te esperamos mañana...` }) }}"
+      },
+      "id": "register-confirmation",
+      "name": "💾 Registrar en BD",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1350, 200],
+      "notes": "Inserta en tabla: customer_confirmations\nColumnas: reservation_id, message_type, message_channel, message_content, sent_at"
+    },
+    {
+      "parameters": {},
+      "id": "no-reservas-end",
+      "name": "✅ Fin (Sin Reservas)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [910, 400]
+    },
+    {
+      "parameters": {},
+      "id": "loop-complete-end",
+      "name": "✅ Fin (Loop Completo)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1130, 400]
+    }
+  ],
+  "connections": {
+    "⏰ Cron Diario 10:00 AM": {
+      "main": [
+        [
+          {
+            "node": "📊 Obtener Reservas Mañana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Obtener Reservas Mañana": {
+      "main": [
+        [
+          {
+            "node": "❓ ¿Hay Reservas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❓ ¿Hay Reservas?": {
+      "main": [
+        [
+          {
+            "node": "🔁 Loop Cada Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "✅ Fin (Sin Reservas)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔁 Loop Cada Reserva": {
+      "main": [
+        [
+          {
+            "node": "📱 Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "✅ Fin (Loop Completo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📱 Enviar WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "💾 Registrar en BD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Registrar en BD": {
+      "main": [
+        [
+          {
+            "node": "🔁 Loop Cada Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-10-10T00:00:00.000Z",
+      "updatedAt": "2025-10-10T00:00:00.000Z",
+      "id": "no-shows",
+      "name": "no-shows"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-10T00:00:00.000Z",
+  "versionId": "1"
+}
+
