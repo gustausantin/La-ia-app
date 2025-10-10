@@ -29,7 +29,7 @@ import { format, parseISO, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import NoShowTrendChart from '../components/noshows/NoShowTrendChart';
 import NoShowReservationDetail from '../components/noshows/NoShowReservationDetail';
-import NoShowAutomationConfig from '../components/noshows/NoShowAutomationConfig';
+import NoShowAutomationConfigSimple from '../components/noshows/NoShowAutomationConfigSimple';
 
 export default function NoShowControlNuevo() {
     const { restaurant } = useAuthContext();
@@ -393,11 +393,11 @@ export default function NoShowControlNuevo() {
                                     <p className="text-sm text-gray-600 font-medium">Reserva &lt;4h antes → +20pts</p>
                                 </div>
 
-                                {/* Factor 7 - NUEVO: Urgencia Temporal */}
+                                {/* Factor 7: Urgencia Temporal */}
                                 <div className="bg-gradient-to-br from-red-50 to-orange-100 rounded-lg p-5 border-2 border-red-300 shadow-lg">
                                     <div className="flex items-center gap-2 mb-3">
                                         <AlertTriangle className="w-6 h-6 text-red-600 animate-pulse" />
-                                        <h3 className="font-bold text-red-900 text-base">⚠️ Urgencia Temporal (NUEVO)</h3>
+                                        <h3 className="font-bold text-red-900 text-base">⚠️ Urgencia Temporal</h3>
                                     </div>
                                     <p className="text-base text-gray-700 mb-2 font-semibold">0-50 puntos según proximidad sin confirmar</p>
                                     <div className="space-y-1 text-sm text-gray-700 font-medium">
@@ -474,18 +474,29 @@ export default function NoShowControlNuevo() {
 
                                 {/* Nota explicativa */}
                                 <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                    <p className="text-sm text-blue-900">
+                                    <p className="text-sm text-blue-900 mb-2">
                                         <span className="font-bold">💡 Cómo funciona:</span> El sistema calcula un <strong>Score Base</strong> sumando 7 factores estáticos (hasta 135 puntos). Luego aplica <strong>Ajustes Dinámicos</strong> según las confirmaciones del cliente (±50 puntos). El Score Final determina automáticamente qué acción tomar y cuándo.
                                     </p>
+                                    <p className="text-sm text-blue-800 bg-blue-100 rounded p-2 mt-2">
+                                        <span className="font-bold">📊 Lógica de puntos:</span> <strong className="text-red-700">Rojo = SUMA puntos</strong> (sube riesgo) • <strong className="text-green-700">Verde = RESTA puntos</strong> (baja riesgo)
+                                    </p>
                                     <div className="mt-3 pt-3 border-t border-blue-200">
-                                        <p className="text-sm text-blue-900">
-                                            <span className="font-bold">🔄 Sistema Dinámico:</span> El riesgo se ajusta en tiempo real:
+                                        <p className="text-sm text-blue-900 font-bold mb-2">
+                                            🔄 Sistema Dinámico - El riesgo se ajusta en tiempo real:
                                         </p>
-                                        <ul className="mt-2 space-y-1 text-sm text-blue-800">
-                                            <li>• Cliente confirma rápido (&lt;1h) → <strong className="text-green-700">-30 puntos</strong></li>
-                                            <li>• Cliente no responde a 24h → <strong className="text-orange-700">+20 puntos</strong></li>
-                                            <li>• Cliente confirma también a 4h → <strong className="text-green-700">-20 puntos</strong></li>
-                                            <li>• Cliente no responde a 4h → <strong className="text-red-700">+30 puntos</strong></li>
+                                        <ul className="mt-2 space-y-2 text-sm text-blue-900">
+                                            <li className="bg-green-50 border border-green-200 rounded p-2">
+                                                ✅ <strong>Cliente confirma rápido</strong> (&lt;1h después del mensaje) → <strong className="text-green-700">-30 puntos</strong> (baja riesgo mucho)
+                                            </li>
+                                            <li className="bg-green-50 border border-green-200 rounded p-2">
+                                                ✅ <strong>Cliente confirma a las 4h</strong> → <strong className="text-green-700">-20 puntos</strong> (doble confirmación, baja riesgo)
+                                            </li>
+                                            <li className="bg-red-50 border border-red-200 rounded p-2">
+                                                ⚠️ <strong>Cliente NO responde a las 24h</strong> → <strong className="text-orange-700">+20 puntos</strong> (sube riesgo)
+                                            </li>
+                                            <li className="bg-red-50 border border-red-200 rounded p-2">
+                                                🔴 <strong>Cliente NO responde a las 4h</strong> → <strong className="text-red-700">+30 puntos</strong> (sube riesgo mucho)
+                                            </li>
                                         </ul>
                                     </div>
                                 </div>
@@ -702,9 +713,8 @@ export default function NoShowControlNuevo() {
                 )}
 
                 {activeTab === 'config' && (
-                    <div className="bg-white rounded-xl shadow-sm border p-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">Configuración de Acciones Automáticas</h3>
-                        <NoShowAutomationConfig restaurantId={restaurant.id} />
+                    <div>
+                        <NoShowAutomationConfigSimple />
                     </div>
                 )}
 
