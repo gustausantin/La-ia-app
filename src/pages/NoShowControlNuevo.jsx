@@ -482,7 +482,7 @@ export default function NoShowControlNuevo() {
                                             <span className="font-bold">🔄 Sistema Dinámico:</span> El riesgo se ajusta en tiempo real:
                                         </p>
                                         <ul className="mt-2 space-y-1 text-sm text-blue-800">
-                                            <li>• Cliente confirma rápido (<1h) → <strong className="text-green-700">-30 puntos</strong></li>
+                                            <li>• Cliente confirma rápido (&lt;1h) → <strong className="text-green-700">-30 puntos</strong></li>
                                             <li>• Cliente no responde a 24h → <strong className="text-orange-700">+20 puntos</strong></li>
                                             <li>• Cliente confirma también a 4h → <strong className="text-green-700">-20 puntos</strong></li>
                                             <li>• Cliente no responde a 4h → <strong className="text-red-700">+30 puntos</strong></li>
