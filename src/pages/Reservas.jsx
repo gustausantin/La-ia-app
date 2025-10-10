@@ -840,12 +840,20 @@ export default function Reservas() {
         try {
             setLoading(true);
 
-            // 🔥 QUERY DIRECTA CON JOIN DE TABLES Y RESERVATION_TABLES (múltiples mesas)
-            // Cargamos TODAS las reservas, el filtrado lo hace filteredReservations
+            // 🔥 USAR RPC OPTIMIZADO CON DATOS DE CUSTOMERS INCLUIDOS
+            // Ahora los datos del customer se obtienen automáticamente vía customer_id
             const { data, error } = await supabase
                 .from('reservations')
                 .select(`
                     *,
+                    customer:customer_id (
+                        id,
+                        name,
+                        email,
+                        phone,
+                        segment_auto,
+                        visits_count
+                    ),
                     tables (
                         id,
                         table_number,
@@ -880,7 +888,13 @@ export default function Reservas() {
                 firstReservation: data?.[0] || null
             });
 
-            let reservations = data || [];
+            // Mapear datos del customer al formato esperado (compatibilidad)
+            let reservations = (data || []).map(r => ({
+                ...r,
+                customer_name: r.customer?.name || r.customer_name,
+                customer_email: r.customer?.email || r.customer_email,
+                customer_phone: r.customer?.phone || r.customer_phone
+            }));
             
             // Log específico para debugging
             const targetReservation = reservations.find(r => r.customer_name?.includes('Kiku'));

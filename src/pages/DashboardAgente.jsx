@@ -98,20 +98,35 @@ export default function DashboardAgente() {
             console.log('🔍 Dashboard buscando reservas para fecha:', todayStr);
             console.log('🔍 Restaurant ID:', restaurant.id);
             
-            // Fetch reservations y customers por separado para evitar ambigüedad
+            // Fetch reservations con datos de customers incluidos
             const { data: todayReservations, error: todayError } = await supabase
                 .from('reservations')
-                .select('*')
+                .select(`
+                    *,
+                    customer:customer_id (
+                        id,
+                        name,
+                        email,
+                        phone,
+                        segment_auto,
+                        visits_count
+                    )
+                `)
                 .eq('restaurant_id', restaurant.id)
                 .eq('reservation_date', todayStr)
                 .in('status', ['pending', 'pending_approval', 'confirmed', 'seated', 'completed']);
             
-            // Obtener customer_ids únicos de las reservas
-            const customerIds = [...new Set((todayReservations || []).map(r => r.customer_id).filter(Boolean))];
+            // Mapear datos del customer al formato esperado
+            const reservationsWithCustomers = (todayReservations || []).map(r => ({
+                ...r,
+                customer_name: r.customer?.name || r.customer_name,
+                customer_email: r.customer?.email || r.customer_email,
+                customer_phone: r.customer?.phone || r.customer_phone
+            }));
             
-            // Fetch customers por separado
+            // Crear customersMap para compatibilidad (aunque ya no es necesario)
             let customersMap = {};
-            if (customerIds.length > 0) {
+            if (false) {  // Código legacy desactivado
                 const { data: customersData } = await supabase
                     .from('customers')
                     .select('id, visits_count, name, total_spent, segment_auto')
@@ -123,14 +138,11 @@ export default function DashboardAgente() {
                 }, {});
             }
             
-            // Enriquecer reservations con datos de customers
-            const enrichedReservations = (todayReservations || []).map(r => ({
-                ...r,
-                customers: r.customer_id ? customersMap[r.customer_id] : null
-            }));
+            // Ya no es necesario enriquecer, los datos vienen incluidos
+            const enrichedReservations = reservationsWithCustomers;
             
-            console.log('📊 Reservas de HOY encontradas:', todayReservations?.length || 0);
-            console.log('📊 Reservas de HOY data:', todayReservations);
+            console.log('📊 Reservas de HOY encontradas:', enrichedReservations?.length || 0);
+            console.log('📊 Reservas de HOY data:', enrichedReservations);
             if (todayError) console.error('❌ Error:', todayError);
 
             // 2. RESERVAS DE AYER

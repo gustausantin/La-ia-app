@@ -137,7 +137,14 @@ export const useReservationStore = create()(
             .from('reservations')
             .select(`
               *,
-              customer:customers(*),
+              customer:customer_id (
+                id,
+                name,
+                email,
+                phone,
+                segment_auto,
+                visits_count
+              ),
               table:tables(*)
             `)
             .gte('date', targetDate)
@@ -146,9 +153,17 @@ export const useReservationStore = create()(
           
           if (error) throw error;
           
+          // Mapear datos del customer al formato esperado
+          const reservationsWithCustomers = (data || []).map(r => ({
+            ...r,
+            customer_name: r.customer?.name || r.customer_name,
+            customer_email: r.customer?.email || r.customer_email,
+            customer_phone: r.customer?.phone || r.customer_phone
+          }));
+          
           set({ 
-            reservations: data || [],
-            filteredReservations: data || [],
+            reservations: reservationsWithCustomers,
+            filteredReservations: reservationsWithCustomers,
           });
           
           // Cargar disponibilidad para el día
