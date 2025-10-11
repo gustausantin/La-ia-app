@@ -140,9 +140,9 @@ BEGIN
     -- y no hay confirmación → Eleva el riesgo dramáticamente
     -- ========================================
     
-    -- Calcular horas hasta la reserva
+    -- Calcular horas hasta la reserva (CORREGIDO CON ZONA HORARIA EUROPA/MADRID)
     v_hours_until_reservation := EXTRACT(EPOCH FROM (
-        (v_reservation.reservation_date + v_reservation.reservation_time) - NOW()
+        (v_reservation.reservation_date::TIMESTAMP + v_reservation.reservation_time) - (NOW() AT TIME ZONE 'Europe/Madrid')
     )) / 3600;
     
     -- Verificar si hay alguna confirmación previa
@@ -152,10 +152,11 @@ BEGIN
         AND confirmed = TRUE
     ) INTO v_has_any_confirmation;
     
-    -- Si está MUY cerca y NO confirmó → RIESGO CRÍTICO
+    -- Si está MUY cerca y NO confirmó → RIESGO CRÍTICO (GARANTIZAR ≥80 pts)
     IF v_hours_until_reservation < 2.25 AND NOT v_has_any_confirmation THEN
         -- Menos de 2h 15min → LLAMADA URGENTE
-        v_base_score := v_base_score + 50;
+        -- GARANTIZAR que llegue a mínimo 80 puntos (score base mínimo de 55 + 25 = 80)
+        v_base_score := GREATEST(v_base_score + 50, 80);
         v_factors := v_factors || jsonb_build_object(
             'factor', '🔴 URGENTE: Menos de 2h 15min sin confirmar',
             'points', 50,
@@ -304,12 +305,12 @@ BEGIN
     
     v_final_score := GREATEST(0, LEAST(100, v_base_score + v_dynamic_adjustment));
     
-    -- Clasificar nivel de riesgo
+    -- Clasificar nivel de riesgo (ACTUALIZADO: >80 = HIGH)
     RETURN QUERY SELECT
         v_final_score as risk_score,
         CASE 
-            WHEN v_final_score > 60 THEN 'high'
-            WHEN v_final_score > 30 THEN 'medium'
+            WHEN v_final_score >= 80 THEN 'high'
+            WHEN v_final_score >= 40 THEN 'medium'
             ELSE 'low'
         END as risk_level,
         jsonb_build_object(
@@ -335,6 +336,7 @@ CREATE OR REPLACE FUNCTION predict_upcoming_noshows_v2(
 RETURNS TABLE(
     reservation_id UUID,
     customer_name VARCHAR,
+    customer_phone VARCHAR,
     reservation_date DATE,
     reservation_time TIME,
     party_size INT,
@@ -353,6 +355,7 @@ BEGIN
         SELECT 
             r.id,
             r.customer_name,
+            r.customer_phone,
             r.reservation_date,
             r.reservation_time,
             r.party_size
@@ -366,6 +369,7 @@ BEGIN
         SELECT 
             ur.id as reservation_id,
             ur.customer_name,
+            ur.customer_phone,
             ur.reservation_date,
             ur.reservation_time,
             ur.party_size,
@@ -382,6 +386,7 @@ BEGIN
     SELECT 
         rc.reservation_id,
         rc.customer_name,
+        rc.customer_phone,
         rc.reservation_date,
         rc.reservation_time,
         rc.party_size,
@@ -397,7 +402,7 @@ BEGIN
             ELSE 'Pendiente confirmación'
         END as confirmation_status,
         rc.recommended_action,
-        LEAST(100, GREATEST(0, ROUND(rc.risk_score * 0.85))) as noshow_probability
+        LEAST(100, GREATEST(0, ROUND(rc.risk_score * 0.85)))::INT as noshow_probability
     FROM risk_calculations rc
     WHERE rc.risk_score > 15 -- Solo mostrar con riesgo mínimo
     ORDER BY rc.risk_score DESC, rc.reservation_date ASC, rc.reservation_time ASC;

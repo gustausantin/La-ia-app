@@ -1,7 +1,7 @@
-// NoShowReservationDetail.jsx - Modal con detalles de riesgo por reserva
-import React from 'react';
-import { X, AlertTriangle, User, Phone, Clock, Users, Calendar, MessageSquare, TrendingUp, Shield } from 'lucide-react';
-import { format } from 'date-fns';
+// NoShowReservationDetail.jsx - Modal con detalles de riesgo por reserva v2
+import React, { useMemo } from 'react';
+import { X, AlertTriangle, User, Phone, Clock, Users, Calendar, MessageSquare, TrendingUp, Shield, PhoneCall } from 'lucide-react';
+import { format, parseISO, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 /**
@@ -10,6 +10,22 @@ import { es } from 'date-fns/locale';
  */
 export default function NoShowReservationDetail({ reservation, onClose, onSendWhatsApp, onMarkConfirmed }) {
     if (!reservation) return null;
+
+    // Calcular tiempo restante hasta la reserva
+    const timeUntilReservation = useMemo(() => {
+        try {
+            const now = new Date();
+            const reservationDateTime = parseISO(`${reservation.reservation_date}T${reservation.reservation_time}`);
+            const minutesUntil = differenceInMinutes(reservationDateTime, now);
+            return minutesUntil;
+        } catch (error) {
+            console.error('Error calculando tiempo hasta reserva:', error);
+            return 999; // Si hay error, asumimos que hay mucho tiempo
+        }
+    }, [reservation.reservation_date, reservation.reservation_time]);
+
+    // Determinar si es urgente basado en el risk_level y tiempo
+    const isUrgentCallWindow = (reservation.risk_level === 'high' || reservation.risk_score >= 80) && timeUntilReservation <= 135;
 
     // Determinar color según nivel de riesgo
     const getRiskColor = (score) => {
@@ -129,7 +145,17 @@ export default function NoShowReservationDetail({ reservation, onClose, onSendWh
                                 <Phone className="w-5 h-5" />
                                 <span className="text-sm font-semibold">Teléfono</span>
                             </div>
-                            <p className="font-bold text-gray-900">{reservation.customer_phone || 'Sin teléfono'}</p>
+                            {reservation.customer_phone ? (
+                                <a 
+                                    href={`tel:${reservation.customer_phone}`}
+                                    className="font-bold text-2xl text-blue-600 hover:text-blue-800 underline"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {reservation.customer_phone}
+                                </a>
+                            ) : (
+                                <p className="font-bold text-gray-400">Sin teléfono</p>
+                            )}
                         </div>
 
                         <div className="bg-gray-50 rounded-lg p-4">
@@ -137,7 +163,7 @@ export default function NoShowReservationDetail({ reservation, onClose, onSendWh
                                 <Clock className="w-5 h-5" />
                                 <span className="text-sm font-semibold">Hora</span>
                             </div>
-                            <p className="font-bold text-gray-900">{reservation.reservation_time}</p>
+                            <p className="font-bold text-gray-900">{reservation.reservation_time?.slice(0, 5) || reservation.reservation_time}</p>
                         </div>
 
                         <div className="bg-gray-50 rounded-lg p-4">
@@ -189,45 +215,79 @@ export default function NoShowReservationDetail({ reservation, onClose, onSendWh
                     </div>
 
                     {/* Acciones Recomendadas */}
-                    <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-                        <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
-                            <MessageSquare className="w-5 h-5" />
-                            Acciones Recomendadas
+                    <div className={`border-2 rounded-lg p-4 ${
+                        isUrgentCallWindow 
+                            ? 'bg-red-50 border-red-300' 
+                            : 'bg-blue-50 border-blue-200'
+                    }`}>
+                        <h3 className={`text-lg font-bold mb-3 flex items-center gap-2 ${
+                            isUrgentCallWindow ? 'text-red-900' : 'text-blue-900'
+                        }`}>
+                            {isUrgentCallWindow ? (
+                                <>
+                                    <PhoneCall className="w-5 h-5 animate-pulse" />
+                                    🚨 ACCIÓN URGENTE REQUERIDA
+                                </>
+                            ) : (
+                                <>
+                                    <MessageSquare className="w-5 h-5" />
+                                    Acciones Recomendadas
+                                </>
+                            )}
                         </h3>
-                        <ul className="space-y-2 text-sm text-blue-800">
-                            {(reservation.riskScore || reservation.risk_score) >= 70 && (
+                        <ul className={`space-y-2 text-sm ${isUrgentCallWindow ? 'text-red-800' : 'text-blue-800'}`}>
+                            {isUrgentCallWindow ? (
                                 <>
                                     <li className="flex items-start gap-2">
-                                        <span className="text-blue-600">✓</span>
-                                        <span>Enviar confirmación por WhatsApp <strong>inmediatamente</strong></span>
+                                        <span className="text-red-600 font-bold">📞</span>
+                                        <span className="font-bold">LLAMAR AHORA AL CLIENTE por teléfono</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <span className="text-blue-600">✓</span>
-                                        <span>Llamar 2 horas antes si no responde al WhatsApp</span>
+                                        <span className="text-red-600">✓</span>
+                                        <span>Si confirma → Clic en "Marcar Confirmado"</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <span className="text-blue-600">✓</span>
-                                        <span>Considerar solicitar señal de reserva</span>
+                                        <span className="text-red-600">✓</span>
+                                        <span>Si no contesta → Esperar hasta T-2h (auto-liberación)</span>
                                     </li>
                                 </>
-                            )}
-                            {(reservation.riskScore || reservation.risk_score) >= 40 && (reservation.riskScore || reservation.risk_score) < 70 && (
+                            ) : (
                                 <>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-blue-600">✓</span>
-                                        <span>Enviar WhatsApp de recordatorio 2 horas antes</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-blue-600">✓</span>
-                                        <span>Monitorear respuesta del cliente</span>
-                                    </li>
+                                    {(reservation.riskScore || reservation.risk_score) >= 70 && (
+                                        <>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-blue-600">✓</span>
+                                                <span>Enviar confirmación por WhatsApp <strong>inmediatamente</strong></span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-blue-600">✓</span>
+                                                <span>Llamar 2 horas antes si no responde al WhatsApp</span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-blue-600">✓</span>
+                                                <span>Considerar solicitar señal de reserva</span>
+                                            </li>
+                                        </>
+                                    )}
+                                    {(reservation.riskScore || reservation.risk_score) >= 40 && (reservation.riskScore || reservation.risk_score) < 70 && (
+                                        <>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-blue-600">✓</span>
+                                                <span>Enviar WhatsApp de recordatorio 2 horas antes</span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-blue-600">✓</span>
+                                                <span>Monitorear respuesta del cliente</span>
+                                            </li>
+                                        </>
+                                    )}
+                                    {(reservation.riskScore || reservation.risk_score) < 40 && (
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-blue-600">✓</span>
+                                            <span>Enviar recordatorio estándar (opcional)</span>
+                                        </li>
+                                    )}
                                 </>
-                            )}
-                            {(reservation.riskScore || reservation.risk_score) < 40 && (
-                                <li className="flex items-start gap-2">
-                                    <span className="text-blue-600">✓</span>
-                                    <span>Enviar recordatorio estándar (opcional)</span>
-                                </li>
                             )}
                         </ul>
                     </div>
@@ -235,17 +295,20 @@ export default function NoShowReservationDetail({ reservation, onClose, onSendWh
 
                 {/* Footer con acciones */}
                 <div className="bg-gray-50 p-6 border-t border-gray-200 flex gap-3">
-                    <button
-                        onClick={() => onSendWhatsApp(reservation)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all shadow-sm"
-                    >
-                        <MessageSquare className="w-5 h-5" />
-                        Enviar WhatsApp
-                    </button>
+                    {/* Solo mostrar "Enviar WhatsApp" si NO estamos en ventana crítica */}
+                    {!isUrgentCallWindow && (
+                        <button
+                            onClick={() => onSendWhatsApp(reservation)}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all shadow-sm"
+                        >
+                            <MessageSquare className="w-5 h-5" />
+                            Enviar WhatsApp
+                        </button>
+                    )}
                     
                     <button
                         onClick={() => onMarkConfirmed(reservation)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all shadow-sm"
+                        className={`${isUrgentCallWindow ? 'flex-1' : 'flex-1'} flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all shadow-sm`}
                     >
                         <Shield className="w-5 h-5" />
                         Marcar Confirmado

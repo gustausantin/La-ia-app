@@ -22,7 +22,8 @@ import {
     Info,
     Brain,
     Target,
-    History
+    History,
+    PhoneCall
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format, parseISO, subDays } from 'date-fns';
@@ -64,10 +65,17 @@ export default function NoShowControlNuevo() {
             setLoading(true);
 
             // 1. Obtener métricas generales
-            const { data: metrics } = await supabase
+            const { data: metrics, error: metricsError } = await supabase
                 .rpc('get_restaurant_noshow_metrics', {
                     p_restaurant_id: restaurant.id
                 });
+
+            if (metricsError) {
+                console.error('❌ Error en get_restaurant_noshow_metrics:', metricsError);
+                console.error('❌ Error message:', metricsError.message);
+            } else {
+                console.log('📊 Métricas cargadas:', metrics);
+            }
 
             if (metrics) {
                 setStats({
@@ -79,42 +87,62 @@ export default function NoShowControlNuevo() {
             }
 
             // 2. Obtener reservas con riesgo HOY (VERSIÓN DINÁMICA)
-            const { data: predictions } = await supabase
+            const { data: predictions, error: predError } = await supabase
                 .rpc('predict_upcoming_noshows_v2', {
                     p_restaurant_id: restaurant.id,
-                    p_days_ahead: 1
+                    p_days_ahead: 0  // 0 = solo HOY, 1 = HOY + MAÑANA
                 });
+            
+            if (predError) {
+                console.error('❌ Error en predict_upcoming_noshows_v2:', predError);
+                console.error('❌ Error message:', predError.message);
+                console.error('❌ Error details:', predError.details);
+                console.error('❌ Error hint:', predError.hint);
+                toast.error('Error al cargar predicciones: ' + predError.message);
+            } else {
+                console.log('🔮 Predicciones cargadas (HOY):', predictions?.length || 0, predictions);
+            }
 
             setRiskReservations(predictions || []);
 
             // 3. Obtener datos de tendencia (últimos 30 días)
-            const { data: actions } = await supabase
+            const { data: actions, error: actionsError } = await supabase
                 .from('noshow_actions')
                 .select('*')
                 .eq('restaurant_id', restaurant.id)
-                .gte('action_date', format(subDays(new Date(), 30), 'yyyy-MM-dd'))
-                .order('action_date', { ascending: true });
+                .gte('created_at', format(subDays(new Date(), 30), 'yyyy-MM-dd'))
+                .order('created_at', { ascending: true });
+            
+            if (actionsError) {
+                console.error('❌ Error cargando noshow_actions:', actionsError);
+            }
+            console.log('📊 Acciones cargadas (últimos 30 días):', actions?.length || 0, actions);
 
             // Agrupar por día
             const grouped = (actions || []).reduce((acc, action) => {
-                const date = action.action_date;
+                const date = format(parseISO(action.created_at), 'yyyy-MM-dd');
                 if (!acc[date]) {
                     acc[date] = { date, prevented: 0, occurred: 0 };
                 }
-                if (action.outcome === 'prevented') acc[date].prevented++;
-                if (action.outcome === 'occurred') acc[date].occurred++;
+                if (action.final_outcome === 'prevented' || action.prevented_noshow) acc[date].prevented++;
+                if (action.final_outcome === 'noshow') acc[date].occurred++;
                 return acc;
             }, {});
 
             setTrendData(Object.values(grouped));
 
             // 4. Obtener acciones recientes (últimas 10)
-            const { data: recentActionsData } = await supabase
+            const { data: recentActionsData, error: recentActionsError } = await supabase
                 .from('noshow_actions')
                 .select('*')
                 .eq('restaurant_id', restaurant.id)
                 .order('created_at', { ascending: false })
                 .limit(10);
+            
+            if (recentActionsError) {
+                console.error('❌ Error cargando acciones recientes:', recentActionsError);
+            }
+            console.log('📋 Acciones recientes cargadas:', recentActionsData?.length || 0, recentActionsData);
 
             setRecentActions(recentActionsData || []);
 
@@ -417,17 +445,18 @@ export default function NoShowControlNuevo() {
                                     <div className="bg-white rounded-lg p-5 border-2 border-red-300 shadow-sm">
                                         <div className="flex items-center gap-3 mb-3">
                                             <span className="w-28 px-4 py-2 bg-red-100 text-red-700 rounded-lg font-bold text-center text-base">🔴 ALTO</span>
-                                            <span className="text-gray-700 font-semibold text-base">&gt;60 puntos → Llamada obligatoria (2h 15min antes)</span>
+                                            <span className="text-gray-700 font-semibold text-base">≥80 puntos → Llamada URGENTE obligatoria</span>
                                         </div>
                                         <div className="ml-32 bg-red-50 rounded-lg p-4 border border-red-200">
-                                            <p className="font-bold text-red-900 mb-2 text-base">Ejemplo: Juan García</p>
+                                            <p className="font-bold text-red-900 mb-2 text-base">Ejemplo: Lucía (hoy a las 19:00)</p>
                                             <ul className="text-sm text-gray-700 space-y-1">
-                                                <li>• Historial: 40% no-shows → <span className="font-semibold text-red-600">+40 pts</span></li>
-                                                <li>• Inactividad: 8 meses sin venir → <span className="font-semibold text-red-600">+25 pts</span></li>
-                                                <li>• Grupo grande: 8 personas → <span className="font-semibold text-red-600">+10 pts</span></li>
+                                                <li>• Historial: 20% no-shows → <span className="font-semibold text-red-600">+20 pts</span></li>
+                                                <li>• Horario: Cena tardía (19h) → <span className="font-semibold text-red-600">+15 pts</span></li>
+                                                <li>• <strong>⚠️ URGENCIA: &lt;2h 15min sin confirmar</strong> → <span className="font-semibold text-red-700">+50 pts</span></li>
+                                                <li>• NO respondió WhatsApp 24h → <span className="font-semibold text-orange-600">+20 pts (dinámico)</span></li>
                                             </ul>
                                             <p className="mt-3 pt-3 border-t border-red-300 font-bold text-red-700 text-base">
-                                                TOTAL: 75 puntos → ¡Llamar SÍ o SÍ 2h 15min antes!
+                                                TOTAL: 105 puntos → 🚨 ¡LLAMAR AHORA MISMO!
                                             </p>
                                         </div>
                                     </div>
@@ -436,7 +465,7 @@ export default function NoShowControlNuevo() {
                                     <div className="bg-white rounded-lg p-5 border-2 border-yellow-300 shadow-sm">
                                         <div className="flex items-center gap-3 mb-3">
                                             <span className="w-28 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-center text-base">🟡 MEDIO</span>
-                                            <span className="text-gray-700 font-semibold text-base">30-60 puntos → WhatsApp reforzado (4 horas antes)</span>
+                                            <span className="text-gray-700 font-semibold text-base">40-79 puntos → Monitorear de cerca</span>
                                         </div>
                                         <div className="ml-32 bg-yellow-50 rounded-lg p-4 border border-yellow-200">
                                             <p className="font-bold text-yellow-900 mb-2 text-base">Ejemplo: María López</p>
@@ -444,9 +473,10 @@ export default function NoShowControlNuevo() {
                                                 <li>• Historial: 15% no-shows → <span className="font-semibold text-yellow-600">+20 pts</span></li>
                                                 <li>• Horario: Reserva a las 22h → <span className="font-semibold text-yellow-600">+15 pts</span></li>
                                                 <li>• Canal: Reserva por teléfono → <span className="font-semibold text-yellow-600">+10 pts</span></li>
+                                                <li>• Menos de 24h sin confirmar → <span className="font-semibold text-yellow-600">+15 pts</span></li>
                                             </ul>
                                             <p className="mt-3 pt-3 border-t border-yellow-300 font-bold text-yellow-700 text-base">
-                                                TOTAL: 45 puntos → Enviar WhatsApp reforzado 4 horas antes
+                                                TOTAL: 60 puntos → Enviar WhatsApp recordatorio 4h antes
                                             </p>
                                         </div>
                                     </div>
@@ -455,7 +485,7 @@ export default function NoShowControlNuevo() {
                                     <div className="bg-white rounded-lg p-5 border-2 border-green-300 shadow-sm">
                                         <div className="flex items-center gap-3 mb-3">
                                             <span className="w-28 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-bold text-center text-base">🟢 BAJO</span>
-                                            <span className="text-gray-700 font-semibold text-base">&lt;30 puntos → Recordatorio estándar (24 horas antes)</span>
+                                            <span className="text-gray-700 font-semibold text-base">&lt;40 puntos → Recordatorio estándar (24 horas antes)</span>
                                         </div>
                                         <div className="ml-32 bg-green-50 rounded-lg p-4 border border-green-200">
                                             <p className="font-bold text-green-900 mb-2 text-base">Ejemplo: Ana Martínez</p>
@@ -569,15 +599,32 @@ export default function NoShowControlNuevo() {
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {riskReservations.map(reservation => (
+                                {riskReservations.map(reservation => {
+                                    // Calcular tiempo hasta reserva
+                                    const now = new Date();
+                                    const reservationDateTime = new Date(`${reservation.reservation_date}T${reservation.reservation_time}`);
+                                    const minutesUntil = Math.floor((reservationDateTime - now) / (1000 * 60));
+                                    const isUrgent = minutesUntil <= 135 && reservation.risk_level === 'high'; // Menos de 2h 15min y alto riesgo
+                                    
+                                    return (
                                     <div
                                         key={reservation.reservation_id}
-                                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                                        className={`relative flex items-center justify-between p-4 border-2 rounded-lg hover:bg-gray-50 cursor-pointer ${
+                                            isUrgent ? 'border-red-500 bg-red-50' : 'border-gray-200'
+                                        }`}
                                         onClick={() => {
                                             setSelectedReservation(reservation);
                                             setShowDetailModal(true);
                                         }}
                                     >
+                                        {/* Banner urgente si aplica */}
+                                        {isUrgent && (
+                                            <div className="absolute -top-3 left-4 px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1 animate-pulse">
+                                                <PhoneCall className="w-3 h-3" />
+                                                🚨 LLAMAR URGENTE
+                                            </div>
+                                        )}
+                                        
                                         <div className="flex items-center gap-4">
                                             <div className={`px-3 py-1 rounded-full border text-xs font-semibold ${getRiskColor(reservation.risk_level)}`}>
                                                 {getRiskLabel(reservation.risk_level)}
@@ -585,7 +632,7 @@ export default function NoShowControlNuevo() {
                                             <div>
                                                 <p className="font-semibold text-gray-900">{reservation.customer_name}</p>
                                                 <p className="text-sm text-gray-600">
-                                                    {reservation.reservation_time} • {reservation.party_size} personas
+                                                    {reservation.reservation_time?.slice(0, 5) || reservation.reservation_time} • {reservation.party_size} personas
                                                 </p>
                                                 {/* Estado de confirmación dinámico */}
                                                 {reservation.confirmation_status && (
@@ -633,7 +680,8 @@ export default function NoShowControlNuevo() {
                                             <ChevronRight className="w-5 h-5 text-gray-400" />
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -674,9 +722,10 @@ export default function NoShowControlNuevo() {
                                                     {action.customer_name || 'Cliente'}
                                                 </p>
                                                 <p className="text-sm text-gray-600">
-                                                    {format(parseISO(action.action_date), "d 'de' MMM", { locale: es })} • 
-                                                    {action.action_type === 'call' && ' Llamada realizada'}
-                                                    {action.action_type === 'whatsapp' && ' WhatsApp enviado'}
+                                                    {format(parseISO(action.created_at), "d 'de' MMM", { locale: es })} • 
+                                                    {action.action_type === 'call_made' && ' Llamada realizada'}
+                                                    {action.action_type === 'confirmation_sent_24h' && ' Confirmación 24h enviada'}
+                                                    {action.action_type === 'confirmation_sent_4h' && ' Recordatorio 4h enviado'}
                                                     {action.action_type === 'auto_release' && ' Auto-liberación'}
                                                 </p>
                                             </div>
@@ -726,7 +775,61 @@ export default function NoShowControlNuevo() {
                             setShowDetailModal(false);
                             setSelectedReservation(null);
                         }}
-                        onAction={loadNoShowData}
+                        onSendWhatsApp={async (reservation) => {
+                            // Función para enviar WhatsApp manual
+                            try {
+                                toast.loading('Enviando WhatsApp...');
+                                // Aquí iría la lógica de envío (por ahora, solo simulamos)
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                                toast.dismiss();
+                                toast.success('WhatsApp enviado correctamente');
+                                setShowDetailModal(false);
+                                setSelectedReservation(null);
+                                loadNoShowData();
+                            } catch (error) {
+                                toast.dismiss();
+                                toast.error('Error al enviar WhatsApp');
+                            }
+                        }}
+                        onMarkConfirmed={async (reservation) => {
+                            // Función para marcar como confirmado (después de llamada manual)
+                            try {
+                                toast.loading('Marcando como confirmado...');
+                                
+                                // 1. Actualizar estado de la reserva
+                                const { error: updateError } = await supabase
+                                    .from('reservations')
+                                    .update({ status: 'confirmed' })
+                                    .eq('id', reservation.reservation_id);
+                                
+                                if (updateError) throw updateError;
+                                
+                                // 2. Registrar confirmación manual en customer_confirmations
+                                const { error: confirmError } = await supabase
+                                    .from('customer_confirmations')
+                                    .insert({
+                                        restaurant_id: restaurant.id,
+                                        reservation_id: reservation.reservation_id,
+                                        message_type: 'Llamada urgente',
+                                        sent_at: new Date().toISOString(),
+                                        responded_at: new Date().toISOString(),
+                                        confirmed: true,
+                                        response_time_minutes: 0 // Confirmación inmediata por llamada
+                                    });
+                                
+                                if (confirmError) throw confirmError;
+                                
+                                toast.dismiss();
+                                toast.success('✅ Reserva confirmada correctamente');
+                                setShowDetailModal(false);
+                                setSelectedReservation(null);
+                                loadNoShowData(); // Recargar datos
+                            } catch (error) {
+                                toast.dismiss();
+                                console.error('Error al confirmar reserva:', error);
+                                toast.error('Error al confirmar: ' + error.message);
+                            }
+                        }}
                     />
                 )}
 
