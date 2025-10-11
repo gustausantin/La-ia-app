@@ -296,6 +296,16 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
     const channel =
         CHANNELS[reservation.channel || "manual"] || CHANNELS.manual;
     const isAgentReservation = reservation.source === "agent";
+    
+    // 🚨 CALCULAR SI ES URGENTE (igual que en NoShowControlNuevo)
+    const isUrgent = useMemo(() => {
+        if (!reservation.reservation_date || !reservation.reservation_time) return false;
+        const reservationDateTime = parseISO(`${reservation.reservation_date}T${reservation.reservation_time}`);
+        const now = new Date();
+        const minutesUntil = Math.floor((reservationDateTime - now) / (1000 * 60));
+        const isHighRisk = reservation.noshow_risk_score >= 80 || reservation.risk_level === 'high';
+        return isHighRisk && minutesUntil > 0 && minutesUntil <= 135; // 2h 15min
+    }, [reservation.reservation_date, reservation.reservation_time, reservation.noshow_risk_score, reservation.risk_level]);
 
     const formatTime = (timeString) => {
         return timeString ? timeString.slice(0, 5) : "00:00";
@@ -303,12 +313,19 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
 
     return (
         <div
-            className={`bg-white border rounded-lg p-3 hover:shadow-md transition-all duration-200 ${
+            className={`bg-white border rounded-lg p-3 hover:shadow-md transition-all duration-200 relative ${
                 isSelected
                     ? "ring-2 ring-blue-500 border-blue-200"
                     : "border-gray-200"
-            } ${isAgentReservation ? "border-l-4 border-l-purple-500" : ""}`}
+            } ${isAgentReservation ? "border-l-4 border-l-purple-500" : ""} ${isUrgent ? "border-2 border-red-500 bg-red-50" : ""}`}
         >
+            {/* 🚨 BANNER URGENTE */}
+            {isUrgent && (
+                <div className="absolute -top-3 left-4 px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1 animate-pulse z-10">
+                    <PhoneCall className="w-3 h-3" />
+                    🚨 LLAMAR URGENTE
+                </div>
+            )}
             <div className="flex items-start justify-between gap-2">
                 {/* Checkbox */}
                 <input
@@ -432,6 +449,29 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                     {reservation.special_requests && (
                         <div className="mt-2 text-sm text-gray-700 italic pl-2 border-l-2 border-amber-400">
                             "{reservation.special_requests}"
+                        </div>
+                    )}
+                    
+                    {/* 🚨 BOTÓN DE ACCIÓN URGENTE */}
+                    {isUrgent && (
+                        <div className="mt-3 flex items-center gap-2">
+                            <a
+                                href={`tel:${reservation.customer_phone}`}
+                                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <PhoneCall className="w-4 h-4" />
+                                LLAMAR AHORA: {reservation.customer_phone}
+                            </a>
+                            <button
+                                onClick={() => {
+                                    // Ir a página de No-Shows
+                                    window.location.href = '/no-shows-nuevo';
+                                }}
+                                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg flex items-center gap-2 transition-colors"
+                            >
+                                <AlertTriangle className="w-4 h-4" />
+                                Ver No-Shows
+                            </button>
                         </div>
                     )}
                 </div>
@@ -840,7 +880,7 @@ export default function Reservas() {
         try {
             setLoading(true);
 
-            // 🔥 USAR RPC OPTIMIZADO CON DATOS DE CUSTOMERS INCLUIDOS
+            // 🔥 USAR RPC OPTIMIZADO CON DATOS DE CUSTOMERS INCLUIDOS + RIESGO NO-SHOW
             // Ahora los datos del customer se obtienen automáticamente vía customer_id
             const { data, error } = await supabase
                 .from('reservations')
@@ -877,6 +917,28 @@ export default function Reservas() {
                 .eq('restaurant_id', restaurantId)
                 .order('reservation_date', { ascending: true })
                 .order('reservation_time', { ascending: true });
+            
+            // 🚨 AGREGAR DATOS DE RIESGO NO-SHOW PARA HOY
+            let riskData = {};
+            try {
+                const { data: riskPredictions } = await supabase
+                    .rpc('predict_upcoming_noshows_v2', {
+                        p_restaurant_id: restaurantId,
+                        p_days_ahead: 0
+                    });
+                
+                if (riskPredictions) {
+                    riskData = riskPredictions.reduce((acc, pred) => {
+                        acc[pred.reservation_id] = {
+                            noshow_risk_score: pred.risk_score,
+                            risk_level: pred.risk_level
+                        };
+                        return acc;
+                    }, {});
+                }
+            } catch (riskError) {
+                console.warn('⚠️ No se pudieron cargar datos de riesgo:', riskError);
+            }
 
             if (error) {
                 console.error('❌ ERROR CARGANDO RESERVAS:', error);
@@ -888,12 +950,15 @@ export default function Reservas() {
                 firstReservation: data?.[0] || null
             });
 
-            // Mapear datos del customer al formato esperado (compatibilidad)
+            // Mapear datos del customer + riesgo al formato esperado (compatibilidad)
             let reservations = (data || []).map(r => ({
                 ...r,
                 customer_name: r.customer?.name || r.customer_name,
                 customer_email: r.customer?.email || r.customer_email,
-                customer_phone: r.customer?.phone || r.customer_phone
+                customer_phone: r.customer?.phone || r.customer_phone,
+                // 🚨 AGREGAR DATOS DE RIESGO
+                noshow_risk_score: riskData[r.id]?.noshow_risk_score || 0,
+                risk_level: riskData[r.id]?.risk_level || 'low'
             }));
             
             // Log específico para debugging

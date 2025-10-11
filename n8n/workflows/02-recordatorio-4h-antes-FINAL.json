@@ -1,0 +1,336 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/30 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "02b2470c-a797-4827-a2b9-6e1065a1784d",
+      "name": "⏰ Cron Cada 30 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1088,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "reservations",
+        "returnAll": true
+      },
+      "id": "93d5bd94-8838-44c1-97f0-69d6ad539502",
+      "name": "📊 Obtener TODAS las Reservas",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -848,
+        608
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst nowTime = now.getTime();\n\nconst filtered = $input.all().filter(item => {\n  const data = item.json;\n  \n  const reservationDateTime = new Date(`${data.reservation_date}T${data.reservation_time}`);\n  const reservationTime = reservationDateTime.getTime();\n  \n  const hoursUntil = (reservationTime - nowTime) / (1000 * 60 * 60);\n  \n  return hoursUntil >= 4 && \n         hoursUntil <= 5 &&\n         (data.status === 'pending' || data.status === 'confirmed') &&\n         data.customer_phone !== null &&\n         data.customer_phone !== '';\n});\n\nreturn filtered;"
+      },
+      "id": "7dcf4283-5d93-416f-b7f5-ffd740aee264",
+      "name": "🔍 Filtrar: Ventana 4-5h",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $input.all().length }}",
+              "value2": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bd9a6b86-4d10-4544-a3c0-aa3748c014f1",
+      "name": "❓ ¿Hay Reservas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "5d133977-c65b-42d8-bd19-bdd7f6ef05ef",
+      "name": "🔁 Loop Cada Reserva",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -144,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst results = items.map(item => {\n  const data = item.json;\n  let phone = data.customer_phone || '';\n  \n  if (phone && !phone.startsWith('+')) {\n    if (phone.startsWith('34')) {\n      phone = '+' + phone;\n    } else if (phone.startsWith('0034')) {\n      phone = '+' + phone.substring(2);\n    } else {\n      phone = '+34' + phone;\n    }\n  }\n  \n  const now = new Date();\n  const reservationDateTime = new Date(`${data.reservation_date}T${data.reservation_time}`);\n  const hoursRemaining = Math.round((reservationDateTime - now) / (1000 * 60 * 60));\n  \n  return {\n    json: {\n      ...data,\n      customer_phone_normalized: phone,\n      hours_remaining: hoursRemaining\n    }\n  };\n});\n\nreturn results;"
+      },
+      "id": "328006ee-56b3-4071-8c11-be0af71d4d46",
+      "name": "📞 Normalizar Teléfono",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "restaurants",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.restaurant_id }}"
+            }
+          ]
+        }
+      },
+      "id": "dad76973-867b-495e-bdd8-74230c02a031",
+      "name": "📍 Obtener Config Restaurante",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        336,
+        416
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "={{ $json.phone }}",
+        "to": "={{ $('📞 Normalizar Teléfono').item.json.customer_phone_normalized }}",
+        "toWhatsapp": true,
+        "message": "=Hola {{ $node[\"📞 Normalizar Teléfono\"].json.customer_name }}! 👋\n\nTe recordamos que tu reserva es *en {{ $node[\"📞 Normalizar Teléfono\"].json.hours_remaining }} horas* (a las {{ $node[\"📞 Normalizar Teléfono\"].json.reservation_time }}) para *{{ $node[\"📞 Normalizar Teléfono\"].json.party_size }} personas*.\n\n¿Todo sigue en pie? 🤔\n\n✅ Responde SÍ para confirmar\n❌ Responde NO si necesitas cancelar\n\nGracias! 🍽️",
+        "options": {
+          "statusCallback": ""
+        }
+      },
+      "id": "fc22dd7a-a03e-4a35-87da-4b148f90f6f5",
+      "name": "📱 Twilio: Enviar WhatsApp 4h",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        560,
+        416
+      ],
+      "credentials": {
+        "twilioApi": {
+          "id": "KZF7OfG2zH2XYZAQ",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "customer_confirmations",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "reservation_id",
+              "fieldValue": "={{ $node[\"📞 Normalizar Teléfono\"].json.id }}"
+            },
+            {
+              "fieldId": "restaurant_id",
+              "fieldValue": "={{ $node[\"📞 Normalizar Teléfono\"].json.restaurant_id }}"
+            },
+            {
+              "fieldId": "message_type",
+              "fieldValue": "Recordatorio 4h antes"
+            },
+            {
+              "fieldId": "sent_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            },
+            {
+              "fieldId": "message_content",
+              "fieldValue": "={{ $node[\"📱 Twilio: Enviar WhatsApp 4h\"].json.body }}"
+            },
+            {
+              "fieldId": "customer_id",
+              "fieldValue": "={{ $node[\"📞 Normalizar Teléfono\"].json.customer_id }}"
+            }
+          ]
+        }
+      },
+      "id": "45a665bb-1706-4f77-a66f-0c14db86251f",
+      "name": "💾 Registrar Confirmación 4h",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        768,
+        416
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "95e5a6ba-9bfc-4c24-a68d-c39cd570be42",
+      "name": "✅ Fin: Sin Reservas",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        848
+      ]
+    }
+  ],
+  "connections": {
+    "⏰ Cron Cada 30 min": {
+      "main": [
+        [
+          {
+            "node": "📊 Obtener TODAS las Reservas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Obtener TODAS las Reservas": {
+      "main": [
+        [
+          {
+            "node": "🔍 Filtrar: Ventana 4-5h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Filtrar: Ventana 4-5h": {
+      "main": [
+        [
+          {
+            "node": "❓ ¿Hay Reservas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❓ ¿Hay Reservas?": {
+      "main": [
+        [
+          {
+            "node": "🔁 Loop Cada Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "✅ Fin: Sin Reservas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔁 Loop Cada Reserva": {
+      "main": [
+        [],
+        [
+          {
+            "node": "📞 Normalizar Teléfono",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📞 Normalizar Teléfono": {
+      "main": [
+        [
+          {
+            "node": "📍 Obtener Config Restaurante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📍 Obtener Config Restaurante": {
+      "main": [
+        [
+          {
+            "node": "📱 Twilio: Enviar WhatsApp 4h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📱 Twilio: Enviar WhatsApp 4h": {
+      "main": [
+        [
+          {
+            "node": "💾 Registrar Confirmación 4h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Registrar Confirmación 4h": {
+      "main": [
+        [
+          {
+            "node": "🔁 Loop Cada Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
+  }
+}
