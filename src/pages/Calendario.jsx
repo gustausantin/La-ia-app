@@ -762,7 +762,7 @@ export default function Calendario() {
                     toast(
                         `🔄 REGENERACIÓN RECOMENDADA\n\n` +
                         `Has cerrado el día ${format(selectedDay, 'dd/MM/yyyy')}.\n\n` +
-                        `📍 Ve a "Gestión de Disponibilidades"\n` +
+                        `📍 Ve a "Gestión de Horarios de Reserva"\n` +
                         `🗑️ Usa "Borrar Disponibilidades" para limpiar\n` +
                         `🎯 Luego "Generar Disponibilidades" para actualizar\n\n` +
                         `Esto elimina slots del día cerrado.`,

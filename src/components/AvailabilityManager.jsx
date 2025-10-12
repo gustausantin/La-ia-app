@@ -42,6 +42,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
     const [autoTriggerShown, setAutoTriggerShown] = useState(false); // 🔒 Flag para evitar modal repetido
     const [protectedDaysData, setProtectedDaysData] = useState([]); // 🛡️ Datos de días protegidos para el modal
     const [dateRangeInfo, setDateRangeInfo] = useState(null); // 📅 Rango de fechas para el modal
+    const [lastMaintenanceRun, setLastMaintenanceRun] = useState(null); // 🔄 Última ejecución del mantenimiento automático
     
     // 🚨 Forzar verificación del estado cuando se monta el componente
     useEffect(() => {
@@ -84,6 +85,26 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
         endDate: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
         overwriteExisting: false
     });
+
+    // Obtener última ejecución del mantenimiento automático
+    const loadLastMaintenanceRun = async () => {
+        try {
+            // Intentar obtener de cron.job_run_details (puede no estar disponible por RLS)
+            const { data, error } = await supabase.rpc('get_last_maintenance_run');
+            
+            if (!error && data) {
+                setLastMaintenanceRun(data);
+            } else {
+                // Fallback: Calcular en base a la lógica (cada día a las 4 AM)
+                const now = new Date();
+                const today4AM = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 4, 0, 0);
+                const lastRun = now.getHours() >= 4 ? today4AM : new Date(today4AM.getTime() - 24 * 60 * 60 * 1000);
+                setLastMaintenanceRun({ estimated: true, timestamp: lastRun.toISOString() });
+            }
+        } catch (error) {
+            console.warn('⚠️ No se pudo obtener última ejecución del mantenimiento:', error);
+        }
+    };
 
     // Cargar configuración del restaurante
     const loadRestaurantSettings = async () => {
@@ -1554,7 +1575,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 <div>
                     <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                         <Calendar className="w-6 h-6 text-blue-600" />
-                        Gestión de Disponibilidades
+                        Gestión de Horarios de Reserva
                     </h2>
                     <p className="text-gray-600 mt-1">
                         Controla cuándo están disponibles tus mesas para reservas
@@ -1602,23 +1623,32 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                             <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 shadow-sm">
                                 <CheckCircle2 className="w-6 h-6 text-green-600" />
                             </div>
-                            <div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900">
-                                        Disponibilidades Activas
-                                    </h3>
-                                    <div className="flex items-center gap-3 mt-2">
-                                        <p className="text-sm text-gray-600 font-medium">
-                                            {dayStats?.mesas || 0} mesas • {dayStats?.duracionReserva || 60} min/reserva
-                                        </p>
-                                        {dayStats?.fechaHasta && (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
-                                                <CalendarCheck className="w-4 h-4 text-blue-600" />
-                                                <span className="text-sm font-bold text-blue-900">
-                                                    Hasta: <span className="text-base">{dayStats.fechaHasta}</span>
-                                                </span>
-                                            </div>
-                                        )}
+                            <div className="flex-1">
+                                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                                    Días Disponibles
+                                </h3>
+                                
+                                {/* 📊 Rango de fechas activo - SIMPLE Y PROFESIONAL */}
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <Calendar className="w-4 h-4 text-blue-600" />
+                                        <span className="text-sm font-medium text-gray-900">
+                                            Desde hoy: <span className="font-bold">{format(new Date(), 'dd/MM/yyyy')}</span>
+                                        </span>
+                                    </div>
+                                    {dayStats?.fechaHasta && (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
+                                            <CalendarCheck className="w-4 h-4 text-green-600" />
+                                            <span className="text-sm font-medium text-gray-900">
+                                                Hasta: <span className="font-bold">{dayStats.fechaHasta}</span>
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg">
+                                        <Clock className="w-4 h-4 text-gray-600" />
+                                        <span className="text-sm font-medium text-gray-900">
+                                            <span className="font-bold">{dayStats?.advanceDaysConfig || 30}</span> días configurados
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -1673,14 +1703,21 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                         </div>
                     </div>
                     
-                    {/* Footer con última generación */}
-                    {generationSuccess?.timestamp && (
-                        <div className="px-6 py-3 bg-white border-t border-gray-200 rounded-b-xl">
-                            <p className="text-sm text-gray-600 text-center font-medium">
-                                Última actualización: {generationSuccess.timestamp}
-                            </p>
+                    {/* Footer con info de mantenimiento automático - PROFESIONAL */}
+                    <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 rounded-b-xl">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <RefreshCw className="w-4 h-4 text-gray-500" />
+                                <p className="text-sm text-gray-700">
+                                    <span className="font-semibold">Mantenimiento Automático:</span> Cada día a las 04:00 se mantiene ventana de {dayStats?.advanceDaysConfig || 30} días
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-md">
+                                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                <span className="text-sm font-medium text-green-900">Activo</span>
+                            </div>
                         </div>
-                    )}
+                    </div>
                 </div>
             )}
 
