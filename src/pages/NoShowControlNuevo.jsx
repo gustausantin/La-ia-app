@@ -77,12 +77,13 @@ export default function NoShowControlNuevo() {
                 console.log('📊 Métricas cargadas:', metrics);
             }
 
-            if (metrics) {
+            if (metrics && metrics.length > 0) {
+                const metricsData = metrics[0]; // La función retorna un array con 1 elemento
                 setStats({
-                    evitadosEsteMes: metrics.prevented_this_month || 0,
-                    tasaNoShow: metrics.noshow_rate || 0,
-                    roiMensual: metrics.monthly_roi || 0,
-                    reservasRiesgo: metrics.high_risk_today || 0
+                    evitadosEsteMes: metricsData.prevented_this_month || 0,
+                    tasaNoShow: metricsData.noshow_rate || 0,
+                    roiMensual: metricsData.monthly_roi || 0,
+                    reservasRiesgo: metricsData.high_risk_today || 0
                 });
             }
 

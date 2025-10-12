@@ -27,6 +27,7 @@ import {
     Zap,
     Receipt,
     Activity,
+    AlertTriangle, // Para No-Shows
     Circle, // NUEVO - para el estado del agente
     RefreshCw, // Importado para el botón de reiniciar
 } from "lucide-react";
@@ -67,7 +68,7 @@ export default function Layout() {
     const menuItems = [
         { name: "Dashboard", path: "/dashboard-agente", icon: Home, badge: null },
         { name: "Reservas", path: "/reservas", icon: Calendar, badge: null },
-        { name: "🆕 No-Shows", path: "/no-shows-nuevo", icon: Activity, badge: "NUEVO", badgeColor: "bg-purple-500" },
+        { name: "No-Shows", path: "/no-shows", icon: AlertTriangle, badge: null },
         {
             name: "Comunicación",
             path: "/comunicacion",
