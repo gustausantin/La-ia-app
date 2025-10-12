@@ -109,9 +109,9 @@ export default function PlantillasCRM() {
                 toast.success(`❌ "${template.name}" desactivada`);
                 loadTemplates();
             } else {
-                // ACTIVAR: Verificar si ya hay otra plantilla del mismo tipo activa
+                // ACTIVAR: Verificar si ya hay otra plantilla de la MISMA CATEGORÍA activa
                 const activeTemplate = templates.find(t => 
-                    t.name === template.name && 
+                    t.category === template.category && 
                     t.id !== template.id && 
                     t.is_active
                 );
@@ -188,7 +188,7 @@ export default function PlantillasCRM() {
         }
     };
 
-    // Duplicar plantilla
+    // Duplicar plantilla (SIEMPRE desactivada)
     const duplicateTemplate = async (template) => {
         try {
             const { error } = await supabase
@@ -200,14 +200,14 @@ export default function PlantillasCRM() {
                     subject: template.subject,
                     content_markdown: template.content_markdown,
                     channel: template.channel,
-                    is_active: false,
+                    is_active: false, // ✅ SIEMPRE desactivada al duplicar
                     segment: 'all',
                     event_trigger: 'manual'
                 });
 
             if (error) throw error;
 
-            toast.success("✅ Plantilla duplicada correctamente");
+            toast.success("✅ Plantilla duplicada (desactivada)");
             loadTemplates();
         } catch (error) {
             console.error("Error duplicando plantilla:", error);
@@ -414,17 +414,17 @@ export default function PlantillasCRM() {
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-2 ml-4">
-                                                        <button
-                                                            onClick={() => handleToggleActive(template)}
-                                                            className={`p-2 rounded-lg transition-all duration-200 cursor-pointer ${
-                                                                template.is_active
-                                                                    ? 'text-green-600 bg-green-100 hover:bg-green-200 shadow-sm'
-                                                                    : 'text-gray-400 hover:text-green-600 hover:bg-green-50 hover:shadow-sm'
-                                                            }`}
-                                                            title={template.is_active ? "Desactivar plantilla" : "Activar plantilla"}
-                                                        >
-                                                            {template.is_active ? <Power className="w-5 h-5" /> : <PowerOff className="w-5 h-5" />}
-                                                        </button>
+                                        <button
+                                            onClick={() => handleToggleActive(template)}
+                                            className={`p-2 rounded-lg transition-all duration-200 cursor-pointer ${
+                                                template.is_active
+                                                    ? 'text-green-600 bg-green-100 hover:bg-green-200 shadow-sm'
+                                                    : 'text-red-600 bg-red-100 hover:bg-red-200 hover:shadow-sm'
+                                            }`}
+                                            title={template.is_active ? "Desactivar plantilla" : "Activar plantilla"}
+                                        >
+                                            {template.is_active ? <Power className="w-5 h-5" /> : <PowerOff className="w-5 h-5" />}
+                                        </button>
                                                         <button
                                                             onClick={() => openPreviewModal(template)}
                                                             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
