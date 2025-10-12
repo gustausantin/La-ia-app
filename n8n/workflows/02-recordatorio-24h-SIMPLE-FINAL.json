@@ -150,9 +150,9 @@
               "keyValue": "={{ $('📍 Obtener Config Restaurante').first().json.id }}"
             },
             {
-              "keyName": "name",
+              "keyName": "category",
               "condition": "eq",
-              "keyValue": "Confirmación 24h Antes"
+              "keyValue": "='confirmacion_24h'"
             },
             {
               "keyName": "is_active",

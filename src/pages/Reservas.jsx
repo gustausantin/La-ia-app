@@ -295,7 +295,7 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
     const mappedStatus = statusMapping[reservation.status] || 'pendiente';
     const state = RESERVATION_STATES[mappedStatus] || RESERVATION_STATES.pendiente;
     const channel =
-        CHANNELS[reservation.channel || "manual"] || CHANNELS.manual;
+        CHANNELS[reservation.reservation_channel || "manual"] || CHANNELS.manual;
     const isAgentReservation = reservation.source === "agent";
     
     // 🚨 CALCULAR SI ES URGENTE (igual que en NoShowControlNuevo)
