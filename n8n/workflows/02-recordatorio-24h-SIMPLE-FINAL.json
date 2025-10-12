@@ -147,12 +147,12 @@
             {
               "keyName": "restaurant_id",
               "condition": "eq",
-              "keyValue": "={{ $node[\"📍 Obtener Config Restaurante\"].json.id }}"
+              "keyValue": "={{ $('📍 Obtener Config Restaurante').first().json.id }}"
             },
             {
               "keyName": "name",
               "condition": "eq",
-              "keyValue": "Recordatorio 24h antes"
+              "keyValue": "Confirmación 24h Antes"
             },
             {
               "keyName": "is_active",

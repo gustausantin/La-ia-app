@@ -1,155 +1,64 @@
-// PlantillasCRM.jsx - PÁGINA DEDICADA PARA PLANTILLAS CRM
+// PlantillasCRM.jsx - SISTEMA PROFESIONAL DE PLANTILLAS CRM
 import React, { useState, useEffect } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import {
     Mail, Edit2, Save, X, Plus, Copy, Eye, Trash2,
-    MessageSquare, Users, Crown, Clock, AlertTriangle,
-    RefreshCw, CheckCircle2, Sparkles, Target
+    RefreshCw, CheckCircle2, Target, Power, PowerOff, Sparkles
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-// PLANTILLAS ESTÁNDAR POR TIPO DE CLIENTE
-const STANDARD_TEMPLATES = {
-    nuevo: {
-        name: "Bienvenida Cliente Nuevo",
-        subject: "¡Bienvenido a {restaurant_name}!",
-        content: `¡Hola {customer_name}!
-
-Gracias por visitarnos por primera vez en {restaurant_name}. Esperamos que hayas disfrutado de tu experiencia con nosotros.
-
-Como nuevo cliente, queremos asegurarnos de que tengas la mejor experiencia posible. Si tienes alguna sugerencia o comentario, no dudes en contactarnos.
-
-Estamos aquí para hacer que cada visita sea especial para ti.
-
-¡Esperamos verte pronto de nuevo!
-
-Un saludo cordial,
-El equipo de {restaurant_name}`,
-        icon: "👋",
-        color: "blue"
+// CATEGORÍAS DE PLANTILLAS PROFESIONALES
+const TEMPLATE_CATEGORIES = {
+    bienvenida: {
+        name: "Bienvenida",
+        description: "Mensajes de bienvenida para nuevos clientes",
+        icon: Mail
+    },
+    confirmacion_24h: {
+        name: "Confirmación 24h Antes",
+        description: "Confirmación de reserva 24 horas antes",
+        icon: CheckCircle2
+    },
+    confirmacion_4h: {
+        name: "Confirmación 4h Antes",
+        description: "Recordatorio urgente 4 horas antes",
+        icon: CheckCircle2
+    },
+    vip_upgrade: {
+        name: "Cliente VIP",
+        description: "Promoción y reconocimiento de clientes VIP",
+        icon: Target
     },
     alto_valor: {
-        name: "Cliente Alto Valor - Agradecimiento",
-        subject: "Gracias por ser parte de {restaurant_name}",
-        content: `Hola {customer_name},
-
-Queremos agradecerte por ser un cliente activo de {restaurant_name}. Tus visitas regulares significan mucho para nosotros.
-
-Hemos notado que disfrutas de nuestra cocina y ambiente, y eso nos llena de alegría. Seguimos trabajando cada día para ofrecerte la mejor experiencia gastronómica.
-
-Si hay algo específico que te gustaría que mejoráramos o algún plato especial que te gustaría probar, ¡háznoslo saber!
-
-Gracias por confiar en nosotros.
-
-Con aprecio,
-El equipo de {restaurant_name}`,
-        icon: "⭐",
-        color: "green"
+        name: "Alto Valor",
+        description: "Reconocimiento a clientes de alto valor",
+        icon: Target
     },
-    vip: {
-        name: "Promoción a Cliente VIP",
-        subject: "¡Felicidades! Ahora eres cliente VIP de {restaurant_name}",
-        content: `¡Hola {customer_name}!
-
-Nos complace informarte que ahora formas parte de nuestro programa exclusivo VIP (Very Important Person) en {restaurant_name}.
-
-Como cliente VIP, disfrutarás de beneficios especiales:
-• Reservas prioritarias
-• Mesa preferencial cuando esté disponible
-• Atención personalizada de nuestro equipo
-• Invitaciones a eventos exclusivos
-• Degustaciones especiales de nuevos platos
-• Descuentos en ocasiones especiales
-
-Tu fidelidad y confianza son invaluables para nosotros. Gracias por elegir {restaurant_name} como tu lugar especial.
-
-¡Esperamos celebrar contigo muchos momentos más!
-
-Con gratitud,
-El equipo de {restaurant_name}`,
-        icon: "👑",
-        color: "purple"
+    reactivacion: {
+        name: "Reactivación",
+        description: "Recuperación de clientes inactivos",
+        icon: RefreshCw
+    },
+    recuperacion: {
+        name: "En Riesgo",
+        description: "Atención a clientes en riesgo de pérdida",
+        icon: RefreshCw
     },
     noshow: {
-        name: "Seguimiento No-Show",
-        subject: "Te echamos de menos en {restaurant_name}",
-        content: `Hola {customer_name},
-
-Notamos que tenías una reserva con nosotros el {reservation_date} y no pudiste acompañarnos.
-
-Entendemos que a veces surgen imprevistos. No hay problema, estas cosas pasan.
-
-¿Te gustaría hacer una nueva reserva? Estaremos encantados de recibirte cuando te venga bien.
-
-Si hubo algún inconveniente que podamos resolver, por favor háznoslo saber. Tu experiencia es muy importante para nosotros.
-
-¡Esperamos verte pronto!
-
-Un saludo cordial,
-El equipo de {restaurant_name}`,
-        icon: "⏰",
-        color: "red"
+        name: "No-Shows",
+        description: "Seguimiento tras ausencias",
+        icon: X
     },
-    en_riesgo: {
-        name: "Cliente En Riesgo - Atención Especial",
-        subject: "¿Cómo podemos mejorar tu experiencia en {restaurant_name}?",
-        content: `Hola {customer_name},
-
-Hemos notado que ha pasado un tiempo desde tu última visita a {restaurant_name}, y queremos asegurarnos de que todo esté bien.
-
-Tu opinión es muy importante para nosotros. Si hubo algo en tu última experiencia que no cumplió con tus expectativas, nos encantaría saberlo para poder mejorarlo.
-
-Estamos comprometidos a ofrecerte el mejor servicio posible, y tu feedback nos ayuda a lograrlo.
-
-¿Te gustaría que te contactemos para hablar sobre cómo podemos hacer que tu próxima visita sea perfecta?
-
-Valoramos mucho tu confianza.
-
-Atentamente,
-El equipo de {restaurant_name}`,
-        icon: "⚠️",
-        color: "orange"
+    grupo_aprobacion: {
+        name: "Aprobación Grupo Grande",
+        description: "Confirmación de reservas de grupos grandes",
+        icon: CheckCircle2
     },
-    inactivo: {
-        name: "Reactivación Cliente Inactivo",
-        subject: "Te echamos de menos en {restaurant_name}",
-        content: `Hola {customer_name},
-
-¡Hace tiempo que no te vemos por {restaurant_name}! Esperamos que estés bien.
-
-Durante tu ausencia, hemos añadido nuevos platos a nuestra carta que creemos te van a encantar. También hemos mejorado nuestra experiencia gastronómica pensando en clientes especiales como tú.
-
-Nos encantaría verte de nuevo y ponerte al día con todas las novedades. ¿Qué te parece si reservas una mesa para esta semana? Te garantizamos una experiencia excepcional.
-
-Tu mesa te está esperando.
-
-¡Esperamos verte pronto!
-
-Con cariño,
-El equipo de {restaurant_name}`,
-        icon: "😴",
-        color: "gray"
-    },
-    noshow_followup: {
-        name: "Clientes No-Show - Seguimiento",
-        subject: "Te echamos de menos en {restaurant_name}",
-        content: `Hola {customer_name},
-
-Notamos que tenías una reserva con nosotros el {reservation_date} y no pudiste acompañarnos.
-
-Entendemos que a veces surgen imprevistos. No hay problema, estas cosas pasan.
-
-¿Te gustaría hacer una nueva reserva? Estaremos encantados de recibirte cuando te venga bien.
-
-Si hubo algún inconveniente que podamos resolver, por favor háznoslo saber. Tu experiencia es muy importante para nosotros.
-
-¡Esperamos verte pronto!
-
-Un saludo cordial,
-El equipo de {restaurant_name}`,
-        icon: "⏰",
-        color: "red"
+    grupo_rechazo: {
+        name: "Rechazo Grupo Grande",
+        description: "Rechazo de reservas de grupos grandes",
+        icon: X
     }
 };
 
@@ -160,6 +69,8 @@ export default function PlantillasCRM() {
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [templateToActivate, setTemplateToActivate] = useState(null);
 
     // Cargar plantillas desde Supabase
     const loadTemplates = async () => {
@@ -171,8 +82,8 @@ export default function PlantillasCRM() {
                 .from("message_templates")
                 .select("*")
                 .eq("restaurant_id", restaurantId)
-                .order("segment", { ascending: true })
-                .order("priority", { ascending: true });
+                .order("category", { ascending: true })
+                .order("name", { ascending: true});
 
             if (error) throw error;
             setTemplates(data || []);
@@ -184,6 +95,74 @@ export default function PlantillasCRM() {
         }
     };
 
+    // Cambiar estado de plantilla (activar/desactivar)
+    const handleToggleActive = async (template) => {
+        try {
+            if (template.is_active) {
+                // DESACTIVAR: Simplemente actualizar a false
+                const { error } = await supabase
+                    .from('message_templates')
+                    .update({ is_active: false, updated_at: new Date().toISOString() })
+                    .eq('id', template.id);
+
+                if (error) throw error;
+                toast.success(`❌ "${template.name}" desactivada`);
+                loadTemplates();
+            } else {
+                // ACTIVAR: Verificar si ya hay otra plantilla del mismo tipo activa
+                const activeTemplate = templates.find(t => 
+                    t.name === template.name && 
+                    t.id !== template.id && 
+                    t.is_active
+                );
+
+                if (activeTemplate) {
+                    // Mostrar modal de confirmación
+                    setTemplateToActivate(template);
+                    setShowConfirmModal(true);
+                } else {
+                    // No hay conflicto, activar directamente
+                    await activateTemplate(template);
+                }
+            }
+        } catch (error) {
+            console.error("Error al cambiar estado de plantilla:", error);
+            toast.error("Error al cambiar el estado");
+        }
+    };
+
+    // Función para activar plantilla (con desactivación automática de otras)
+    const activateTemplate = async (template) => {
+        try {
+            const { error } = await supabase.rpc('set_active_template', {
+                p_template_id: template.id,
+                p_restaurant_id: restaurantId
+            });
+
+            if (error) throw error;
+            toast.success(`✅ "${template.name}" activada`);
+            loadTemplates();
+        } catch (error) {
+            console.error("Error al activar plantilla:", error);
+            toast.error("Error al activar la plantilla");
+        }
+    };
+
+    // Confirmar activación de plantilla (desactivará la otra automáticamente)
+    const confirmActivation = async () => {
+        if (!templateToActivate) return;
+        
+        await activateTemplate(templateToActivate);
+        setShowConfirmModal(false);
+        setTemplateToActivate(null);
+    };
+
+    // Cancelar activación
+    const cancelActivation = () => {
+        setShowConfirmModal(false);
+        setTemplateToActivate(null);
+    };
+
     // Guardar plantilla
     const saveTemplate = async (templateData) => {
         try {
@@ -192,7 +171,7 @@ export default function PlantillasCRM() {
                 .update({
                     name: templateData.name,
                     subject: templateData.subject,
-                    content_markdown: templateData.content,
+                    content_markdown: templateData.content_markdown,
                     updated_at: new Date().toISOString()
                 })
                 .eq("id", templateData.id);
@@ -209,34 +188,6 @@ export default function PlantillasCRM() {
         }
     };
 
-    // Crear nueva plantilla
-    const createTemplate = async (type) => {
-        try {
-            const standardTemplate = STANDARD_TEMPLATES[type];
-            
-            const { error } = await supabase
-                .from("message_templates")
-                .insert({
-                    restaurant_id: restaurantId,
-                    name: standardTemplate.name,
-                    segment: type,
-                    subject: standardTemplate.subject,
-                    content_markdown: standardTemplate.content,
-                    variables: ["restaurant_name", "customer_name"],
-                    is_active: true,
-                    channel: "email"
-                });
-
-            if (error) throw error;
-
-            toast.success("✅ Plantilla creada correctamente");
-            loadTemplates();
-        } catch (error) {
-            console.error("Error creando plantilla:", error);
-            toast.error("Error al crear la plantilla");
-        }
-    };
-
     // Duplicar plantilla
     const duplicateTemplate = async (template) => {
         try {
@@ -245,12 +196,13 @@ export default function PlantillasCRM() {
                 .insert({
                     restaurant_id: restaurantId,
                     name: `${template.name} (Copia)`,
-                    segment: template.segment,
+                    category: template.category,
                     subject: template.subject,
                     content_markdown: template.content_markdown,
-                    variables: template.variables,
-                    is_active: true,
-                    channel: template.channel || "email"
+                    channel: template.channel,
+                    is_active: false,
+                    segment: 'all',
+                    event_trigger: 'manual'
                 });
 
             if (error) throw error;
@@ -301,35 +253,50 @@ export default function PlantillasCRM() {
         loadTemplates();
     }, [restaurantId]);
 
+    // Agrupar plantillas por categoría
+    const templatesByCategory = templates.reduce((acc, template) => {
+        const cat = template.category || 'otros';
+        if (!acc[cat]) acc[cat] = [];
+        acc[cat].push(template);
+        return acc;
+    }, {});
+
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/20 to-blue-50/20 flex items-center justify-center">
                 <div className="text-center">
-                    <RefreshCw className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-                    <p className="text-gray-600">Cargando plantillas...</p>
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+                        <RefreshCw className="w-8 h-8 text-white animate-spin" />
+                    </div>
+                    <p className="text-gray-600 font-medium">Cargando plantillas...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/20 to-blue-50/20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Header Principal */}
-                <div className="mb-8">
+                {/* Header Principal con degradado */}
+                <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 mb-8 shadow-lg">
                     <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-xl font-bold text-gray-900 flex items-center">
-                                <Mail className="w-8 h-8 text-purple-600 mr-3" />
-                                Plantillas CRM
-                            </h1>
-                            <p className="text-gray-600 mt-1">
-                                Gestiona y personaliza las plantillas de mensajes para cada tipo de cliente
-                            </p>
+                        <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 bg-white/20 backdrop-blur-xl rounded-xl flex items-center justify-center">
+                                <Mail className="w-7 h-7 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                                    Plantillas CRM
+                                    <Sparkles className="w-5 h-5" />
+                                </h1>
+                                <p className="text-purple-100 mt-1">
+                                    Gestiona y personaliza las plantillas de mensajes para cada tipo de cliente
+                                </p>
+                            </div>
                         </div>
                         <button
                             onClick={loadTemplates}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-xl text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
                         >
                             <RefreshCw className="w-4 h-4" />
                             Actualizar
@@ -337,193 +304,267 @@ export default function PlantillasCRM() {
                     </div>
                 </div>
 
-                {/* Estadísticas */}
+                {/* Estadísticas con toques de color */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                         <div className="flex items-center">
-                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <Mail className="w-6 h-6 text-blue-600" />
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+                                <Mail className="w-6 h-6 text-white" />
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Total Plantillas</p>
-                                <p className="text-lg font-bold text-gray-900">{templates.length}</p>
+                                <p className="text-2xl font-bold text-gray-900">{templates.length}</p>
                             </div>
                         </div>
                     </div>
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                         <div className="flex items-center">
-                            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                <CheckCircle2 className="w-6 h-6 text-green-600" />
+                            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm">
+                                <CheckCircle2 className="w-6 h-6 text-white" />
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Activas</p>
-                                <p className="text-lg font-bold text-gray-900">
-                                    {templates.filter(t => t.is_active ?? t.active).length}
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {templates.filter(t => t.is_active).length}
                                 </p>
                             </div>
                         </div>
                     </div>
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                         <div className="flex items-center">
-                            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <Target className="w-6 h-6 text-purple-600" />
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                                <Target className="w-6 h-6 text-white" />
                             </div>
                             <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Tipos</p>
-                                <p className="text-lg font-bold text-gray-900">
-                                    {new Set(templates.map(t => t.segment || t.type)).size}
+                                <p className="text-sm font-medium text-gray-600">Categorías</p>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {Object.keys(templatesByCategory).length}
                                 </p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Plantillas por Tipo */}
-                <div className="space-y-8">
-                    {Object.entries(STANDARD_TEMPLATES).map(([type, standard]) => {
-                        const typeTemplates = templates.filter(t => t.segment === type);
-                        
+                {/* Plantillas por Categoría */}
+                <div className="space-y-6">
+                    {Object.entries(templatesByCategory).map(([category, categoryTemplates]) => {
+                        const categoryInfo = TEMPLATE_CATEGORIES[category] || {
+                            name: category,
+                            description: "Plantillas personalizadas",
+                            icon: Mail
+                        };
+                        const IconComponent = categoryInfo.icon;
+
                         return (
-                            <div key={type} className="bg-white rounded-xl shadow-sm border border-gray-200">
-                                <div className={`px-6 py-4 border-b border-gray-200 bg-${standard.color}-50`}>
+                            <div key={category} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                {/* Header de categoría con degradado sutil */}
+                                <div className="px-6 py-4 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <span className="text-xl">{standard.icon}</span>
+                                            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+                                                <IconComponent className="w-5 h-5 text-white" />
+                                            </div>
                                             <div>
-                                                <h3 className="text-lg font-bold text-gray-900 capitalize">
-                                                    Clientes {type}
+                                                <h3 className="text-lg font-semibold text-gray-900">
+                                                    {categoryInfo.name}
                                                 </h3>
                                                 <p className="text-sm text-gray-600">
-                                                    {typeTemplates.length} plantilla{typeTemplates.length !== 1 ? 's' : ''}
+                                                    {categoryInfo.description} · {categoryTemplates.length} plantilla{categoryTemplates.length !== 1 ? 's' : ''}
                                                 </p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => createTemplate(type)}
-                                            className={`flex items-center gap-2 px-3 py-2 bg-${standard.color}-600 text-white rounded-lg hover:bg-${standard.color}-700 transition-colors text-sm`}
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                            Nueva Plantilla
-                                        </button>
                                     </div>
                                 </div>
 
                                 <div className="p-6">
-                                    {typeTemplates.length > 0 ? (
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                            {typeTemplates.map(template => (
-                                                <div key={template.id} className="border border-gray-200 rounded-lg p-2">
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <h4 className="font-medium text-gray-900">{template.name}</h4>
-                                                        <div className="flex items-center gap-2">
-                                                            <button
-                                                                onClick={() => openPreviewModal(template)}
-                                                                className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                                                                title="Vista previa"
-                                                            >
-                                                                <Eye className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => openEditModal(template)}
-                                                                className="p-1 text-gray-400 hover:text-green-600 transition-colors"
-                                                                title="Editar"
-                                                            >
-                                                                <Edit2 className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => duplicateTemplate(template)}
-                                                                className="p-1 text-gray-400 hover:text-purple-600 transition-colors"
-                                                                title="Duplicar"
-                                                            >
-                                                                <Copy className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => deleteTemplate(template.id)}
-                                                                className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                                                                title="Eliminar"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
+                                    <div className="space-y-4">
+                                        {categoryTemplates.map(template => (
+                                            <div 
+                                                key={template.id} 
+                                                className={`border-2 rounded-xl p-4 transition-all duration-200 ${
+                                                    template.is_active 
+                                                        ? 'border-green-300 bg-green-50/50 shadow-sm' 
+                                                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <h4 className="font-semibold text-gray-900">{template.name}</h4>
+                                                            {template.is_active && (
+                                                                <span className="px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-semibold rounded-full flex items-center gap-1 shadow-sm">
+                                                                    <Power className="w-3 h-3" />
+                                                                    Activa
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {template.subject && (
+                                                            <p className="text-sm text-gray-600 mb-2">
+                                                                <strong>Asunto:</strong> {template.subject}
+                                                            </p>
+                                                        )}
+                                                        <p className="text-sm text-gray-500 line-clamp-2">
+                                                            {(template.content_markdown || '').substring(0, 150)}...
+                                                        </p>
+                                                        <div className="flex items-center gap-4 mt-3">
+                                                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                                <Mail className="w-3 h-3" />
+                                                                {template.channel || 'email'}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                    <p className="text-sm text-gray-600 mb-2">
-                                                        <strong>Asunto:</strong> {template.subject}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 line-clamp-3">
-                                                        {(template.content_markdown || template.content || '').substring(0, 150)}...
-                                                    </p>
-                                                    <div className="flex items-center justify-between mt-3">
-                                                        <span className={`text-xs px-2 py-1 rounded-full ${
-                                                            (template.is_active ?? template.active)
-                                                                ? 'bg-green-100 text-green-800' 
-                                                                : 'bg-gray-100 text-gray-800'
-                                                        }`}>
-                                                            {(template.is_active ?? template.active) ? 'Activa' : 'Inactiva'}
-                                                        </span>
-                                                        <span className="text-xs text-gray-500">
-                                                            Prioridad {template.priority}
-                                                        </span>
+                                                    <div className="flex items-center gap-2 ml-4">
+                                                        <button
+                                                            onClick={() => handleToggleActive(template)}
+                                                            className={`p-2 rounded-lg transition-all duration-200 cursor-pointer ${
+                                                                template.is_active
+                                                                    ? 'text-green-600 bg-green-100 hover:bg-green-200 shadow-sm'
+                                                                    : 'text-gray-400 hover:text-green-600 hover:bg-green-50 hover:shadow-sm'
+                                                            }`}
+                                                            title={template.is_active ? "Desactivar plantilla" : "Activar plantilla"}
+                                                        >
+                                                            {template.is_active ? <Power className="w-5 h-5" /> : <PowerOff className="w-5 h-5" />}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => openPreviewModal(template)}
+                                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                                                            title="Vista previa"
+                                                        >
+                                                            <Eye className="w-5 h-5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => openEditModal(template)}
+                                                            className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200"
+                                                            title="Editar"
+                                                        >
+                                                            <Edit2 className="w-5 h-5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => duplicateTemplate(template)}
+                                                            className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                                            title="Duplicar"
+                                                        >
+                                                            <Copy className="w-5 h-5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => deleteTemplate(template.id)}
+                                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                                            title="Eliminar"
+                                                        >
+                                                            <Trash2 className="w-5 h-5" />
+                                                        </button>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-8 text-gray-500">
-                                            <Mail className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                            <p className="text-sm">No hay plantillas para este tipo de cliente</p>
-                                            <p className="text-xs mt-1">Haz clic en "Nueva Plantilla" para crear una</p>
-                                        </div>
-                                    )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
 
+                {/* Modal de Confirmación de Activación */}
+                {showConfirmModal && templateToActivate && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+                            <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 rounded-t-2xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-xl flex items-center justify-center">
+                                        <Power className="w-6 h-6 text-white" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white">
+                                        Confirmar Activación
+                                    </h3>
+                                </div>
+                            </div>
+
+                            <div className="p-6">
+                                <div className="mb-6">
+                                    <p className="text-gray-700 mb-4 leading-relaxed">
+                                        Ya existe otra plantilla <strong>"{templateToActivate.name}"</strong> activa.
+                                    </p>
+                                    <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
+                                        <p className="text-amber-800 text-sm font-medium flex items-start gap-2">
+                                            <span className="text-lg">⚠️</span>
+                                            <span>
+                                                Al activar esta plantilla, la otra será desactivada automáticamente. 
+                                                Solo puede haber una plantilla activa de cada tipo.
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-3">
+                                    <button
+                                        onClick={cancelActivation}
+                                        className="px-6 py-2.5 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={confirmActivation}
+                                        className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+                                    >
+                                        <Power className="w-4 h-4" />
+                                        Activar de todos modos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Modal de Edición/Vista Previa */}
                 {showModal && editingTemplate && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
-                        <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                                <h3 className="text-lg font-bold text-gray-900">
-                                    {previewMode ? 'Vista Previa' : 'Editar'} Plantilla
-                                </h3>
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                            {/* Header del modal con degradado */}
+                            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 rounded-t-2xl">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                        {previewMode ? <Eye className="w-5 h-5" /> : <Edit2 className="w-5 h-5" />}
+                                        {previewMode ? 'Vista Previa' : 'Editar'} Plantilla
+                                    </h3>
+                                    <button
+                                        onClick={() => setShowModal(false)}
+                                        className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="p-6">
                                 {previewMode ? (
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
                                                 Nombre de la Plantilla
                                             </label>
-                                            <p className="text-gray-900">{editingTemplate.name}</p>
+                                            <p className="text-gray-900 text-lg">{editingTemplate.name}</p>
                                         </div>
+                                        {editingTemplate.subject && (
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    Asunto del Mensaje
+                                                </label>
+                                                <p className="text-gray-900">{editingTemplate.subject}</p>
+                                            </div>
+                                        )}
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Asunto del Mensaje
-                                            </label>
-                                            <p className="text-gray-900">{editingTemplate.subject}</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
                                                 Contenido del Mensaje
                                             </label>
-                                            <div className="bg-gray-50 p-2 rounded-lg whitespace-pre-wrap">
-                                                {editingTemplate.content_markdown || editingTemplate.content}
+                                            <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 rounded-lg whitespace-pre-wrap border border-gray-200">
+                                                {editingTemplate.content_markdown}
                                             </div>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
                                                 Nombre de la Plantilla
                                             </label>
                                             <input
@@ -533,62 +574,66 @@ export default function PlantillasCRM() {
                                                     ...prev,
                                                     name: e.target.value
                                                 }))}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                                             />
                                         </div>
+                                        {editingTemplate.channel === 'email' && (
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    Asunto del Mensaje
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={editingTemplate.subject || ''}
+                                                    onChange={(e) => setEditingTemplate(prev => ({
+                                                        ...prev,
+                                                        subject: e.target.value
+                                                    }))}
+                                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                                                />
+                                            </div>
+                                        )}
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Asunto del Mensaje
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={editingTemplate.subject}
-                                                onChange={(e) => setEditingTemplate(prev => ({
-                                                    ...prev,
-                                                    subject: e.target.value
-                                                }))}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
                                                 Contenido del Mensaje
                                             </label>
                                             <textarea
-                                                value={editingTemplate.content_markdown || editingTemplate.content || ''}
+                                                value={editingTemplate.content_markdown || ''}
                                                 onChange={(e) => setEditingTemplate(prev => ({
                                                     ...prev,
-                                                    content: e.target.value,
                                                     content_markdown: e.target.value
                                                 }))}
                                                 rows={12}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors font-mono text-sm"
                                             />
                                         </div>
-                                        <div className="bg-blue-50 p-2 rounded-lg">
-                                            <h4 className="font-medium text-blue-900 mb-2">Variables Disponibles:</h4>
+                                        <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-lg border-2 border-blue-200">
+                                            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                                <Sparkles className="w-4 h-4 text-purple-600" />
+                                                Variables Disponibles:
+                                            </h4>
                                             <div className="flex flex-wrap gap-2 text-sm">
-                                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                                    {"{restaurant_name}"}
+                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                                    {'{{customer_name}}'}
                                                 </span>
-                                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                                    {"{customer_name}"}
+                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                                    {'{{restaurant_name}}'}
                                                 </span>
-                                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                                    {"{customer_phone}"}
+                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                                    {'{{reservation_time}}'}
                                                 </span>
-                                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                                    {"{customer_email}"}
+                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                                    {'{{reservation_date}}'}
                                                 </span>
-                                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                                    {"{last_visit_date}"}
+                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                                    {'{{party_size}}'}
                                                 </span>
-                                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                                    {"{reservation_date}"}
+                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                                    {'{{restaurant_phone}}'}
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-blue-700 mt-2">
-                                                💡 Usa estas variables en tus mensajes y se reemplazarán automáticamente con los datos reales del cliente.
+                                            <p className="text-xs text-gray-700 mt-3 font-medium">
+                                                💡 Usa estas variables en tus mensajes. Se reemplazarán automáticamente con los datos reales.
                                             </p>
                                         </div>
                                     </div>
@@ -597,14 +642,14 @@ export default function PlantillasCRM() {
                                 <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
                                     <button
                                         onClick={() => setShowModal(false)}
-                                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                        className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                                     >
                                         Cancelar
                                     </button>
                                     {!previewMode && (
                                         <button
                                             onClick={() => saveTemplate(editingTemplate)}
-                                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                            className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
                                         >
                                             <Save className="w-4 h-4" />
                                             Guardar Plantilla
