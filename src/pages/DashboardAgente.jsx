@@ -262,9 +262,19 @@ export default function DashboardAgente() {
             
             console.log('📊 Desglose calculado:', { newCustomers, returningCustomers, vipCustomers, total: newCustomers + returningCustomers + vipCustomers });
 
-            // 8. OCUPACIÓN
+            // 8. OCUPACIÓN (basada en PERSONAS vs. CAPACIDAD TOTAL DIARIA)
+            // Calcular capacidad total diaria = Σ(capacidad_mesa) × turnos_posibles
+            const totalTableCapacity = tables?.reduce((sum, t) => sum + (t.capacity || 0), 0) || 0;
+            const avgReservationDuration = 90; // minutos (de configuración)
+            const openingHours = 4; // 18:00 - 22:00 (simplificado, idealmente leer de restaurant.settings)
+            const turnosDisponibles = Math.floor((openingHours * 60) / avgReservationDuration);
+            const capacidadTotalDiaria = totalTableCapacity * turnosDisponibles;
+            
+            // Total de personas RESERVADAS hoy
             const totalPeople = (todayReservations || []).reduce((sum, r) => sum + (r.party_size || 0), 0);
-            const occupancyPercent = totalCapacity > 0 ? Math.round((totalPeople / totalCapacity) * 100) : 0;
+            
+            // Ocupación = (Personas Reservadas / Capacidad Total Diaria) × 100
+            const occupancyPercent = capacidadTotalDiaria > 0 ? Math.round((totalPeople / capacidadTotalDiaria) * 100) : 0;
 
             // 9. VALOR GENERADO ESTA SEMANA
             const weeklySpend = (thisWeekRes || []).reduce((sum, r) => sum + (r.spend_amount || 0), 0);
@@ -361,7 +371,7 @@ export default function DashboardAgente() {
                 lastWeekReservations: (lastWeekRes || []).length,
                 thisWeekReservations: (thisWeekRes || []).length,
                 pendingCRMAlerts: (crmAlerts || []).length,
-                totalCapacity,
+                totalCapacity: capacidadTotalDiaria, // ✅ CORRECCIÓN: Capacidad total diaria (mesas × turnos)
                 weeklyValue,
                 noShowWidgetData,
                 returningCustomersData,
@@ -699,7 +709,14 @@ export default function DashboardAgente() {
                                     <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Alertas No-Show</p>
                                     <h3 className="text-4xl font-bold text-gray-900">{dashboardData.noShowsRisk}</h3>
                                 </div>
-                                <AlertTriangle className="w-8 h-8 text-gray-400" />
+                                {dashboardData.noShowsRisk > 0 ? (
+                                    <div className="relative">
+                                        <AlertTriangle className="w-8 h-8 text-red-600 animate-pulse" />
+                                        <div className="absolute inset-0 rounded-full bg-red-400 opacity-20 animate-ping"></div>
+                                    </div>
+                                ) : (
+                                    <AlertTriangle className="w-8 h-8 text-gray-400" />
+                                )}
                             </div>
                             
                             {dashboardData.noShowsRisk > 0 ? (
