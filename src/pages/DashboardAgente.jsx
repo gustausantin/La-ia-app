@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { format, startOfDay, endOfDay, subDays, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfDay, endOfDay, subDays, startOfWeek, endOfWeek, startOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { 
     Bot, Calendar, Users, AlertTriangle, TrendingUp, TrendingDown, 
@@ -121,7 +121,13 @@ export default function DashboardAgente() {
                 ...r,
                 customer_name: r.customer?.name || r.customer_name,
                 customer_email: r.customer?.email || r.customer_email,
-                customer_phone: r.customer?.phone || r.customer_phone
+                customer_phone: r.customer?.phone || r.customer_phone,
+                customers: r.customer ? {
+                    visits_count: r.customer.visits_count,
+                    segment_auto: r.customer.segment_auto,
+                    name: r.customer.name,
+                    phone: r.customer.phone
+                } : null
             }));
             
             // Crear customersMap para compatibilidad (aunque ya no es necesario)
@@ -179,15 +185,28 @@ export default function DashboardAgente() {
                 .lte('reservation_date', format(endLastWeek, 'yyyy-MM-dd'))
                 .in('status', ['pending', 'pending_approval', 'confirmed', 'seated', 'completed']);
 
-            // 4. NO-SHOWS DE RIESGO HOY
-            const { data: noShowRisk } = await supabase
+            // 4. NO-SHOWS DE RIESGO HOY (usando predict_upcoming_noshows_v2 como en NoShowControlNuevo)
+            const { data: riskPredictions, error: riskError } = await supabase
+                .rpc('predict_upcoming_noshows_v2', {
+                    p_restaurant_id: restaurant.id,
+                    p_days_ahead: 0  // 0 = solo HOY
+                });
+
+            if (riskError) {
+                console.error('❌ Error en predict_upcoming_noshows_v2:', riskError);
+            }
+
+            // Contar reservas de riesgo HOY (medium + high)
+            const highRisk = (riskPredictions || []).filter(p => p.risk_level === 'medium' || p.risk_level === 'high').length;
+            
+            // Contar no-shows evitados este mes
+            const { data: noShowActions } = await supabase
                 .from('noshow_actions')
                 .select('id, prevented_noshow')
                 .eq('restaurant_id', restaurant.id)
-                .eq('reservation_date', todayStr);
-
-            const highRisk = noShowRisk?.filter(n => !n.prevented_noshow).length || 0;
-            const prevented = noShowRisk?.filter(n => n.prevented_noshow === true).length || 0;
+                .gte('created_at', format(startOfMonth(today), 'yyyy-MM-dd'));
+                
+            const prevented = noShowActions?.filter(n => n.prevented_noshow === true).length || 0;
 
             // 5. ALERTAS CRM PENDIENTES
             const { data: crmAlerts } = await supabase
@@ -205,26 +224,43 @@ export default function DashboardAgente() {
             const totalCapacity = tables?.reduce((sum, t) => sum + (t.capacity || 0), 0) || 0;
 
             // 7. CLIENTES: NUEVOS, HABITUALES, VIP
-            // LÓGICA CORRECTA: Si hay reserva, HAY CLIENTE (siempre)
+            // LÓGICA CORRECTA: Contar PERSONAS (party_size), no reservas
             // - Si tiene customer_id → usar visits_count de customers
             // - Si NO tiene customer_id → es cliente nuevo (reserva sin vincular)
             
-            const newCustomers = enrichedReservations.filter(r => {
+            console.log('🔍 DEBUG - Calculando desglose de clientes:', enrichedReservations.map(r => ({
+                name: r.customer_name,
+                party_size: r.party_size,
+                customer_id: r.customer_id,
+                customers: r.customers,
+                visits_count: r.customers?.visits_count
+            })));
+            
+            const newCustomers = enrichedReservations.reduce((sum, r) => {
                 // Si no tiene customer_id, es nuevo (no estaba en BD)
-                if (!r.customer_id) return true;
+                if (!r.customer_id) return sum + (r.party_size || 0);
                 // Si tiene customer_id, verificar visits_count
-                return r.customers?.visits_count === 1;
-            }).length;
+                if (r.customers?.visits_count === 1) return sum + (r.party_size || 0);
+                return sum;
+            }, 0);
             
-            const returningCustomers = enrichedReservations.filter(r => {
+            const returningCustomers = enrichedReservations.reduce((sum, r) => {
                 // Solo si tiene customer_id Y visits_count entre 2-9
-                return r.customer_id && r.customers?.visits_count > 1 && r.customers?.visits_count < 10;
-            }).length;
+                if (r.customer_id && r.customers?.visits_count > 1 && r.customers?.visits_count < 10) {
+                    return sum + (r.party_size || 0);
+                }
+                return sum;
+            }, 0);
             
-            const vipCustomers = enrichedReservations.filter(r => {
+            const vipCustomers = enrichedReservations.reduce((sum, r) => {
                 // Solo si tiene customer_id Y (visits_count >= 10 O segment_auto = vip)
-                return r.customer_id && (r.customers?.visits_count >= 10 || r.customers?.segment_auto === 'vip');
-            }).length;
+                if (r.customer_id && (r.customers?.visits_count >= 10 || r.customers?.segment_auto === 'vip')) {
+                    return sum + (r.party_size || 0);
+                }
+                return sum;
+            }, 0);
+            
+            console.log('📊 Desglose calculado:', { newCustomers, returningCustomers, vipCustomers, total: newCustomers + returningCustomers + vipCustomers });
 
             // 8. OCUPACIÓN
             const totalPeople = (todayReservations || []).reduce((sum, r) => sum + (r.party_size || 0), 0);
@@ -308,10 +344,14 @@ export default function DashboardAgente() {
             setActiveAlerts(alerts || []);
             console.log('🚨 Alarmas activas:', alerts?.length || 0);
 
+            // ✅ CLIENTES DE HOY = Total de personas (party_size) confirmadas o pendientes
+            const clientesToday = enrichedReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
+            
             setDashboardData({
                 reservationsToday: (todayReservations || []).length,
                 occupancyPercent,
                 occupiedSeats: totalPeople,
+                clientsToday: clientesToday, // ✅ CORRECCIÓN: Total personas hoy
                 newCustomers,
                 returningCustomers,
                 vipCustomers,
@@ -611,7 +651,7 @@ export default function DashboardAgente() {
                                 <div>
                                     <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Clientes de Hoy</p>
                                     <h3 className="text-4xl font-bold text-gray-900">
-                                        {dashboardData.newCustomers + dashboardData.returningCustomers + dashboardData.vipCustomers}
+                                        {dashboardData.clientsToday || 0}
                                     </h3>
                                 </div>
                                 <div className="p-2 bg-green-50 rounded-lg">

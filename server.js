@@ -230,6 +230,33 @@ app.listen(PORT, '0.0.0.0', async () => {
   console.log('🏥 Iniciando monitor del sistema...');
   const { startAgentHealthMonitor } = await import('./src/services/systemNotificationService.js');
   startAgentHealthMonitor();
+  
+  // 🔄 AUTO-MARCAR RESERVAS CADUCADAS COMO NO-SHOW (cada 30 min)
+  console.log('🔄 Iniciando auto-marcado de reservas caducadas...');
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+  
+  // Ejecutar inmediatamente al iniciar
+  const markExpiredReservations = async () => {
+    try {
+      const { data, error } = await supabase.rpc('mark_all_expired_reservations_as_noshow');
+      if (error) throw error;
+      if (data && data.updated_count > 0) {
+        console.log(`✅ Auto-marcadas ${data.updated_count} reservas caducadas como no-show`);
+      }
+    } catch (error) {
+      console.error('❌ Error auto-marcando reservas caducadas:', error.message);
+    }
+  };
+  
+  await markExpiredReservations();
+  
+  // Ejecutar cada 30 minutos
+  setInterval(markExpiredReservations, 30 * 60 * 1000);
+  console.log('✅ Cron job configurado: marcar reservas caducadas cada 30 minutos');
 });
 
 // Manejar errores de puerto

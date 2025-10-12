@@ -39,8 +39,7 @@ const CRMv2 = lazy(() => import('./pages/CRMSimple')); // CRM SIMPLE - Una pági
 const AvailabilityTester = lazy(() => import('./components/AvailabilityTester'));
 
 // 🛡️ Sistema de No-Shows Revolucionario
-const NoShowControl = lazy(() => import('./pages/NoShowControl'));
-const NoShowControlNuevo = lazy(() => import('./pages/NoShowControlNuevo'));
+const NoShowControl = lazy(() => import('./pages/NoShowControlNuevo'));
 
 // 🤖 Dashboard del Agente IA
 const DashboardAgente = lazy(() => import('./pages/DashboardAgente'));
@@ -134,14 +133,6 @@ function AppContent() {
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <NoShowControl />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/no-shows-nuevo" 
-                element={
-                  <Suspense fallback={<PageLoading />}>
-                    <NoShowControlNuevo />
                   </Suspense>
                 } 
               />

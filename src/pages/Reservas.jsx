@@ -173,10 +173,10 @@ const RESERVATION_STATES = {
         icon: <XCircle className="w-4 h-4" />,
     },
     no_show: {
-        label: "No Show",
-        color: "bg-orange-100 text-orange-800 border-orange-200",
+        label: "No-Show",
+        color: "bg-red-100 text-red-800 border-red-200",
         actions: ["view"],
-        icon: <AlertCircle className="w-4 h-4" />,
+        icon: <AlertTriangle className="w-4 h-4" />,
     },
 };
 
@@ -288,7 +288,8 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
         'confirmed': 'confirmada', 
         'seated': 'sentada',
         'completed': 'completada',
-        'cancelled': 'cancelada'
+        'cancelled': 'cancelada',
+        'no_show': 'no_show'
     };
     
     const mappedStatus = statusMapping[reservation.status] || 'pendiente';
@@ -1813,18 +1814,15 @@ export default function Reservas() {
         const pending = filteredReservations.filter(
             (r) => r.status === "pending",
         ).length;
+        const noShows = filteredReservations.filter(
+            (r) => r.status === "no_show",
+        ).length;
         const covers = filteredReservations.reduce(
             (sum, r) => sum + r.party_size,
             0,
         );
-        const agentCount = filteredReservations.filter(
-            (r) => r.source === "agent",
-        ).length;
-        const manualCount = filteredReservations.filter(
-            (r) => r.source !== "agent",
-        ).length;
 
-        return { total, confirmed, pending, covers, agentCount, manualCount };
+        return { total, confirmed, pending, noShows, covers };
     }, [filteredReservations]);
 
     if (!isReady) {
@@ -2105,7 +2103,7 @@ export default function Reservas() {
             </div>
 
             {/* Estadísticas mejoradas */}
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 <div className="bg-white p-2 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between">
                         <div>
@@ -2117,50 +2115,6 @@ export default function Reservas() {
                         <CalendarIcon className="w-8 h-8 text-blue-500" />
                     </div>
                 </div>
-
-                <button 
-                    onClick={() => setFilters(prev => ({ 
-                        ...prev, 
-                        source: prev.source === 'agent' ? '' : 'agent' 
-                    }))}
-                    className={`p-2 rounded-lg border transition-colors w-full text-left ${
-                        filters.source === 'agent' 
-                            ? 'bg-purple-100 border-purple-400 shadow-md' 
-                            : 'bg-white border-purple-200 hover:bg-purple-50'
-                    }`}
-                >
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-600">Por IA</p>
-                            <p className="text-lg font-bold text-purple-600">
-                                {stats.agentCount}
-                            </p>
-                        </div>
-                        <Bot className="w-8 h-8 text-purple-500" />
-                    </div>
-                </button>
-
-                <button 
-                    onClick={() => setFilters(prev => ({ 
-                        ...prev, 
-                        source: prev.source === 'manual' ? '' : 'manual' 
-                    }))}
-                    className={`p-2 rounded-lg border transition-colors w-full text-left ${
-                        filters.source === 'manual' 
-                            ? 'bg-gray-100 border-gray-400 shadow-md' 
-                            : 'bg-white border-gray-200 hover:bg-gray-50'
-                    }`}
-                >
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-600">Manual</p>
-                            <p className="text-lg font-bold text-gray-600">
-                                {stats.manualCount}
-                            </p>
-                        </div>
-                        <Edit className="w-8 h-8 text-gray-500" />
-                    </div>
-                </button>
 
                 <button 
                     onClick={() => setFilters(prev => ({ 
@@ -2203,6 +2157,28 @@ export default function Reservas() {
                             </p>
                         </div>
                         <AlertCircle className="w-8 h-8 text-yellow-500" />
+                    </div>
+                </button>
+
+                <button 
+                    onClick={() => setFilters(prev => ({ 
+                        ...prev, 
+                        status: prev.status === 'no_show' ? '' : 'no_show' 
+                    }))}
+                    className={`p-2 rounded-lg border transition-colors w-full text-left ${
+                        filters.status === 'no_show' 
+                            ? 'bg-red-100 border-red-400 shadow-md' 
+                            : 'bg-white border-red-200 hover:bg-red-50'
+                    }`}
+                >
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600">No-Shows</p>
+                            <p className="text-lg font-bold text-red-600">
+                                {stats.noShows}
+                            </p>
+                        </div>
+                        <AlertTriangle className="w-8 h-8 text-red-500" />
                     </div>
                 </button>
 

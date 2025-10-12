@@ -1,0 +1,393 @@
+{
+  "name": "03 - Alerta Urgente 4h antes (CON PLANTILLAS CRM)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */1 * * *"
+            }
+          ]
+        }
+      },
+      "id": "11a2470c-a797-4827-a2b9-6e1065a1784d",
+      "name": "⏰ Cron Cada Hora",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1088,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "reservations",
+        "returnAll": true
+      },
+      "id": "22b5bd94-8838-44c1-97f0-69d6ad539502",
+      "name": "📊 Obtener TODAS las Reservas",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -848,
+        608
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst fourHoursLater = new Date(now.getTime() + (4 * 60 * 60 * 1000));\nconst sixHoursLater = new Date(now.getTime() + (6 * 60 * 60 * 1000));\n\nconst todayStr = now.toISOString().split('T')[0];\n\nconst filtered = $input.all().filter(item => {\n  const data = item.json;\n  \n  if (data.reservation_date !== todayStr || \n      data.status !== 'pending' || \n      !data.customer_phone) {\n    return false;\n  }\n  \n  const [hours, minutes] = data.reservation_time.split(':');\n  const reservationTime = new Date(now);\n  reservationTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);\n  \n  return reservationTime >= fourHoursLater && reservationTime <= sixHoursLater;\n});\n\nreturn filtered;"
+      },
+      "id": "33cf4283-5d93-416f-b7f5-ffd740aee264",
+      "name": "🔍 Filtrar: 4-6h + Pending",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $input.all().length }}",
+              "value2": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "44a6b86-4d10-4544-a3c0-aa3748c014f1",
+      "name": "❓ ¿Hay Reservas Urgentes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "55133977-c65b-42d8-bd19-bdd7f6ef05ef",
+      "name": "🔁 Loop Cada Reserva",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -144,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst results = items.map(item => {\n  const data = item.json;\n  let phone = data.customer_phone || '';\n  \n  if (phone && !phone.startsWith('+')) {\n    if (phone.startsWith('34')) {\n      phone = '+' + phone;\n    } else if (phone.startsWith('0034')) {\n      phone = '+' + phone.substring(2);\n    } else {\n      phone = '+34' + phone;\n    }\n  }\n  \n  return {\n    json: {\n      ...data,\n      customer_phone_normalized: phone\n    }\n  };\n});\n\nreturn results;"
+      },
+      "id": "66006ee-56b3-4071-8c11-be0af71d4d46",
+      "name": "📞 Normalizar Teléfono",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "restaurants",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.restaurant_id }}"
+            }
+          ]
+        }
+      },
+      "id": "77d76973-867b-495e-bdd8-74230c02a031",
+      "name": "📍 Obtener Config Restaurante",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        272,
+        400
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT * FROM get_reminder_template('{{ $json.id }}', 'Recordatorio 4h antes')",
+        "options": {}
+      },
+      "id": "88a111bb-2222-3333-4444-555566667777",
+      "name": "📄 Obtener Plantilla 4h",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        464,
+        400
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obtener la plantilla desde Supabase\nconst template = $json.content || '';\n\n// Obtener datos de nodos anteriores\nconst reserva = $node[\"📞 Normalizar Teléfono\"].json;\nconst restaurant = $node[\"📍 Obtener Config Restaurante\"].json;\n\n// Preparar variables a reemplazar\nconst variables = {\n  customer_name: reserva.customer_name || 'Cliente',\n  restaurant_name: restaurant.name || 'Restaurante',\n  reservation_time: reserva.reservation_time || '',\n  reservation_date: reserva.reservation_date || '',\n  party_size: (reserva.party_size || 1).toString(),\n  restaurant_phone: restaurant.phone || ''\n};\n\n// Reemplazar cada variable en la plantilla\nlet message = template;\nfor (const [key, value] of Object.entries(variables)) {\n  const regex = new RegExp(`\\\\{\\\\{${key}\\\\}\\\\}`, 'g');\n  message = message.replace(regex, value);\n}\n\n// Retornar el mensaje personalizado\nreturn [{\n  json: {\n    ...reserva,\n    restaurant_phone: restaurant.phone,\n    message_final: message,\n    template_used: 'Recordatorio 4h antes'\n  }\n}];"
+      },
+      "id": "99b222cc-3333-4444-5555-666677778888",
+      "name": "🔄 Reemplazar Variables",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "from": "={{ $json.restaurant_phone }}",
+        "to": "={{ $json.customer_phone_normalized }}",
+        "toWhatsapp": true,
+        "message": "={{ $json.message_final }}",
+        "options": {}
+      },
+      "id": "00c22dd7a-a03e-4a35-87da-4b148f90f6f5",
+      "name": "📱 Twilio: Enviar WhatsApp",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        848,
+        400
+      ],
+      "credentials": {
+        "twilioApi": {
+          "id": "KZF7OfG2zH2XYZAQ",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "customer_confirmations",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "reservation_id",
+              "fieldValue": "={{ $json.id }}"
+            },
+            {
+              "fieldId": "restaurant_id",
+              "fieldValue": "={{ $json.restaurant_id }}"
+            },
+            {
+              "fieldId": "message_type",
+              "fieldValue": "Alerta urgente 4h antes"
+            },
+            {
+              "fieldId": "sent_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            },
+            {
+              "fieldId": "message_content",
+              "fieldValue": "={{ $json.message_final }}"
+            },
+            {
+              "fieldId": "customer_id",
+              "fieldValue": "={{ $json.customer_id }}"
+            }
+          ]
+        }
+      },
+      "id": "11a665bb-1706-4f77-a66f-0c14db86251f",
+      "name": "💾 Registrar Confirmación",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        400
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "22e5a6ba-9bfc-4c24-a68d-c39cd570be42",
+      "name": "✅ Fin: Sin Reservas",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        848
+      ]
+    }
+  ],
+  "connections": {
+    "⏰ Cron Cada Hora": {
+      "main": [
+        [
+          {
+            "node": "📊 Obtener TODAS las Reservas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Obtener TODAS las Reservas": {
+      "main": [
+        [
+          {
+            "node": "🔍 Filtrar: 4-6h + Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Filtrar: 4-6h + Pending": {
+      "main": [
+        [
+          {
+            "node": "❓ ¿Hay Reservas Urgentes?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❓ ¿Hay Reservas Urgentes?": {
+      "main": [
+        [
+          {
+            "node": "🔁 Loop Cada Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "✅ Fin: Sin Reservas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔁 Loop Cada Reserva": {
+      "main": [
+        [],
+        [
+          {
+            "node": "📞 Normalizar Teléfono",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📞 Normalizar Teléfono": {
+      "main": [
+        [
+          {
+            "node": "📍 Obtener Config Restaurante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📍 Obtener Config Restaurante": {
+      "main": [
+        [
+          {
+            "node": "📄 Obtener Plantilla 4h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📄 Obtener Plantilla 4h": {
+      "main": [
+        [
+          {
+            "node": "🔄 Reemplazar Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔄 Reemplazar Variables": {
+      "main": [
+        [
+          {
+            "node": "📱 Twilio: Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📱 Twilio: Enviar WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "💾 Registrar Confirmación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Registrar Confirmación": {
+      "main": [
+        [
+          {
+            "node": "🔁 Loop Cada Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
+  }
+}
+
+

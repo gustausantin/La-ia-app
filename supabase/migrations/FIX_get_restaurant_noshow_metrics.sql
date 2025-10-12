@@ -36,14 +36,14 @@ BEGIN
     
     -- 2. Calcular tasa de no-show (últimos p_days_back días)
     SELECT 
-        COUNT(*) FILTER (WHERE status = 'noshow'),
+        COUNT(*) FILTER (WHERE status = 'no_show'),
         COUNT(*)
     INTO v_noshows, v_total_reservations
     FROM reservations
     WHERE restaurant_id = p_restaurant_id
     AND reservation_date >= CURRENT_DATE - INTERVAL '1 day' * p_days_back
     AND reservation_date < CURRENT_DATE
-    AND status IN ('confirmed', 'confirmada', 'completed', 'noshow');
+    AND status IN ('confirmed', 'completed', 'no_show', 'seated', 'cancelled');
     
     -- 3. Calcular tamaño promedio de grupo
     SELECT COALESCE(AVG(party_size), 2)
@@ -52,11 +52,11 @@ BEGIN
     WHERE restaurant_id = p_restaurant_id
     AND reservation_date >= v_start_of_month;
     
-    -- 4. Contar reservas de alto riesgo HOY
+    -- 4. Contar reservas de riesgo HOY (medium + high)
     SELECT COUNT(*)
     INTO v_high_risk_today
     FROM predict_upcoming_noshows_v2(p_restaurant_id, 0) -- 0 = solo hoy
-    WHERE risk_level = 'high';
+    WHERE risk_level IN ('medium', 'high');
     
     -- Retornar resultados
     RETURN QUERY
