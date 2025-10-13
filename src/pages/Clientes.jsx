@@ -65,8 +65,39 @@ const CUSTOMER_SEGMENTS = {
     }
 };
 
-// FUNCIÓN PARA DETERMINAR SEGMENTO DEL CLIENTE - **ELIMINADA**
-// La lógica ahora reside 100% en la base de datos a través de `segment_auto`
+// FUNCIÓN PARA CALCULAR SEGMENTO EN TIEMPO REAL
+const calculateRealTimeSegment = (customer) => {
+    if (!customer) return 'nuevo';
+    
+    const visitsCount = customer.visits_count || 0;
+    const totalSpent = customer.total_spent || 0;
+    const daysSinceLastVisit = customer.last_visit_at 
+        ? Math.floor((new Date() - new Date(customer.last_visit_at)) / (1000 * 60 * 60 * 24))
+        : 999;
+    
+    // 1. Nuevo: 0-1 visitas
+    if (visitsCount <= 1) return 'nuevo';
+    
+    // 2. VIP: 10+ visitas O gasto alto
+    if (visitsCount >= 10 || totalSpent >= 500) return 'vip';
+    
+    // 3. Alto valor: Gasto elevado pero pocas visitas
+    if (totalSpent >= 300 && visitsCount < 10) return 'alto_valor';
+    
+    // 4. Regular: 2-9 visitas y activo
+    if (visitsCount >= 2 && visitsCount < 10 && daysSinceLastVisit <= 60) return 'regular';
+    
+    // 5. Ocasional: Pocas visitas, irregular
+    if (visitsCount >= 2 && visitsCount < 5) return 'ocasional';
+    
+    // 6. Inactivo: No viene hace 90+ días
+    if (daysSinceLastVisit >= 90) return 'inactivo';
+    
+    // 7. En riesgo: Entre 60-90 días sin venir
+    if (daysSinceLastVisit >= 60 && daysSinceLastVisit < 90) return 'en_riesgo';
+    
+    return 'nuevo';
+};
 
 // Componente principal
 export default function Clientes() {
@@ -110,15 +141,19 @@ export default function Clientes() {
 
             if (error) throw error;
 
-            // Procesar clientes con segmentación automática
-            const processedCustomers = customers?.map(customer => ({
-                ...customer,
-                // Usar directamente el segmento calculado por la BD
-                segment: customer.segment_manual || customer.segment_auto || 'nuevo',
-                daysSinceLastVisit: customer.last_visit_at 
+            // Procesar clientes con segmentación automática EN TIEMPO REAL
+            const processedCustomers = customers?.map(customer => {
+                const daysSinceLastVisit = customer.last_visit_at 
                     ? Math.floor((new Date() - new Date(customer.last_visit_at)) / (1000 * 60 * 60 * 24))
-                    : null
-            })) || [];
+                    : null;
+                
+                return {
+                    ...customer,
+                    // ✅ Calcular segmento en tiempo real basado en visits_count
+                    segment: customer.segment_manual || calculateRealTimeSegment(customer),
+                    daysSinceLastVisit
+                };
+            }) || [];
 
             console.log("✅ Clientes procesados:", processedCustomers.length);
             setCustomers(processedCustomers);
@@ -166,10 +201,9 @@ export default function Clientes() {
             if (!matchesSearch) return false;
         }
 
-        // Filtro por segmento
+        // Filtro por segmento (usa el ya calculado)
         if (filters.segment) {
-            const customerSegment = customer.segment_manual || customer.segment_auto || 'nuevo';
-            if (customerSegment !== filters.segment) return false;
+            if (customer.segment !== filters.segment) return false;
         }
 
         // Filtro por VIP
@@ -253,61 +287,83 @@ export default function Clientes() {
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-7xl mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
-                    <div>
-                        <h1 className="text-lg font-bold text-gray-900">Gestión de Clientes</h1>
-                        <p className="text-gray-600">Sistema CRM para tu restaurante</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={loadCustomers}
-                            className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                        >
-                            <RefreshCw className="w-4 h-4" />
-                            Actualizar
-                        </button>
-                        <button
-                            onClick={handleCreateCustomer}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Nuevo Cliente
-                        </button>
+                {/* Header con gradiente corporativo */}
+                <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-xl p-8 text-white">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center">
+                                <Users className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-bold text-white mb-1">Gestión de Clientes</h1>
+                                <p className="text-purple-100">Sistema CRM inteligente · {filteredCustomers.length} clientes</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={loadCustomers}
+                                className="flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur text-white border-2 border-white/30 rounded-xl hover:bg-white/20 transition-all duration-300 font-medium"
+                            >
+                                <RefreshCw className="w-5 h-5" />
+                                Actualizar
+                            </button>
+                            <button
+                                onClick={handleCreateCustomer}
+                                className="flex items-center gap-2 px-5 py-3 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Nuevo Cliente
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 {/* Dashboard de Clientes - Métricas por Segmento */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 className="text-sm font-semibold text-gray-900 mb-2">Estado de la Base de Clientes</h2>
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <TrendingUp className="w-5 h-5 text-white" />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-900">Estado de la Base de Clientes</h2>
+                    </div>
 
                     {/* Desglose por segmentos con porcentajes */}
-                    <div className="grid grid-cols-2 md:grid-cols-7 gap-2">
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                         {Object.entries(CUSTOMER_SEGMENTS).map(([key, segment]) => {
-                            const count = customers.filter(c => (c.segment_manual || c.segment_auto) === key).length;
+                            const count = customers.filter(c => c.segment === key).length;
                             const percentage = customers.length > 0 ? Math.round((count / customers.length) * 100) : 0;
+                            
+                            const colorClasses = {
+                                blue: 'from-blue-400 to-blue-600 border-blue-300 bg-blue-50',
+                                green: 'from-green-400 to-green-600 border-green-300 bg-green-50',
+                                purple: 'from-purple-400 to-purple-600 border-purple-300 bg-purple-50',
+                                yellow: 'from-yellow-400 to-yellow-600 border-yellow-300 bg-yellow-50',
+                                gray: 'from-gray-400 to-gray-600 border-gray-300 bg-gray-50',
+                                orange: 'from-orange-400 to-orange-600 border-orange-300 bg-orange-50',
+                                indigo: 'from-indigo-400 to-indigo-600 border-indigo-300 bg-indigo-50'
+                            };
                             
                             return (
                                 <div 
                                     key={key} 
-                                    className={`p-2 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 ${
                                         filters.segment === key 
-                                            ? `border-${segment.color}-500 bg-${segment.color}-50` 
-                                            : 'border-gray-200 hover:border-gray-300'
+                                            ? `${colorClasses[segment.color]} border-2` 
+                                            : 'border-gray-200 hover:border-gray-300 bg-white'
                                     }`}
                                     onClick={() => setFilters({...filters, segment: filters.segment === key ? '' : key})}
                                 >
                                     <div className="text-center">
-                                        <div className="text-base mb-1">{segment.icon}</div>
-                                        <div className="text-sm font-bold text-gray-900">{count}</div>
-                                        <div className={`text-xs font-medium text-${segment.color}-700`}>
+                                        <div className="text-2xl mb-2">{segment.icon}</div>
+                                        <div className="text-2xl font-bold text-gray-900 mb-1">{count}</div>
+                                        <div className="text-xs font-semibold text-gray-700 mb-2">
                                             {segment.label}
                                         </div>
-                                        <div className="text-xs text-gray-500 mt-0.5">
-                                            {percentage}% del total
+                                        <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${colorClasses[segment.color]} text-white`}>
+                                            {percentage}%
                                         </div>
-                            </div>
-                        </div>
+                                    </div>
+                                </div>
                             );
                         })}
                     </div>
@@ -320,8 +376,8 @@ export default function Clientes() {
                                 <div className="text-sm text-gray-600">Salud de la Base de Clientes</div>
                                 <div className="text-sm font-semibold text-gray-900">
                                     {(() => {
-                                        const activeCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length;
-                                        const activePercentage = customers.length > 0 ? (activeCount / customers.length) * 100 : 0;
+                                        const regularCount = customers.filter(c => c.segment === 'regular').length;
+                                        const activePercentage = customers.length > 0 ? (regularCount / customers.length) * 100 : 0;
                                         
                                         if (activePercentage >= 60) return "🟢 Excelente";
                                         if (activePercentage >= 40) return "🟡 Buena";
@@ -334,11 +390,11 @@ export default function Clientes() {
                             {/* Análisis compacto */}
                             <div className="flex-1 text-sm text-gray-700">
                                 {(() => {
-                                    const activeCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'activo').length;
-                                    const riskCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'riesgo').length;
-                                    const inactiveCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'inactivo').length;
-                                    const newCount = customers.filter(c => (c.segment_manual || c.segment_auto) === 'nuevo').length;
-                                    const activePercentage = customers.length > 0 ? (activeCount / customers.length) * 100 : 0;
+                                    const regularCount = customers.filter(c => c.segment === 'regular').length;
+                                    const riskCount = customers.filter(c => c.segment === 'en_riesgo').length;
+                                    const inactiveCount = customers.filter(c => c.segment === 'inactivo').length;
+                                    const newCount = customers.filter(c => c.segment === 'nuevo').length;
+                                    const activePercentage = customers.length > 0 ? (regularCount / customers.length) * 100 : 0;
                                     const riskPercentage = customers.length > 0 ? (riskCount / customers.length) * 100 : 0;
                                     const inactivePercentage = customers.length > 0 ? (inactiveCount / customers.length) * 100 : 0;
                                     
@@ -361,7 +417,7 @@ export default function Clientes() {
                                         recommendations.push("Crear campañas de recuperación");
                                     }
                                     
-                                    if (newCount > activeCount && customers.length > 5) {
+                                    if (newCount > regularCount && customers.length > 5) {
                                         issues.push("Los clientes nuevos no se están fidelizando");
                                         recommendations.push("Mejorar experiencia de primeras visitas");
                                     }
@@ -417,29 +473,32 @@ export default function Clientes() {
                 </div>
 
                 {/* Filtros Avanzados */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
-                    <div className="space-y-4">
+                <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                    <div className="space-y-5">
                         {/* Búsqueda por texto */}
                     <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400" size={22} />
                         <input
                             type="text"
-                            placeholder="Buscar por nombre, email o teléfono..."
+                            placeholder="🔍 Buscar por nombre, email o teléfono..."
                             value={filters.search}
                             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 text-lg font-medium bg-white shadow-sm"
                         />
                         </div>
 
                         {/* Filtros adicionales */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             {/* Filtro por VIP */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cliente</label>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                    <Crown className="w-4 h-4 text-purple-500" />
+                                    Tipo de Cliente
+                                </label>
                                 <select
                                     value={filters.vip}
                                     onChange={(e) => setFilters({ ...filters, vip: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 font-medium bg-white"
                                 >
                                     <option value="">Todos</option>
                                     <option value="vip">👑 VIP (€500+)</option>
@@ -449,11 +508,14 @@ export default function Clientes() {
 
                             {/* Filtro por frecuencia de visitas */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Frecuencia</label>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-blue-500" />
+                                    Frecuencia
+                                </label>
                                 <select
                                     value={filters.visitCount}
                                     onChange={(e) => setFilters({ ...filters, visitCount: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 font-medium bg-white"
                                 >
                                     <option value="">Todas</option>
                                     <option value="new">👋 Nuevos (1 visita)</option>
@@ -464,11 +526,14 @@ export default function Clientes() {
 
                             {/* Filtro por rango de gasto */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Gasto Total</label>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                    <DollarSign className="w-4 h-4 text-green-500" />
+                                    Gasto Total
+                                </label>
                                 <select
                                     value={filters.spentRange}
                                     onChange={(e) => setFilters({ ...filters, spentRange: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 transition-all duration-300 font-medium bg-white"
                                 >
                                     <option value="">Todos</option>
                                     <option value="low">💚 Bajo (&lt;€100)</option>
@@ -535,34 +600,41 @@ export default function Clientes() {
                             )}
                         </div>
                     ) : (
-                        <div className="divide-y divide-gray-200">
-                            {filteredCustomers.map((customer) => (
+                        <div className="space-y-3">
+                            {filteredCustomers.map((customer) => {
+                                const segmentColor = CUSTOMER_SEGMENTS[customer.segment]?.color || 'gray';
+                                const colorGradients = {
+                                    blue: 'from-blue-500 to-blue-600',
+                                    green: 'from-green-500 to-green-600',
+                                    purple: 'from-purple-500 to-purple-600',
+                                    yellow: 'from-yellow-500 to-yellow-600',
+                                    gray: 'from-gray-500 to-gray-600',
+                                    orange: 'from-orange-500 to-orange-600',
+                                    indigo: 'from-indigo-500 to-indigo-600'
+                                };
+                                
+                                return (
                                 <div
                                     key={customer.id}
-                                    className="p-2 hover:bg-gray-50 cursor-pointer transition-colors"
+                                    className="p-5 bg-white rounded-xl border-2 border-gray-100 hover:border-purple-300 hover:shadow-lg cursor-pointer transition-all duration-300"
                                     onClick={() => handleViewCustomer(customer)}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                {/* Avatar con inicial */}
-                                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                            <div className="flex items-center gap-4">
+                                                {/* Avatar con inicial - MÁS GRANDE */}
+                                                <div className={`w-14 h-14 bg-gradient-to-br ${colorGradients[segmentColor]} rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg`}>
                                                     {customer.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 
-                                                {/* Icono de segmento - NUEVA FUNCIONALIDAD */}
-                                                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm flex-shrink-0">
-                                                    {CUSTOMER_SEGMENTS[customer.segment_manual || customer.segment_auto]?.icon || "👤"}
-                                                </div>
-                                                
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <h3 className="text-sm font-medium text-gray-900 truncate">
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <h3 className="text-lg font-bold text-gray-900 truncate">
                                                             {customer.name}
                                                         </h3>
-                                                        {/* Etiqueta de segmento - NUEVA FUNCIONALIDAD */}
-                                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${CUSTOMER_SEGMENTS[customer.segment_manual || customer.segment_auto]?.color || 'gray'}-100 text-${CUSTOMER_SEGMENTS[customer.segment_manual || customer.segment_auto]?.color || 'gray'}-800`}>
-                                                            {CUSTOMER_SEGMENTS[customer.segment_manual || customer.segment_auto]?.label || 'Cliente'}
+                                                        {/* Etiqueta de segmento - CALCULADA EN TIEMPO REAL */}
+                                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${colorGradients[segmentColor]} text-white shadow-md`}>
+                                                            {CUSTOMER_SEGMENTS[customer.segment]?.icon} {CUSTOMER_SEGMENTS[customer.segment]?.label || 'Cliente'}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-2 mt-1">
@@ -582,50 +654,50 @@ export default function Clientes() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <div className="flex items-center gap-4">
                                             {/* Visitas */}
-                                            <div className="text-center">
-                                                <p className="font-medium text-gray-900">{customer.visits_count || 0}</p>
-                                                <p className="text-xs">Visitas</p>
+                                            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                                                <Clock className="w-5 h-5 text-blue-600" />
+                                                <div>
+                                                    <p className="text-2xl font-bold text-blue-900">{customer.visits_count || 0}</p>
+                                                    <p className="text-xs text-blue-700 font-medium">Visitas</p>
+                                                </div>
                                             </div>
                                             
                                             {/* Total gastado */}
-                                            <div className="text-center">
-                                                <p className="font-medium text-gray-900">€{(customer.total_spent || 0).toFixed(2)}</p>
-                                                <p className="text-xs">Gastado</p>
-                                            </div>
-                                            
-                                            {/* Días desde última visita - NUEVA FUNCIONALIDAD */}
-                                            <div className="text-center">
-                                                <p className="font-medium text-gray-900">
-                                                    {customer.daysSinceLastVisit !== null ? `${customer.daysSinceLastVisit}d` : 'Nueva'}
-                                                </p>
-                                                <p className="text-xs">Última</p>
-                                            </div>
-                                            
-                                            {/* Fecha última visita */}
-                                            {customer.last_visit_at && (
-                                                <div className="text-center">
-                                                    <p className="font-medium text-gray-900">
-                                                        {format(parseISO(customer.last_visit_at), 'dd/MM')}
-                                                    </p>
-                                                    <p className="text-xs">Fecha</p>
+                                            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                                                <DollarSign className="w-5 h-5 text-green-600" />
+                                                <div>
+                                                    <p className="text-2xl font-bold text-green-900">€{(customer.total_spent || 0).toFixed(0)}</p>
+                                                    <p className="text-xs text-green-700 font-medium">Gastado</p>
                                                 </div>
-                                            )}
+                                            </div>
+                                            
+                                            {/* Días desde última visita */}
+                                            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                                                <CheckCircle2 className="w-5 h-5 text-purple-600" />
+                                                <div>
+                                                    <p className="text-2xl font-bold text-purple-900">
+                                                        {customer.daysSinceLastVisit !== null ? `${customer.daysSinceLastVisit}d` : 'Nuevo'}
+                                                    </p>
+                                                    <p className="text-xs text-purple-700 font-medium">Última</p>
+                                                </div>
+                                            </div>
                                             
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleEditCustomer(customer);
                                                 }}
-                                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                                                className="p-3 text-gray-400 hover:text-white hover:bg-gradient-to-br hover:from-purple-500 hover:to-blue-600 rounded-xl transition-all duration-300 border-2 border-gray-200 hover:border-purple-500"
                                             >
-                                                <Edit2 className="w-4 h-4" />
+                                                <Edit2 className="w-5 h-5" />
                                             </button>
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

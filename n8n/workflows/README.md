@@ -128,11 +128,44 @@ Los workflows 02 y 03 usan plantillas dinámicas desde `message_templates`:
 
 ---
 
+#### **6. `05-auto-liberacion-2h-antes-FINAL.json`**
+- **Función:** Auto-liberación de slots sin confirmar
+- **Cron:** Cada 10 minutos (`*/10 * * * *`)
+- **Descripción:** Marca como no_show y libera slots automáticamente
+
+**Flujo:**
+```
+Cron cada 10 min
+  ↓
+Buscar reservas <2h + risk >= 60 + sin confirmar
+  ↓
+Por cada reserva:
+  ↓
+Marcar como 'no_show'
+  ↓
+Liberar slot (current_bookings -= party_size)
+  ↓
+Registrar en noshow_actions
+```
+
+---
+
 ## 📈 PRÓXIMOS WORKFLOWS:
 
+- [ ] **Workflow 4:** Procesador de Respuestas WhatsApp (webhook)
 - [ ] Seguimiento No-Show (recordar política)
 - [ ] Bienvenida cliente VIP
 - [ ] Reactivación clientes inactivos
+
+---
+
+## 🎯 WORKFLOWS COMPLETADOS: 3/5 (60%)
+
+✅ Workflow 1: Confirmación 24h  
+✅ Workflow 2: Recordatorio 4h  
+✅ Workflow 5: Auto-Liberación 2h  
+⏳ Workflow 4: Procesador Respuestas (crítico)  
+⏭️ Workflow 3: Alertas Llamada (opcional)
 
 ---
 
