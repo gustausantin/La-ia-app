@@ -557,10 +557,7 @@ const Configuracion = () => {
                 const { data, error } = await supabase
                     .from('restaurants')
                     .update({
-                        settings: {
-                            ...currentSettings,
-                            channels: updatedChannels
-                        },
+                        channels: updatedChannels,
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', effectiveRestaurantId)
