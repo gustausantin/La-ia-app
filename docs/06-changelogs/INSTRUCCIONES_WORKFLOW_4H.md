@@ -183,3 +183,4 @@ is_active: true
 
 **Estado:** ✅ Listo para importar y activar
 
+
