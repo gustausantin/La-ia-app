@@ -212,14 +212,26 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             const endDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
 
             // 3. Obtener DÍAS ÚNICOS con slots REALES en availability_slots
+            // ⚠️ Usamos RPC para obtener fechas únicas sin límite de 1000 registros
+            console.log('🔍 CÓDIGO ACTUALIZADO - Consultando días únicos directamente');
+            
+            // Query optimizado: obtener fechas DISTINTAS (no todos los slots)
             const { data: slotsData, error: slotsError } = await supabase
-                .from('availability_slots')
-                .select('slot_date')
-                .eq('restaurant_id', restaurantId)
-                .gte('slot_date', today)
-                .lte('slot_date', endDate);
+                .rpc('get_unique_slot_dates', {
+                    p_restaurant_id: restaurantId,
+                    p_from_date: today
+                });
 
             if (slotsError) throw slotsError;
+
+            console.log(`✅ SLOTS RECIBIDOS: ${slotsData?.length} registros`);
+            
+            // Debug: Ver fechas únicas en los slots
+            const uniqueDates = [...new Set(slotsData?.map(s => s.slot_date) || [])].sort();
+            console.log(`📅 FECHAS ÚNICAS EN SLOTS: ${uniqueDates.length} días`);
+            console.log(`📅 Primera fecha: ${uniqueDates[0]}`);
+            console.log(`📅 Última fecha: ${uniqueDates[uniqueDates.length - 1]}`);
+            console.log(`📅 Todas las fechas:`, uniqueDates);
 
             // 3.5. Obtener días CERRADOS manualmente (festivos, vacaciones) desde special_events
             const { data: closedDays, error: closedError } = await supabase

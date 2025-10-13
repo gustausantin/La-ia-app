@@ -89,3 +89,4 @@ TOTAL: 22 × 2 = 44 plazas/día ✅
 
 **Estado:** ✅ Corregido - Refresca el Dashboard para verlo
 
+
