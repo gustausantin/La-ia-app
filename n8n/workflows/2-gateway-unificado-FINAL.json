@@ -5,8 +5,8 @@
       "parameters": {},
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [240, 300],
-      "id": "trigger-start",
+      "position": [-976, 368],
+      "id": "301ccff3-c922-4d60-b8dc-680ca6183cea",
       "name": "▶️ Start"
     },
     {
@@ -15,8 +15,8 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300],
-      "id": "normalize",
+      "position": [-800, 368],
+      "id": "89af1d1b-9aae-4784-87e9-56a392b19d05",
       "name": "📝 Normalizar"
     },
     {
@@ -25,25 +25,22 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 300],
-      "id": "normalize-phone",
+      "position": [-624, 368],
+      "id": "2e1f8f9e-7deb-45d1-a45c-0c94d76683fa",
       "name": "📞 Normalizar Teléfono"
     },
     {
       "parameters": {
-        "resource": "row",
         "operation": "get",
         "tableId": "customers",
         "filters": {
           "conditions": [
             {
               "keyName": "restaurant_id",
-              "condition": "eq",
               "keyValue": "={{ $json.restaurant_id }}"
             },
             {
               "keyName": "phone",
-              "condition": "eq",
               "keyValue": "={{ $json.customer_phone_normalized }}"
             }
           ]
@@ -51,17 +48,17 @@
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [900, 300],
-      "id": "buscar-cliente",
+      "position": [-448, 368],
+      "id": "d9891e38-25b5-4a3d-9daa-a8e3c7ac5fdd",
       "name": "🔍 Buscar Cliente",
+      "alwaysOutputData": true,
       "credentials": {
         "supabaseApi": {
           "id": "9pdl4V7ImejCLZWo",
           "name": "Supabase La-IA"
         }
       },
-      "continueOnFail": true,
-      "alwaysOutputData": true
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -73,18 +70,17 @@
               "value2": 0
             }
           ]
-        }
+        },
+        "options": {}
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [900, 300],
-      "id": "if-cliente-existe",
+      "position": [-272, 352],
+      "id": "b56757e5-9843-4461-bdd0-adedf84fdcb2",
       "name": "❓ ¿Existe?"
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "create",
         "tableId": "customers",
         "fieldsUi": {
           "fieldValues": [
@@ -137,8 +133,8 @@
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1120, 420],
-      "id": "crear-cliente",
+      "position": [-80, 256],
+      "id": "e2080d51-8216-4482-9822-2c05684e8f68",
       "name": "➕ Crear Cliente",
       "credentials": {
         "supabaseApi": {
@@ -153,14 +149,12 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1340, 300],
-      "id": "fusionar",
+      "position": [128, 368],
+      "id": "68c7531d-62da-41b1-9ac7-9f9be2527426",
       "name": "🔗 Fusionar Datos"
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "create",
         "tableId": "agent_conversations",
         "fieldsUi": {
           "fieldValues": [
@@ -201,8 +195,8 @@
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1560, 300],
-      "id": "crear-conversacion",
+      "position": [352, 368],
+      "id": "77b360d2-e1e0-4c4d-94f9-085c41dd5b9e",
       "name": "💬 Crear Conversación",
       "credentials": {
         "supabaseApi": {
@@ -213,8 +207,6 @@
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "create",
         "tableId": "agent_messages",
         "fieldsUi": {
           "fieldValues": [
@@ -247,8 +239,8 @@
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1780, 300],
-      "id": "guardar-mensaje",
+      "position": [576, 368],
+      "id": "0a2106e3-4d1d-40bd-8332-7c777ca172b9",
       "name": "💾 Guardar Mensaje",
       "credentials": {
         "supabaseApi": {
@@ -263,60 +255,184 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2000, 300],
-      "id": "preparar-clasificador",
+      "position": [800, 368],
+      "id": "c3d18a4b-61ca-4590-b99c-ac7ad190010a",
       "name": "📦 Para Clasificador"
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "SUPER_AGENT_WORKFLOW_ID",
-          "mode": "id",
-          "cachedResultName": "3️⃣ Super Agent Híbrido"
+          "value": "Dctj1QcfrlJPbVGC",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Dctj1QcfrlJPbVGC",
+          "cachedResultName": " Agent IA — 3️⃣ Super Agent Híbrido (FINAL)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
         },
         "options": {}
       },
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
-      "position": [2220, 300],
-      "id": "ejecutar-clasificador",
+      "position": [1008, 368],
+      "id": "65ba4788-be21-41b9-bea5-9946290847b8",
       "name": "🚀 Clasificador"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "whatsapp_message_buffer",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "buffer_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.customer_phone }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-784, 592],
+      "id": "a7a51a67-a6b5-494a-a593-649f6f9ae5df",
+      "name": "🗑️ Eliminar Buffer",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
     }
   ],
   "connections": {
     "▶️ Start": {
-      "main": [[{"node": "📝 Normalizar", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "📝 Normalizar",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🗑️ Eliminar Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "📝 Normalizar": {
-      "main": [[{"node": "📞 Normalizar Teléfono", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "📞 Normalizar Teléfono",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "📞 Normalizar Teléfono": {
-      "main": [[{"node": "🔍 Buscar Cliente", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "🔍 Buscar Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "🔍 Buscar Cliente": {
-      "main": [[{"node": "❓ ¿Existe?", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "❓ ¿Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "❓ ¿Existe?": {
       "main": [
-        [{"node": "➕ Crear Cliente", "type": "main", "index": 0}],
-        [{"node": "🔗 Fusionar Datos", "type": "main", "index": 0}]
+        [
+          {
+            "node": "➕ Crear Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🔗 Fusionar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "➕ Crear Cliente": {
-      "main": [[{"node": "🔗 Fusionar Datos", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "🔗 Fusionar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "🔗 Fusionar Datos": {
-      "main": [[{"node": "💬 Crear Conversación", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "💬 Crear Conversación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "💬 Crear Conversación": {
-      "main": [[{"node": "💾 Guardar Mensaje", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "💾 Guardar Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "💾 Guardar Mensaje": {
-      "main": [[{"node": "📦 Para Clasificador", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "📦 Para Clasificador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "📦 Para Clasificador": {
-      "main": [[{"node": "🚀 Clasificador", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "🚀 Clasificador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "pinData": {},
@@ -326,7 +442,9 @@
   "staticData": null,
   "tags": [],
   "triggerCount": 1,
-  "updatedAt": "2025-10-13T11:30:00.000Z",
-  "versionId": "FINAL"
+  "updatedAt": "2025-10-14T12:50:00.000Z",
+  "versionId": "FINAL-PARALELO",
+  "meta": {
+    "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
+  }
 }
-

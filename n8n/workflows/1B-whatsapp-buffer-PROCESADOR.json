@@ -1,0 +1,279 @@
+{
+  "name": "1B — WhatsApp Buffer Procesador (CRON)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-816, 256],
+      "id": "c2df0ae8-9c9b-4ef3-894c-3cba224d217b",
+      "name": "⏰ Cada 5 segundos"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "whatsapp_message_buffer",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-592, 256],
+      "id": "0a044a14-faa3-42b1-85fd-5afb31da1720",
+      "name": "📊 Get All Buffers",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst buffers = $input.all();\n\nconsole.log(`📊 Total buffers: ${buffers.length}`);\n\n// Filtrar buffers que:\n// 1. Llevan más de 30 segundos sin actualizar\n// 2. NO están siendo procesados (processing_since = NULL)\n// 3. O están huérfanos (processing_since > 60s)\nconst readyBuffers = buffers.filter(item => {\n  const buffer = item.json;\n  const lastMessageAt = new Date(buffer.last_message_at || buffer.updated_at);\n  const secondsAgo = (now - lastMessageAt) / 1000;\n  \n  // Verificar si está siendo procesado\n  const processingSince = buffer.processing_since ? new Date(buffer.processing_since) : null;\n  const processingSecondsAgo = processingSince ? (now - processingSince) / 1000 : null;\n  \n  console.log(`  Buffer ${buffer.buffer_key}: ${secondsAgo.toFixed(1)}s ago, processing: ${processingSince ? processingSecondsAgo.toFixed(1) + 's' : 'NO'}`);\n  \n  // Condiciones para procesar:\n  // 1. Más de 30s desde último mensaje\n  // 2. Y (NO está procesando O está procesando hace más de 60s = huérfano)\n  const isReady = secondsAgo >= 30;\n  const isNotProcessing = !processingSince || processingSecondsAgo > 60;\n  \n  if (isReady && !isNotProcessing) {\n    console.log(`    ⏭️ Skip: Ya está siendo procesado`);\n  }\n  \n  return isReady && isNotProcessing;\n});\n\nconsole.log(`✅ Buffers listos para procesar: ${readyBuffers.length}`);\n\nif (readyBuffers.length === 0) {\n  console.log('⏭️ No hay buffers para procesar');\n  return [];\n}\n\nreturn readyBuffers;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-368, 256],
+      "id": "66bafa5a-8830-414b-8fc6-e6c30bc7ae08",
+      "name": "🔍 Filtrar Listos (>30s)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $input.all().length }}",
+              "operation": "largerEqual",
+              "value2": 1
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-144, 256],
+      "id": "cbd25f89-6c0f-4e8d-9084-a40a411cb02a",
+      "name": "❓ ¿Hay buffers?"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://ktsqwvhqamedpmzkzjaz.supabase.co/rest/v1/whatsapp_message_buffer",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "buffer_key",
+              "value": "eq.{{ $json.buffer_key }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzY3NzEsImV4cCI6MjA2OTk1Mjc3MX0.Y-zMa2F5a7UVT-efldv0sZjLAgmCfeEmhxfP7kgGzNY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c3F3dmhxYW1lZHBtemt6amF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzY3NzEsImV4cCI6MjA2OTk1Mjc3MX0.Y-zMa2F5a7UVT-efldv0sZjLAgmCfeEmhxfP7kgGzNY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "processing_since",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [64, 128],
+      "id": "860dbdbe-fe17-470b-9827-1b1398b57221",
+      "name": "🔒 Marcar Procesando"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obtener datos del nodo \"¿Hay buffers?\" (antes del PATCH)\nconst buffer = $('❓ ¿Hay buffers?').first().json;\n\nconsole.log('📦 Preparando buffer para Gateway:', buffer.buffer_key);\nconsole.log('   Mensajes:', buffer.messages);\nconsole.log('   Cantidad:', buffer.message_count);\n\nreturn {\n  channel: 'whatsapp',\n  restaurant_id: buffer.restaurant_id,\n  customer_phone: buffer.customer_phone,\n  customer_name: buffer.customer_name,\n  user_message: buffer.messages,\n  message_count: buffer.message_count,\n  buffer_key: buffer.buffer_key,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [288, 128],
+      "id": "8622c9e1-b94d-4a54-9b6c-e7b41fb0058c",
+      "name": "📦 Preparar para Gateway"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "5LobAwicedK8INQQ",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/5LobAwicedK8INQQ",
+          "cachedResultName": "Agent IA — 2️⃣ Gateway Unificado (FINAL)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [512, 128],
+      "id": "f97c9437-ace7-4f59-825f-5a9d56f7cd70",
+      "name": "🚀 Ejecutar Gateway"
+    },
+    {
+      "parameters": {
+        "jsCode": "const processed = $input.first().json;\n\nconsole.log('✅ Buffer procesado:', processed);\n\nreturn { success: true, processed_at: new Date().toISOString() };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 128],
+      "id": "a0fbc90c-e8cb-4702-a09c-053535709581",
+      "name": "✅ Log Success"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('⏭️ No hay buffers para procesar en esta ejecución');\n\nreturn { message: 'No buffers to process' };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [64, 368],
+      "id": "0042d763-02f3-4237-8a21-c5b03a171781",
+      "name": "⏭️ Log Skip"
+    }
+  ],
+  "connections": {
+    "⏰ Cada 5 segundos": {
+      "main": [
+        [
+          {
+            "node": "📊 Get All Buffers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Get All Buffers": {
+      "main": [
+        [
+          {
+            "node": "🔍 Filtrar Listos (>30s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Filtrar Listos (>30s)": {
+      "main": [
+        [
+          {
+            "node": "❓ ¿Hay buffers?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❓ ¿Hay buffers?": {
+      "main": [
+        [
+          {
+            "node": "🔒 Marcar Procesando",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "⏭️ Log Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔒 Marcar Procesando": {
+      "main": [
+        [
+          {
+            "node": "📦 Preparar para Gateway",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📦 Preparar para Gateway": {
+      "main": [
+        [
+          {
+            "node": "🚀 Ejecutar Gateway",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚀 Ejecutar Gateway": {
+      "main": [
+        [
+          {
+            "node": "✅ Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-14T12:45:00.000Z",
+  "versionId": "FINAL-SIN-DELETE",
+  "meta": {
+    "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
+  }
+}

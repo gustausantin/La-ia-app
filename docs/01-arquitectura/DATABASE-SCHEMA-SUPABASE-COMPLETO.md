@@ -1,9 +1,10 @@
 # 📊 ESQUEMA COMPLETO BASE DE DATOS SUPABASE - LA-IA APP
 
-> **Fecha:** 2 de Octubre 2025  
+> **Fecha:** 14 de Octubre 2025  
 > **Fuente:** Export directo desde `information_schema.columns`  
 > **Estado:** ✅ **COMPLETO Y VERIFICADO**  
-> **Total Tablas:** 45 tablas + 1 vista
+> **Total Tablas:** 46 tablas + 1 vista  
+> **Última actualización:** Agregada tabla `crm_interactions` para sistema de feedback
 
 ---
 
@@ -27,8 +28,9 @@
 16. [crm_settings](#16-crm_settings) - Configuración CRM
 17. [crm_suggestions](#17-crm_suggestions) - Sugerencias CRM
 18. [crm_templates](#18-crm_templates) - Plantillas CRM
-19. [crm_v2_dashboard](#19-crm_v2_dashboard) - Dashboard CRM v2 (VISTA)
-20. [customer_feedback](#20-customer_feedback) - Feedback clientes
+19. [crm_interactions](#19-crm_interactions) - ✨ **Interacciones CRM (NUEVO)**
+20. [crm_v2_dashboard](#20-crm_v2_dashboard) - Dashboard CRM v2 (VISTA)
+21. [customer_feedback](#21-customer_feedback) - Feedback clientes
 21. [customer_interactions](#21-customer_interactions) - Interacciones clientes
 22. [customers](#22-customers) - **Base clientes**
 23. [daily_metrics](#23-daily_metrics) - Métricas diarias
@@ -458,7 +460,55 @@
 
 ---
 
-### 19. crm_v2_dashboard
+### 19. crm_interactions ✨ **NUEVO**
+
+**Propósito:** Registro de todas las interacciones del CRM con clientes (campañas de feedback, recordatorios, reactivación, etc.)
+
+| Columna | Tipo | NULL | Default | Descripción |
+|---------|------|------|---------|-------------|
+| `id` | uuid | NO | `gen_random_uuid()` | ID único |
+| `restaurant_id` | uuid | NO | - | FK → restaurants |
+| `customer_id` | uuid | NO | - | FK → customers |
+| `interaction_type` | varchar | NO | - | Tipo: feedback, bienvenida, reactivacion, vip_upgrade, recordatorio, marketing, manual |
+| `campaign_id` | varchar | YES | - | ID de campaña (ej: feedback_post_visit_day1) |
+| `campaign_name` | varchar | YES | - | Nombre descriptivo de la campaña |
+| `channel` | varchar | NO | - | Canal: whatsapp, email, sms, phone, push |
+| `message_text` | text | NO | - | Mensaje enviado al cliente |
+| `message_template_id` | varchar | YES | - | ID de plantilla usada |
+| `status` | varchar | NO | `'sent'` | Estado: sent, delivered, read, responded, bounced, failed |
+| `customer_responded` | boolean | YES | `false` | ¿Cliente respondió? |
+| `response_received_at` | timestamptz | YES | - | Cuándo respondió |
+| `response_conversation_id` | uuid | YES | - | FK → agent_conversations (si respondió) |
+| `metadata` | jsonb | YES | `'{}'` | Datos adicionales (reservation_id, etc.) |
+| `created_at` | timestamptz | NO | `NOW()` | Fecha creación |
+| `updated_at` | timestamptz | NO | `NOW()` | Fecha actualización |
+| `sent_at` | timestamptz | YES | - | Cuándo se envió |
+| `delivered_at` | timestamptz | YES | - | Cuándo se entregó |
+| `read_at` | timestamptz | YES | - | Cuándo se leyó |
+
+**Índices:**
+- `idx_crm_interactions_restaurant_type` - (restaurant_id, interaction_type, created_at DESC)
+- `idx_crm_interactions_customer` - (customer_id, created_at DESC)
+- `idx_crm_interactions_campaign` - (campaign_id, created_at DESC)
+- `idx_crm_interactions_status` - (restaurant_id, status, created_at DESC)
+- `idx_crm_interactions_response` - (restaurant_id, customer_responded, created_at DESC)
+- `idx_crm_interactions_metadata` - GIN (metadata)
+
+**Función helper:** `log_crm_interaction()` - Registrar interacciones fácilmente desde workflows
+
+**RLS:** ✅ Habilitado (aislamiento por tenant)
+
+**Uso:**
+- Campañas de feedback post-visita
+- Mensajes de bienvenida a nuevos clientes
+- Reactivación de clientes inactivos
+- Recordatorios de reservas
+- Promociones y marketing
+- Tracking de tasa de respuesta
+
+---
+
+### 20. crm_v2_dashboard
 
 **Tipo:** VISTA (no tabla física)
 
