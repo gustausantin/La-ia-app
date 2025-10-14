@@ -1,0 +1,142 @@
+// ✅ CÓDIGO FINAL - MANEJA ESPAÑOL E INGLÉS + ITEMS VACÍOS
+// COPIA ESTO EN EL NODO "🔗 Fusionar Contexto Enriquecido"
+
+const allData = $input.all();
+
+console.log('📦 Datos recibidos del Merge:', allData.length, 'items');
+
+// Inicializar variables
+let classifiedData, restaurant, reservations = [], operatingHours = [];
+
+// Recorrer todos los items del Merge
+for (let i = 0; i < allData.length; i++) {
+  const item = allData[i];
+  const data = item.json;
+  
+  // Saltar si está vacío o es null
+  if (!data || Object.keys(data).length === 0) {
+    console.log(`⚠️ Item ${i} está vacío, saltando...`);
+    continue;
+  }
+  
+  console.log(`📋 Item ${i} keys:`, Object.keys(data).join(', '));
+  
+  // ✅ 1. CLASIFICACIÓN (puede venir en español o inglés)
+  if (data.classification || data.intent || data.intencion) {
+    classifiedData = data;
+    
+    // Normalizar a inglés si viene en español
+    if (data.classification && data.classification.intencion) {
+      classifiedData.intent = data.classification.intencion;
+      classifiedData.entities = data.classification.entidades || {};
+      classifiedData.confidence = data.classification.confianza || 0.5;
+      classifiedData.sentiment = data.classification.sentimiento || 'neutral';
+    } else if (data.intencion) {
+      classifiedData.intent = data.intencion;
+      classifiedData.entities = data.entidades || {};
+      classifiedData.confidence = data.confianza || 0.5;
+      classifiedData.sentiment = data.sentimiento || 'neutral';
+    }
+    
+    console.log('✅ Clasificación encontrada:', classifiedData.intent);
+  }
+  // ✅ 2. RESTAURANTE
+  else if (data.name && data.email && data.address) {
+    restaurant = data;
+    console.log('✅ Restaurante encontrado:', data.name);
+  }
+  // ✅ 3. RESERVA
+  else if (data.reservation_date) {
+    reservations.push(data);
+    console.log('✅ Reserva encontrada');
+  }
+  // ✅ 4. HORARIOS
+  else if (data.day_of_week && data.open_time) {
+    operatingHours.push(data);
+    console.log('✅ Horario encontrado:', data.day_of_week);
+  }
+}
+
+// ✅ VALIDACIONES
+if (!classifiedData) {
+  throw new Error('❌ No se encontró clasificación. Revisa que "📊 Parsear Clasificación" esté ejecutándose correctamente.');
+}
+
+if (!restaurant) {
+  throw new Error('❌ No se encontró info del restaurante. Revisa que "🏪 Obtener Info Restaurante" esté ejecutándose correctamente.');
+}
+
+const settings = restaurant.settings || {};
+const channels = restaurant.channels || {};
+
+// Preparar resumen de reservas activas
+const reservationsSummary = reservations.length > 0 
+  ? reservations.map(r => `- ID: ${r.id.substring(0, 8)}... | ${r.reservation_date} a las ${r.reservation_time} | ${r.party_size} personas | Estado: ${r.status}`).join('\n')
+  : 'No tiene reservas activas';
+
+// Preparar horarios (usar calendar_schedule si operating_hours está vacío)
+let hoursSummary = 'No disponible';
+if (operatingHours.length > 0) {
+  hoursSummary = operatingHours.map(h => `${h.day_of_week}: ${h.open_time} - ${h.close_time}`).join(', ');
+} else if (settings.calendar_schedule && settings.calendar_schedule.length > 0) {
+  hoursSummary = settings.calendar_schedule
+    .filter(day => day.is_open)
+    .map(day => `${day.day_name}: ${day.open_time} - ${day.close_time}`)
+    .join(', ');
+}
+
+// ✅ CONTEXTO FINAL ENRIQUECIDO
+const enrichedContext = {
+  // Datos originales
+  conversation_id: classifiedData.conversation_id,
+  customer_id: classifiedData.customer_id,
+  customer_name: classifiedData.customer_name,
+  customer_phone: classifiedData.customer_phone,
+  restaurant_id: classifiedData.restaurant_id,
+  channel: classifiedData.channel,
+  user_message: classifiedData.user_message,
+  timestamp: classifiedData.timestamp,
+  
+  // Clasificación del LLM (normalizada a inglés)
+  classification: {
+    intent: classifiedData.intent,
+    entities: classifiedData.entities || {},
+    sentiment: classifiedData.sentiment || 'neutral',
+    confidence: classifiedData.confidence || 0.5,
+    reasoning: classifiedData.reasoning || 'Clasificación automática'
+  },
+  
+  // Contexto del cliente
+  customer_context: {
+    has_active_reservations: reservations.length > 0,
+    reservations_count: reservations.length,
+    reservations: reservations,
+    reservations_summary: reservationsSummary
+  },
+  
+  // Contexto del restaurante
+  restaurant_context: {
+    id: restaurant.id,
+    name: restaurant.name,
+    address: restaurant.address,
+    phone: restaurant.phone,
+    email: restaurant.email,
+    whatsapp: channels.whatsapp?.phone_number || '',
+    operating_hours: operatingHours,
+    hours_summary: hoursSummary,
+    settings: settings,
+    agent_name: settings.agent?.name || 'el asistente virtual'
+  }
+};
+
+console.log('✅ Contexto enriquecido completo:', {
+  intent: enrichedContext.classification.intent,
+  confidence: enrichedContext.classification.confidence,
+  active_reservations: enrichedContext.customer_context.reservations_count,
+  sentiment: enrichedContext.classification.sentiment,
+  agent_name: enrichedContext.restaurant_context.agent_name
+});
+
+return enrichedContext;
+
+
