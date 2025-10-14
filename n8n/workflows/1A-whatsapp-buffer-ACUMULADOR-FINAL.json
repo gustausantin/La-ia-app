@@ -1,5 +1,5 @@
 {
-  "name": "1A️⃣ WhatsApp Buffer - ACUMULADOR",
+  "name": "1A️.  WhatsApp Buffer - ACUMULADOR",
   "nodes": [
     {
       "parameters": {
@@ -10,8 +10,11 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
-      "position": [240, 300],
-      "id": "webhook-whatsapp",
+      "position": [
+        -96,
+        432
+      ],
+      "id": "a1562059-1fb5-4cbb-8e87-a988045e3170",
       "name": "📱 Webhook WhatsApp",
       "webhookId": "whatsapp-inbound"
     },
@@ -21,26 +24,26 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300],
-      "id": "normalize",
+      "position": [
+        128,
+        432
+      ],
+      "id": "0bc425d4-ae30-46f9-88cf-08dcbedd89fc",
       "name": "📝 Normalizar"
     },
     {
       "parameters": {
-        "resource": "row",
         "operation": "getAll",
         "tableId": "restaurants",
-        "returnAll": true,
-        "options": {
-          "columns": {
-            "columnsString": "id,name,channels"
-          }
-        }
+        "returnAll": true
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [680, 300],
-      "id": "get-restaurants",
+      "position": [
+        352,
+        432
+      ],
+      "id": "506bbd9c-12b4-4846-a755-6d8651db71b5",
       "name": "🔍 Get Restaurants",
       "credentials": {
         "supabaseApi": {
@@ -55,8 +58,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 300],
-      "id": "find-restaurant",
+      "position": [
+        576,
+        432
+      ],
+      "id": "0beee55d-5177-486a-adc5-d586f1fb7303",
       "name": "✅ Find Restaurant"
     },
     {
@@ -119,8 +125,11 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1120, 300],
-      "id": "upsert-buffer",
+      "position": [
+        800,
+        432
+      ],
+      "id": "391355c4-9310-449a-aa2c-ed5498b9a71a",
       "name": "🔄 UPSERT Buffer",
       "webhookId": ""
     },
@@ -134,36 +143,81 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1340, 300],
-      "id": "respond-ok",
+      "position": [
+        1008,
+        432
+      ],
+      "id": "a23de832-0cec-4a27-ad22-2d78387de015",
       "name": "✅ OK (Guardado)"
     }
   ],
+  "pinData": {},
   "connections": {
     "📱 Webhook WhatsApp": {
-      "main": [[{"node": "📝 Normalizar", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "📝 Normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "📝 Normalizar": {
-      "main": [[{"node": "🔍 Get Restaurants", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "🔍 Get Restaurants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "🔍 Get Restaurants": {
-      "main": [[{"node": "✅ Find Restaurant", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "✅ Find Restaurant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "✅ Find Restaurant": {
-      "main": [[{"node": "🔄 UPSERT Buffer", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "🔄 UPSERT Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "🔄 UPSERT Buffer": {
-      "main": [[{"node": "✅ OK (Guardado)", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "✅ OK (Guardado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "pinData": {},
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "staticData": null,
-  "tags": [],
-  "triggerCount": 1,
-  "updatedAt": "2025-10-14T10:00:00.000Z",
-  "versionId": "FINAL-ACUMULADOR"
+  "versionId": "4e8909c7-6afe-4c56-81b4-5452ca4b9af8",
+  "meta": {
+    "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
+  },
+  "id": "9Bbx1PJKSYC6JnTe",
+  "tags": []
 }
 
