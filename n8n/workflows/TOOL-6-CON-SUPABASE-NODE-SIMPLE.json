@@ -11,43 +11,38 @@
     },
     {
       "parameters": {
-        "operation": "getAll",
+        "jsCode": "const input = $input.first().json;\n\nconsole.log('🔍🔍🔍 DEBUG CRÍTICO - INPUT TOOL-6:');\nconsole.log('   conversation_id:', input.conversation_id);\nconsole.log('   customer_phone:', input.customer_phone);\nconsole.log('   restaurant_id:', input.restaurant_id);\nconsole.log('   timestamp:', input.timestamp || 'NO TIMESTAMP');\n\nif (!input.conversation_id) {\n  throw new Error('❌ CRÍTICO: No hay conversation_id');\n}\n\nif (!input.customer_phone) {\n  throw new Error('❌ CRÍTICO: No hay customer_phone');\n}\n\nreturn input;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300],
+      "id": "debug-input-tool6",
+      "name": "🐛 DEBUG Input"
+    },
+    {
+      "parameters": {
+        "operation": "get",
         "tableId": "agent_messages",
-        "returnAll": false,
-        "limit": 1,
         "filters": {
           "conditions": [
             {
               "keyName": "conversation_id",
-              "condition": "eq",
               "keyValue": "={{ $json.conversation_id }}"
             },
             {
               "keyName": "customer_phone",
-              "condition": "eq",
               "keyValue": "={{ $json.customer_phone }}"
             },
             {
               "keyName": "direction",
-              "condition": "eq",
               "keyValue": "inbound"
             }
           ]
-        },
-        "options": {
-          "sort": {
-            "sortProperties": [
-              {
-                "keyName": "timestamp",
-                "order": "desc"
-              }
-            ]
-          }
         }
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [400, 300],
+      "position": [600, 300],
       "id": "search-message-supabase",
       "name": "🔍 Buscar Mensaje Cliente",
       "alwaysOutputData": true,
@@ -61,11 +56,11 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $('▶️ Start (Tool Call)').first().json;\nconst supabaseResult = $input.first().json;\n\nconsole.log('🆘 ESCALADO A HUMANO:', input);\nconsole.log('🔍 Resultado Supabase RAW:', JSON.stringify(supabaseResult));\n\nconst reason = input.reason || 'cliente_solicita';\nconst customerPhone = input.customer_phone || 'No disponible';\nconst customerName = input.customer_name || 'Cliente';\n\n// ✅ BUSCAR EL MENSAJE - PROBAR TODAS LAS POSIBILIDADES\nlet customerMessage = 'Cliente solicitó hablar con el encargado'; // Default\n\n// Opción 1: Directamente en supabaseResult\nif (supabaseResult && supabaseResult.message_text) {\n  customerMessage = supabaseResult.message_text;\n  console.log('✅ Opción 1 - Mensaje encontrado directo:', customerMessage.substring(0, 50));\n}\n// Opción 2: En data\nelse if (supabaseResult && supabaseResult.data && supabaseResult.data.message_text) {\n  customerMessage = supabaseResult.data.message_text;\n  console.log('✅ Opción 2 - Mensaje encontrado en data:', customerMessage.substring(0, 50));\n}\n// Opción 3: Array en data\nelse if (supabaseResult && Array.isArray(supabaseResult.data) && supabaseResult.data.length > 0) {\n  customerMessage = supabaseResult.data[0].message_text || customerMessage;\n  console.log('✅ Opción 3 - Mensaje encontrado en array:', customerMessage.substring(0, 50));\n}\n// Opción 4: user_message del input (última alternativa)\nelse if (input.user_message) {\n  customerMessage = input.user_message;\n  console.log('✅ Opción 4 - Mensaje del input:', customerMessage.substring(0, 50));\n}\nelse {\n  console.log('⚠️ NO SE ENCONTRÓ MENSAJE - usando default');\n  console.log('⚠️ Structure:', Object.keys(supabaseResult));\n}\n\n// Si el mensaje es muy largo (>200 caracteres), hacer resumen\nif (customerMessage.length > 200) {\n  customerMessage = customerMessage.substring(0, 197) + '...';\n}\n\nconst urgency = input.urgency || 'high';\n\n// Mapeo de razones a español\nconst reasonMap = {\n  'cliente_solicita': '🙋 El cliente solicita hablar con una persona',\n  'situacion_compleja': '🤔 Situación compleja fuera del alcance del agente',\n  'queja_grave': '😡 Queja grave del cliente',\n  'informacion_no_disponible': 'ℹ️ Información no disponible en el sistema',\n  'error_sistema': '⚠️ Error del sistema'\n};\n\nconst reasonText = reasonMap[reason] || reason;\nconst urgencyEmoji = urgency === 'high' ? '🚨🚨🚨' : '⚠️';\n\nconsole.log('📤 MENSAJE FINAL QUE SE ENVIARÁ:', customerMessage);\n\nreturn {\n  reason,\n  reasonText,\n  customerPhone,\n  customerName,\n  customerMessage,\n  urgency,\n  urgencyEmoji,\n  timestamp: new Date().toISOString()\n};"
+        "jsCode": "const input = $('▶️ Start (Tool Call)').first().json;\nconst supabaseResult = $input.first().json;\n\nconsole.log('🆘 ESCALADO A HUMANO:', input);\nconsole.log('🔍 Resultado Supabase RAW:', JSON.stringify(supabaseResult, null, 2));\n\nconst reason = input.reason || 'cliente_solicita';\nconst customerPhone = input.customer_phone || 'No disponible';\nconst customerName = input.customer_name || 'Cliente';\n\n// ✅ BUSCAR EL MENSAJE - ORDEN DE PRIORIDAD\nlet customerMessage = null;\nlet source = 'default';\n\n// 🔍 PRIORIDAD 1: Resultado de SQL query (array en data)\nif (supabaseResult && Array.isArray(supabaseResult) && supabaseResult.length > 0) {\n  customerMessage = supabaseResult[0].message_text;\n  source = 'sql-array-root';\n  console.log('✅ Opción 1 - SQL array root:', customerMessage?.substring(0, 50));\n}\n// 🔍 PRIORIDAD 2: Resultado en data array\nelse if (supabaseResult && Array.isArray(supabaseResult.data) && supabaseResult.data.length > 0) {\n  customerMessage = supabaseResult.data[0].message_text;\n  source = 'sql-array-data';\n  console.log('✅ Opción 2 - SQL array data:', customerMessage?.substring(0, 50));\n}\n// 🔍 PRIORIDAD 3: Directamente en supabaseResult\nelse if (supabaseResult && supabaseResult.message_text) {\n  customerMessage = supabaseResult.message_text;\n  source = 'direct';\n  console.log('✅ Opción 3 - Direct:', customerMessage?.substring(0, 50));\n}\n// 🔍 PRIORIDAD 4: En data object\nelse if (supabaseResult && supabaseResult.data && supabaseResult.data.message_text) {\n  customerMessage = supabaseResult.data.message_text;\n  source = 'data-object';\n  console.log('✅ Opción 4 - Data object:', customerMessage?.substring(0, 50));\n}\n// 🔍 PRIORIDAD 5: user_message del input (SIEMPRE debe existir)\nelse if (input.user_message) {\n  customerMessage = input.user_message;\n  source = 'input-fallback';\n  console.log('✅ Opción 5 - Input fallback:', customerMessage?.substring(0, 50));\n}\n\n// 🔴 Si NINGUNA opción funcionó, usar default\nif (!customerMessage) {\n  customerMessage = 'Cliente solicitó hablar con el encargado';\n  source = 'default';\n  console.log('⚠️ NO SE ENCONTRÓ MENSAJE - usando default');\n  console.log('⚠️ Input keys:', Object.keys(input));\n  console.log('⚠️ Supabase keys:', Object.keys(supabaseResult || {}));\n}\n\nconsole.log('📊 Source usado:', source);\n\n// Si el mensaje es muy largo (>200 caracteres), hacer resumen\nif (customerMessage && customerMessage.length > 200) {\n  customerMessage = customerMessage.substring(0, 197) + '...';\n}\n\nconst urgency = input.urgency || 'high';\n\n// Mapeo de razones a español\nconst reasonMap = {\n  'cliente_solicita': '🙋 El cliente solicita hablar con una persona',\n  'situacion_compleja': '🤔 Situación compleja fuera del alcance del agente',\n  'queja_grave': '😡 Queja grave del cliente',\n  'informacion_no_disponible': 'ℹ️ Información no disponible en el sistema',\n  'error_sistema': '⚠️ Error del sistema'\n};\n\nconst reasonText = reasonMap[reason] || reason;\nconst urgencyEmoji = urgency === 'high' ? '🚨🚨🚨' : '⚠️';\n\nconsole.log('📤 MENSAJE FINAL:', customerMessage);\nconsole.log('📤 Source:', source);\n\nreturn {\n  reason,\n  reasonText,\n  customerPhone,\n  customerName,\n  customerMessage,\n  urgency,\n  urgencyEmoji,\n  timestamp: new Date().toISOString(),\n  _debug_source: source\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [600, 300],
+      "position": [800, 300],
       "id": "prepare-escalation",
       "name": "📋 Preparar Escalado"
     },
@@ -84,7 +79,7 @@
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [800, 300],
+      "position": [1000, 300],
       "id": "get-restaurant",
       "name": "🏪 Get Restaurant",
       "credentials": {
@@ -96,11 +91,11 @@
     },
     {
       "parameters": {
-        "jsCode": "const escalation = $('📋 Preparar Escalado').first().json;\nconst restaurant = $input.first().json;\n\nconst channels = restaurant.channels || {};\n\n// ✅ Teléfonos correctos\nconst twilioNumber = channels.voice?.phone_number || '+14155238886';\nconst emergencyPhone = channels.whatsapp?.emergency_phone || restaurant.phone;\n\n// Validaciones\nif (!twilioNumber) {\n  throw new Error('❌ No se encontró número de canales IA');\n}\n\nif (!emergencyPhone) {\n  throw new Error('❌ No se encontró teléfono de emergencia');\n}\n\n// Construir mensaje de alerta\nconst message = `${escalation.urgencyEmoji} ALERTA - CLIENTE NECESITA ATENCIÓN\\n\\n${escalation.reasonText}\\n\\n👤 Cliente: ${escalation.customerName}\\n📞 Teléfono: ${escalation.customerPhone}\\n⏰ Hora: ${new Date().toLocaleString('es-ES')}\\n\\n💬 Mensaje del cliente:\\n\"${escalation.customerMessage}\"\\n\\n⚡ Acción requerida: Contactar al cliente URGENTEMENTE\\n\\n---\\nRestaurante: ${restaurant.name}`;\n\nconsole.log('📤 Mensaje completo:', message);\n\nreturn {\n  ...escalation,\n  restaurant_name: restaurant.name,\n  twilio_number: twilioNumber,\n  emergency_phone: emergencyPhone,\n  alert_message: message\n};"
+        "jsCode": "const escalation = $('📋 Preparar Escalado').first().json;\nconst restaurant = $input.first().json;\n\nconst channels = restaurant.channels || {};\n\n// ✅ Teléfonos correctos\nconst twilioNumber = channels.voice?.phone_number || '+14155238886';\nconst emergencyPhone = channels.whatsapp?.emergency_phone || restaurant.phone;\n\n// Validaciones\nif (!twilioNumber) {\n  throw new Error('❌ No se encontró número de canales IA');\n}\n\nif (!emergencyPhone) {\n  throw new Error('❌ No se encontró teléfono de emergencia');\n}\n\n// ✅ Hora en zona horaria de España (Europe/Madrid)\nconst horaEspana = new Date().toLocaleString('es-ES', {\n  timeZone: 'Europe/Madrid',\n  day: '2-digit',\n  month: '2-digit',\n  year: 'numeric',\n  hour: '2-digit',\n  minute: '2-digit',\n  second: '2-digit'\n});\n\n// Construir mensaje de alerta\nconst message = `${escalation.urgencyEmoji} ALERTA - CLIENTE NECESITA ATENCIÓN\\n\\n${escalation.reasonText}\\n\\n👤 Cliente: ${escalation.customerName}\\n📞 Teléfono: ${escalation.customerPhone}\\n⏰ Hora: ${horaEspana}\\n\\n💬 Mensaje del cliente:\\n\"${escalation.customerMessage}\"\\n\\n⚡ Acción requerida: Contactar al cliente URGENTEMENTE\\n\\n---\\nRestaurante: ${restaurant.name}`;\n\nconsole.log('📤 Mensaje completo:', message);\n\nreturn {\n  ...escalation,\n  restaurant_name: restaurant.name,\n  twilio_number: twilioNumber,\n  emergency_phone: emergencyPhone,\n  alert_message: message\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1000, 300],
+      "position": [1200, 300],
       "id": "build-alert",
       "name": "🚨 Construir Alerta"
     },
@@ -114,7 +109,7 @@
       },
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
-      "position": [1200, 300],
+      "position": [1400, 300],
       "id": "send-whatsapp-alert",
       "name": "📱 Enviar WhatsApp Urgente",
       "credentials": {
@@ -134,7 +129,7 @@
       },
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
-      "position": [1400, 300],
+      "position": [1600, 300],
       "id": "send-whatsapp-customer",
       "name": "📱 Enviar WhatsApp al Cliente",
       "credentials": {
@@ -186,7 +181,7 @@
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1600, 300],
+      "position": [1800, 300],
       "id": "log-escalation",
       "name": "💾 Registrar Escalado",
       "credentials": {
@@ -202,13 +197,16 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1800, 300],
+      "position": [2000, 300],
       "id": "return-success",
       "name": "✅ Devolver Resultado"
     }
   ],
   "connections": {
     "▶️ Start (Tool Call)": {
+      "main": [[{"node": "🐛 DEBUG Input", "type": "main", "index": 0}]]
+    },
+    "🐛 DEBUG Input": {
       "main": [[{"node": "🔍 Buscar Mensaje Cliente", "type": "main", "index": 0}]]
     },
     "🔍 Buscar Mensaje Cliente": {

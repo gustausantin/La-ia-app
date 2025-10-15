@@ -1,0 +1,251 @@
+{
+  "name": " Agent IA — TOOL check_availability (Consultar Disponibilidad)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "▶️ Start",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nconsole.log('📥 Input recibido:', input);\n\nconst fecha = input.date || input.reservation_date || '';\nconst hora = input.time || input.reservation_time || '';\nconst personas = parseInt(input.party_size || input.people || 0);\nconst ubicacion = input.reservation_location || input.location || null;\nconst restaurant_id = input.restaurant_id || '';\n\nif (!fecha || !/^\\d{4}-\\d{2}-\\d{2}$/.test(fecha)) {\n  throw new Error('Formato de fecha inválido. Se requiere YYYY-MM-DD');\n}\n\nconst hoy = new Date().toISOString().split('T')[0];\nif (fecha < hoy) {\n  throw new Error('No se puede consultar disponibilidad en fechas pasadas');\n}\n\nif (!hora || !/^\\d{2}:\\d{2}(:\\d{2})?$/.test(hora)) {\n  throw new Error('Formato de hora inválido. Se requiere HH:MM');\n}\n\nconst horaNormalizada = hora.substring(0, 5);\n\nif (!personas || personas < 1 || personas > 20) {\n  throw new Error('Número de personas debe estar entre 1 y 20');\n}\n\nif (!restaurant_id) {\n  throw new Error('restaurant_id es obligatorio');\n}\n\nconsole.log('✅ Validado:', { fecha, hora: horaNormalizada, personas, restaurant_id });\n\nreturn {\n  fecha,\n  hora: horaNormalizada,\n  personas,\n  ubicacion,\n  restaurant_id,\n  fecha_formateada: new Date(fecha).toLocaleDateString('es-ES', { \n    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' \n  })\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 320],
+      "id": "b2c3d4e5-f6g7-8901-bcde-f12345678901",
+      "name": "🔍 Validar Input"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "availability_slots",
+        "returnAll": false,
+        "limit": 100,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "restaurant_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.restaurant_id }}"
+            },
+            {
+              "keyName": "slot_date",
+              "condition": "eq",
+              "keyValue": "={{ $json.fecha }}"
+            },
+            {
+              "keyName": "start_time",
+              "condition": "eq",
+              "keyValue": "={{ $json.hora }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "free"
+            },
+            {
+              "keyName": "is_available",
+              "condition": "eq",
+              "keyValue": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [640, 320],
+      "id": "c3d4e5f6-g7h8-9012-cdef-123456789012",
+      "name": "📍 Buscar Slots Libres",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      },
+      "alwaysOutputData": true,
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const slots = $input.all();\nconst validacion = $('🔍 Validar Input').first().json;\n\nconsole.log('📊 Slots encontrados:', slots.length);\n\nif (slots.length === 0) {\n  return { tiene_slots: false };\n}\n\n// Filtrar por table_id para obtener info de mesas\nconst tableIds = [...new Set(slots.map(s => s.json.table_id))];\n\nconsole.log('🔑 Table IDs:', tableIds);\n\nreturn {\n  tiene_slots: true,\n  table_ids: tableIds,\n  total_slots: slots.length,\n  ...validacion\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [840, 320],
+      "id": "d4e5f6g7-h8i9-0123-defg-234567890123",
+      "name": "🔢 Procesar Slots"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "tiene-slots",
+              "leftValue": "={{ $json.tiene_slots }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1040, 320],
+      "id": "e5f6g7h8-i9j0-1234-efgh-345678901234",
+      "name": "If ¿Hay Slots?"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "tables",
+        "returnAll": false,
+        "limit": 50,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "restaurant_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.restaurant_id }}"
+            },
+            {
+              "keyName": "is_active",
+              "condition": "eq",
+              "keyValue": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1240, 240],
+      "id": "f6g7h8i9-j0k1-2345-fghi-456789012345",
+      "name": "🪑 Obtener Mesas",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const procesar = $('🔢 Procesar Slots').first().json;\nconst mesas = $input.all();\n\nconst tableIds = procesar.table_ids || [];\nconst personas = procesar.personas;\n\n// Filtrar mesas disponibles con capacidad suficiente\nconst mesasValidas = mesas\n  .map(m => m.json)\n  .filter(mesa => \n    tableIds.includes(mesa.id) && \n    mesa.capacity >= personas\n  )\n  .sort((a, b) => a.capacity - b.capacity);\n\nconsole.log('✅ Mesas válidas:', mesasValidas.length);\n\nif (mesasValidas.length === 0) {\n  return {\n    disponible: false,\n    mensaje: `Lo siento, no tenemos mesas con capacidad suficiente para ${personas} personas.`,\n    alternativas: [],\n    detalles: {\n      fecha: procesar.fecha,\n      hora: procesar.hora,\n      personas: personas\n    },\n    accion_sugerida: 'buscar_otra_hora'\n  };\n}\n\nconst mejorMesa = mesasValidas[0];\n\nconst mensaje = `¡Perfecto! Sí tenemos disponibilidad para ${personas} persona${personas > 1 ? 's' : ''} el ${procesar.fecha_formateada} a las ${procesar.hora}. Tenemos ${mesasValidas.length} mesa${mesasValidas.length > 1 ? 's' : ''} disponible${mesasValidas.length > 1 ? 's' : ''}.`;\n\nreturn {\n  disponible: true,\n  mensaje: mensaje,\n  detalles: {\n    fecha: procesar.fecha,\n    hora: procesar.hora,\n    personas: personas,\n    mesas_disponibles: mesasValidas.length,\n    mejor_opcion: {\n      mesa: mejorMesa.table_number,\n      capacidad: mejorMesa.capacity,\n      zona: mejorMesa.zone || 'General'\n    }\n  },\n  accion_sugerida: 'proceder_con_reserva'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 240],
+      "id": "g7h8i9j0-k1l2-3456-ghij-567890123456",
+      "name": "✅ Respuesta Disponible"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "availability_slots",
+        "returnAll": false,
+        "limit": 100,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "restaurant_id",
+              "condition": "eq",
+              "keyValue": "={{ $('🔍 Validar Input').item.json.restaurant_id }}"
+            },
+            {
+              "keyName": "slot_date",
+              "condition": "eq",
+              "keyValue": "={{ $('🔍 Validar Input').item.json.fecha }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "free"
+            },
+            {
+              "keyName": "is_available",
+              "condition": "eq",
+              "keyValue": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1240, 400],
+      "id": "h8i9j0k1-l2m3-4567-hijk-678901234567",
+      "name": "🔎 Buscar Alternativas",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      },
+      "alwaysOutputData": true,
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const validacion = $('🔍 Validar Input').first().json;\nconst alternativas = $input.all();\n\nif (alternativas.length === 0) {\n  return {\n    tiene_alternativas: false,\n    mensaje: `Lo siento, no tenemos disponibilidad para ${validacion.personas} personas el ${validacion.fecha_formateada}. ¿Te gustaría que busque en otra fecha?`,\n    disponible: false,\n    alternativas: [],\n    detalles: {\n      fecha_solicitada: validacion.fecha,\n      hora_solicitada: validacion.hora,\n      personas: validacion.personas\n    },\n    accion_sugerida: 'sugerir_otra_fecha'\n  };\n}\n\n// Agrupar por hora\nconst horasPorSlot = {};\nalternativas.forEach(slot => {\n  const hora = slot.json.start_time;\n  if (!horasPorSlot[hora]) {\n    horasPorSlot[hora] = [];\n  }\n  horasPorSlot[hora].push(slot.json.table_id);\n});\n\nconst horasDisponibles = Object.keys(horasPorSlot)\n  .sort()\n  .slice(0, 5);\n\nconst listaHoras = horasDisponibles.join(', ');\nconst mensaje = `Lo siento, no tenemos disponibilidad a las ${validacion.hora} para ${validacion.personas} personas. Sin embargo, sí tenemos disponibilidad en estos otros horarios el ${validacion.fecha_formateada}: ${listaHoras}. ¿Alguno de estos horarios te vendría bien?`;\n\nreturn {\n  tiene_alternativas: true,\n  disponible: false,\n  mensaje: mensaje,\n  alternativas: horasDisponibles,\n  detalles: {\n    fecha: validacion.fecha,\n    hora_solicitada: validacion.hora,\n    personas: validacion.personas,\n    total_alternativas: horasDisponibles.length\n  },\n  accion_sugerida: 'elegir_alternativa'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 400],
+      "id": "i9j0k1l2-m3n4-5678-ijkl-789012345678",
+      "name": "⚠️ Respuesta Alternativas"
+    }
+  ],
+  "connections": {
+    "▶️ Start": {
+      "main": [[{"node": "🔍 Validar Input", "type": "main", "index": 0}]]
+    },
+    "🔍 Validar Input": {
+      "main": [[{"node": "📍 Buscar Slots Libres", "type": "main", "index": 0}]]
+    },
+    "📍 Buscar Slots Libres": {
+      "main": [[{"node": "🔢 Procesar Slots", "type": "main", "index": 0}]]
+    },
+    "🔢 Procesar Slots": {
+      "main": [[{"node": "If ¿Hay Slots?", "type": "main", "index": 0}]]
+    },
+    "If ¿Hay Slots?": {
+      "main": [
+        [{"node": "🪑 Obtener Mesas", "type": "main", "index": 0}],
+        [{"node": "🔎 Buscar Alternativas", "type": "main", "index": 0}]
+      ]
+    },
+    "🪑 Obtener Mesas": {
+      "main": [[{"node": "✅ Respuesta Disponible", "type": "main", "index": 0}]]
+    },
+    "🔎 Buscar Alternativas": {
+      "main": [[{"node": "⚠️ Respuesta Alternativas", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-15T13:00:00.000Z",
+  "versionId": "2",
+  "meta": {
+    "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
+  }
+}
