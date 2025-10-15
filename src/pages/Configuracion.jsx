@@ -370,7 +370,8 @@ const Configuracion = () => {
                             api_token: dbSettings.channels?.whatsapp?.api_token || "",
                             business_account_id: dbSettings.channels?.whatsapp?.business_account_id || "",
                             use_same_phone: dbSettings.channels?.whatsapp?.use_same_phone ?? true,
-                            phone_number: dbSettings.channels?.whatsapp?.phone_number || ""
+                            phone_number: dbSettings.channels?.whatsapp?.phone_number || "",
+                            emergency_phone: dbSettings.channels?.whatsapp?.emergency_phone || ""  // ✅ AÑADIDO
                         },
                         instagram: { 
                             enabled: dbSettings.channels?.instagram?.enabled || false, 
@@ -556,12 +557,17 @@ const Configuracion = () => {
                 
                 const currentSettings = currentData?.settings || {};
                 
-                // Actualizar directamente en la tabla restaurants (columna settings.channels)
+                // ✅ CORREGIDO: Actualizar tanto 'channels' como 'settings' para preservar toda la info
+                const updatedSettings = {
+                    ...currentSettings,
+                    channels: updatedChannels  // Añadir channels a settings también
+                };
                 
                 const { data, error } = await supabase
                     .from('restaurants')
                     .update({
-                        channels: updatedChannels,
+                        channels: updatedChannels,  // Columna channels
+                        settings: updatedSettings,   // ✅ NUEVO: También actualizar settings
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', effectiveRestaurantId)
