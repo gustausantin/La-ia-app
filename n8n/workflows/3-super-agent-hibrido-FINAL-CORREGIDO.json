@@ -613,7 +613,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.first().json;\n\nreturn {\n  conversation_id: data.conversation_id,\n  customer_id: data.customer_id,\n  customer_phone: data.customer_phone,\n  customer_name: data.customer_name,\n  restaurant_id: data.restaurant_id,\n  channel: data.channel,\n  agent_response: data.fixed_message,\n  classification: data.classification,\n  timestamp: new Date().toISOString(),\n  should_escalate: data.should_escalate,\n  escalate_reason: data.escalate_reason,\n  escalate_urgency: data.escalate_urgency,\n  whatsapp_from: data.restaurant_context?.phone || '',\n  whatsapp_to: data.customer_phone\n};"
+        "jsCode": "const data = $input.first().json;\n\nreturn {\n  conversation_id: data.conversation_id,\n  customer_id: data.customer_id,\n  customer_phone: data.customer_phone,\n  customer_name: data.customer_name,\n  restaurant_id: data.restaurant_id,\n  channel: data.channel,\n  user_message: data.user_message,  // ✅ AÑADIDO: Mensaje original del cliente\n  agent_response: data.fixed_message,\n  classification: data.classification,\n  timestamp: new Date().toISOString(),\n  should_escalate: data.should_escalate,\n  escalate_reason: data.escalate_reason,\n  escalate_urgency: data.escalate_urgency,\n  whatsapp_from: data.restaurant_context?.phone || '',\n  whatsapp_to: data.customer_phone\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -680,7 +680,18 @@
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
-          "value": {}
+          "value": {
+            "conversation_id": "={{ $json.conversation_id }}",
+            "customer_id": "={{ $json.customer_id }}",
+            "customer_phone": "={{ $json.customer_phone }}",
+            "customer_name": "={{ $json.customer_name }}",
+            "restaurant_id": "={{ $json.restaurant_id }}",
+            "channel": "={{ $json.channel }}",
+            "user_message": "={{ $json.user_message }}",
+            "timestamp": "={{ $json.timestamp }}",
+            "reason": "={{ $json.escalate_reason || 'cliente_solicita' }}",
+            "urgency": "={{ $json.escalate_urgency || 'high' }}"
+          }
         },
         "options": {
           "waitForSubWorkflow": true
