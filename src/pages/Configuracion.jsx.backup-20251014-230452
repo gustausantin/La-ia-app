@@ -127,7 +127,7 @@ const Configuracion = () => {
         channels: {
             // Modo simple por defecto (objetos precreados para evitar undefined)
             voice: { enabled: false, phone_number: "" },
-            whatsapp: { enabled: false, use_same_phone: true, phone_number: "", emergency_phone: "" },
+            whatsapp: { enabled: false, use_same_phone: true, phone_number: "" },
             webchat: { enabled: true },
             instagram: { enabled: false, handle: "", invite_email: "" },
             facebook: { enabled: false, page_url: "", invite_email: "" },
@@ -491,10 +491,6 @@ const Configuracion = () => {
                         if (!ch.voice?.phone_number) errors.push('WhatsApp: usa mismo número, pero no hay teléfono en llamadas.');
                     } else if (!ch.whatsapp?.phone_number) {
                         errors.push('WhatsApp: falta el número.');
-                    }
-                    // Validar número de emergencia
-                    if (!ch.whatsapp?.emergency_phone) {
-                        errors.push('WhatsApp: falta el número de emergencia (obligatorio).');
                     }
                 }
                 if (ch.vapi?.enabled) {
@@ -915,18 +911,15 @@ const Configuracion = () => {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Teléfono persona de contacto (emergencias)
+                                                Teléfono
                                             </label>
                                             <input
                                                 type="tel"
                                                 value={settings.phone}
                                                 onChange={(e) => setSettings(prev => ({ ...prev, phone: e.target.value }))}
-                                                className="w-full px-4 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                                 placeholder="+34 600 000 000"
                                             />
-                                            <p className="text-xs text-red-600 mt-1 font-medium">
-                                                ⚠️ Este es el número del encargado para recibir alertas urgentes (NO pongas el teléfono del restaurante)
-                                            </p>
                                         </div>
 
                                         <div className="col-span-2">
@@ -1358,39 +1351,14 @@ const Configuracion = () => {
                         >
                             <div className="space-y-6">
                                 {/* INFORMACIÓN DEL RESTAURANTE */}
-                                {/* Aviso ANTES de todo */}
-                                <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-6 shadow-sm">
-                                    <div className="flex items-start gap-3">
-                                        <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
-                                        <div className="flex-1">
-                                            <h5 className="font-bold text-gray-900 mb-2">⚠️ IMPORTANTE: Necesitarás DOS números diferentes</h5>
-                                            <div className="space-y-2 text-sm text-gray-700">
-                                                <p><strong>1️⃣ Número para canales IA:</strong> Se dedicará 100% a la inteligencia artificial.</p>
-                                                <p><strong>2️⃣ Número de emergencia:</strong> Tu móvil personal o del encargado. Para recibir alertas urgentes.</p>
-                                                <p className="text-xs text-amber-700 font-medium mt-2">
-                                                    💡 Si no tienes un número dedicado para los canales, ya conseguiremos uno.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* LOS DOS NÚMEROS JUNTOS */}
-                                <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-6 shadow-sm">
-                                    <h4 className="text-sm font-bold text-purple-900 uppercase mb-5 flex items-center gap-2">
-                                        <Phone className="w-5 h-5" />
-                                        📞 NÚMEROS DE TELÉFONO
+                                <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 border-2 border-purple-200 rounded-lg p-5 shadow-sm">
+                                    <h4 className="text-sm font-bold text-purple-900 uppercase mb-4 flex items-center gap-2">
+                                        <Phone className="w-4 h-4" />
+                                        Información de contacto del restaurante
                                     </h4>
-                                    <p className="text-sm text-gray-700 mb-6">
-                                        Estos números se usarán automáticamente en <strong>todos los canales</strong> (WhatsApp, VAPI, Instagram, Facebook, etc.)
-                                    </p>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Número 1: Canales IA */}
-                                        <div className="bg-white rounded-lg p-4 border-2 border-blue-300">
-                                            <label className="block text-sm font-bold text-blue-900 mb-2">
-                                                1️⃣ Número dedicado para canales IA *
-                                            </label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-800 mb-2">Teléfono principal</label>
                                             <input
                                                 type="text"
                                                 value={settings.channels?.voice?.phone_number || ""}
@@ -1401,35 +1369,27 @@ const Configuracion = () => {
                                                         voice: { ...prev.channels?.voice, phone_number: e.target.value }
                                                     }
                                                 }))}
-                                                className="w-full px-4 py-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-base"
+                                                className="w-full px-4 py-2.5 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
                                                 placeholder="+34 600 000 000"
                                             />
-                                            <p className="text-xs text-gray-600 mt-2">
-                                                📱 Este número lo verán tus clientes al interactuar con la IA (dedicado 100% a IA, no lo uses para llamadas normales)
-                                            </p>
+                                            <p className="text-xs text-purple-700 mt-1">Número donde hoy reciben llamadas</p>
                                         </div>
-
-                                        {/* Número 2: Emergencia */}
-                                        <div className="bg-white rounded-lg p-4 border-2 border-red-300">
-                                            <label className="block text-sm font-bold text-red-900 mb-2">
-                                                2️⃣ Número de emergencia (humano) *
-                                            </label>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-800 mb-2">Móvil del restaurante (opcional)</label>
                                             <input
                                                 type="text"
-                                                value={settings.channels?.whatsapp?.emergency_phone || ""}
+                                                value={settings.channels?.voice?.mobile_number || ""}
                                                 onChange={(e) => setSettings(prev => ({
                                                     ...prev,
                                                     channels: {
                                                         ...prev.channels,
-                                                        whatsapp: { ...prev.channels?.whatsapp, emergency_phone: e.target.value }
+                                                        voice: { ...prev.channels?.voice, mobile_number: e.target.value }
                                                     }
                                                 }))}
-                                                className="w-full px-4 py-3 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-base"
+                                                className="w-full px-4 py-2.5 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
                                                 placeholder="+34 600 000 000"
                                             />
-                                            <p className="text-xs text-gray-600 mt-2">
-                                                🆘 Número del encargado para recibir alertas urgentes cuando la IA necesite ayuda (debe ser diferente al número de canales)
-                                            </p>
+                                            <p className="text-xs text-purple-700 mt-1">Móvil alternativo para contacto</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1651,7 +1611,7 @@ const Configuracion = () => {
                                                 <label htmlFor="wa-same-number" className="text-sm font-medium text-gray-700">Usar el mismo número de llamadas</label>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Número de teléfono para WhatsApp</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Número de teléfono</label>
                                                 <input
                                                     type="text"
                                                     value={(settings.channels?.whatsapp?.use_same_phone ? settings.channels?.voice?.phone_number : settings.channels?.whatsapp?.phone_number) || ""}
@@ -1666,7 +1626,6 @@ const Configuracion = () => {
                                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                                     placeholder="+34 600 000 000"
                                                 />
-                                                <p className="text-xs text-gray-500 mt-1">Se usará el número configurado arriba automáticamente</p>
                                             </div>
                                         </div>
                                     )}

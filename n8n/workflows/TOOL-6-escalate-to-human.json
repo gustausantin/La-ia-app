@@ -46,7 +46,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const escalation = $('📋 Preparar Escalado').first().json;\nconst restaurant = $input.first().json;\n\nconst channels = restaurant.channels || {};\nconst whatsapp = channels.whatsapp || {};\nconst emergencyPhone = whatsapp.emergency_phone || whatsapp.phone_number || restaurant.phone;\n\nif (!emergencyPhone) {\n  throw new Error('❌ No se encontró teléfono de emergencia para el restaurante');\n}\n\n// Construir mensaje de alerta\nconst message = `${escalation.urgencyEmoji} ALERTA - CLIENTE NECESITA ATENCIÓN\n\n${escalation.reasonText}\n\n👤 Cliente: ${escalation.customerName}\n📞 Teléfono: ${escalation.customerPhone}\n⏰ Hora: ${new Date().toLocaleString('es-ES')}\n\n💬 Mensaje del cliente:\n\"${escalation.customerMessage}\"\n\n⚡ Acción requerida: Contactar al cliente URGENTEMENTE\n\n---\nRestaurante: ${restaurant.name}`;\n\nconsole.log('📨 Enviando alerta a:', emergencyPhone);\nconsole.log('Mensaje:', message);\n\nreturn {\n  ...escalation,\n  restaurant_name: restaurant.name,\n  emergency_phone: emergencyPhone,\n  alert_message: message\n};"
+        "jsCode": "const escalation = $('📋 Preparar Escalado').first().json;\nconst restaurant = $input.first().json;\n\nconst channels = restaurant.channels || {};\nconst whatsapp = channels.whatsapp || {};\n\n// ✅ NÚMERO DE TWILIO (quien ENVÍA - FROM)\nconst twilioNumber = whatsapp.phone_number || restaurant.phone;\n\n// ✅ NÚMERO DE EMERGENCIA (quien RECIBE - TO)\nconst emergencyPhone = whatsapp.emergency_phone;\n\n// Validaciones\nif (!twilioNumber) {\n  throw new Error('❌ No se encontró número de Twilio para el restaurante (channels.whatsapp.phone_number)');\n}\n\nif (!emergencyPhone) {\n  throw new Error('❌ No se encontró teléfono de emergencia para el restaurante (channels.whatsapp.emergency_phone)');\n}\n\n// Construir mensaje de alerta\nconst message = `${escalation.urgencyEmoji} ALERTA - CLIENTE NECESITA ATENCIÓN\\n\\n${escalation.reasonText}\\n\\n👤 Cliente: ${escalation.customerName}\\n📞 Teléfono: ${escalation.customerPhone}\\n⏰ Hora: ${new Date().toLocaleString('es-ES')}\\n\\n💬 Mensaje del cliente:\\n\"${escalation.customerMessage}\"\\n\\n⚡ Acción requerida: Contactar al cliente URGENTEMENTE\\n\\n---\\nRestaurante: ${restaurant.name}`;\n\nconsole.log('📤 Configuración envío:');\nconsole.log('   FROM (Twilio):', twilioNumber);\nconsole.log('   TO (Emergencia):', emergencyPhone);\nconsole.log('   Mensaje:', message.substring(0, 100) + '...');\n\nreturn {\n  ...escalation,\n  restaurant_name: restaurant.name,\n  twilio_number: twilioNumber,\n  emergency_phone: emergencyPhone,\n  alert_message: message\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -56,7 +56,7 @@
     },
     {
       "parameters": {
-        "from": "={{ $json.customerPhone }}",
+        "from": "={{ $json.twilio_number }}",
         "to": "={{ $json.emergency_phone }}",
         "toWhatsapp": true,
         "message": "={{ $json.alert_message }}",
