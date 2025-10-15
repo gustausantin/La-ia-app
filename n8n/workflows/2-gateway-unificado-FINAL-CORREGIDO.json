@@ -1,5 +1,4 @@
 {
-  "name": "2 - Gateway Unificado (FINAL)",
   "nodes": [
     {
       "parameters": {},
@@ -322,22 +321,6 @@
       "name": "🚀 Clasificador"
     }
   ],
-  "pinData": {
-    "▶️ Start": [
-      {
-        "json": {
-          "channel": "whatsapp",
-          "restaurant_id": "d6b63130-1ebf-4284-98fc-a3b31a85d9d1",
-          "customer_phone": "+34671126148",
-          "customer_name": "Gustau",
-          "user_message": "Eii! hola!\nme gustaria reservar para mañana a las 20\nseriamos 4 va bien?",
-          "message_count": 3,
-          "buffer_key": "+34671126148",
-          "timestamp": "2025-10-14T11:00:20.311Z"
-        }
-      }
-    ]
-  },
   "connections": {
     "▶️ Start": {
       "main": [
@@ -457,14 +440,22 @@
       ]
     }
   },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1"
+  "pinData": {
+    "▶️ Start": [
+      {
+        "channel": "whatsapp",
+        "restaurant_id": "d6b63130-1ebf-4284-98fc-a3b31a85d9d1",
+        "customer_phone": "+34671126148",
+        "customer_name": "Gustau",
+        "user_message": "Eii! hola!\nme gustaria reservar para mañana a las 20\nseriamos 4 va bien?",
+        "message_count": 3,
+        "buffer_key": "+34671126148",
+        "timestamp": "2025-10-14T11:00:20.311Z"
+      }
+    ]
   },
-  "versionId": "acf081b8-b14f-46ce-a42f-023438bcc15a",
   "meta": {
     "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
-  },
-  "id": "5LobAwicedK8INQQ",
-  "tags": []
+  }
 }
+

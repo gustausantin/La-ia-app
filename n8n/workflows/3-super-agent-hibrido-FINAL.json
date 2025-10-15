@@ -308,6 +308,10 @@
               "fieldValue": "={{ $json.restaurant_id }}"
             },
             {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $json.customer_phone }}"
+            },
+            {
               "fieldId": "direction",
               "fieldValue": "outbound"
             },
