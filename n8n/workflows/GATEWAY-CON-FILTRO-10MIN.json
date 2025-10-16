@@ -1,0 +1,16 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const conversations = $input.all();\n\nif (conversations.length === 0) {\n  console.log('❌ No hay conversaciones');\n  return [];\n}\n\nconst now = new Date();\nconst tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);\n\nconst activeConversations = conversations.filter(item => {\n  const conv = item.json;\n  const createdAt = new Date(conv.created_at);\n  \n  const isRecent = createdAt >= tenMinutesAgo;\n  \n  console.log(`📅 Conversación ${conv.id}:`);\n  console.log(`  - Creada: ${conv.created_at}`);\n  console.log(`  - Hace ${Math.round((now - createdAt) / 60000)} minutos`);\n  console.log(`  - ¿Válida? ${isRecent}`);\n  \n  return isRecent;\n});\n\nif (activeConversations.length === 0) {\n  console.log('⏰ Todas las conversaciones tienen más de 10 minutos');\n  return [];\n}\n\nconsole.log(`✅ ${activeConversations.length} conversación(es) activa(s)`);\n\nreturn activeConversations;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [128, -272],
+      "id": "filter-10min-code",
+      "name": "⏰ Filtrar 10 Minutos"
+    }
+  ]
+}
+
+

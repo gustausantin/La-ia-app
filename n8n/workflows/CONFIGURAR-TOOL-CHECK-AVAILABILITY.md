@@ -163,3 +163,5 @@ IMPORTANTE: Cuando uses check_availability:
 **Prioridad:** 🔴 CRÍTICA  
 **Tiempo estimado:** 10 minutos  
 
+
+
