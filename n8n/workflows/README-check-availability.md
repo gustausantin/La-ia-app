@@ -363,3 +363,5 @@ WHERE restaurant_id = 'TU_RESTAURANT_ID'
 **Fecha:** 15 Octubre 2025  
 **Versión:** 1.0  
 
+
+

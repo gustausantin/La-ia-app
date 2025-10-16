@@ -27,14 +27,17 @@
           "conditions": [
             {
               "keyName": "conversation_id",
+              "condition": "eq",
               "keyValue": "={{ $json.conversation_id }}"
             },
             {
               "keyName": "customer_phone",
+              "condition": "eq",
               "keyValue": "={{ $json.customer_phone }}"
             },
             {
               "keyName": "direction",
+              "condition": "eq",
               "keyValue": "inbound"
             }
           ]
@@ -72,6 +75,7 @@
           "conditions": [
             {
               "keyName": "id",
+              "condition": "eq",
               "keyValue": "={{ $('▶️ Start (Tool Call)').item.json.restaurant_id }}"
             }
           ]
