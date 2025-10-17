@@ -53,8 +53,6 @@ import { ReservationDetailsModal } from "../components/reservas/ReservationDetai
 import { processReservationCompletion } from "../services/CRMService";
 import AvailabilityManager from "../components/AvailabilityManager";
 import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
-import { useRegenerationModal } from '../hooks/useRegenerationModal';
-import RegenerationRequiredModal from '../components/RegenerationRequiredModal';
 
 // 📧 FUNCIÓN PARA ENVIAR MENSAJE NO-SHOW
 const sendNoShowMessage = async (reservation) => {
@@ -638,7 +636,6 @@ export default function Reservas() {
     const navigate = useNavigate();
     const location = useLocation();
     const changeDetection = useAvailabilityChangeDetection(restaurantId);
-    const { isModalOpen, modalChangeReason, modalChangeDetails, showRegenerationModal, closeModal } = useRegenerationModal();
 
     const [loading, setLoading] = useState(true);
     const [reservations, setReservations] = useState([]);
@@ -2691,14 +2688,6 @@ export default function Reservas() {
                     </div>
                 </div>
             )}
-            
-            {/* 🚨 MODAL BLOQUEANTE DE REGENERACIÓN */}
-            <RegenerationRequiredModal
-                isOpen={isModalOpen}
-                onClose={closeModal}
-                changeReason={modalChangeReason}
-                changeDetails={modalChangeDetails}
-            />
         </div>
     );
 }

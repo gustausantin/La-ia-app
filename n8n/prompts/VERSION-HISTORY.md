@@ -2,7 +2,7 @@
 
 ## 🎯 GUÍA DE USO
 
-**Prompt activo en producción:** `PROMPT-SUPER-AGENT-v3-PERFECTO.txt` ✅
+**Prompt activo en producción:** `PROMPT-SUPER-AGENT-v4-CON-ZONAS.txt` ✅
 
 Cada versión está documentada con:
 - Fecha de creación
@@ -14,7 +14,43 @@ Cada versión está documentada con:
 
 ## 📚 VERSIONES DISPONIBLES
 
-### **VERSIÓN 3 PERFECTO** ✅ **(ACTUAL)**
+### **VERSIÓN 4 CON ZONAS** ✅ **(ACTUAL)**
+**Archivo:** `PROMPT-SUPER-AGENT-v4-CON-ZONAS.txt`  
+**Fecha:** 17 de octubre 2025  
+**Líneas:** 360+
+
+**Nueva funcionalidad:** Sistema completo de gestión de zonas
+
+**Cambios principales:**
+- ✅ Nueva sección "🏢 GESTIÓN DE ZONAS" con 4 zonas estandarizadas
+- ✅ Lógica inteligente: Privado solo se sugiere en casos específicos
+- ✅ Actualización de `check_availability`: parámetro `preferred_zone`
+- ✅ Actualización de `create_reservation`: parámetro `preferred_zone`
+- ✅ Checklist ampliada: Paso 3.5 (ZONA opcional)
+- ✅ Flujo de conversación: 4 casos (A/B/C/D) para gestión de zona
+- ✅ Manejo de disponibilidad por zona: sugerencias de zonas alternativas
+
+**Zonas disponibles:**
+- 🏠 Interior (default, siempre ofrecido)
+- ☀️ Terraza (siempre ofrecido)
+- 🍷 Barra (siempre ofrecido)
+- 🚪 Privado (solo sugerido en casos específicos)
+
+**Reglas de Privado:**
+- Grupo ≥ 8 personas → Sugerir privado
+- Keywords ("tranquilo", "íntimo", "romántico", "especial", "aniversario") → Sugerir privado
+- Cliente pregunta explícitamente → Ofrecer privado
+- Otros casos → NO mencionar privado
+
+**Por qué usar esta versión:**
+- Permite al agente gestionar preferencias de zona de forma natural
+- Optimiza experiencia del usuario (puede elegir dónde sentarse)
+- Aumenta conversión (clientes eligen su zona preferida)
+- Inteligente con sala privada (no la ofrece a todo el mundo)
+
+---
+
+### **VERSIÓN 3 PERFECTO**
 **Archivo:** `PROMPT-SUPER-AGENT-v3-PERFECTO.txt`  
 **Fecha:** 17 de octubre 2025  
 **Líneas:** 238

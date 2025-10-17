@@ -11,7 +11,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.first().json;\n\nconsole.log('📥 Input recibido:', input);\n\nconst fecha = input.date || input.reservation_date || '';\nconst hora = input.time || input.reservation_time || '';\nconst personas = parseInt(input.party_size || input.people || 0);\nconst ubicacion = input.reservation_location || input.location || null;\nconst restaurant_id = input.restaurant_id || '';\n\nif (!fecha || !/^\\d{4}-\\d{2}-\\d{2}$/.test(fecha)) {\n  throw new Error('Formato de fecha inválido. Se requiere YYYY-MM-DD');\n}\n\nconst hoy = new Date().toISOString().split('T')[0];\nif (fecha < hoy) {\n  throw new Error('No se puede consultar disponibilidad en fechas pasadas');\n}\n\nif (!hora || !/^\\d{2}:\\d{2}(:\\d{2})?$/.test(hora)) {\n  throw new Error('Formato de hora inválido. Se requiere HH:MM');\n}\n\nconst horaNormalizada = hora.substring(0, 5);\n\nif (!personas || personas < 1 || personas > 20) {\n  throw new Error('Número de personas debe estar entre 1 y 20');\n}\n\nif (!restaurant_id) {\n  throw new Error('restaurant_id es obligatorio');\n}\n\nconsole.log('✅ Validado:', { fecha, hora: horaNormalizada, personas, restaurant_id });\n\nreturn {\n  fecha,\n  hora: horaNormalizada,\n  personas,\n  ubicacion,\n  restaurant_id,\n  fecha_formateada: new Date(fecha).toLocaleDateString('es-ES', { \n    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' \n  })\n};"
+        "jsCode": "const input = $input.first().json;\n\nconsole.log('📥 Input recibido:', input);\n\nconst fecha = input.date || input.reservation_date || '';\nconst hora = input.time || input.reservation_time || '';\nconst personas = parseInt(input.party_size || input.people || 0);\nconst restaurant_id = input.restaurant_id || '';\n\n// ✅ NUEVO: Validar y normalizar zona\nconst zonaRaw = input.preferred_zone || input.zone || input.reservation_location || input.location || null;\nconst validZones = ['interior', 'terraza', 'barra', 'privado', 'any'];\nlet zona = null;\n\nif (zonaRaw) {\n  const zonaNormalizada = zonaRaw.toLowerCase().trim();\n  if (validZones.includes(zonaNormalizada)) {\n    zona = zonaNormalizada === 'any' ? null : zonaNormalizada;\n    console.log(`✅ Zona válida: ${zona || 'todas'}`);\n  } else {\n    console.log(`⚠️ Zona inválida: \"${zonaRaw}\". Se buscará en todas las zonas.`);\n    zona = null;  // Fallback: buscar en todas las zonas\n  }\n}\n\nif (!fecha || !/^\\d{4}-\\d{2}-\\d{2}$/.test(fecha)) {\n  throw new Error('Formato de fecha inválido. Se requiere YYYY-MM-DD');\n}\n\nconst hoy = new Date().toISOString().split('T')[0];\nif (fecha < hoy) {\n  throw new Error('No se puede consultar disponibilidad en fechas pasadas');\n}\n\nif (!hora || !/^\\d{2}:\\d{2}(:\\d{2})?$/.test(hora)) {\n  throw new Error('Formato de hora inválido. Se requiere HH:MM');\n}\n\nconst horaNormalizada = hora.substring(0, 5);\n\nif (!personas || personas < 1 || personas > 20) {\n  throw new Error('Número de personas debe estar entre 1 y 20');\n}\n\nif (!restaurant_id) {\n  throw new Error('restaurant_id es obligatorio');\n}\n\nconsole.log('✅ Validado:', { fecha, hora: horaNormalizada, personas, zona: zona || 'todas', restaurant_id });\n\nreturn {\n  fecha,\n  hora: horaNormalizada,\n  personas,\n  zona,  // null = buscar en todas las zonas\n  restaurant_id,\n  fecha_formateada: new Date(fecha).toLocaleDateString('es-ES', { \n    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' \n  })\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -126,10 +126,18 @@
               "keyName": "is_active",
               "condition": "eq",
               "keyValue": "true"
+            },
+            {
+              "keyName": "zone",
+              "condition": "eq",
+              "keyValue": "={{ $json.zona }}",
+              "combinator": "and"
             }
           ]
         },
-        "options": {}
+        "options": {
+          "queryName": "filterByZone"
+        }
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -141,11 +149,12 @@
           "id": "9pdl4V7ImejCLZWo",
           "name": "Supabase La-IA"
         }
-      }
+      },
+      "notes": "Filtra mesas por restaurant_id, is_active y opcionalmente por zone si se especificó"
     },
     {
       "parameters": {
-        "jsCode": "const procesar = $('🔢 Procesar Slots').first().json;\nconst mesas = $input.all();\n\nconst tableIds = procesar.table_ids || [];\nconst personas = procesar.personas;\n\n// Filtrar mesas disponibles con capacidad suficiente\nconst mesasValidas = mesas\n  .map(m => m.json)\n  .filter(mesa => \n    tableIds.includes(mesa.id) && \n    mesa.capacity >= personas\n  )\n  .sort((a, b) => a.capacity - b.capacity);\n\nconsole.log('✅ Mesas válidas:', mesasValidas.length);\n\nif (mesasValidas.length === 0) {\n  return {\n    disponible: false,\n    mensaje: `Lo siento, no tenemos mesas con capacidad suficiente para ${personas} personas.`,\n    alternativas: [],\n    detalles: {\n      fecha: procesar.fecha,\n      hora: procesar.hora,\n      personas: personas\n    },\n    accion_sugerida: 'buscar_otra_hora'\n  };\n}\n\nconst mejorMesa = mesasValidas[0];\n\nconst mensaje = `¡Perfecto! Sí tenemos disponibilidad para ${personas} persona${personas > 1 ? 's' : ''} el ${procesar.fecha_formateada} a las ${procesar.hora}. Tenemos ${mesasValidas.length} mesa${mesasValidas.length > 1 ? 's' : ''} disponible${mesasValidas.length > 1 ? 's' : ''}.`;\n\nreturn {\n  disponible: true,\n  mensaje: mensaje,\n  detalles: {\n    fecha: procesar.fecha,\n    hora: procesar.hora,\n    personas: personas,\n    mesas_disponibles: mesasValidas.length,\n    mejor_opcion: {\n      mesa: mejorMesa.table_number,\n      capacidad: mejorMesa.capacity,\n      zona: mejorMesa.zone || 'General'\n    }\n  },\n  accion_sugerida: 'proceder_con_reserva'\n};"
+        "jsCode": "const procesar = $('🔢 Procesar Slots').first().json;\nconst mesas = $input.all();\n\nconst tableIds = procesar.table_ids || [];\nconst personas = procesar.personas;\nconst zona = procesar.zona;  // ✅ NUEVO\n\n// Filtrar mesas disponibles con capacidad suficiente\nconst mesasValidas = mesas\n  .map(m => m.json)\n  .filter(mesa => \n    tableIds.includes(mesa.id) && \n    mesa.capacity >= personas\n  )\n  .sort((a, b) => a.capacity - b.capacity);\n\nconsole.log('✅ Mesas válidas:', mesasValidas.length);\n\nif (mesasValidas.length === 0) {\n  // ✅ MEJORADO: Mensaje diferente si se especificó zona\n  const mensajeBase = `Lo siento, no tenemos mesas con capacidad suficiente para ${personas} personas`;\n  const mensajeZona = zona ? ` en la zona ${zona}` : '';\n  const sugerencia = zona ? ' ¿Te iría bien en otra zona?' : '';\n  \n  return {\n    disponible: false,\n    mensaje: `${mensajeBase}${mensajeZona}.${sugerencia}`,\n    alternativas: [],\n    detalles: {\n      fecha: procesar.fecha,\n      hora: procesar.hora,\n      personas: personas,\n      zona_solicitada: zona\n    },\n    accion_sugerida: zona ? 'sugerir_otra_zona' : 'buscar_otra_hora'\n  };\n}\n\nconst mejorMesa = mesasValidas[0];\n\n// ✅ MEJORADO: Mencionar zona solo si se especificó\nconst mensajeZona = zona ? ` en ${zona}` : '';\nconst mensaje = `¡Perfecto! Sí tenemos disponibilidad${mensajeZona} para ${personas} persona${personas > 1 ? 's' : ''} el ${procesar.fecha_formateada} a las ${procesar.hora}. Tenemos ${mesasValidas.length} mesa${mesasValidas.length > 1 ? 's' : ''} disponible${mesasValidas.length > 1 ? 's' : ''}.`;\n\nreturn {\n  disponible: true,\n  mensaje: mensaje,\n  detalles: {\n    fecha: procesar.fecha,\n    hora: procesar.hora,\n    personas: personas,\n    zona_solicitada: zona,  // ✅ NUEVO\n    mesas_disponibles: mesasValidas.length,\n    mejor_opcion: {\n      mesa: mejorMesa.table_number,\n      capacidad: mejorMesa.capacity,\n      zona: mejorMesa.zone || 'interior'\n    }\n  },\n  accion_sugerida: 'proceder_con_reserva'\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

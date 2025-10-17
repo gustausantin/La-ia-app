@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useReservationWizard } from '../../hooks/useReservationWizard';
 import { AlternativeTimesModal } from './AlternativeTimesModal';
+import { getZoneIcon, getZoneLabel } from '../../constants/zones';
 
 /**
  * Componente principal del wizard de reservas
@@ -694,7 +695,7 @@ const StepZone = ({ formData, validation, isLoading, onChange }) => {
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-lg font-semibold text-gray-900 capitalize">
-                  {zone.zone}
+                  {getZoneIcon(zone.zone)} {getZoneLabel(zone.zone)}
                 </span>
                 {formData.zone === zone.zone && (
                   <Check className="w-6 h-6 text-blue-600" />
