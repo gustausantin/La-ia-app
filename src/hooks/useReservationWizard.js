@@ -264,7 +264,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
       // 🔥 AGRUPAR SOLO LAS MESAS DISPONIBLES por zona
       const zoneCapacity = {};
       availableTables.forEach(table => {
-        const zone = table.zone || 'main';
+        const zone = table.zone || 'interior';  // ✅ Cambio: 'main' → 'interior'
         if (!zoneCapacity[zone]) {
           zoneCapacity[zone] = {
             zone,
@@ -335,7 +335,7 @@ export const useReservationWizard = (restaurantId, initialData = null) => {
     
     // 🆕 Filtrar por zona si se especificó
     if (zone) {
-      tables = tables.filter(t => (t.zone || 'main') === zone);
+      tables = tables.filter(t => (t.zone || 'interior') === zone);  // ✅ Cambio: 'main' → 'interior'
       console.log(`📍 Filtrando por zona "${zone}":`, tables.length, 'mesas');
     }
     

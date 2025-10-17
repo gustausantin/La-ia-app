@@ -1716,14 +1716,10 @@ const TableModal = ({
                             }`}
                         >
                             <option value="">Seleccionar zona...</option>
-                            <option value="Salón principal">Salón principal</option>
-                            <option value="Salón secundario">Salón secundario</option>
-                            <option value="Terraza">Terraza</option>
-                            <option value="Privado">Privado</option>
-                            <option value="Exterior">Exterior</option>
-                            <option value="Barra">Barra</option>
-                            <option value="VIP">Zona VIP</option>
-                            <option value="Otros">Otros</option>
+                            <option value="interior">🏠 Interior</option>
+                            <option value="terraza">☀️ Terraza</option>
+                            <option value="barra">🍷 Barra</option>
+                            <option value="privado">🚪 Privado</option>
                         </select>
                         {errors.zone && (
                             <p className="text-xs text-red-600 mt-1">

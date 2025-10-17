@@ -1,0 +1,329 @@
+{
+  "name": "Tool: check_availability (CON ZONAS OPTIMIZADO)",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"date\": \"2025-10-19\",\n  \"time\": \"20:00\",\n  \"party_size\": 4,\n  \"preferred_zone\": \"terraza\",\n  \"restaurant_id\": \"d6b63130-1ebf-4284-98fc-a3b31a85d9d1\"\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [-640, 360],
+      "id": "3318ab06-204f-4cec-84dd-3c52d5412cf0",
+      "name": "Start",
+      "notes": "✅ NUEVO: Acepta preferred_zone (opcional)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =====================================================\n// 🔍 VALIDACIÓN DE INPUT CON SOPORTE DE ZONAS\n// =====================================================\n\nconst input = $input.first().json;\n\nconsole.log('📥 Input recibido:', input);\n\n// ===== VALIDAR FECHA =====\nconst fecha = input.date || input.reservation_date || '';\n\nif (!fecha || !/^\\d{4}-\\d{2}-\\d{2}$/.test(fecha)) {\n  throw new Error('Formato de fecha inválido. Se requiere YYYY-MM-DD');\n}\n\nconst hoy = new Date().toISOString().split('T')[0];\nif (fecha < hoy) {\n  throw new Error('No se puede consultar disponibilidad en fechas pasadas');\n}\n\n// ===== VALIDAR HORA =====\nconst hora = input.time || input.reservation_time || '';\n\nif (!hora || !/^\\d{2}:\\d{2}(:\\d{2})?$/.test(hora)) {\n  throw new Error('Formato de hora inválido. Se requiere HH:MM');\n}\n\nconst horaNormalizada = hora.substring(0, 5);\n\n// ===== VALIDAR PERSONAS =====\nconst personas = parseInt(input.party_size || input.people || 0);\n\nif (!personas || personas < 1 || personas > 20) {\n  throw new Error('Número de personas debe estar entre 1 y 20');\n}\n\n// ===== VALIDAR RESTAURANT_ID =====\nconst restaurant_id = input.restaurant_id || '';\n\nif (!restaurant_id) {\n  throw new Error('restaurant_id es obligatorio');\n}\n\n// ✅ NUEVO: VALIDAR Y NORMALIZAR ZONA\nconst zonaRaw = input.preferred_zone || input.zone || input.reservation_location || input.location || null;\nconst validZones = ['interior', 'terraza', 'barra', 'privado', 'any'];\nlet zona = null;\n\nif (zonaRaw) {\n  const zonaNormalizada = zonaRaw.toLowerCase().trim();\n  if (validZones.includes(zonaNormalizada)) {\n    zona = zonaNormalizada === 'any' ? null : zonaNormalizada;\n    console.log(`✅ Zona válida: ${zona || 'todas'}`);\n  } else {\n    console.log(`⚠️ Zona inválida: \"${zonaRaw}\". Se buscará en todas las zonas.`);\n    zona = null;  // Fallback: buscar en todas las zonas\n  }\n}\n\nconsole.log('✅ Validado:', { fecha, hora: horaNormalizada, personas, zona: zona || 'todas', restaurant_id });\n\n// ===== RETURN =====\nreturn {\n  fecha,\n  hora: horaNormalizada,\n  personas,\n  zona,  // null = buscar en todas las zonas\n  restaurant_id,\n  fecha_formateada: new Date(fecha).toLocaleDateString('es-ES', { \n    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' \n  })\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-448, 360],
+      "id": "d0be64bf-4074-4f2a-a703-f16cd3b4b256",
+      "name": "🔍 Validar Input",
+      "notes": "✅ MEJORADO: Valida zona (opcional)"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "availability_slots",
+        "returnAll": false,
+        "limit": 100,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "restaurant_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.restaurant_id }}"
+            },
+            {
+              "keyName": "slot_date",
+              "condition": "eq",
+              "keyValue": "={{ $json.fecha }}"
+            },
+            {
+              "keyName": "start_time",
+              "condition": "eq",
+              "keyValue": "={{ $json.hora }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "free"
+            },
+            {
+              "keyName": "is_available",
+              "condition": "eq",
+              "keyValue": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-256, 360],
+      "id": "e784d94e-f8d1-4822-9031-7ad33ea69bda",
+      "name": "📍 Buscar Slots Libres",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      },
+      "continueOnFail": true,
+      "notes": "✅ Busca slots disponibles (hora exacta)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =====================================================\n// 🔢 PROCESAR SLOTS CON FILTRO DE ZONA Y CAPACIDAD\n// =====================================================\n\nconst slots = $input.all();\nconst validacion = $('🔍 Validar Input').first().json;\n\nconsole.log('📊 Slots encontrados:', slots.length);\n\nif (slots.length === 0) {\n  return { \n    tiene_slots: false,\n    ...validacion\n  };\n}\n\n// ✅ NUEVO: Filtrar por zona SI se especificó\nlet slotsFiltrados = slots;\n\nif (validacion.zona) {\n  slotsFiltrados = slots.filter(s => s.json.zone === validacion.zona);\n  console.log(`🔍 Slots en zona \"${validacion.zona}\": ${slotsFiltrados.length}`);\n}\n\nif (slotsFiltrados.length === 0) {\n  return { \n    tiene_slots: false,\n    zona_solicitada: validacion.zona,\n    zona_no_disponible: true,\n    slots_totales: slots.length,  // Hay slots pero en otras zonas\n    ...validacion\n  };\n}\n\n// Agrupar por table_id para contar slots por mesa\nconst slotsPorMesa = {};\nslotsFiltrados.forEach(slot => {\n  const tableId = slot.json.table_id;\n  if (!slotsPorMesa[tableId]) {\n    slotsPorMesa[tableId] = {\n      slots: [],\n      zone: slot.json.zone\n    };\n  }\n  slotsPorMesa[tableId].slots.push(slot.json);\n});\n\nconst tableIds = Object.keys(slotsPorMesa);\n\nconsole.log(`🔑 Mesas con slots: ${tableIds.length}`);\n\nreturn {\n  tiene_slots: true,\n  table_ids: tableIds,\n  slots_por_mesa: slotsPorMesa,\n  total_slots: slotsFiltrados.length,\n  zona_solicitada: validacion.zona,\n  ...validacion\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-64, 360],
+      "id": "13c11657-df0f-49dd-b0d9-25971b3d6aaa",
+      "name": "🔢 Procesar Slots",
+      "notes": "✅ MEJORADO: Filtra por zona si se especificó"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "tiene-slots",
+              "leftValue": "={{ $json.tiene_slots }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [128, 360],
+      "id": "63824336-28b5-4fea-908c-f9d6e8a34470",
+      "name": "❓ ¿Hay Slots?",
+      "notes": "Bifurcación: Disponible vs No disponible"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "tables",
+        "returnAll": false,
+        "limit": 50,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "restaurant_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.restaurant_id }}"
+            },
+            {
+              "keyName": "is_active",
+              "condition": "eq",
+              "keyValue": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [320, 280],
+      "id": "83a2b77e-cf3c-4deb-80c8-e85f3afbef28",
+      "name": "🪑 Obtener Mesas",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      },
+      "notes": "✅ NOTA: Aún necesario para obtener capacity"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =====================================================\n// ✅ RESPUESTA: SÍ HAY DISPONIBILIDAD\n// =====================================================\n\nconst procesar = $('🔢 Procesar Slots').first().json;\nconst mesas = $input.all();\n\nconst tableIds = procesar.table_ids || [];\nconst personas = procesar.personas;\nconst zona = procesar.zona;\n\n// Filtrar mesas disponibles con capacidad suficiente\nconst mesasValidas = mesas\n  .map(m => m.json)\n  .filter(mesa => \n    tableIds.includes(mesa.id) && \n    mesa.capacity >= personas\n  )\n  .sort((a, b) => a.capacity - b.capacity);\n\nconsole.log('✅ Mesas válidas:', mesasValidas.length);\n\nif (mesasValidas.length === 0) {\n  // ✅ MEJORADO: Mensaje diferente si se especificó zona\n  const mensajeBase = `Lo siento, no tenemos mesas con capacidad suficiente para ${personas} personas`;\n  const mensajeZona = zona ? ` en la zona ${zona}` : '';\n  const sugerencia = zona ? ' ¿Te iría bien en otra zona?' : '';\n  \n  return {\n    disponible: false,\n    mensaje: `${mensajeBase}${mensajeZona}.${sugerencia}`,\n    alternativas: [],\n    detalles: {\n      fecha: procesar.fecha,\n      hora: procesar.hora,\n      personas: personas,\n      zona_solicitada: zona\n    },\n    accion_sugerida: zona ? 'sugerir_otra_zona' : 'buscar_otra_hora'\n  };\n}\n\nconst mejorMesa = mesasValidas[0];\n\n// ✅ MEJORADO: Mencionar zona solo si se especificó\nconst mensajeZona = zona ? ` en ${zona}` : '';\nconst mensaje = `¡Perfecto! Sí tenemos disponibilidad${mensajeZona} para ${personas} persona${personas > 1 ? 's' : ''} el ${procesar.fecha_formateada} a las ${procesar.hora}. Tenemos ${mesasValidas.length} mesa${mesasValidas.length > 1 ? 's' : ''} disponible${mesasValidas.length > 1 ? 's' : ''}.`;\n\nreturn {\n  disponible: true,\n  mensaje: mensaje,\n  detalles: {\n    fecha: procesar.fecha,\n    hora: procesar.hora,\n    personas: personas,\n    zona_solicitada: zona,  // ✅ NUEVO\n    mesas_disponibles: mesasValidas.length,\n    mejor_opcion: {\n      mesa: mejorMesa.table_number,\n      capacidad: mejorMesa.capacity,\n      zona: mejorMesa.zone || 'interior'\n    }\n  },\n  accion_sugerida: 'proceder_con_reserva'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [512, 280],
+      "id": "7903ae04-d85b-4eb1-8d8b-0f4aa85d8322",
+      "name": "✅ Respuesta: Disponible",
+      "notes": "✅ MEJORADO: Incluye info de zona en respuesta"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "availability_slots",
+        "returnAll": false,
+        "limit": 200,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "restaurant_id",
+              "condition": "eq",
+              "keyValue": "={{ $('🔍 Validar Input').item.json.restaurant_id }}"
+            },
+            {
+              "keyName": "slot_date",
+              "condition": "eq",
+              "keyValue": "={{ $('🔍 Validar Input').item.json.fecha }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "free"
+            },
+            {
+              "keyName": "is_available",
+              "condition": "eq",
+              "keyValue": "true"
+            }
+          ]
+        },
+        "options": {
+          "sort": [
+            {
+              "field": "start_time",
+              "direction": "asc"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [320, 440],
+      "id": "162e89e9-0560-4141-932c-3cd5411f53d5",
+      "name": "🔎 Buscar Alternativas",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      },
+      "continueOnFail": true,
+      "notes": "✅ Busca todos los slots libres del día (ordenados por hora)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =====================================================\n// ⚠️ RESPUESTA: NO HAY DISPONIBILIDAD (CON ALTERNATIVAS)\n// =====================================================\n\nconst validacion = $('🔍 Validar Input').first().json;\nconst procesar = $('🔢 Procesar Slots').first().json;\nconst alternativas = $input.all();\n\nconst zona = validacion.zona;\nconst personas = validacion.personas;\n\n// ===== CASO 1: NO HAY ALTERNATIVAS EN TODO EL DÍA =====\nif (alternativas.length === 0) {\n  return {\n    tiene_alternativas: false,\n    mensaje: `Lo siento, no tenemos disponibilidad para ${personas} personas el ${validacion.fecha_formateada}. ¿Te gustaría que busque en otra fecha?`,\n    disponible: false,\n    alternativas: [],\n    detalles: {\n      fecha_solicitada: validacion.fecha,\n      hora_solicitada: validacion.hora,\n      personas: personas,\n      zona_solicitada: zona\n    },\n    accion_sugerida: 'sugerir_otra_fecha'\n  };\n}\n\n// ===== CASO 2: HAY SLOTS PERO EN OTRA ZONA =====\nif (procesar.zona_no_disponible && zona) {\n  // Buscar en qué zonas SÍ hay disponibilidad\n  const zonasDisponibles = [...new Set(\n    alternativas\n      .map(s => s.json.zone)\n      .filter(z => z && z !== zona)\n  )];\n  \n  if (zonasDisponibles.length > 0) {\n    const listaZonas = zonasDisponibles.join(', ');\n    return {\n      tiene_alternativas: true,\n      disponible: false,\n      mensaje: `Lo siento, no tenemos disponibilidad en ${zona} a las ${validacion.hora} para ${personas} personas. Sin embargo, sí tenemos disponibilidad en: ${listaZonas}. ¿Te iría bien alguna de estas zonas?`,\n      alternativas_zona: zonasDisponibles,\n      detalles: {\n        fecha: validacion.fecha,\n        hora_solicitada: validacion.hora,\n        personas: personas,\n        zona_solicitada: zona,\n        zonas_alternativas: zonasDisponibles\n      },\n      accion_sugerida: 'elegir_otra_zona'\n    };\n  }\n}\n\n// ===== CASO 3: HAY SLOTS EN OTRAS HORAS =====\n// Agrupar por hora\nconst horasPorSlot = {};\nalternativas.forEach(slot => {\n  const hora = slot.json.start_time;\n  const zonaSlot = slot.json.zone;\n  \n  // Si se especificó zona, solo contar esa zona\n  if (zona && zonaSlot !== zona) {\n    return;\n  }\n  \n  if (!horasPorSlot[hora]) {\n    horasPorSlot[hora] = {\n      slots: 0,\n      tables: new Set()\n    };\n  }\n  horasPorSlot[hora].slots++;\n  horasPorSlot[hora].tables.add(slot.json.table_id);\n});\n\nconst horasDisponibles = Object.keys(horasPorSlot)\n  .filter(h => h !== validacion.hora)  // Excluir hora solicitada\n  .sort()\n  .slice(0, 5);\n\nif (horasDisponibles.length === 0) {\n  // No hay alternativas en la zona solicitada\n  const mensajeZona = zona ? ` en ${zona}` : '';\n  return {\n    tiene_alternativas: false,\n    disponible: false,\n    mensaje: `Lo siento, no tenemos disponibilidad${mensajeZona} para ${personas} personas el ${validacion.fecha_formateada}. ¿Te gustaría que busque en otra fecha?`,\n    alternativas: [],\n    detalles: {\n      fecha: validacion.fecha,\n      hora_solicitada: validacion.hora,\n      personas: personas,\n      zona_solicitada: zona\n    },\n    accion_sugerida: 'sugerir_otra_fecha'\n  };\n}\n\nconst listaHoras = horasDisponibles.join(', ');\nconst mensajeZona = zona ? ` en ${zona}` : '';\nconst mensaje = `Lo siento, no tenemos disponibilidad a las ${validacion.hora}${mensajeZona} para ${personas} personas. Sin embargo, sí tenemos disponibilidad en estos otros horarios el ${validacion.fecha_formateada}: ${listaHoras}. ¿Alguno de estos horarios te vendría bien?`;\n\nreturn {\n  tiene_alternativas: true,\n  disponible: false,\n  mensaje: mensaje,\n  alternativas_horario: horasDisponibles,\n  detalles: {\n    fecha: validacion.fecha,\n    hora_solicitada: validacion.hora,\n    personas: personas,\n    zona_solicitada: zona,\n    total_alternativas: horasDisponibles.length\n  },\n  accion_sugerida: 'elegir_alternativa'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [512, 440],
+      "id": "e2814fea-f96e-469d-bfa5-f8c14d86b273",
+      "name": "⚠️ Respuesta: No Disponible",
+      "notes": "✅ MEJORADO: Distingue entre falta de zona vs falta de hora"
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "🔍 Validar Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Validar Input": {
+      "main": [
+        [
+          {
+            "node": "📍 Buscar Slots Libres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📍 Buscar Slots Libres": {
+      "main": [
+        [
+          {
+            "node": "🔢 Procesar Slots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔢 Procesar Slots": {
+      "main": [
+        [
+          {
+            "node": "❓ ¿Hay Slots?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❓ ¿Hay Slots?": {
+      "main": [
+        [
+          {
+            "node": "🪑 Obtener Mesas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🔎 Buscar Alternativas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🪑 Obtener Mesas": {
+      "main": [
+        [
+          {
+            "node": "✅ Respuesta: Disponible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔎 Buscar Alternativas": {
+      "main": [
+        [
+          {
+            "node": "⚠️ Respuesta: No Disponible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
+  },
+  "tags": [
+    {
+      "createdAt": "2025-10-17T09:00:00.000Z",
+      "updatedAt": "2025-10-17T09:00:00.000Z",
+      "id": "zona-dinamica",
+      "name": "✅ Con Zonas Dinámicas"
+    }
+  ]
+}
+

@@ -185,7 +185,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
         }
     };
 
-    // 📊 Calcular estadísticas de DÍAS basadas en SLOTS REALES (no configuración)
+    // 📊 Calcular estadísticas de DÍAS basadas en CONFIGURACIÓN (no solo slots generados)
     const loadDayStats = async () => {
         try {
             console.log('📊 Calculando estadísticas de DÍAS para restaurant:', restaurantId);
@@ -255,7 +255,10 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             const uniqueDaysWithSlots = new Set(
                 slotsData?.filter(s => !closedDaysSet.has(s.slot_date)).map(s => s.slot_date) || []
             );
-            const diasTotales = uniqueDaysWithSlots.size;
+            
+            // ✅ FIX CORRECTO: DÍAS TOTALES = DÍAS REALES CON SLOTS, NO configuración
+            const diasConSlotsGenerados = uniqueDaysWithSlots.size;
+            const diasTotales = diasConSlotsGenerados;  // ← Días REALES, no configuración
 
             // Debug: Mostrar TODOS los días con slots
             const diasArray = Array.from(uniqueDaysWithSlots).sort();
@@ -288,11 +291,13 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 reservationsInSlotsRange.map(r => r.reservation_date)
             ).size;
 
-            // 8. Calcular días libres = días con slots - días con reservas (en rango)
-            const diasLibres = Math.max(0, diasTotales - uniqueDaysWithReservations);
+            // 8. Calcular días libres = días REALES con slots - días con reservas
+            // ✅ diasConSlotsGenerados ya está definido arriba (línea 260)
+            const diasLibres = Math.max(0, diasConSlotsGenerados - uniqueDaysWithReservations);
 
             console.log('📊 DEBUG - Cálculo de días:', {
-                diasConSlots: diasTotales,
+                diasTotalesConfigurados: diasTotales,
+                diasConSlotsGenerados: diasConSlotsGenerados,
                 diasConReservasEnRango: uniqueDaysWithReservations,
                 diasLibres: diasLibres,
                 totalReservasActivas: activeReservations.length,
@@ -313,13 +318,13 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             const maxDate = maxSlotDate ? format(new Date(maxSlotDate), 'dd/MM/yyyy') : null;
 
             const stats = {
-                diasTotales: diasTotales,  // ← AHORA basado en SLOTS REALES, no configuración
-                diasConReservas: uniqueDaysWithReservations,
-                diasLibres: diasLibres,  // ← AHORA basado en SLOTS REALES
-                reservasActivas: reservasActivas,
+                diasTotales: diasTotales,  // ← Días REALES con slots (puede ser 0)
+                diasConReservas: uniqueDaysWithReservations,  // ← Días con reservas activas
+                diasLibres: diasLibres,  // ← Días libres = diasTotales - diasConReservas
+                reservasActivas: reservasActivas,  // ← Total reservas activas futuras
                 mesas: mesas,
                 duracionReserva: reservationDuration,
-                advanceDaysConfig: advanceDays,  // Guardamos la config para el modal de generar
+                advanceDaysConfig: advanceDays,  // ← Configuración (30 días) para el modal
                 fechaHasta: maxDate  // ← Fecha máxima REAL de disponibilidades
             };
 
@@ -853,10 +858,17 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
         }
     };
 
-    // 🚨 AUTO-TRIGGER: Mostrar modal de confirmación si viene desde cambio de horarios (SOLO UNA VEZ)
+    // 🚨 AUTO-TRIGGER: Mostrar modal de confirmación si viene desde cambio de horarios (SOLO UNA VEZ POR SESIÓN)
     useEffect(() => {
-        if (autoTriggerRegeneration && restaurantId && !loading && !autoTriggerShown) {
+        // ✅ FIX: Verificar también needsRegeneration para evitar modal repetido sin cambios pendientes
+        if (autoTriggerRegeneration && 
+            restaurantId && 
+            !loading && 
+            !autoTriggerShown && 
+            changeDetection.needsRegeneration) {
+            
             console.log('🚨 AUTO-TRIGGER: Mostrando modal de confirmación (PRIMERA VEZ)...');
+            
             // Pequeño delay para que el componente termine de montar
             const timer = setTimeout(async () => {
                 await handleShowRegenerateModal(); // Preparar datos y mostrar modal
@@ -864,7 +876,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             }, 500);
             return () => clearTimeout(timer);
         }
-    }, [autoTriggerRegeneration, restaurantId, loading, autoTriggerShown]);
+    }, [autoTriggerRegeneration, restaurantId, loading, autoTriggerShown, changeDetection.needsRegeneration]);
 
     // 🔒 REGLA SAGRADA: NUNCA ELIMINAR RESERVAS
     // Esta función SOLO genera availability_slots - JAMÁS toca la tabla 'reservations'
@@ -1798,66 +1810,6 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                         <p className="text-sm text-gray-600 mt-3 font-medium">
                             Crear disponibilidades para los próximos {dayStats.advanceDaysConfig || 20} días
                         </p>
-                    </div>
-                </div>
-            )}
-
-            {/* Aviso de regeneración necesaria - BANNER CRÍTICO */}
-            {/* ⚠️ NO mostrar si el modal de confirmación O resultado está abierto */}
-            {changeDetection.needsRegeneration && !showConfirmRegenerate && !showRegenerationModal && (
-                <div className="border-2 border-red-500 rounded-lg p-6 mb-6 bg-red-50 shadow-lg animate-pulse">
-                    <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0">
-                            <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-                                <AlertCircle className="w-7 h-7 text-white" />
-                            </div>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-red-900 text-lg mb-2 flex items-center gap-2">
-                                🚨 REGENERACIÓN REQUERIDA - ACCIÓN NECESARIA
-                    </h3>
-                    
-                            <div className="text-red-800 mb-4 space-y-2">
-                                <p className="font-semibold text-base">
-                                    ⚠️ {changeDetection.getChangeMessage()}
-                                </p>
-                                <p className="text-sm">
-                                    <strong>⚡ IMPORTANTE:</strong> Las disponibilidades actuales NO reflejan los cambios. 
-                                    Los clientes podrían ver horarios incorrectos.
-                                </p>
-                                <div className="bg-white border-l-4 border-red-500 p-2 rounded">
-                                    <p className="text-sm font-medium text-red-900">
-                                        📍 Acción requerida:
-                                    </p>
-                                    <ol className="text-sm text-red-800 mt-2 ml-4 list-decimal space-y-1">
-                                        <li>Haz clic en "🔄 Regenerar Ahora"</li>
-                                        <li>Espera a que se complete el proceso</li>
-                                        <li>Verifica las nuevas disponibilidades</li>
-                                    </ol>
-                                </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={async () => {
-                                await smartRegeneration(changeDetection.changeType, changeDetection.changeDetails);
-                                changeDetection.clearRegenerationFlag();
-                            }}
-                            disabled={loading}
-                                    className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all shadow-md font-semibold text-base"
-                        >
-                                    {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
-                                    🔄 Regenerar Ahora
-                        </button>
-                        
-                        <button
-                            onClick={() => changeDetection.clearRegenerationFlag()}
-                                    className="text-sm text-red-700 hover:text-red-900 underline font-medium"
-                        >
-                                    Ignorar (no recomendado)
-                        </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             )}

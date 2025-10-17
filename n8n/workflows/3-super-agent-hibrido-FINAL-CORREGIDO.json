@@ -144,7 +144,13 @@
               "name": "party_size"
             },
             {
+              "name": "preferred_zone"
+            },
+            {
               "name": "special_requests"
+            },
+            {
+              "name": "restaurant_id"
             }
           ]
         }
@@ -225,7 +231,7 @@
     {
       "parameters": {
         "name": "check_availability",
-        "description": "Consulta la disponibilidad del restaurante para una fecha, hora y número de personas específicos. Úsala cuando el cliente pregunte si hay disponibilidad ANTES de crear la reserva.",
+        "description": "Consulta la disponibilidad del restaurante para una fecha, hora y número de personas específicos. Opcionalmente puedes especificar una zona preferida (interior, terraza, barra, privado). Úsala cuando el cliente pregunte si hay disponibilidad ANTES de crear la reserva.",
         "workflowId": {
           "__rl": true,
           "value": "TOOL_CHECK_AVAILABILITY_ID",
@@ -241,6 +247,12 @@
             },
             {
               "name": "party_size"
+            },
+            {
+              "name": "preferred_zone"
+            },
+            {
+              "name": "restaurant_id"
             }
           ]
         }
