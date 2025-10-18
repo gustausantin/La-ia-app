@@ -1,0 +1,243 @@
+{
+  "name": "🔧 TOOL: create_reservation — COMPLETO",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [-1200, 240],
+      "id": "start-node",
+      "name": "▶️ Start"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.item.json;\n\nconsole.log('🔍 Input recibido:', JSON.stringify(input, null, 2));\n\n// ✅ Validar datos mínimos\nconst required = ['reservation_date', 'reservation_time', 'party_size', 'restaurant_id'];\nconst missing = required.filter(field => !input[field]);\n\nif (missing.length > 0) {\n  throw new Error(`❌ Faltan campos obligatorios: ${missing.join(', ')}`);\n}\n\nreturn {\n  // ✅ DATOS OBLIGATORIOS\n  restaurant_id: input.restaurant_id,\n  customer_id: input.customer_id,  // ✅ YA VIENE DEL GATEWAY\n  customer_phone: input.customer_phone,  // ✅ YA VIENE DEL GATEWAY\n  customer_name: input.customer_name,  // ✅ YA VIENE DEL GATEWAY\n  \n  // ✅ DATOS DE LA RESERVA\n  reservation_date: input.reservation_date,  // 'YYYY-MM-DD'\n  reservation_time: input.reservation_time,  // 'HH:MM'\n  party_size: parseInt(input.party_size),\n  \n  // ✅ DATOS OPCIONALES\n  preferred_zone: input.preferred_zone || null,\n  special_requests: input.special_requests || null\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1000, 240],
+      "id": "validate-input",
+      "name": "🔍 Validar Input"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "availability_slots",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "=restaurant_id=eq.{{ $json.restaurant_id }}&slot_date=eq.{{ $json.reservation_date }}&start_time=eq.{{ $json.reservation_time }}&status=eq.free&is_available=is.true{{ $json.preferred_zone ? '&zone=eq.' + $json.preferred_zone : '' }}"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-800, 240],
+      "id": "get-slots",
+      "name": "🔍 Buscar Slots Disponibles",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const slots = $input.all();\nconst validacion = $('🔍 Validar Input').first().json;\n\nconsole.log('📊 Slots encontrados:', slots.length);\n\nif (slots.length === 0) {\n  return {\n    disponible: false,\n    mensaje: `No hay mesas disponibles para ${validacion.party_size} personas el ${validacion.reservation_date} a las ${validacion.reservation_time}.`\n  };\n}\n\n// ✅ FILTRAR POR CAPACIDAD (ahora capacity está en availability_slots)\nconst slotsWithCapacity = slots.filter(s => {\n  const capacity = s.json.capacity;\n  return capacity >= validacion.party_size;\n});\n\nconsole.log('✅ Slots con capacidad suficiente:', slotsWithCapacity.length);\n\nif (slotsWithCapacity.length === 0) {\n  return {\n    disponible: false,\n    mensaje: `No hay mesas con capacidad para ${validacion.party_size} personas en esa fecha y hora.`\n  };\n}\n\n// ✅ Ordenar por capacidad ASC (la más pequeña que cumpla)\nconst sorted = slotsWithCapacity.sort((a, b) => a.json.capacity - b.json.capacity);\nconst mejorSlot = sorted[0].json;\n\nconsole.log('🎯 Mejor slot seleccionado:', {\n  id: mejorSlot.id,\n  table_id: mejorSlot.table_id,\n  table_name: mejorSlot.table_name,\n  capacity: mejorSlot.capacity,\n  zone: mejorSlot.zone\n});\n\nreturn {\n  disponible: true,\n  slot_id: mejorSlot.id,\n  table_id: mejorSlot.table_id,\n  table_name: mejorSlot.table_name,\n  capacity: mejorSlot.capacity,\n  zone: mejorSlot.zone,\n  start_time: mejorSlot.start_time,\n  end_time: mejorSlot.end_time,\n  reservation_date: validacion.reservation_date,\n  reservation_time: validacion.reservation_time,\n  party_size: validacion.party_size,\n  restaurant_id: validacion.restaurant_id,\n  customer_id: validacion.customer_id,\n  customer_phone: validacion.customer_phone,\n  customer_name: validacion.customer_name,\n  special_requests: validacion.special_requests\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-600, 240],
+      "id": "select-best-table",
+      "name": "🎯 Seleccionar Mejor Mesa"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-available",
+              "leftValue": "={{ $json.disponible }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-400, 240],
+      "id": "check-available",
+      "name": "❓ ¿Disponible?"
+    },
+    {
+      "parameters": {
+        "tableId": "reservations",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "restaurant_id",
+              "fieldValue": "={{ $json.restaurant_id }}"
+            },
+            {
+              "fieldId": "customer_id",
+              "fieldValue": "={{ $json.customer_id }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $json.customer_phone }}"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $json.customer_name }}"
+            },
+            {
+              "fieldId": "reservation_date",
+              "fieldValue": "={{ $json.reservation_date }}"
+            },
+            {
+              "fieldId": "reservation_time",
+              "fieldValue": "={{ $json.start_time }}"
+            },
+            {
+              "fieldId": "party_size",
+              "fieldValue": "={{ $json.party_size }}"
+            },
+            {
+              "fieldId": "table_id",
+              "fieldValue": "={{ $json.table_id }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "confirmed"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "agent_whatsapp"
+            },
+            {
+              "fieldId": "special_requests",
+              "fieldValue": "={{ $json.special_requests }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-160, 128],
+      "id": "create-reservation",
+      "name": "💾 Crear Reserva",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "availability_slots",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('🎯 Seleccionar Mejor Mesa').item.json.slot_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "reserved"
+            },
+            {
+              "fieldId": "is_available",
+              "fieldValue": false
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [32, 128],
+      "id": "mark-slot-reserved",
+      "name": "🔒 Marcar Slot Reservado",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const reservation = $('💾 Crear Reserva').first().json;\nconst slotData = $('🎯 Seleccionar Mejor Mesa').first().json;\n\nconsole.log('✅ Reserva creada:', reservation.id);\nconsole.log('✅ Slot marcado como reservado:', slotData.slot_id);\n\nreturn {\n  success: true,\n  reservation_id: reservation.id,\n  message: `¡Listo, ${reservation.customer_name}! Tu reserva está confirmada para el ${reservation.reservation_date} a las ${reservation.reservation_time} para ${reservation.party_size} personas. Mesa: ${slotData.table_name} (${slotData.zone}).`,\n  details: {\n    reservation_id: reservation.id,\n    date: reservation.reservation_date,\n    time: reservation.reservation_time,\n    party_size: reservation.party_size,\n    table: slotData.table_name,\n    zone: slotData.zone,\n    customer_name: reservation.customer_name,\n    special_requests: reservation.special_requests || 'Ninguna'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [224, 128],
+      "id": "format-success",
+      "name": "✅ Respuesta: Éxito"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconsole.log('❌ No hay disponibilidad:', data.mensaje);\n\nreturn {\n  success: false,\n  message: data.mensaje,\n  details: {\n    date: $('🔍 Validar Input').first().json.reservation_date,\n    time: $('🔍 Validar Input').first().json.reservation_time,\n    party_size: $('🔍 Validar Input').first().json.party_size\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-160, 352],
+      "id": "format-error",
+      "name": "❌ Respuesta: Sin Disponibilidad"
+    }
+  ],
+  "connections": {
+    "▶️ Start": {
+      "main": [[{"node": "🔍 Validar Input", "type": "main", "index": 0}]]
+    },
+    "🔍 Validar Input": {
+      "main": [[{"node": "🔍 Buscar Slots Disponibles", "type": "main", "index": 0}]]
+    },
+    "🔍 Buscar Slots Disponibles": {
+      "main": [[{"node": "🎯 Seleccionar Mejor Mesa", "type": "main", "index": 0}]]
+    },
+    "🎯 Seleccionar Mejor Mesa": {
+      "main": [[{"node": "❓ ¿Disponible?", "type": "main", "index": 0}]]
+    },
+    "❓ ¿Disponible?": {
+      "main": [
+        [{"node": "❌ Respuesta: Sin Disponibilidad", "type": "main", "index": 0}],
+        [{"node": "💾 Crear Reserva", "type": "main", "index": 0}]
+      ]
+    },
+    "💾 Crear Reserva": {
+      "main": [[{"node": "🔒 Marcar Slot Reservado", "type": "main", "index": 0}]]
+    },
+    "🔒 Marcar Slot Reservado": {
+      "main": [[{"node": "✅ Respuesta: Éxito", "type": "main", "index": 0}]]
+    },
+    "✅ Respuesta: Éxito": {
+      "main": [[]]
+    },
+    "❌ Respuesta: Sin Disponibilidad": {
+      "main": [[]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

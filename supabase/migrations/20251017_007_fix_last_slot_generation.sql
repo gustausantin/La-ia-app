@@ -1,9 +1,15 @@
 -- =====================================================
--- FIX: RESPETAR DÍAS CERRADOS DEL CALENDARIO
+-- FIX: GENERAR SLOTS HASTA LA ÚLTIMA HORA INCLUIDA
 -- Fecha: 17 Octubre 2025
--- Problema: Función busca en "calendar_exceptions" pero la tabla es "special_events"
--- Solución: Cambiar a special_events con is_closed = true
+-- Problema: Si el horario dice 18:00-22:00, NO generaba slot a las 22:00
+-- Solución: La última hora del horario DEBE incluirse (es el último pase)
 -- =====================================================
+
+-- 🎯 EJEMPLO:
+-- Horario: 18:00 - 22:00
+-- Duración: 60 min
+-- ANTES: Último slot → 21:00 (termina a las 22:00) ❌
+-- AHORA: Último slot → 22:00 (termina a las 23:00) ✅
 
 CREATE OR REPLACE FUNCTION cleanup_and_regenerate_availability(
     p_restaurant_id UUID,
@@ -34,7 +40,7 @@ DECLARE
     v_slots_marked INTEGER := 0;
     v_table RECORD;
     v_has_reservations BOOLEAN;
-    v_is_day_closed BOOLEAN;  -- ✅ CAMBIADO: más claro
+    v_is_day_closed BOOLEAN;
 BEGIN
     -- 1. Obtener configuración del restaurante
     SELECT settings INTO v_settings
@@ -60,7 +66,6 @@ BEGIN
     
     WHILE v_current_date <= p_end_date LOOP
         -- 🛡️ PROTECCIÓN 1: Si el día está CERRADO en special_events (festivo/vacaciones), SALTAR
-        -- ✅ FIX: Buscar en special_events con is_closed = true
         SELECT EXISTS(
             SELECT 1 FROM special_events
             WHERE restaurant_id = p_restaurant_id
@@ -163,7 +168,8 @@ BEGIN
                 CONTINUE;
             END IF;
             
-            RAISE NOTICE '✅ Día % (%) abierto: % - %', v_current_date, v_day_name, v_open_time, v_close_time;
+            RAISE NOTICE '✅ Día % (%) abierto: % - % (última reserva INCLUIDA a las %)', 
+                         v_current_date, v_day_name, v_open_time, v_close_time, v_close_time;
         END;
         
         -- 5. GENERAR SLOTS para el día
@@ -237,5 +243,7 @@ $$;
 
 -- Comentario
 COMMENT ON FUNCTION cleanup_and_regenerate_availability IS 
-'Limpia y regenera slots. RESPETA días cerrados en special_events (is_closed=true) y días con reservas activas';
+'Limpia y regenera slots. RESPETA días cerrados en special_events (is_closed=true) y días con reservas activas. 
+✅ FIX 2025-10-17: La última hora del horario (ej: 22:00) INCLUIDA como último pase posible.';
+
 

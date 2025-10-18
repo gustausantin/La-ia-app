@@ -1,8 +1,7 @@
 -- =====================================================
--- FIX: RESPETAR DÍAS CERRADOS DEL CALENDARIO
+-- ACTUALIZAR cleanup_and_regenerate_availability
+-- PARA INCLUIR CAPACITY Y TABLE_NAME
 -- Fecha: 17 Octubre 2025
--- Problema: Función busca en "calendar_exceptions" pero la tabla es "special_events"
--- Solución: Cambiar a special_events con is_closed = true
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION cleanup_and_regenerate_availability(
@@ -34,7 +33,7 @@ DECLARE
     v_slots_marked INTEGER := 0;
     v_table RECORD;
     v_has_reservations BOOLEAN;
-    v_is_day_closed BOOLEAN;  -- ✅ CAMBIADO: más claro
+    v_is_day_closed BOOLEAN;
 BEGIN
     -- 1. Obtener configuración del restaurante
     SELECT settings INTO v_settings
@@ -53,14 +52,13 @@ BEGIN
     v_slot_interval := COALESCE((v_settings->>'slot_interval')::INTEGER, 30);
     v_reservation_duration := COALESCE((v_settings->>'reservation_duration')::INTEGER, 90);
     
-    RAISE NOTICE '🔧 Configuración: interval=% min, duration=% min', v_slot_interval, v_reservation_duration;
+    RAISE NOTICE 'Configuración: interval=% min, duration=% min', v_slot_interval, v_reservation_duration;
     
     -- 2. Iterar por cada día
     v_current_date := p_start_date;
     
     WHILE v_current_date <= p_end_date LOOP
-        -- 🛡️ PROTECCIÓN 1: Si el día está CERRADO en special_events (festivo/vacaciones), SALTAR
-        -- ✅ FIX: Buscar en special_events con is_closed = true
+        -- Protección 1: Si el día está CERRADO en special_events
         SELECT EXISTS(
             SELECT 1 FROM special_events
             WHERE restaurant_id = p_restaurant_id
@@ -69,9 +67,8 @@ BEGIN
         ) INTO v_is_day_closed;
         
         IF v_is_day_closed THEN
-            RAISE NOTICE '🚫 Día % está CERRADO por evento especial (festivo/vacaciones) - SLOTS ELIMINADOS', v_current_date;
+            RAISE NOTICE 'Día % está CERRADO por evento especial', v_current_date;
             
-            -- ✅ ELIMINAR todos los slots libres de ese día (NO debe haber disponibilidad)
             DELETE FROM availability_slots
             WHERE restaurant_id = p_restaurant_id
               AND slot_date = v_current_date
@@ -80,16 +77,12 @@ BEGIN
             GET DIAGNOSTICS v_deleted_today = ROW_COUNT;
             v_slots_deleted := v_slots_deleted + v_deleted_today;
             
-            IF v_deleted_today > 0 THEN
-                RAISE NOTICE '🧹 Eliminados % slots libres del día cerrado %', v_deleted_today, v_current_date;
-            END IF;
-            
             v_days_protected := v_days_protected + 1;
             v_current_date := v_current_date + 1;
             CONTINUE;
         END IF;
         
-        -- 🛡️ PROTECCIÓN 2: Si el día tiene reservas activas, NO TOCAR NADA
+        -- Protección 2: Si el día tiene reservas activas
         SELECT EXISTS(
             SELECT 1 FROM reservations
             WHERE restaurant_id = p_restaurant_id
@@ -98,13 +91,13 @@ BEGIN
         ) INTO v_has_reservations;
         
         IF v_has_reservations THEN
-            RAISE NOTICE '🛡️ Día % tiene reservas - INTOCABLE (se mantiene exactamente como está)', v_current_date;
+            RAISE NOTICE 'Día % tiene reservas - INTOCABLE', v_current_date;
             v_days_protected := v_days_protected + 1;
             v_current_date := v_current_date + 1;
             CONTINUE;
         END IF;
         
-        -- 3. BORRAR slots LIBRES del día si vamos a regenerar
+        -- 3. Borrar slots libres del día
         DELETE FROM availability_slots
         WHERE restaurant_id = p_restaurant_id
           AND slot_date = v_current_date
@@ -112,10 +105,6 @@ BEGIN
         
         GET DIAGNOSTICS v_deleted_today = ROW_COUNT;
         v_slots_deleted := v_slots_deleted + v_deleted_today;
-        
-        IF v_deleted_today > 0 THEN
-            RAISE NOTICE '🧹 Eliminados % slots libres del día %', v_deleted_today, v_current_date;
-        END IF;
         
         -- 4. Obtener configuración del día de la semana
         v_day_of_week := EXTRACT(DOW FROM v_current_date);
@@ -149,7 +138,7 @@ BEGIN
             END IF;
             
             IF NOT v_is_open THEN
-                RAISE NOTICE '🚫 Día % (%) está cerrado según horario semanal', v_current_date, v_day_name;
+                RAISE NOTICE 'Día % (%) está cerrado según horario semanal', v_current_date, v_day_name;
                 v_current_date := v_current_date + 1;
                 CONTINUE;
             END IF;
@@ -158,17 +147,18 @@ BEGIN
             v_close_time := (v_day_config->>'close')::TIME;
             
             IF v_open_time IS NULL OR v_close_time IS NULL THEN
-                RAISE NOTICE '⚠️ Día % sin horarios configurados, saltando', v_current_date;
+                RAISE NOTICE 'Día % sin horarios configurados', v_current_date;
                 v_current_date := v_current_date + 1;
                 CONTINUE;
             END IF;
             
-            RAISE NOTICE '✅ Día % (%) abierto: % - %', v_current_date, v_day_name, v_open_time, v_close_time;
+            RAISE NOTICE 'Día % (%) abierto: % - % (última hora INCLUIDA)', 
+                         v_current_date, v_day_name, v_open_time, v_close_time;
         END;
         
         -- 5. GENERAR SLOTS para el día
         FOR v_table IN 
-            SELECT id, name, zone, capacity
+            SELECT id, name, zone, capacity  -- ✅ AGREGADO: capacity
             FROM tables 
             WHERE restaurant_id = p_restaurant_id 
               AND is_active = true
@@ -178,8 +168,7 @@ BEGIN
             WHILE v_current_time <= v_close_time LOOP
                 v_end_time := v_current_time + (v_reservation_duration || ' minutes')::INTERVAL;
                 
-                -- ✅ FIX: Si el horario dice cierre a las 22:00, la última reserva puede EMPEZAR a las 22:00
-                -- (aunque termine después del cierre). El horario público incluye la última hora.
+                -- ✅ FIX: La última hora del horario INCLUIDA como último pase
                 IF v_current_time <= v_close_time THEN
                     INSERT INTO availability_slots (
                         restaurant_id,
@@ -188,6 +177,8 @@ BEGIN
                         end_time,
                         table_id,
                         zone,
+                        capacity,      -- ✅ NUEVO
+                        table_name,    -- ✅ NUEVO
                         status,
                         is_available,
                         duration_minutes,
@@ -201,6 +192,8 @@ BEGIN
                         v_end_time,
                         v_table.id,
                         v_table.zone,
+                        v_table.capacity,  -- ✅ NUEVO: De tables.capacity
+                        v_table.name,      -- ✅ NUEVO: De tables.name
                         'free',
                         true,
                         v_reservation_duration,
@@ -221,7 +214,7 @@ BEGIN
         v_current_date := v_current_date + 1;
     END LOOP;
     
-    RAISE NOTICE '✅ Regeneración completada: % slots creados, % eliminados, % días protegidos', 
+    RAISE NOTICE 'Regeneración completada: % slots creados, % eliminados, % días protegidos', 
                  v_slots_created, v_slots_deleted, v_days_protected;
     
     RETURN jsonb_build_object(
@@ -235,7 +228,13 @@ BEGIN
 END;
 $$;
 
--- Comentario
 COMMENT ON FUNCTION cleanup_and_regenerate_availability IS 
-'Limpia y regenera slots. RESPETA días cerrados en special_events (is_closed=true) y días con reservas activas';
+'Limpia y regenera slots. Incluye capacity y table_name desde tables.
+✅ FIX 2025-10-17: Última hora del horario INCLUIDA.
+✅ FIX 2025-10-17: Agrega capacity y table_name a cada slot.';
+
+-- =====================================================
+-- FIN DE ACTUALIZACIÓN
+-- =====================================================
+
 
