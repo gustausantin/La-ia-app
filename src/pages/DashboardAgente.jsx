@@ -312,13 +312,13 @@ export default function DashboardAgente() {
                 totalPending: (crmAlerts || []).length
             };
 
-            // 🆕 Cargar contador de reservas por canal HOY
+            // 🆕 Cargar contador de reservas CREADAS HOY por canal
             const { data: channelReservations, error: channelError } = await supabase
                 .from('reservations')
-                .select('reservation_channel')
+                .select('channel, created_at')
                 .eq('restaurant_id', restaurant.id)
-                .eq('reservation_date', todayStr)
-                .in('status', ['pending', 'pending_approval', 'confirmed', 'seated', 'completed']);
+                .gte('created_at', `${todayStr}T00:00:00`)
+                .lte('created_at', `${todayStr}T23:59:59`);
 
             if (channelError) {
                 console.error('Error cargando reservas por canal:', channelError);
@@ -326,9 +326,9 @@ export default function DashboardAgente() {
 
             // Contar reservas por canal
             const counts = (channelReservations || []).reduce((acc, r) => {
-                // ✅ Si reservation_channel es NULL o vacío → "manual"
+                // ✅ Si channel es NULL o vacío → "manual"
                 // Las reservas sin canal son reservas manuales desde el Dashboard
-                const channel = r.reservation_channel || 'manual';
+                const channel = r.channel || 'manual';
                 acc[channel] = (acc[channel] || 0) + 1;
                 return acc;
             }, {});

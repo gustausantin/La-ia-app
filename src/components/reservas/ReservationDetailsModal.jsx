@@ -185,11 +185,15 @@ export const ReservationDetailsModal = ({ reservation, onClose, isOpen }) => {
               <div className="bg-gray-50 rounded-xl p-4 space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Canal</span>
-                  <span className="font-semibold text-gray-900 capitalize">{reservation.channel || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Origen</span>
-                  <span className="font-semibold text-gray-900 capitalize">{reservation.source || 'N/A'}</span>
+                  <span className="font-semibold text-gray-900 capitalize">
+                    {reservation.channel === 'whatsapp' ? 'WhatsApp' :
+                     reservation.channel === 'web' ? 'Web' :
+                     reservation.channel === 'instagram' ? 'Instagram' :
+                     reservation.channel === 'facebook' ? 'Facebook' :
+                     reservation.channel === 'phone' ? 'Llamada' :
+                     reservation.channel === 'vapi' ? 'Llamada' :
+                     reservation.channel || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Creada el</span>

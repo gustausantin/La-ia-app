@@ -191,11 +191,16 @@ const CustomerModal = ({
             console.log('customer.consent_sms:', customer.consent_sms);
             console.log('customer.consent_whatsapp:', customer.consent_whatsapp);
             
+            // ✅ Si el cliente solo tiene 'name' (de WhatsApp), intentar extraer first_name
+            const firstName = customer.first_name || (customer.name ? customer.name.split(' ')[0] : '');
+            const lastName1 = customer.last_name1 || '';
+            const lastName2 = customer.last_name2 || '';
+            
             setFormData({
                 name: customer.name || '',
-                first_name: customer.first_name || '',
-                last_name1: customer.last_name1 || '',
-                last_name2: customer.last_name2 || '',
+                first_name: firstName,
+                last_name1: lastName1,
+                last_name2: lastName2,
                 email: customer.email || '',
                 phone: customer.phone || '',
                 birthday: customer.birthday || '',
@@ -474,7 +479,7 @@ const CustomerModal = ({
                                     className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                                 >
                                     <Trash2 className="w-4 h-4" />
-                                    Eliminar
+                                    Desactivar
                                 </button>
                             </>
                         )}
@@ -542,9 +547,9 @@ const CustomerModal = ({
                                                         name: `${firstName} ${prev.last_name1 || ''} ${prev.last_name2 || ''}`.trim()
                                                     }));
                                                 }}
-                                                disabled={!isEditing}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
-                                                placeholder="Juan"
+                                            disabled={!isEditing}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
+                                            placeholder="Nombre"
                                             />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
@@ -564,9 +569,9 @@ const CustomerModal = ({
                                                             name: `${prev.first_name || ''} ${lastName1} ${prev.last_name2 || ''}`.trim()
                                                         }));
                                                     }}
-                                                    disabled={!isEditing}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
-                                                    placeholder="Pérez"
+                                                disabled={!isEditing}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
+                                                placeholder="Primer apellido"
                                                 />
                                             </div>
                                             <div>
@@ -585,9 +590,9 @@ const CustomerModal = ({
                                                             name: `${prev.first_name || ''} ${prev.last_name1 || ''} ${lastName2}`.trim()
                                                         }));
                                                     }}
-                                                    disabled={!isEditing}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
-                                                    placeholder="García"
+                                                disabled={!isEditing}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
+                                                placeholder="Segundo apellido"
                                                 />
                                             </div>
                                         </div>
@@ -606,12 +611,12 @@ const CustomerModal = ({
                                             Email
                                         </label>
                                         <input
-                                            type="email"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                            disabled={!isEditing}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
-                                            placeholder="juan@email.com"
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                        disabled={!isEditing}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
+                                        placeholder="email@ejemplo.com"
                                         />
                                     </div>
 
@@ -951,21 +956,30 @@ const CustomerModal = ({
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-xl shadow-xl p-6 max-w-md mx-4">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-red-100 rounded-lg">
-                                <Trash2 className="w-6 h-6 text-red-600" />
+                            <div className="p-2 bg-orange-100 rounded-lg">
+                                <Trash2 className="w-6 h-6 text-orange-600" />
                             </div>
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                    ¿Eliminar cliente?
+                                    ⚠️ Desactivar cliente
                                 </h3>
                                 <p className="text-sm text-gray-600">
-                                    Esta acción no se puede deshacer
+                                    El cliente se ocultará pero su histórico se mantendrá
                                 </p>
                             </div>
                         </div>
                         
-                        <div className="p-2 bg-yellow-50 border border-yellow-200 rounded-lg mb-6">
-                            <p className="text-sm text-yellow-800">
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                            <p className="text-sm text-blue-900">
+                                <strong>Si desactivas este cliente:</strong><br />
+                                ✓ Ya no aparecerá en búsquedas<br />
+                                ✓ No podrá hacer nuevas reservas<br />
+                                ✓ Su histórico se mantendrá para auditoría
+                            </p>
+                        </div>
+                        
+                        <div className="p-2 bg-gray-50 border border-gray-200 rounded-lg mb-6">
+                            <p className="text-sm text-gray-800">
                                 <strong>Cliente:</strong> {formData.first_name} {formData.last_name1}<br />
                                 {formData.email && <><strong>Email:</strong> {formData.email}<br /></>}
                                 {formData.phone && <><strong>Teléfono:</strong> {formData.phone}</>}
@@ -985,10 +999,32 @@ const CustomerModal = ({
                                     try {
                                         setDeleting(true);
                                         
-                                        // Eliminar de la base de datos
+                                        // 1️⃣ VERIFICAR si tiene reservas ACTIVAS
+                                        const { data: activeReservations, error: checkError } = await supabase
+                                            .from('reservations')
+                                            .select('id, reservation_date, reservation_time, status')
+                                            .eq('customer_id', customer.id)
+                                            .in('status', ['pending', 'pending_approval', 'confirmed', 'seated']);
+
+                                        if (checkError) throw checkError;
+
+                                        // 2️⃣ Si tiene reservas ACTIVAS → PROHIBIR
+                                        if (activeReservations && activeReservations.length > 0) {
+                                            toast.error(
+                                                `❌ Este cliente tiene ${activeReservations.length} reserva(s) activa(s). No se puede eliminar.`
+                                            );
+                                            setShowDeleteConfirm(false);
+                                            setDeleting(false);
+                                            return;
+                                        }
+
+                                        // 3️⃣ SOFT DELETE: Desactivar cliente (no eliminar físicamente)
                                         const { error } = await supabase
                                             .from('customers')
-                                            .delete()
+                                            .update({ 
+                                                is_active: false,
+                                                updated_at: new Date().toISOString()
+                                            })
                                             .eq('id', customer.id);
                                         
                                         if (error) throw error;
@@ -1003,11 +1039,11 @@ const CustomerModal = ({
                                         onClose();
                                         
                                         // Mostrar mensaje de éxito
-                                        toast.success('✅ Cliente eliminado correctamente');
+                                        toast.success('✅ Cliente desactivado correctamente');
                                         
                                     } catch (error) {
-                                        console.error('Error eliminando cliente:', error);
-                                        toast.error('❌ Error al eliminar el cliente: ' + error.message);
+                                        console.error('Error desactivando cliente:', error);
+                                        toast.error('❌ Error al desactivar el cliente: ' + error.message);
                                     } finally {
                                         setDeleting(false);
                                     }
@@ -1018,12 +1054,12 @@ const CustomerModal = ({
                                 {deleting ? (
                                     <>
                                         <RefreshCw className="w-4 h-4 animate-spin" />
-                                        Eliminando...
+                                        Desactivando...
                                     </>
                                 ) : (
                                     <>
                                         <Trash2 className="w-4 h-4" />
-                                        Eliminar definitivamente
+                                        SÍ, DESACTIVAR
                                     </>
                                 )}
                             </button>

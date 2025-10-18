@@ -85,10 +85,14 @@ export const CanalesActivosWidget = ({ channelStats, channelCounts = {} }) => {
                     <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                         <LinkIcon className="w-4 h-4 text-white" />
                     </div>
-                    <div>
-                        <h3 className="text-sm font-bold text-gray-900">Canales Activos</h3>
-                        <p className="text-xs text-gray-500">Estado en tiempo real</p>
+                <div>
+                    <h3 className="text-sm font-bold text-gray-900">Canales Activos</h3>
+                    <div className="flex items-center gap-1">
+                        <span className="text-xs font-semibold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
+                            📅 CREADAS HOY
+                        </span>
                     </div>
+                </div>
                 </div>
             </div>
 

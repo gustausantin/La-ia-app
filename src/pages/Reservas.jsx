@@ -50,6 +50,8 @@ import {
 import toast from "react-hot-toast";
 import { ReservationWizard } from "../components/reservas/ReservationWizard";
 import { ReservationDetailsModal } from "../components/reservas/ReservationDetailsModal";
+import { ConfirmDeleteModal } from "../components/reservas/ConfirmDeleteModal";
+import { ConfirmCancelModal } from "../components/reservas/ConfirmCancelModal";
 import { processReservationCompletion } from "../services/CRMService";
 import AvailabilityManager from "../components/AvailabilityManager";
 import { useAvailabilityChangeDetection } from '../hooks/useAvailabilityChangeDetection';
@@ -173,8 +175,14 @@ const RESERVATION_STATES = {
     no_show: {
         label: "No-Show",
         color: "bg-red-100 text-red-800 border-red-200",
-        actions: ["view"],
+        actions: ["view", "delete"],  // ✅ AÑADIDO "delete"
         icon: <AlertTriangle className="w-4 h-4" />,
+    },
+    deleted: {
+        label: "Eliminada",
+        color: "bg-gray-400 text-gray-700 border-gray-500",
+        actions: [],  // Estado final, sin acciones
+        icon: <Trash2 className="w-4 h-4" />,
     },
 };
 
@@ -220,6 +228,9 @@ const AgentStatsPanel = ({ stats, insights }) => {
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                     <Brain className="w-5 h-5" />
                     Rendimiento del Agente IA
+                    <span className="text-xs bg-white/20 px-2 py-1 rounded-full ml-2">
+                        📊 Reservas generadas hoy
+                    </span>
                 </h3>
                 <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
                     En línea
@@ -293,8 +304,8 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
     const mappedStatus = statusMapping[reservation.status] || 'pendiente';
     const state = RESERVATION_STATES[mappedStatus] || RESERVATION_STATES.pendiente;
     const channel =
-        CHANNELS[reservation.reservation_channel || "manual"] || CHANNELS.manual;
-    const isAgentReservation = reservation.source === "agent";
+        CHANNELS[reservation.channel || "manual"] || CHANNELS.manual;
+    const isAgentReservation = reservation.source === "agent" || reservation.source === "agent_whatsapp";
     
     // 🚨 CALCULAR SI ES URGENTE (igual que en NoShowControlNuevo)
     const isUrgent = useMemo(() => {
@@ -397,6 +408,14 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                                 <div className="flex items-center gap-1 px-2 py-1 bg-red-100 border border-red-400 text-red-900 rounded font-bold text-xs animate-pulse">
                                     <AlertTriangle className="w-4 h-4" />
                                     <span>GRUPO GRANDE</span>
+                                </div>
+                            )}
+
+                            {/* ⚠️ PETICIÓN ESPECIAL */}
+                            {reservation.special_requests && reservation.special_requests.trim() !== '' && (
+                                <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 border border-orange-400 text-orange-900 rounded font-semibold text-xs" title={reservation.special_requests}>
+                                    <AlertCircle className="w-4 h-4" />
+                                    <span>PETICIÓN ESPECIAL</span>
                                 </div>
                             )}
 
@@ -617,7 +636,7 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
                                         className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-red-700"
                                     >
                                         <Trash2 className="w-4 h-4" />
-                                        Eliminar
+                                        Eliminar definitivamente
                                     </button>
                                 </>
                             )}
@@ -685,8 +704,12 @@ export default function Reservas() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [showInsightsModal, setShowInsightsModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);  // ✅ NUEVO para cancelar
     const [editingReservation, setEditingReservation] = useState(null);
     const [viewingReservation, setViewingReservation] = useState(null);
+    const [deletingReservation, setDeletingReservation] = useState(null);
+    const [cancellingReservation, setCancellingReservation] = useState(null);  // ✅ NUEVO para cancelar
 
     // Subscription de real-time
     const [realtimeSubscription, setRealtimeSubscription] = useState(null);
@@ -810,10 +833,10 @@ export default function Reservas() {
             // 4. Canal más usado - calculado desde reservas existentes (sin tabla externa)
             let channelPerformance = null;
             try {
-                // Calcular canal más usado desde las reservas del día
+                // Calcular canal más usado desde las reservas CREADAS hoy (independientemente de su fecha de reserva)
                 const todayReservations = reservations.filter(r => {
-                    const reservationDate = format(parseISO(r.created_at), 'yyyy-MM-dd');
-                    return reservationDate === today;
+                    const createdDate = format(parseISO(r.created_at), 'yyyy-MM-dd');
+                    return createdDate === today;
                 });
                 
                 if (todayReservations.length > 0) {
@@ -913,6 +936,7 @@ export default function Reservas() {
                     )
                 `)
                 .eq('restaurant_id', restaurantId)
+                .neq('status', 'deleted')  // ✅ OCULTAR reservas eliminadas
                 .order('reservation_date', { ascending: true })
                 .order('reservation_time', { ascending: true });
             
@@ -1316,14 +1340,14 @@ export default function Reservas() {
         now.setHours(0, 0, 0, 0);
 
         if (activeView === 'hoy') {
-            // Vista HOY: Solo reservas de hoy
+            // Vista HOY: Solo reservas de hoy (TODAS, incluidas canceladas)
             filtered = filtered.filter(r => r.reservation_date === today);
         } else if (activeView === 'proximas') {
-            // Vista PRÓXIMAS: Hoy + futuro (excluyendo completed, cancelled, no_show)
+            // Vista PRÓXIMAS: Hoy + futuro (solo activas: pending, confirmed, seated)
             filtered = filtered.filter(r => {
                 const resDate = new Date(r.reservation_date);
                 return resDate >= now && 
-                       !['completed', 'cancelled', 'no_show'].includes(r.status);
+                       ['pending', 'pending_approval', 'confirmed', 'seated'].includes(r.status);
             });
 
             // Aplicar sub-filtro de PRÓXIMAS
@@ -1338,11 +1362,11 @@ export default function Reservas() {
                 filtered = filtered.filter(r => r.reservation_date >= today && r.reservation_date <= monthEnd);
             }
         } else if (activeView === 'pasadas') {
-            // Vista PASADAS: Fecha < hoy O estados finales
+            // Vista PASADAS: Fecha < hoy O estados finales (completed, cancelled, no_show)
             filtered = filtered.filter(r => {
                 const resDate = new Date(r.reservation_date);
                 return resDate < now || 
-                       ['completed', 'no_show'].includes(r.status);
+                       ['completed', 'cancelled', 'no_show'].includes(r.status);
             });
         }
 
@@ -1557,6 +1581,95 @@ export default function Reservas() {
         [filteredReservations],
     );
 
+    // ⚠️ Función para confirmar cancelación desde el modal
+    const handleCancelConfirm = async (reservation) => {
+        try {
+            // 1️⃣ CANCELAR: Cambiar status a 'cancelled'
+            const { error: updateError } = await supabase
+                .from('reservations')
+                .update({ 
+                    status: 'cancelled',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', reservation.id);
+
+            if (updateError) throw updateError;
+
+            // 2️⃣ LIBERAR SLOTS asociados (igual que eliminar)
+            const { error: slotError } = await supabase
+                .from('availability_slots')
+                .update({
+                    status: 'free',
+                    is_available: true,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('table_id', reservation.table_id)
+                .eq('slot_date', reservation.reservation_date)
+                .eq('start_time', reservation.reservation_time);
+
+            if (slotError) {
+                console.warn('⚠️ No se pudieron liberar los slots:', slotError);
+            }
+
+            // 3️⃣ Cerrar modal y recargar
+            setShowCancelModal(false);
+            setCancellingReservation(null);
+            toast.success('✅ Reserva cancelada y horario liberado');
+            loadReservations();
+
+        } catch (error) {
+            console.error('❌ Error al cancelar reserva:', error);
+            toast.error('Error al cancelar la reserva');
+            setShowCancelModal(false);
+            setCancellingReservation(null);
+        }
+    };
+
+    // 🗑️ Función para confirmar eliminación desde el modal
+    const handleDeleteConfirm = async (reservation) => {
+        try {
+            // 1️⃣ SOFT DELETE: Cambiar status a 'deleted'
+            const { error: updateError } = await supabase
+                .from('reservations')
+                .update({ 
+                    status: 'deleted',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', reservation.id);
+
+            if (updateError) throw updateError;
+
+            // 2️⃣ LIBERAR SLOTS asociados
+            const { error: slotError } = await supabase
+                .from('availability_slots')
+                .update({
+                    status: 'free',
+                    is_available: true,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('table_id', reservation.table_id)
+                .eq('slot_date', reservation.reservation_date)
+                .eq('start_time', reservation.reservation_time);
+
+            if (slotError) {
+                console.warn('⚠️ No se pudieron liberar los slots:', slotError);
+                // No lanzamos error, ya que la reserva sí se eliminó
+            }
+
+            // 3️⃣ Cerrar modal y recargar
+            setShowDeleteModal(false);
+            setDeletingReservation(null);
+            toast.success('✅ Reserva eliminada y slot liberado');
+            loadReservations();
+
+        } catch (error) {
+            console.error('❌ Error al eliminar reserva:', error);
+            toast.error('Error al eliminar la reserva');
+            setShowDeleteModal(false);
+            setDeletingReservation(null);
+        }
+    };
+
     // Manejar acciones de reservas
     const handleReservationAction = useCallback(
         async (action, reservation) => {
@@ -1578,12 +1691,10 @@ export default function Reservas() {
                     message = "Reserva completada";
                     break;
                 case "cancel":
-                    if (!window.confirm("¿Estás seguro de cancelar esta reserva?")) {
-                        return;
-                    }
-                    newStatus = "cancelled";
-                    message = "Reserva cancelada";
-                    break;
+                    // ⚠️ Abrir modal de confirmación para cancelar (libera slots automáticamente)
+                    setCancellingReservation(reservation);
+                    setShowCancelModal(true);
+                    return;
                 case "noshow":
                     if (!window.confirm("¿Confirmas que el cliente no se presentó?")) {
                         return;
@@ -1593,27 +1704,10 @@ export default function Reservas() {
                     break;
                 case "delete":
                     // 🔒 REGLA SAGRADA: Esta es la ÚNICA función que puede eliminar reservas
-                    // ⚠️ NUNCA eliminar esta confirmación - las reservas son SAGRADAS
-                    if (!window.confirm("⚠️ ¿Estás seguro de ELIMINAR permanentemente esta reserva?\n\nEsta acción no se puede deshacer.\n\n🔒 ADVERTENCIA: Esta es la única forma de eliminar reservas.")) {
-                        return;
-                    }
-                    // Eliminar permanentemente de la base de datos (ÚNICA FUNCIÓN AUTORIZADA)
-                    try {
-                        const { error } = await supabase
-                            .from('reservations')
-                            .delete()
-                            .eq('id', reservation.id);
-
-                        if (error) throw error;
-
-                        toast.success("Reserva eliminada permanentemente");
-                        loadReservations();
-                        return;
-                    } catch (error) {
-                        console.error('Error eliminando reserva:', error);
-                        toast.error('Error al eliminar la reserva');
-                        return;
-                    }
+                    // ⚠️ Mostrar modal de confirmación con advertencia clara
+                    setDeletingReservation(reservation);
+                    setShowDeleteModal(true);
+                    return;
                 case "edit":
                     // 🔥 Cargar datos completos del cliente antes de editar
                     if (reservation.customer_id) {
@@ -1751,11 +1845,27 @@ export default function Reservas() {
                 return;
             }
 
-            if (
-                !window.confirm(
-                    `¿Confirmar acción en ${selectedReservations.size} reservas?`,
-                )
-            ) {
+            // 🔒 VALIDACIÓN: Solo permitir eliminar reservas canceladas o no-show
+            if (action === "delete") {
+                const reservationIds = Array.from(selectedReservations);
+                const selectedReservationsData = reservations.filter(r => reservationIds.includes(r.id));
+                const nonDeletableReservations = selectedReservationsData.filter(
+                    r => !['cancelled', 'no_show'].includes(r.status)
+                );
+
+                if (nonDeletableReservations.length > 0) {
+                    toast.error(
+                        `❌ Solo puedes eliminar reservas canceladas o no-show. ${nonDeletableReservations.length} reserva(s) seleccionada(s) tienen otro estado.`
+                    );
+                    return;
+                }
+            }
+
+            const confirmMessage = action === "delete" 
+                ? `⚠️ ¿ELIMINAR ${selectedReservations.size} reserva(s)?\n\nSe eliminarán permanentemente y los horarios quedarán libres.`
+                : `¿Confirmar acción en ${selectedReservations.size} reservas?`;
+
+            if (!window.confirm(confirmMessage)) {
                 return;
             }
 
@@ -1773,18 +1883,49 @@ export default function Reservas() {
                         newStatus = "cancelled";
                         message = `${reservationIds.length} reservas canceladas`;
                         break;
+                    case "delete":
+                        newStatus = "deleted";
+                        message = `${reservationIds.length} reservas eliminadas`;
+                        break;
                     default:
                         return;
                 }
 
+                // 1️⃣ Actualizar status de las reservas
                 const { error } = await supabase
                     .from("reservations")
                     .update({
                         status: newStatus,
+                        updated_at: new Date().toISOString()
                     })
                     .in("id", reservationIds);
 
                 if (error) throw error;
+
+                // 2️⃣ Si es cancelar o eliminar, liberar los slots asociados
+                if (action === "cancel" || action === "delete") {
+                    // Obtener las reservas seleccionadas para liberar sus slots
+                    const selectedReservationsData = reservations.filter(r => reservationIds.includes(r.id));
+                    
+                    for (const reservation of selectedReservationsData) {
+                        if (reservation.table_id && reservation.reservation_date && reservation.reservation_time) {
+                            const { error: slotError } = await supabase
+                                .from('availability_slots')
+                                .update({
+                                    status: 'free',
+                                    is_available: true,
+                                    updated_at: new Date().toISOString()
+                                })
+                                .eq('table_id', reservation.table_id)
+                                .eq('slot_date', reservation.reservation_date)
+                                .eq('start_time', reservation.reservation_time);
+
+                            if (slotError) {
+                                console.warn(`⚠️ No se pudo liberar slot para reserva ${reservation.id}:`, slotError);
+                            }
+                        }
+                    }
+                }
 
                 toast.success(message);
                 addNotification({
@@ -1796,10 +1937,11 @@ export default function Reservas() {
                 // Recargar reservas para mostrar cambios inmediatamente
                 await loadReservations();
             } catch (error) {
+                console.error('Error al actualizar las reservas:', error);
                 toast.error("Error al actualizar las reservas");
             }
         },
-        [selectedReservations, loadReservations, addNotification],
+        [selectedReservations, reservations, loadReservations, addNotification],
     );
 
     // Calcular estadísticas
@@ -2237,10 +2379,17 @@ export default function Reservas() {
                         </button>
                         <button
                             onClick={() => handleBulkAction("cancel")}
-                            className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm flex items-center gap-1"
+                            className="px-3 py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm flex items-center gap-1"
                         >
                             <XCircle className="w-4 h-4" />
                             Cancelar ({selectedReservations.size})
+                        </button>
+                        <button
+                            onClick={() => handleBulkAction("delete")}
+                            className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm flex items-center gap-1"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Eliminar ({selectedReservations.size})
                         </button>
                     </div>
                 )}
@@ -2688,6 +2837,28 @@ export default function Reservas() {
                     </div>
                 </div>
             )}
+
+            {/* ⚠️ MODAL DE CONFIRMACIÓN DE CANCELACIÓN */}
+            <ConfirmCancelModal
+                isOpen={showCancelModal}
+                reservation={cancellingReservation}
+                onConfirm={handleCancelConfirm}
+                onCancel={() => {
+                    setShowCancelModal(false);
+                    setCancellingReservation(null);
+                }}
+            />
+
+            {/* 🗑️ MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+            <ConfirmDeleteModal
+                isOpen={showDeleteModal}
+                reservation={deletingReservation}
+                onConfirm={handleDeleteConfirm}
+                onCancel={() => {
+                    setShowDeleteModal(false);
+                    setDeletingReservation(null);
+                }}
+            />
         </div>
     );
 }
