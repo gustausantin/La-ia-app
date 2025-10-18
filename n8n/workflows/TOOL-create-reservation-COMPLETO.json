@@ -126,6 +126,10 @@
               "fieldValue": "agent_whatsapp"
             },
             {
+              "fieldId": "channel",
+              "fieldValue": "whatsapp"
+            },
+            {
               "fieldId": "special_requests",
               "fieldValue": "={{ $json.special_requests }}"
             }
