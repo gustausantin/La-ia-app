@@ -211,3 +211,4 @@ Resultado: El LLM preguntará si quiere cancelar o cambiar fecha
 
 **Estado:** ✅ LISTO PARA PRUEBAS EN N8N
 
+

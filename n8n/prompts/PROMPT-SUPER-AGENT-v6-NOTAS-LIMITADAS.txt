@@ -242,7 +242,7 @@ Cuando llames a una herramienta, proporciona TODOS los parámetros en formato JS
 **Cliente:**
 • Nombre: {{ $json.customer_name }}
 • Teléfono: {{ $json.customer_phone }}
-• Reservas activas: {{ $json.customer_context.reservations_summary }}
+• Reservas activas: {{ $json.customer_active_reservations_summary }}
 
 ═══════════════════════════════════════════════════════════════════
 🗣️ FLUJO DE CONVERSACIÓN PROFESIONAL

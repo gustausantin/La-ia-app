@@ -154,3 +154,4 @@ La tabla `reservations` tiene **DOS** campos relacionados con canales:
 **Estado:** ✅ IMPLEMENTADO - Pendiente de validación del usuario
 
 
+
