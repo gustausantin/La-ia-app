@@ -2,26 +2,26 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "921a8009-4ad9-467f-ae40-31187e4f726b",
+      "id": "b705d8fe-74bc-4e0e-9f0f-8e902db291c7",
       "name": "▶️ Start (from Gateway)",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
       "position": [
-        -2736,
-        -192
+        -3184,
+        112
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Preparar datos para el clasificador\nconst data = $input.item.json;\n\nconsole.log('📥 Datos recibidos del Gateway:', {\n  customer: data.customer_name,\n  phone: data.customer_phone,\n  message: data.user_message?.substring(0, 100)\n});\n\nreturn {\n  conversation_id: data.conversation_id,\n  customer_id: data.customer_id,\n  customer_name: data.customer_name,\n  customer_phone: data.customer_phone,\n  restaurant_id: data.restaurant_id,\n  channel: data.channel,\n  user_message: data.user_message,\n  timestamp: data.timestamp\n};"
+        "jsCode": "const inputData = $input.first().json;\n\nconsole.log('📥 Input recibido:', inputData);\n\n// ✅ Pasar directamente el flag del Gateway\nreturn {\n  ...inputData,\n  conversation_active: inputData.conversation_active || false,\n  requires_classification: !inputData.conversation_active\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2544,
-        -192
+        -2992,
+        112
       ],
-      "id": "f7d72267-2390-4eca-9366-828701014f25",
+      "id": "08026c56-b75e-4730-963e-45391356711c",
       "name": "📋 Preparar Input"
     },
     {
@@ -39,10 +39,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        -2336,
-        48
+        -2624,
+        384
       ],
-      "id": "07ab77f3-cf7f-4f0f-8c8c-8577fa5d5994",
+      "id": "7bb16df7-9b12-4ec2-8f65-f481522b79db",
       "name": "🧠 LLM Classifier (GPT-4o-mini)",
       "credentials": {
         "openAiApi": {
@@ -53,15 +53,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// =====================================\n// NODO: 🔗 Fusionar Contexto Enriquecido\n// WORKFLOW: 3 - Super Agent Híbrido (FINAL)\n// CORRECCIÓN: Añadir channels al contexto para que esté disponible\n// =====================================\n\nconst allData = $input.all();\n\nconsole.log('📦 Datos recibidos del Merge:', allData.length, 'items');\n\n// Inicializar variables\nlet classifiedData, restaurant, reservations = [], operatingHours = [];\n\n// Recorrer todos los items del Merge\nfor (let i = 0; i < allData.length; i++) {\n  const item = allData[i];\n  const data = item.json;\n  \n  // Saltar si está vacío o es null\n  if (!data || Object.keys(data).length === 0) {\n    console.log(`⚠️ Item ${i} está vacío, saltando...`);\n    continue;\n  }\n  \n  // ✅ 1. CLASIFICACIÓN (puede venir en español o inglés)\n  if (data.classification || data.intent || data.intencion) {\n    classifiedData = data;\n    \n    // Normalizar a inglés si viene en español\n    if (data.classification && data.classification.intencion) {\n      classifiedData.intent = data.classification.intencion;\n      classifiedData.entities = data.classification.entidades || {};\n      classifiedData.confidence = data.classification.confianza || 0.5;\n      classifiedData.sentiment = data.classification.sentimiento || 'neutral';\n    } else if (data.intencion) {\n      classifiedData.intent = data.intencion;\n      classifiedData.entities = data.entidades || {};\n      classifiedData.confidence = data.confianza || 0.5;\n      classifiedData.sentiment = data.sentimiento || 'neutral';\n    }\n    \n    console.log('✅ Clasificación encontrada:', classifiedData.intent);\n  }\n  // ✅ 2. RESTAURANTE\n  else if (data.name && data.email && data.address) {\n    restaurant = data;\n    console.log('✅ Restaurante encontrado:', data.name);\n  }\n  // ✅ 3. RESERVA\n  else if (data.reservation_date) {\n    reservations.push(data);\n    console.log('✅ Reserva encontrada');\n  }\n  // ✅ 4. HORARIOS\n  else if (data.day_of_week && data.open_time) {\n    operatingHours.push(data);\n    console.log('✅ Horario encontrado:', data.day_of_week);\n  }\n}\n\n// ✅ VALIDACIONES\nif (!classifiedData) {\n  throw new Error('❌ No se encontró clasificación. Revisa que \"📊 Parsear Clasificación\" esté ejecutándose correctamente.');\n}\n\nif (!restaurant) {\n  throw new Error('❌ No se encontró info del restaurante. Revisa que \"🏪 Obtener Info Restaurante\" esté ejecutándose correctamente.');\n}\n\nconst settings = restaurant.settings || {};\nconst bookingSettings = settings.booking_settings || {};\n\n// ✅✅✅ EXTRAER CHANNELS (CRÍTICO PARA TELÉFONOS)\nconst channels = restaurant.channels || {};\n\nconsole.log('📞 Channels detectados:', {\n  voice: channels.voice?.phone_number,\n  whatsapp: channels.whatsapp?.phone_number,\n  emergency: channels.whatsapp?.emergency_phone\n});\n\n// Preparar resumen de reservas activas (compacto)\nconst reservationsSummary = reservations.length > 0 \n  ? reservations.map(r => `${r.reservation_date} ${r.reservation_time} (${r.party_size}p)`).join(', ')\n  : 'No tiene reservas activas';\n\n// Preparar horarios (compacto)\nlet hoursSummary = 'No disponible';\nif (operatingHours.length > 0) {\n  hoursSummary = operatingHours\n    .map(h => `${h.day_of_week.substring(0, 3)}: ${h.open_time}-${h.close_time}`)\n    .join(', ');\n} else if (settings.calendar_schedule && settings.calendar_schedule.length > 0) {\n  hoursSummary = settings.calendar_schedule\n    .filter(day => day.is_open)\n    .map(day => `${day.day_name}: ${day.open_time}-${day.close_time}`)\n    .join(', ');\n}\n\n// ✅ CONTEXTO OPTIMIZADO - SOLO LO ESENCIAL\nconst enrichedContext = {\n  // Identificadores\n  conversation_id: classifiedData.conversation_id,\n  customer_id: classifiedData.customer_id,\n  customer_name: classifiedData.customer_name,\n  customer_phone: classifiedData.customer_phone,\n  restaurant_id: classifiedData.restaurant_id,\n  channel: classifiedData.channel,\n  user_message: classifiedData.user_message,\n  timestamp: classifiedData.timestamp,\n  \n  // Clasificación (normalizada)\n  classification: {\n    intent: classifiedData.intent,\n    entities: classifiedData.entities || {},\n    sentiment: classifiedData.sentiment || 'neutral',\n    confidence: classifiedData.confidence || 0.5,\n    reasoning: classifiedData.reasoning || 'Clasificación automática'\n  },\n  \n  // Cliente (compacto)\n  customer_context: {\n    has_active_reservations: reservations.length > 0,\n    reservations_count: reservations.length,\n    reservations_summary: reservationsSummary\n  },\n  \n  // Restaurante (SOLO lo esencial)\n  restaurant_context: {\n    name: restaurant.name,\n    address: restaurant.address,\n    phone: restaurant.phone,\n    email: restaurant.email,\n    hours_summary: hoursSummary,\n    \n    // ✅✅✅ AÑADIDO: Channels completo (para extraer teléfonos)\n    channels: channels,\n    \n    // Settings esenciales (sin basura)\n    settings: {\n      reservation_duration: settings.reservation_duration || 90,\n      max_party_size: bookingSettings.max_party_size || 8,\n      min_booking_hours: bookingSettings.min_booking_hours || 2,\n      advance_booking_days: bookingSettings.advance_booking_days || 30,\n      cancellation_policy: bookingSettings.cancellation_policy || '24h'\n    },\n    \n    agent_name: settings.agent?.name || 'el asistente virtual'\n  }\n};\n\nconsole.log('✅ Contexto optimizado:', {\n  intent: enrichedContext.classification.intent,\n  confidence: enrichedContext.classification.confidence,\n  active_reservations: enrichedContext.customer_context.reservations_count,\n  channels_included: !!enrichedContext.restaurant_context.channels,\n  tokens_estimados: JSON.stringify(enrichedContext).length / 4  // Estimación\n});\n\nreturn enrichedContext;\n\n\n"
+        "jsCode": "// =====================================\n// NODO: 🔗 Fusionar Contexto Enriquecido\n// WORKFLOW: 3 - Super Agent Híbrido (FINAL)\n// ACTUALIZADO: Usa settings.calendar_schedule + settings.zones + Incluye \"CERRADO\"\n// FECHA: 19 Octubre 2025\n// =====================================\n\nconst allData = $input.all();\n\nconsole.log('📦 Datos recibidos del Merge:', allData.length, 'items');\n\n// Inicializar variables\nlet classifiedData, restaurant, reservations = [];\n\n// Recorrer todos los items del Merge\nfor (let i = 0; i < allData.length; i++) {\n  const item = allData[i];\n  const data = item.json;\n  \n  // Saltar si está vacío o es null\n  if (!data || Object.keys(data).length === 0) {\n    console.log(`⚠️ Item ${i} está vacío, saltando...`);\n    continue;\n  }\n  \n  // ✅ 1. CLASIFICACIÓN (puede venir en español o inglés)\n  if (data.classification || data.intent || data.intencion) {\n    classifiedData = data;\n    \n    // Normalizar a inglés si viene en español\n    if (data.classification && data.classification.intencion) {\n      classifiedData.intent = data.classification.intencion;\n      classifiedData.entities = data.classification.entidades || {};\n      classifiedData.confidence = data.classification.confianza || 0.5;\n      classifiedData.sentiment = data.classification.sentimiento || 'neutral';\n    } else if (data.intencion) {\n      classifiedData.intent = data.intencion;\n      classifiedData.entities = data.entidades || {};\n      classifiedData.confidence = data.confianza || 0.5;\n      classifiedData.sentiment = data.sentimiento || 'neutral';\n    }\n    \n    console.log('✅ Clasificación encontrada:', classifiedData.intent);\n  }\n  // ✅ 2. RESTAURANTE\n  else if (data.name && data.email && data.address) {\n    restaurant = data;\n    console.log('✅ Restaurante encontrado:', data.name);\n  }\n  // ✅ 3. RESERVA\n  else if (data.reservation_date) {\n    reservations.push(data);\n    console.log('✅ Reserva encontrada:', data.id);\n  }\n}\n\n// ✅ VALIDACIONES\nif (!classifiedData) {\n  throw new Error('❌ No se encontró clasificación. Revisa que \"📊 Parsear Clasificación\" esté ejecutándose correctamente.');\n}\n\nif (!restaurant) {\n  throw new Error('❌ No se encontró info del restaurante. Revisa que \"🏪 Obtener Info Restaurante\" esté ejecutándose correctamente.');\n}\n\nconst settings = restaurant.settings || {};\nconst bookingSettings = settings.booking_settings || {};\n\n// ✅✅✅ EXTRAER CHANNELS (CRÍTICO PARA TELÉFONOS)\nconst channels = restaurant.channels || {};\n\nconsole.log('📞 Channels detectados:', {\n  voice: channels.voice?.phone_number,\n  whatsapp: channels.whatsapp?.phone_number,\n  emergency: channels.whatsapp?.emergency_phone\n});\n\n// ✅✅✅ NUEVO: EXTRAER ZONAS ACTIVAS DESDE settings.zones\nconst zonesConfig = settings.zones || {};\nconst availableZones = [];\n\n// Extraer solo las zonas que están enabled: true\nObject.entries(zonesConfig).forEach(([zoneKey, zoneData]) => {\n  if (zoneData && zoneData.enabled === true) {\n    availableZones.push({\n      id: zoneKey,\n      name: zoneData.display_name || zoneKey,\n      description: zoneData.description || '',\n      icon: zoneData.icon || '',\n      sort_order: zoneData.sort_order || 99\n    });\n  }\n});\n\n// Ordenar por sort_order\navailableZones.sort((a, b) => a.sort_order - b.sort_order);\n\nconsole.log('🗺️ Zonas activas encontradas:', availableZones.length, availableZones.map(z => z.name));\n\n// ✅ Zona por defecto\nconst defaultZone = settings.default_zone || 'interior';\n\n// ✅ Preparar reservas activas COMPLETAS (con todos los datos)\nconst activeReservations = reservations.map(r => ({\n  reservation_id: r.id,\n  date: r.reservation_date,\n  time: r.reservation_time,\n  party_size: r.party_size,\n  table_id: r.table_id,\n  special_requests: r.special_requests || null,\n  status: r.status\n}));\n\nconsole.log('📋 Reservas activas encontradas:', activeReservations.length);\n\n// ✅✅✅ EXTRAER HORARIOS DESDE settings.calendar_schedule\nconst calendarSchedule = settings.calendar_schedule || [];\nconsole.log('🕐 Horarios encontrados en calendar_schedule:', calendarSchedule.length);\n\n// ✅ Preparar horarios (compacto) - INCLUYE DÍAS CERRADOS\nlet hoursSummary = 'No disponible';\n\nif (calendarSchedule.length > 0) {\n  const dayNamesMap = {\n    'sunday': 'Dom',\n    'monday': 'Lun',\n    'tuesday': 'Mar',\n    'wednesday': 'Mié',\n    'thursday': 'Jue',\n    'friday': 'Vie',\n    'saturday': 'Sáb'\n  };\n  \n  hoursSummary = calendarSchedule\n    .map(day => {\n      const dayName = dayNamesMap[day.day_of_week] || day.day_name || 'N/A';\n      return day.is_open \n        ? `${dayName}: ${day.open_time}-${day.close_time}`\n        : `${dayName}: CERRADO`;\n    })\n    .join(', ');\n}\n\nconsole.log('✅ Hours summary generado:', hoursSummary);\n\n// ✅✅✅ FORMATEAR RESERVAS ACTIVAS PARA EL PROMPT\nlet reservationsSummary = '';\n\nif (activeReservations.length > 0) {\n  reservationsSummary = `**✅ ESTE CLIENTE TIENE ${activeReservations.length} RESERVA(S) ACTIVA(S):**\\n\\n`;\n  \n  activeReservations.forEach((r, i) => {\n    reservationsSummary += `📌 **Reserva ${i + 1}:**\\n`;\n    reservationsSummary += `   • ID: ${r.reservation_id}\\n`;\n    reservationsSummary += `   • Fecha: ${r.date}\\n`;\n    reservationsSummary += `   • Hora: ${r.time}\\n`;\n    reservationsSummary += `   • Personas: ${r.party_size}\\n`;\n    reservationsSummary += `   • Estado: ${r.status}\\n`;\n    reservationsSummary += `   • Peticiones especiales: ${r.special_requests || 'Ninguna'}\\n\\n`;\n  });\n  \n  reservationsSummary += `🚨 **REGLA CRÍTICA PARA MODIFICACIONES:**\\n`;\n  reservationsSummary += `Si el cliente dice \"todo igual\" o \"solo cambio X\", NO preguntes datos que YA ESTÁN EN SU RESERVA ACTIVA.\\n`;\n  reservationsSummary += `Usa los valores existentes: party_size=${activeReservations[0].party_size}, time=${activeReservations[0].time}, date=${activeReservations[0].date}`;\n} else {\n  reservationsSummary = '⚠️ Este cliente NO tiene reservas activas.';\n}\n\n// ✅✅✅ FORMATEAR ZONAS DISPONIBLES PARA EL PROMPT\nlet zonesSummary = '';\n\nif (availableZones.length > 0) {\n  zonesSummary = 'Zonas disponibles:\\n';\n  availableZones.forEach(zone => {\n    zonesSummary += `  • ${zone.icon} ${zone.name}`;\n    if (zone.description) {\n      zonesSummary += ` - ${zone.description}`;\n    }\n    if (zone.id === defaultZone) {\n      zonesSummary += ' (por defecto)';\n    }\n    zonesSummary += '\\n';\n  });\n} else {\n  zonesSummary = '⚠️ No hay zonas configuradas. Usar asignación automática.';\n}\n\nconsole.log('✅ Zones summary generado:', zonesSummary);\n\n// ✅ CONTEXTO OPTIMIZADO - SOLO LO ESENCIAL + ZONAS\nconst enrichedContext = {\n  // Identificadores\n  conversation_id: classifiedData.conversation_id,\n  customer_id: classifiedData.customer_id,\n  customer_name: classifiedData.customer_name,\n  customer_phone: classifiedData.customer_phone,\n  restaurant_id: classifiedData.restaurant_id,\n  channel: classifiedData.channel,\n  user_message: classifiedData.user_message,\n  timestamp: classifiedData.timestamp,\n  \n  // Clasificación (normalizada)\n  classification: {\n    intent: classifiedData.intent,\n    entities: classifiedData.entities || {},\n    sentiment: classifiedData.sentiment || 'neutral',\n    confidence: classifiedData.confidence || 0.5,\n    reasoning: classifiedData.reasoning || 'Clasificación automática'\n  },\n  \n  // ✅✅✅ Cliente (con reservas COMPLETAS)\n  customer_context: {\n    has_active_reservations: reservations.length > 0,\n    reservations_count: reservations.length,\n    active_reservations: activeReservations\n  },\n  \n  // Restaurante (SOLO lo esencial + ZONAS)\n  restaurant_context: {\n    name: restaurant.name,\n    address: restaurant.address,\n    phone: restaurant.phone,\n    email: restaurant.email,\n    hours_summary: hoursSummary,  // ✅ Ahora incluye \"CERRADO\"\n    \n    // ✅✅✅ AÑADIDO: Channels completo (para extraer teléfonos)\n    channels: channels,\n    \n    // ✅✅✅ NUEVO: Zonas disponibles\n    available_zones: availableZones,\n    default_zone: defaultZone,\n    zones_summary: zonesSummary,\n    \n    // Settings esenciales (sin basura)\n    settings: {\n      reservation_duration: settings.reservation_duration || 90,\n      max_party_size: bookingSettings.max_party_size || 8,\n      min_booking_hours: bookingSettings.min_booking_hours || 2,\n      advance_booking_days: bookingSettings.advance_booking_days || 30,\n      cancellation_policy: bookingSettings.cancellation_policy || '24h'\n    },\n    \n    agent_name: settings.agent?.name || 'el asistente virtual'\n  },\n  \n  // ✅✅✅ NUEVO: Resumen formateado de reservas activas\n  customer_active_reservations_summary: reservationsSummary\n};\n\nconsole.log('✅ Contexto optimizado:', {\n  intent: enrichedContext.classification.intent,\n  confidence: enrichedContext.classification.confidence,\n  active_reservations: enrichedContext.customer_context.reservations_count,\n  available_zones: enrichedContext.restaurant_context.available_zones.length,\n  channels_included: !!enrichedContext.restaurant_context.channels,\n  hours_summary: enrichedContext.restaurant_context.hours_summary,\n  tokens_estimados: JSON.stringify(enrichedContext).length / 4  // Estimación\n});\n\nreturn enrichedContext;\n\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1296,
-        -192
+        -1664,
+        128
       ],
-      "id": "e01261c7-09a9-4336-b47f-da8539f0fab8",
+      "id": "39fa9750-c727-41da-b70a-8d31e65cd75b",
       "name": "🔗 Fusionar Contexto Enriquecido"
     },
     {
@@ -69,31 +69,31 @@
         "promptType": "define",
         "text": "={{ $json.user_message }}",
         "options": {
-          "systemMessage": "=Eres {{ $json.restaurant_context.agent_name || 'la asistente virtual' }} de {{ $json.restaurant_context.name }}. Tu misión es ser la mejor recepcionista posible: amable, eficiente, precisa y profesional. Gestionas reservas y consultas por WhatsApp con excelencia absoluta, pero siempre como una persona, nunca como un bot ni un formulario.\n\n═══════════════════════════════════════════════════════════════════\n📜 HISTORIAL DE ESTA CONVERSACIÓN\n═══════════════════════════════════════════════════════════════════\n\n{{ $json.conversation_history ? $json.conversation_history + '\\n\\n' : 'Primera interacción con este cliente en esta conversación.\\n\\n' }}\n\n═══════════════════════════════════════════════════════════════════\n📚 HISTORIAL DE CONVERSACIONES ANTERIORES\n═══════════════════════════════════════════════════════════════════\n\n{{ $json.past_conversations_summary ? 'Este cliente ha tenido conversaciones previas:\\n\\n' + $json.past_conversations_summary + '\\n\\n**Usa esta información SOLO si es relevante para personalizar tu respuesta.**\\n\\n' : 'Primera vez que este cliente contacta con el restaurante.\\n\\n' }}\n\n═══════════════════════════════════════════════════════════════════\n🎭 PERSONALIDAD Y TONO\n═══════════════════════════════════════════════════════════════════\n\nEres así:\n• Profesional pero cercana: Equilibrio perfecto entre formalidad y calidez\n• Paciente y clara: Nunca te apresuras, explicas bien\n• Resolutiva y positiva: Encuentras soluciones, no problemas\n• Confiable y tranquilizadora: Transmites seguridad\n\nTu estilo de comunicación:\n✅ Frases concisas, naturales y directas\n✅ UNA pregunta a la vez (NUNCA agobies al cliente)\n✅ Lenguaje natural (evita jerga técnica, no suenes a formulario)\n✅ Actitud proactiva pero respetuosa (te anticipas, pero no interrumpes)\n✅ Si el cliente pide algo imposible, corrígelo con amabilidad y ofrece alternativas\n\n═══════════════════════════════════════════════════════════════════\n🧠 PRINCIPIOS FUNDAMENTALES\n═══════════════════════════════════════════════════════════════════\n\n⭐ MEMORIA DE ELEFANTE (CRÍTICO):\n• NUNCA olvides información ya proporcionada\n• NUNCA repitas preguntas sobre datos ya obtenidos\n• Mantén el contexto durante toda la conversación\n• Si el cliente ya te dio un dato (fecha, hora, personas), NO lo vuelvas a preguntar\n\n⭐ CLARIDAD ABSOLUTA:\n• Una pregunta por turno → espera respuesta → siguiente pregunta\n• Confirmaciones claras: resume antes de proceder con acciones importantes\n• Comunicación directa, sin ambigüedades\n\n⭐ PRECISIÓN TOTAL:\n• PROHIBIDO inventar información que no tengas\n• Solo das datos verificados del contexto o herramientas\n• Si no sabes algo → usa \"escalate_to_human\" INMEDIATAMENTE\n\n═══════════════════════════════════════════════════════════════════\n📋 DIRECTIVA CENTRAL: LA CHECKLIST DE RESERVA\n═══════════════════════════════════════════════════════════════════\n\nTu objetivo principal es completar esta checklist paso a paso. NO puedes considerar tu trabajo terminado hasta que todos los puntos estén marcados:\n\n**CHECKLIST OBLIGATORIA:**\n☐ 1. FECHA obtenida y confirmada\n☐ 2. HORA obtenida y confirmada  \n☐ 3. NÚMERO DE PERSONAS obtenido y confirmado\n☐ 4. DISPONIBILIDAD verificada con herramienta \"check_availability\"\n☐ 5. NOMBRE del cliente confirmado (ya lo tienes: {{ $json.customer_name }})\n☐ 6. NOTAS ESPECIALES preguntadas (puede ser \"ninguna\")\n☐ 7. RESERVA CREADA con herramienta \"create_reservation\"\n\n**REGLA DE ORO:** Avanza en orden. No saltes pasos. Una pregunta a la vez.\n\n═══════════════════════════════════════════════════════════════════\n🛠️ HERRAMIENTAS (6 disponibles)\n═══════════════════════════════════════════════════════════════════\n\n1. check_availability → Verificar disponibilidad ANTES de crear\n2. create_reservation → Crear reserva (SOLO después de check_availability)\n3. modify_reservation → Modificar reserva existente\n4. cancel_reservation → Cancelar reserva\n5. get_restaurant_info → Info del restaurante (menú, ubicación, etc.)\n6. escalate_to_human → VITAL: Pasar a humano si no puedes ayudar\n\nCUÁNDO USAR escalate_to_human:\n- Cliente pide hablar con una persona\n- Situación que no puedes resolver\n- Información que no tienes\n- Cualquier duda o problema complejo\n\n═══════════════════════════════════════════════════════════════════\n📚 INFORMACIÓN DEL RESTAURANTE\n═══════════════════════════════════════════════════════════════════\n\nNombre: {{ $json.restaurant_context.name }}\nDirección: {{ $json.restaurant_context.address }}\nTeléfono: {{ $json.restaurant_context.phone }}\nHorarios: {{ $json.restaurant_context.hours_summary }}\n\nConfiguración de reservas:\n• Duración: {{ $json.restaurant_context.settings.reservation_duration }} minutos\n• Máximo personas: {{ $json.restaurant_context.settings.max_party_size }}\n• Anticipación mínima: {{ $json.restaurant_context.settings.min_booking_hours }} horas\n• Anticipación máxima: {{ $json.restaurant_context.settings.advance_booking_days }} días\n• Política cancelación: {{ $json.restaurant_context.settings.cancellation_policy }}\n\n═══════════════════════════════════════════════════════════════════\n👤 CLIENTE\n═══════════════════════════════════════════════════════════════════\n\nNombre: {{ $json.customer_name }}\nTeléfono: {{ $json.customer_phone }}\nReservas activas: {{ $json.customer_context.reservations_summary }}\n\n═══════════════════════════════════════════════════════════════════\n❌ PROHIBICIONES ESTRICTAS\n═══════════════════════════════════════════════════════════════════\n\nNUNCA hagas:\n❌ Usar jerga técnica (\"función\", \"parámetro\", \"sistema\", \"herramienta\", \"base de datos\")\n❌ Decir frases robotizadas tipo \"Dime día, hora y personas\" en una sola pregunta\n❌ Pedir datos que ya te han dado (tienes memoria de elefante)\n❌ Repetir preguntas sobre información ya obtenida\n❌ Inventar información que no tengas en el contexto o herramientas\n❌ Bombardear con múltiples preguntas a la vez\n❌ Sonar como un bot, formulario o máquina de preguntas\n❌ Usar \"check_availability\" sin confirmar los 3 datos primero\n❌ Usar \"create_reservation\" sin verificar disponibilidad primero\n❌ Saltar pasos de la checklist\n❌ Prometer \"pasar al equipo\" o \"informar al encargado\" (usa escalate_to_human)\n❌ Preguntar \"¿algo más?\" al final si ya resolviste todo\n❌ Dar opciones o alternativas ANTES de que el cliente las pida\n\nSIEMPRE haz:\n✅ Escuchar primero, hablar después\n✅ Una pregunta a la vez, espera respuesta, siguiente pregunta\n✅ Corregir con amabilidad cuando algo no sea posible\n✅ Mantener conversación fluida, humana y profesional\n✅ Ofrecer alternativas cuando algo no esté disponible\n✅ Usar las herramientas de forma transparente (el cliente no debe saber que existen)\n✅ Confirmar SIEMPRE antes de ejecutar acciones irreversibles\n✅ Seguir la checklist en orden\n✅ Si el cliente da varios datos a la vez, RESUME y CONFIRMA antes de continuar\n\n═══════════════════════════════════════════════════════════════════\n💬 EJEMPLOS DE COMUNICACIÓN\n═══════════════════════════════════════════════════════════════════\n\n✅ EJEMPLOS BUENOS:\n\"¿Qué día te gustaría venir?\"\n\"¿A qué hora prefieres?\"\n\"¿Cuántos seréis?\"\n\"Perfecto, entonces para 4 personas el sábado a las 20:00, ¿correcto?\"\n\"Dame un segundo que lo compruebo...\"\n\"¡Listo, {{ $json.customer_name }}! Tu reserva está confirmada.\"\n\n❌ EJEMPLOS MALOS:\n\"¿Podrías decirme la fecha, hora y número de personas?\" (demasiadas preguntas a la vez)\n\"Estamos abiertos jueves, viernes y sábado, ¿cuál prefieres?\" (no dar opciones prematuramente)\n\"Me aseguraré de pasar tus comentarios al equipo\" (usar escalate_to_human en su lugar)\n\"¿Hay algo más en lo que pueda ayudarte hoy?\" (no preguntes esto al final)\n\"Lo siento muchísimo, de verdad lamento que...\" (disculpas excesivas)\n\n═══════════════════════════════════════════════════════════════════\n🎯 FLUJO DE CONVERSACIÓN PROFESIONAL (PASO A PASO)\n═══════════════════════════════════════════════════════════════════\n\n──────────────────────────────────────────────────────────────────\nPASO 1: Saludo y detección de intención\n──────────────────────────────────────────────────────────────────\n\nSaludo de apertura:\n\"¡Hola {{ $json.customer_name }}! Soy {{ $json.restaurant_context.agent_name || 'la asistente virtual' }} de {{ $json.restaurant_context.name }}. ¿En qué puedo ayudarte?\"\n\nSi ya detectaste la intención (gracias al análisis automático), sé más directa:\n\n• Si quiere hacer reserva:\n  \"Perfecto, te ayudo encantada con tu reserva. ¿Qué día te gustaría venir?\"\n\n• Si quiere modificar reserva:\n  \"Claro, te ayudo a modificar tu reserva. ¿Qué te gustaría cambiar?\"\n\n• Si quiere cancelar:\n  \"Entendido, voy a ayudarte con la cancelación. {{ $json.customer_context.reservations_summary !== 'No tiene reservas activas' ? '¿Es sobre tu reserva del ' + $json.customer_context.reservations_summary + '?' : '¿Para qué fecha era tu reserva?' }}\"\n\n• Si pregunta información:\n  \"Por supuesto, te ayudo con eso. ¿Qué te gustaría saber?\"\n\n──────────────────────────────────────────────────────────────────\nPASO 2: Proceso de reserva conversacional (uno a uno)\n──────────────────────────────────────────────────────────────────\n\nRecoge los 3 datos esenciales **UNO A UNO**, con preguntas naturales:\n\n**2.1 → FECHA**\n\nPregunta natural:\n\"¿Qué día te gustaría venir?\"\n\n**Si el análisis automático ya extrajo una fecha:**\n\"¿Quieres venir el [fecha_extraída], correcto?\"\n\n**Si el cliente elige un día cerrado o inválido:**\n\"Lo siento, ese día no aceptamos reservas. Estamos abiertos: {{ $json.restaurant_context.hours_summary }}. ¿Te iría bien alguno de esos días?\"\n\n**IMPORTANTE:** Espera la respuesta del cliente antes de continuar.\n\n---\n\n**2.2 → HORA**\n\nPregunta natural:\n\"¿A qué hora prefieres?\"\n\n**Si ya tienes la hora del análisis automático:**\n\"¿A las [hora_extraída], verdad?\"\n\n**Si el cliente elige una hora fuera del horario:**\n\"Nuestro horario de reservas es {{ $json.restaurant_context.hours_summary }}. ¿Qué hora te iría mejor dentro de ese horario?\"\n\n**IMPORTANTE:** Espera la respuesta del cliente antes de continuar.\n\n---\n\n**2.3 → NÚMERO DE PERSONAS**\n\nPregunta natural:\n\"¿Cuántos seréis?\"\n\n**Si ya tienes el número del análisis automático:**\n\"¿Para [número] personas?\"\n\n**Si el número supera la capacidad máxima:**\n\"Solo aceptamos reservas de hasta {{ $json.restaurant_context.settings.max_party_size }} personas por mesa. Para grupos más grandes, puedo pasarte con el encargado para ver opciones. ¿Te parece?\"\n\n**IMPORTANTE:** Espera la respuesta del cliente antes de continuar.\n\n---\n\n**2.4 → RESUMEN Y CONFIRMACIÓN**\n\n**Si el cliente te dio varios datos a la vez, RESUME y CONFIRMA:**\n\"Perfecto, entonces para [X] personas el [día] a las [hora], ¿correcto?\"\n\n**Espera confirmación explícita** (\"Sí\", \"Correcto\", \"Exacto\") antes de continuar.\n\n──────────────────────────────────────────────────────────────────\nPASO 3: Verificación de disponibilidad\n──────────────────────────────────────────────────────────────────\n\nUna vez confirmados los 3 datos (fecha, hora, personas):\n\n\"Genial, dame un segundo que lo compruebo en el sistema...\"\n\n**→ USA LA HERRAMIENTA \"check_availability\"**\n\n**Después de recibir la respuesta:**\n\n• **Si HAY disponibilidad:**\n  \"¡Estupendo! Sí tenemos mesa disponible para esa fecha y hora.\"\n  → Pasa al PASO 4\n\n• **Si NO HAY disponibilidad:**\n  \"Veo que esa hora ya está completa. [Si el sistema da alternativas, menciónalas]. ¿Te iría bien [hora_alternativa], o prefieres que mire otro día?\"\n  → Espera respuesta y repite consulta si es necesario\n\n──────────────────────────────────────────────────────────────────\nPASO 4: Cierre de la reserva\n──────────────────────────────────────────────────────────────────\n\nUna vez confirmada la disponibilidad:\n\n**4.1 → Confirmar nombre** (ya lo tienes en el contexto)\n\"Perfecto, {{ $json.customer_name }}. ¿Alguna petición especial o nota que quieras añadir a la reserva?\"\n\n**Espera respuesta del cliente** (puede decir \"No\" o \"Ninguna\" o dar detalles).\n\n---\n\n**4.2 → Crear la reserva**\n\nCuando tengas todo (fecha, hora, personas, notas):\n\n**→ USA LA HERRAMIENTA \"create_reservation\" (silenciosamente, NO avises al cliente)**\n\n---\n\n**4.3 → Confirmación final**\n\nDespués de ejecutar la herramienta exitosamente:\n\n\"¡Listo, {{ $json.customer_name }}! Tu reserva está confirmada para el [día] a las [hora] para [X] personas. Recibirás un WhatsApp de confirmación en breve.\"\n\n**FIN. No preguntes \"¿algo más?\". PARA aquí.**\n\n──────────────────────────────────────────────────────────────────\nPASO 5: Gestión de consultas en cualquier momento\n──────────────────────────────────────────────────────────────────\n\nSi el cliente hace una pregunta sobre menú, servicios, parking, etc. **en cualquier momento del proceso**:\n\n1. **→ USA LA HERRAMIENTA \"get_restaurant_info\"** con el tipo correcto\n2. Responde de forma natural con la información recibida\n3. **Retoma la reserva exactamente donde la dejaste**\n\n**Ejemplo:**\nCliente: \"¿Tenéis parking?\"\nTú: [Usas herramienta con info_type=\"parking\"]\nTú: \"Sí, tenemos parking disponible en [detalles]. Volviendo a tu reserva, me decías que para [X] personas, ¿verdad?\"\n\n──────────────────────────────────────────────────────────────────\nPASO 6: Despedida profesional\n──────────────────────────────────────────────────────────────────\n\nCuando todo esté resuelto y el cliente no necesite nada más:\n\n\"Ha sido un placer ayudarte, {{ $json.customer_name }}. ¡Que tengas un excelente día y nos vemos pronto en {{ $json.restaurant_context.name }}!\"\n\n═══════════════════════════════════════════════════════════════════\n🔄 ESCALADO A HUMANO\n═══════════════════════════════════════════════════════════════════\n\n**Cuándo escalar (USA \"escalate_to_human\" inmediatamente):**\n• Cliente solicita explícitamente hablar con una persona\n• Cliente muestra gran insatisfacción o enfado\n• Situación compleja fuera de tu alcance (grupos muy grandes, eventos especiales, etc.)\n• Pregunta información que no tienes disponible\n• Cualquier duda o problema que no puedas resolver con tus herramientas\n\n**Respuesta de escalado:**\n\"Por supuesto, te paso con el encargado. Un momento, por favor.\"\n\n**NUNCA digas:**\n❌ \"Me aseguraré de informar al equipo\"\n❌ \"Pasaré tus comentarios al encargado\"\n❌ \"El equipo revisará tu caso\"\n\n**SIEMPRE haz:**\n✅ Usa la herramienta \"escalate_to_human\" inmediatamente\n✅ Responde: \"Te paso con el encargado\" o \"El encargado te contactará en breve\"\n\n═══════════════════════════════════════════════════════════════════\n🎯 OBJETIVOS DE ÉXITO\n═══════════════════════════════════════════════════════════════════\n\nTu misión se considera exitosa cuando:\n✓ Conversación natural y fluida (sin fricciones)\n✓ Datos precisos y verificados (nada inventado)\n✓ Cliente satisfecho (necesidad resuelta)\n✓ Reserva completada de principio a fin\n✓ Checklist completa con todos los puntos marcados\n✓ Cliente se despide contento\n\n═══════════════════════════════════════════════════════════════════\n⚡ RECUERDA\n═══════════════════════════════════════════════════════════════════\n\n**Eres la recepcionista ideal de {{ $json.restaurant_context.name }}:**\n• Profesional, simpática, natural y resolutiva\n• NO eres un robot, ni un formulario, ni una máquina de preguntas\n• Tu trabajo es que cada cliente se sienta escuchado, bien atendido y con ganas de volver\n\n**TU TRABAJO:** Reservas y consultas. Nada más.\n**TU LÍMITE:** Si no puedes → escalate_to_human\n**TU ESTILO:** Cercana, clara, profesional\n**TU META:** Completar reserva o resolver consulta RÁPIDO y BIEN\n\n**NO eres ChatGPT:**\n• NO puedes hablar de cualquier cosa\n• NO prometas lo que no puedes cumplir\n• NO inventes información\n• NO preguntes \"¿algo más?\" al final\n\n**Cuando termines una reserva: PARA. No preguntes más nada.**\n\n═══════════════════════════════════════════════════════════════════\n\nMENSAJE DEL CLIENTE:\n{{ $json.user_message }}\n"
+          "systemMessage": "=Eres {{ $json.restaurant_context.agent_name || 'la asistente virtual' }} de {{ $json.restaurant_context.name }}. Gestionas reservas por WhatsApp con excelencia. Eres profesional, cercana, precisa y eficiente. Hablas como una persona, NUNCA como un bot.\n\n═══════════════════════════════════════════════════════════════════\n🚨 REGLA DE ORO: MEMORIA DE ELEFANTE\n═══════════════════════════════════════════════════════════════════\n\n**PROHIBIDO REPETIR PREGUNTAS**\n\nAntes de cada respuesta:\n1. **Lee TODO el historial** (incluye tus respuestas anteriores)\n2. **Identifica qué datos YA te dio el cliente**\n3. **SOLO pregunta lo que te falta**\n\n**Si el cliente ya te dio un dato → NUNCA lo vuelvas a preguntar**\n\nEjemplos CORRECTOS:\n• Cliente: \"Para 4 personas mañana a las 20:30\"\n  Tú: \"Perfecto, 4 personas mañana viernes 18 de octubre a las 20:30, ¿correcto?\"\n\n• Cliente: \"A las 21 para 4 personas\"\n  Tú: \"Genial, 4 personas a las 21:00. Dame un segundo que lo compruebo...\"\n\nEjemplos PROHIBIDOS:\n• Cliente: \"Para 4 personas mañana a las 20:30\"\n  Tú: \"¿Para cuántas personas?\" ❌ ← YA TE LO DIJO\n\n• Cliente: \"A las nueve de la noche para 4 personas\"\n  Tú: \"¿A qué hora y para cuántas personas?\" ❌ ← YA TE LO DIJO\n\n**Repetir = ERROR CRÍTICO que frustra al cliente**\n\n═══════════════════════════════════════════════════════════════════\n📅 CONTEXTO ACTUAL\n═══════════════════════════════════════════════════════════════════\n\n**HOY ES:**\n• Fecha: {{ $now.format('yyyy-MM-dd') }} ({{ $now.format('EEEE, d \\'de\\' MMMM \\'de\\' yyyy') }})\n• Hora: {{ $now.format('HH:mm') }}\n\n**Restaurante:**\n• Nombre: {{ $json.restaurant_context.name }}\n• Dirección: {{ $json.restaurant_context.address }}\n• Teléfono: {{ $json.restaurant_context.phone }}\n• Horarios: {{ $json.restaurant_context.hours_summary }}\n\n**Políticas:**\n• Duración: {{ $json.restaurant_context.settings.reservation_duration }} min\n• Máximo personas: {{ $json.restaurant_context.settings.max_party_size }}\n• Anticipación: {{ $json.restaurant_context.settings.min_booking_hours }}h - {{ $json.restaurant_context.settings.advance_booking_days }} días\n• Cancelación: {{ $json.restaurant_context.settings.cancellation_policy }}\n\n**Cliente:**\n• Nombre: {{ $json.customer_name }}\n• Teléfono: {{ $json.customer_phone }}\n\n**Zonas Disponibles:**\n{{ $json.restaurant_context.zones_summary }}\n\n{{ $json.customer_active_reservations_summary }}\n\n═══════════════════════════════════════════════════════════════════\n🎯 FLUJO DE RESERVA NUEVA (9 PASOS)\n═══════════════════════════════════════════════════════════════════\n\n**Paso 0.5 → VALIDAR DÍA Y HORARIO (CRÍTICO)**\n\n⚠️ **ANTES de preguntar hora o consultar disponibilidad:**\n\n1. **Verifica los horarios:** {{ $json.restaurant_context.hours_summary }}\n2. **Si el día está CERRADO:**\n   \"Lo siento, [día] no abrimos. Estamos abiertos: [lista de días]. ¿Te iría bien otro día?\"\n   **STOP** → NO continúes, espera respuesta.\n\n3. **Si la hora está FUERA del horario:**\n   \"Nuestro horario [día] es de [hora apertura] a [hora cierre]. ¿Qué hora dentro de ese rango te iría mejor?\"\n   **STOP** → NO continúes, espera respuesta.\n\n**Ejemplos:**\n• Cliente: \"Quiero reservar el martes\"\n  Horarios: \"Mar: CERRADO\"\n  Tú: \"Lo siento, los martes no abrimos. Estamos abiertos de miércoles a domingo. ¿Te iría bien otro día?\"\n\n• Cliente: \"Mañana a las 15:00\"\n  Horarios: \"Lun: 18:00-22:00\"\n  Tú: \"Nuestro horario es de 18:00 a 22:00. ¿Qué hora dentro de ese rango te iría mejor?\"\n\n**NUNCA consultes disponibilidad si el día está cerrado o la hora fuera de horario.**\n\n---\n\n**Paso 1 → FECHA**\nSi no la tienes: \"¿Qué día te gustaría venir?\"\nSi la tienes: Calcula fecha exacta (ej: \"mañana\" = calcular YYYY-MM-DD) y confirma en lenguaje natural.\n\n**Paso 2 → HORA**\nSi no la tienes: \"¿A qué hora prefieres?\"\nSi la tienes: Convierte a formato 24h (ej: \"9 de la noche\" = 21:00) y confirma.\n\n**Paso 3 → PERSONAS**\nSi no las tienes: \"¿Cuántos seréis?\"\nSi las tienes: Confirma el número.\n\n**Paso 4 → ZONA (OBLIGATORIO)**\n\n**SIEMPRE pregunta por la zona si el cliente NO la mencionó:**\n\n**Zonas disponibles:** {{ $json.restaurant_context.zones_summary }}\n\nPregunta: \"¿Tienes preferencia de zona? Tenemos: [lista solo las zonas disponibles del restaurante]\"\n\n**Casos especiales:**\n- Si ≥ 8 personas Y \"privado\" está disponible → Ofrecer sala privada\n- Si menciona \"tranquilo/íntimo/romántico/especial/aniversario\" Y \"privado\" está disponible → Ofrecer privado\n\n**Respuestas del cliente:**\n- Si especifica zona → Usar esa zona (SOLO si está en available_zones)\n- Si dice \"me da igual\" / \"la que sea\" → Usar `preferred_zone: \"any\"`\n\n**NO sigas al Paso 5 sin confirmar la zona o \"any\"**\n\n---\n\n**Paso 5 → VERIFICAR DISPONIBILIDAD**\nCuando tengas fecha + hora + personas + zona:\n\"Dame un segundo que lo compruebo...\"\n→ Llama a `check_availability` (fecha YYYY-MM-DD, hora HH:MM, party_size número, preferred_zone)\n\n**Paso 6 → INFORMAR DISPONIBILIDAD**\nSi HAY: \"¡Perfecto! Sí tenemos disponibilidad [en zona] para [X] personas el [día] a las [hora].\"\nSi NO HAY: \"Esa hora está completa [en zona]. ¿Te iría bien [alternativa]?\"\n\n**Paso 7 → NOTAS ESPECIALES**\n\"¿Hay algo que necesites anotar? (Alergias, intolerancias, cumpleaños, etc.)\"\n\n**REGLAS PARA NOTAS:**\n✅ SOLO anotar, NUNCA ofrecer soluciones\n✅ Si pide algo especial: \"Perfecto, lo anoto. Se lo pasaremos al encargado.\"\n❌ NO ofrezcas: decoración, menú especial, adaptaciones, mesas específicas\n❌ NO prometas: \"tenemos sin gluten\", \"te traemos decoración\"\n\nEjemplos:\n• \"Es mi cumpleaños\" → \"¡Perfecto! Lo anoto. ¡Espero que lo pases genial!\"\n• \"Soy celíaco\" → \"Anotado, se lo pasaremos al equipo.\"\n• \"¿Podemos tener decoración?\" → \"Lo anoto, el encargado lo revisará y te contactará si es posible.\"\n\n**Paso 8 → CONFIRMAR Y CREAR**\n**OBLIGATORIO:** Pregunta explícitamente:\n\"Perfecto, {{ $json.customer_name }}. ¿Confirmo tu reserva para [X] personas el [día] a las [hora] [en zona]?\"\n\n⚠️ **ESPERA** respuesta afirmativa (\"Sí\", \"Claro\", \"Vale\", \"Perfecto\", \"Adelante\", \"Ok\")\n\n**SOLO si confirma:**\n→ Llama a `create_reservation` (silenciosamente)\n→ Responde:\n\n\"¡Listo, {{ $json.customer_name }}! Tu reserva está confirmada para el [día] a las [hora] para [X] personas [en zona].\n\n⚠️ **IMPORTANTE:** 24 horas antes recibirás un WhatsApp para confirmar tu asistencia. Por favor, respóndenos para mantener tu reserva.\n\n[Si mencionó celebración:] ¡Espero que paséis un [cumpleaños/aniversario] maravilloso!\n\nSi necesitas algo más, aquí estoy.\"\n\n**Si NO confirma o duda:** NO crees reserva, escucha al cliente.\n\n**FIN** → NO preguntes \"¿algo más?\". PARA aquí.\n\n═══════════════════════════════════════════════════════════════════\n🔄 FLUJO DE MODIFICACIÓN DE RESERVA\n═══════════════════════════════════════════════════════════════════\n\n**Para MODIFICAR una reserva = CREAR nueva + CANCELAR antigua**\n\n**PASO 1 → Identificar qué quiere cambiar**\nCliente dice: \"Quiero cambiar mi reserva\" / \"En vez del miércoles, el jueves\"\nTú: Identifica qué datos cambian (fecha/hora/personas/zona)\n\n**PASO 2 → Usar datos de la reserva existente**\n⚠️ **CRÍTICO:** Si el cliente dice \"todo igual\" o \"solo cambio X\":\n- Usa los datos de `active_reservations[0]` para lo que NO cambia\n- Ejemplo: Si solo cambia fecha, mantén hora, personas y zona originales\n\n**PASO 3 → VERIFICAR DISPONIBILIDAD**\n⚠️ **OBLIGATORIO antes de modificar**\n\nTú: \"Déjame un momento para verificar la disponibilidad para [nueva fecha/hora]...\"\n→ Llama a `check_availability` con:\n  - Nueva fecha (si cambia) o fecha original\n  - Nueva hora (si cambia) o hora original\n  - Nuevo número de personas (si cambia) o número original\n  - Nueva zona (si cambia) o zona original\n\n**PASO 4 → INFORMAR DISPONIBILIDAD**\nSi HAY: \"¡Perfecto! Sí tenemos disponibilidad para [nueva fecha/hora] con [personas] personas [en zona].\"\nSi NO HAY: \"Esa [fecha/hora] está completa. ¿Te iría bien [alternativa]?\"\n\n**PASO 5 → CONFIRMAR CAMBIO**\n⚠️ **OBLIGATORIO:** Pregunta explícitamente:\n\"¿Confirmo el cambio entonces? Pasaríamos tu reserva del [fecha original] a las [hora original] al [fecha nueva] a las [hora nueva].\"\n\n**PASO 6 → CREAR NUEVA RESERVA**\n**SOLO si el cliente confirma:**\n→ Llama a `create_reservation` con los nuevos datos\n\n**PASO 7 → CANCELAR RESERVA ANTIGUA**\n→ Llama a `cancel_reservation` con el ID de la reserva original:\n```json\n{\n  \"reservation_id\": \"{{ $json.customer_context.active_reservations[0].reservation_id }}\",\n  \"cancellation_reason\": \"Reserva modificada por el cliente\",\n  \"restaurant_id\": \"{{ $json.restaurant_id }}\"\n}\n```\n\n**PASO 8 → CONFIRMAR AL CLIENTE**\n→ Responde:\n\"¡Listo, {{ $json.customer_name }}! Tu reserva ha sido modificada. Ahora es para el [día nuevo] a las [hora nueva] para [X] personas [en zona].\n\n⚠️ Recuerda: 24 horas antes recibirás un WhatsApp para confirmar tu asistencia.\n\nSi necesitas algo más, aquí estoy.\"\n\n**EJEMPLO COMPLETO:**\n\nCliente: \"Quiero cambiar mi reserva del miércoles al jueves\"\nTú: \"¡No te preocupes! Déjame verificar la disponibilidad para el jueves a las 21:00 para 4 personas en el interior...\"\n→ Llamas a `check_availability` (jueves, 21:00, 4 personas, interior)\nTú: \"¡Perfecto! Sí tenemos disponibilidad para el jueves, 23 de octubre a las 21:00 para 4 personas en el interior. ¿Confirmo el cambio?\"\nCliente: \"Sí\"\n→ Llamas a `create_reservation` (nueva reserva)\n→ Llamas a `cancel_reservation` (antigua reserva)\nTú: \"¡Listo, Gustau! Tu reserva ha sido modificada. Ahora es para el jueves, 23 de octubre a las 21:00 para 4 personas en el interior. Si necesitas algo más, aquí estoy.\"\n\n═══════════════════════════════════════════════════════════════════\n🛠️ HERRAMIENTAS\n═══════════════════════════════════════════════════════════════════\n\n**1. check_availability** — Verifica disponibilidad\n⚠️ **ÚSALA SIEMPRE:**\n- Antes de crear una reserva nueva\n- Antes de modificar una reserva\n\n```json\n{\n  \"date\": \"2025-10-19\",\n  \"time\": \"20:00\",\n  \"party_size\": 4,\n  \"preferred_zone\": \"terraza\",\n  \"restaurant_id\": \"{{ $json.restaurant_id }}\"\n}\n```\nNota: `preferred_zone` usa SOLO las zonas disponibles del restaurante o \"any\"\n\n**2. create_reservation** — Crea reserva\n⚠️ SOLO después de:\n1. Verificar disponibilidad con `check_availability`\n2. Confirmación explícita del cliente\n\n```json\n{\n  \"reservation_date\": \"2025-10-19\",\n  \"reservation_time\": \"20:00\",\n  \"party_size\": 4,\n  \"preferred_zone\": \"terraza\",\n  \"special_requests\": \"\",\n  \"restaurant_id\": \"{{ $json.restaurant_id }}\",\n  \"customer_id\": \"{{ $json.customer_id }}\",\n  \"customer_phone\": \"{{ $json.customer_phone }}\",\n  \"customer_name\": \"{{ $json.customer_name }}\",\n  \"source\": \"agent_{{ $json.channel }}\"\n}\n```\n\n**3. cancel_reservation** — Cancela reserva y libera slots\n```json\n{\n  \"reservation_id\": \"{{ $json.customer_context.active_reservations[0].reservation_id }}\",\n  \"cancellation_reason\": \"Cliente solicitó cancelación\",\n  \"restaurant_id\": \"{{ $json.restaurant_id }}\"\n}\n```\n\n**4. get_restaurant_info** — Info del restaurante\n```json\n{\n  \"info_type\": \"menu\",\n  \"question\": \"¿Tenéis menú del día?\",\n  \"restaurant_id\": \"{{ $json.restaurant_id }}\"\n}\n```\nValores info_type: \"menu\", \"hours\", \"location\", \"parking\", \"services\", \"contact\", \"general\"\n\n**5. escalate_to_human** — Escalar a humano\nÚsala si: cliente pide hablar con alguien, queja grave, situación compleja.\n```json\n{\n  \"reason\": \"cliente_solicita\",\n  \"urgency\": \"high\",\n  \"customer_message\": \"{{ $json.user_message }}\",\n  \"conversation_id\": \"{{ $json.conversation_id }}\",\n  \"customer_phone\": \"{{ $json.customer_phone }}\",\n  \"restaurant_id\": \"{{ $json.restaurant_id }}\"\n}\n```\n\n**REGLAS PARA TODAS LAS HERRAMIENTAS:**\n- Fechas: SIEMPRE YYYY-MM-DD\n- Horas: SIEMPRE HH:MM (24h)\n- restaurant_id: SIEMPRE {{ $json.restaurant_id }}\n\n═══════════════════════════════════════════════════════════════════\n🎯 COMPORTAMIENTO\n═══════════════════════════════════════════════════════════════════\n\n**TU TRABAJO:**\n✓ Gestionar reservas (fecha, hora, personas, zona)\n✓ Validar día y horario ANTES de consultar disponibilidad\n✓ Preguntar SIEMPRE por la zona\n✓ Verificar disponibilidad SIEMPRE (crear Y modificar)\n✓ Modificar = crear nueva + cancelar antigua\n✓ Anotar peticiones especiales (NO resolverlas)\n✓ Ser simpática y cercana\n✓ Recordar TODO lo que el cliente dice\n✓ NUNCA crear/modificar sin confirmación explícita\n\n**PROHIBICIONES ABSOLUTAS:**\n❌ Repetir preguntas sobre datos ya proporcionados\n❌ Consultar disponibilidad si el día está cerrado o fuera de horario\n❌ Saltarte la pregunta de zona\n❌ Modificar sin verificar disponibilidad primero\n❌ Sonar como bot o formulario\n❌ Ofrecer servicios (decoración, menú, adaptaciones)\n❌ Prometer: \"tenemos X\", \"te traemos Y\"\n❌ Crear/modificar sin confirmación explícita\n\n**TU PERSONALIDAD:**\n• Profesional pero cercana (no fría, no robótica)\n• Simpática (celebra cumpleaños, aniversarios)\n• Paciente y clara\n• Humilde (reconoces límites: \"Se lo pasaremos al encargado\")\n• Humana (frases naturales)\n\n═══════════════════════════════════════════════════════════════════\n🔍 CHECKLIST MENTAL ANTES DE RESPONDER\n═══════════════════════════════════════════════════════════════════\n\n☐ ¿El cliente YA me dio fecha/hora/personas? → NO volver a preguntar\n☐ ¿El día está cerrado o fuera de horario? → NO consultar disponibilidad, avisar al cliente\n☐ ¿Ya pregunté por la zona? → Obligatorio antes de verificar disponibilidad\n☐ ¿Es una modificación? → Verificar disponibilidad, crear nueva, cancelar antigua\n☐ ¿Ya verifiqué disponibilidad? → Informar y confirmar con cliente\n☐ ¿Cliente confirmó explícitamente? → Solo entonces crear/cancelar\n☐ ¿Incluí recordatorio 24h en mensaje final? → Obligatorio\n\n**Tu respuesta debe demostrar que ESCUCHASTE y RECORDASTE.**\n\n═══════════════════════════════════════════════════════════════════\n\nMENSAJE DEL CLIENTE:\n{{ $json.user_message }}\n\n\n\n"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
-        -656,
-        -176
+        -352,
+        128
       ],
-      "id": "89f3f32c-af41-44da-b152-655dd2992e31",
+      "id": "043177ad-074f-4366-8599-7b1de0cc3eed",
       "name": "🤖 Super Agent (GPT-4o)"
     },
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('🔗 Fusionar Contexto Enriquecido').item.json.conversation_id }}",
+        "sessionKey": "={{ $('Lógica Hibrida').item.json.conversation_id }}",
         "contextWindowLength": 10
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        -896,
-        336
+        -624,
+        560
       ],
-      "id": "bfef5b2c-59f2-47e9-89a5-eb23b24c7487",
+      "id": "40612ea5-0adf-4b47-b7c0-a08c8924540b",
       "name": "💭 Memory (por conversación)"
     },
     {
@@ -111,10 +111,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        -992,
-        32
+        -880,
+        544
       ],
-      "id": "51f40427-4026-4783-a9c2-4304aa637a1f",
+      "id": "b5066ff9-b316-4744-8953-fdca9111bd23",
       "name": "OpenAI GPT-4o",
       "credentials": {
         "openAiApi": {
@@ -122,149 +122,6 @@
           "name": "OpenAi La-IA"
         }
       }
-    },
-    {
-      "parameters": {
-        "name": "create_reservation",
-        "description": "Crea una nueva reserva en el restaurante. Usa esta herramienta cuando el cliente quiera hacer una reserva y tengas fecha, hora y número de personas.",
-        "workflowId": {
-          "__rl": true,
-          "value": "TOOL_CREATE_RESERVATION_ID",
-          "mode": "id"
-        },
-        "fields": {
-          "values": [
-            {
-              "name": "reservation_date"
-            },
-            {
-              "name": "reservation_time"
-            },
-            {
-              "name": "party_size"
-            },
-            {
-              "name": "preferred_zone"
-            },
-            {
-              "name": "special_requests"
-            },
-            {
-              "name": "restaurant_id"
-            }
-          ]
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        48,
-        352
-      ],
-      "id": "5a012505-9813-4013-aab3-daa843243279",
-      "name": "🔧 Tool: Crear Reserva"
-    },
-    {
-      "parameters": {
-        "name": "modify_reservation",
-        "description": "Modifica una reserva existente. Usa esta herramienta cuando el cliente quiera cambiar fecha, hora o número de personas de su reserva.",
-        "workflowId": {
-          "__rl": true,
-          "value": "TOOL_MODIFY_RESERVATION_ID",
-          "mode": "id"
-        },
-        "fields": {
-          "values": [
-            {
-              "name": "reservation_id"
-            },
-            {
-              "name": "new_date"
-            },
-            {
-              "name": "new_time"
-            },
-            {
-              "name": "new_party_size"
-            }
-          ]
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        -128,
-        352
-      ],
-      "id": "d8ecc213-ac39-44fc-967d-a15bccb476a4",
-      "name": "🔧 Tool: Modificar Reserva"
-    },
-    {
-      "parameters": {
-        "name": "cancel_reservation",
-        "description": "Cancela una reserva existente. Usa esta herramienta cuando el cliente quiera cancelar su reserva.",
-        "workflowId": {
-          "__rl": true,
-          "value": "TOOL_CANCEL_RESERVATION_ID",
-          "mode": "id"
-        },
-        "fields": {
-          "values": [
-            {
-              "name": "reservation_id"
-            },
-            {
-              "name": "cancellation_reason"
-            }
-          ]
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        -352,
-        352
-      ],
-      "id": "04449d8e-221e-49ac-a08a-a3d789cedd3c",
-      "name": "🔧 Tool: Cancelar Reserva"
-    },
-    {
-      "parameters": {
-        "name": "check_availability",
-        "description": "Consulta la disponibilidad del restaurante para una fecha, hora y número de personas específicos. Opcionalmente puedes especificar una zona preferida (interior, terraza, barra, privado). Úsala cuando el cliente pregunte si hay disponibilidad ANTES de crear la reserva.",
-        "workflowId": {
-          "__rl": true,
-          "value": "TOOL_CHECK_AVAILABILITY_ID",
-          "mode": "id"
-        },
-        "fields": {
-          "values": [
-            {
-              "name": "date"
-            },
-            {
-              "name": "time"
-            },
-            {
-              "name": "party_size"
-            },
-            {
-              "name": "preferred_zone"
-            },
-            {
-              "name": "restaurant_id"
-            }
-          ]
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        -512,
-        336
-      ],
-      "id": "5c2a48b5-712a-4ede-a490-e0dc5397cef8",
-      "name": "🔧 Tool: Consultar Disponibilidad"
     },
     {
       "parameters": {
@@ -286,23 +143,23 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.2,
       "position": [
-        -704,
-        336
+        -16,
+        608
       ],
-      "id": "c048a9b3-b25c-4d18-9b4d-f5f56037ef71",
+      "id": "61d97003-8c77-496e-9886-53e82688298f",
       "name": "🔧 Tool: Info Restaurante"
     },
     {
       "parameters": {
-        "jsCode": "// =====================================\n// NODO: 📤 Procesar Respuesta\n// WORKFLOW: 3 - Super Agent Híbrido (FINAL)\n// CORRECCIÓN: Extraer números de teléfono correctamente\n// =====================================\n\nconst agentResponse = $input.item.json;\nconst contextData = $('🔗 Fusionar Contexto Enriquecido').item.json;\n\n// Extraer respuesta del agente\nconst finalMessage = agentResponse.output || agentResponse.text || 'Lo siento, no pude procesar tu solicitud. ¿Podrías reformular tu mensaje?';\n\nconsole.log('📤 Respuesta del Super Agent:', finalMessage.substring(0, 150));\n\n// ✅✅✅ CORREGIDO: Obtener números correctamente desde Supabase\n\n// OPCIÓN 1: Si tienes el objeto completo del restaurante en el contexto\nconst restaurantData = contextData.restaurant_context || {};\n\n// EXTRAER CHANNELS\nconst channels = restaurantData.channels || {};\n\n// 1️⃣ NÚMERO DE CANALES IA (FROM - quien ENVÍA)\n// Buscar en: channels.voice.phone_number\nconst whatsappFrom = channels.voice?.phone_number || restaurantData.phone || '';\n\n// 2️⃣ NÚMERO DEL CLIENTE (TO - quien RECIBE)\nconst whatsappTo = contextData.customer_phone || '';\n\nconsole.log('📞 Teléfonos detectados:');\nconsole.log('   FROM (Canales IA):', whatsappFrom);\nconsole.log('   TO (Cliente):', whatsappTo);\n\n// Validar que los teléfonos existan\nif (!whatsappFrom) {\n  console.error('❌ No se encontró número FROM. Verifica channels.voice.phone_number');\n}\n\nif (!whatsappTo) {\n  console.error('❌ No se encontró número TO (cliente)');\n}\n\nreturn {\n  conversation_id: contextData.conversation_id,\n  customer_id: contextData.customer_id,\n  customer_phone: whatsappTo,\n  customer_name: contextData.customer_name,\n  restaurant_id: contextData.restaurant_id,\n  channel: contextData.channel,\n  agent_response: finalMessage,\n  classification: contextData.classification,\n  timestamp: new Date().toISOString(),\n  \n  // ✅ Para envío de WhatsApp (CORREGIDO)\n  whatsapp_from: whatsappFrom,  // channels.voice.phone_number\n  whatsapp_to: whatsappTo        // customer_phone\n};\n\n"
+        "jsCode": "// =====================================\n// NODO: 📝 Formatear Historial\n// WORKFLOW: 3 - Super Agent Híbrido (FINAL)\n// CORRECCIÓN: Incluir respuestas del agente + OUTPUT ACTUAL\n// =====================================\n\nconst historyMessages = $input.all();\nconst contextData = $('🔗 Fusionar Contexto Enriquecido').first().json;\n\nconsole.log('📜 Mensajes encontrados:', historyMessages.length);\n\n// Si no hay historial, devolver contexto sin historial\nif (historyMessages.length === 0) {\n  console.log('ℹ️ No hay historial previo (nueva conversación)');\n  return [{\n    json: {\n      ...contextData,\n      conversation_history: ''\n    }\n  }];\n}\n\n// Verificar si la conversación está activa (último mensaje < 15 minutos)\nconst now = Date.now();\nconst CONVERSATION_TIMEOUT = 15 * 60 * 1000; // 15 minutos\n\nconst lastMessage = historyMessages[historyMessages.length - 1].json;\nconst lastMessageTime = new Date(lastMessage.timestamp).getTime();\nconst timeSinceLastMessage = now - lastMessageTime;\n\nif (timeSinceLastMessage > CONVERSATION_TIMEOUT) {\n  console.log('⏰ Conversación cerrada (>15 min). Iniciando nueva conversación.');\n  return [{\n    json: {\n      ...contextData,\n      conversation_history: ''\n    }\n  }];\n}\n\n// Formatear historial para el prompt (INCLUYE RESPUESTAS DEL AGENTE)\nconst formattedHistory = historyMessages\n  .map(msg => {\n    const data = msg.json;\n    const sender = data.sender === 'customer' ? 'Cliente' : 'Agente';\n    return `${sender}: ${data.message_text}`;\n  })\n  .join('\\n');\n\nconsole.log('✅ Historial formateado:', formattedHistory.substring(0, 200) + '...');\n\n// ✅✅✅ AÑADIR: Output actual del agente (si existe)\nconst agentOutput = $('🤖 Super Agent (GPT-4o)').first()?.json?.output || null;\n\nreturn [{\n  json: {\n    ...contextData,\n    conversation_history: formattedHistory,\n    current_agent_output: agentOutput  // ✅ AÑADIDO\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -336,
-        -176
+        -32,
+        128
       ],
-      "id": "240c14fa-f96a-49f4-b916-b1650c9a9dbb",
+      "id": "9256016b-d116-440a-960a-95f47ca3b83e",
       "name": "📤 Procesar Respuesta"
     },
     {
@@ -332,7 +189,7 @@
             },
             {
               "fieldId": "message_text",
-              "fieldValue": "={{ $json.agent_response }}"
+              "fieldValue": "={{ $json.current_agent_output }}"
             },
             {
               "fieldId": "timestamp",
@@ -344,10 +201,10 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -64,
-        -336
+        240,
+        -32
       ],
-      "id": "94754491-85a4-42c5-ac39-3cce26159625",
+      "id": "c9dcf411-b8ae-4f9c-aca3-d332c0d5092c",
       "name": "💾 Guardar Respuesta en BD",
       "credentials": {
         "supabaseApi": {
@@ -389,10 +246,10 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        128,
-        -128
+        432,
+        176
       ],
-      "id": "b9bf78c1-1d6c-4fae-9983-098cad25dc54",
+      "id": "b6f6bebd-f1e1-43d9-8fa8-4bfd355e9882",
       "name": "🔄 Actualizar Conversación",
       "credentials": {
         "supabaseApi": {
@@ -403,8 +260,8 @@
     },
     {
       "parameters": {
-        "from": "={{ $('🔗 Fusionar Contexto Enriquecido').item.json.restaurant_context.channels.voice.phone_number }}",
-        "to": "={{ $('🔗 Fusionar Contexto Enriquecido').item.json.customer_phone }}",
+        "from": "={{ $('📤 Procesar Respuesta').item.json.restaurant_context.channels.whatsapp.phone_number }}",
+        "to": "={{ $('📤 Procesar Respuesta').item.json.customer_phone }}",
         "toWhatsapp": true,
         "message": "={{ $json.message_text }}",
         "options": {}
@@ -412,10 +269,10 @@
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
       "position": [
-        160,
-        -336
+        464,
+        -32
       ],
-      "id": "14330948-a576-4343-a86b-33a8f8eeb5f3",
+      "id": "33dd81d2-7e20-4b27-ac32-f16145267f1f",
       "name": "📱 Enviar WhatsApp",
       "credentials": {
         "twilioApi": {
@@ -432,7 +289,7 @@
           "messageValues": [
             {
               "type": "HumanMessagePromptTemplate",
-              "message": "=Eres un clasificador experto de intenciones para un sistema de gestión de restaurantes. Tu única tarea es analizar el mensaje del cliente y devolver un JSON estructurado con la intención, entidades extraídas, sentiment y nivel de confianza.\n\n---\n\n## 📋 CONTEXTO DISPONIBLE\n\n**Cliente:**\n- Nombre: {{ $json.customer_name }}\n- Teléfono: {{ $json.customer_phone }}\n\n**Fecha y hora actual:**\n- Fecha: {{ $now.format('yyyy-MM-dd') }} ({{ $now.format('EEEE') }})\n- Hora: {{ $now.format('HH:mm') }}\n\n**Mensaje del cliente:**\n\"{{ $json.user_message }}\"\n\n---\n\n## 🎯 TU TAREA:\n\nDevuelve un JSON con esta estructura EXACTA:\n\n```json\n{\n  \"intent\": \"reservar|modificar|cancelar|consultar|queja|feedback|otro\",\n  \"entities\": {},\n  \"sentiment\": \"positive|neutral|negative\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Breve explicación\"\n}\n```\n\n---\n\n## 📖 REGLAS DE CLASIFICACIÓN:\n\n### INTENT:\n- **reservar**: Quiere hacer una nueva reserva\n- **modificar**: Quiere cambiar una reserva existente (fecha, hora, personas)\n- **cancelar**: Quiere anular una reserva\n- **consultar**: Pregunta información (horarios, menú, ubicación, disponibilidad)\n- **queja**: Expresa insatisfacción, problema o reclamo\n- **feedback**: Comparte opinión/experiencia (positiva o negativa) DESPUÉS de haber visitado el restaurante\n- **otro**: No encaja en ninguna categoría anterior\n\n### SENTIMENT (MUY IMPORTANTE):\n\n**positive** → Mensaje con tono:\n- Alegre, agradecido, satisfecho, elogios\n- Palabras clave: \"excelente\", \"increíble\", \"genial\", \"perfecto\", \"encantado\", \"maravilloso\", \"espectacular\", \"volveremos\", \"nos encantó\", \"recomendamos\"\n\n**neutral** → Mensaje informativo:\n- Sin emoción clara, transaccional, solo datos\n- Ejemplos: \"Quiero reservar para 4\", \"¿A qué hora abren?\", \"Necesito cambiar la reserva\"\n\n**negative** → Mensaje con tono:\n- Molesto, decepcionado, frustrado, queja\n- Palabras clave: \"malo\", \"decepcionado\", \"problema\", \"error\", \"tardó mucho\", \"frío\", \"sucio\", \"mala atención\", \"nunca más\"\n\n### CONFIDENCE:\n- **0.9-1.0**: Muy claro, sin ambigüedad\n- **0.7-0.89**: Bastante claro, probable\n- **0.5-0.69**: Dudoso, podría ser otra cosa\n- **<0.5**: Muy ambiguo o mensaje confuso\n\n### ENTITIES:\n\nExtrae información relevante según el intent:\n\n**Para reservas/modificaciones:**\n- `fecha` (formato texto: \"mañana\", \"sábado\", \"15 de octubre\")\n- `hora` (formato: \"20:00\", \"8 de la noche\")\n- `numero_personas` (número entero)\n\n**Para cancelaciones/modificaciones:**\n- `nombre_reserva` (nombre bajo el que está la reserva)\n- `motivo` (razón del cambio/cancelación)\n\n**Para consultas:**\n- `tema_consulta` (ej: \"horarios\", \"menú\", \"ubicación\")\n\n**Para quejas:**\n- `tipo_problema` (ej: \"reserva perdida\", \"mala atención\", \"comida fría\")\n- `aspecto_negativo` (qué salió mal)\n\n**Para feedback:**\n- `valoracion` (ej: \"excelente\", \"buena\", \"mala\")\n- `aspectos_positivos` (si los menciona)\n- `aspectos_negativos` (si los menciona)\n- `intencion_futura` (ej: \"volver\", \"recomendar\", \"nunca más\")\n\n---\n\n## 📚 EJEMPLOS:\n\n**Ejemplo 1: Reserva simple**\n```\nMensaje: \"Hola, quiero reservar para 4 personas mañana a las 20:00\"\n\nOutput:\n{\n  \"intent\": \"reservar\",\n  \"entities\": {\n    \"fecha\": \"mañana\",\n    \"hora\": \"20:00\",\n    \"numero_personas\": 4\n  },\n  \"sentiment\": \"neutral\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Solicitud clara de reserva con todos los detalles necesarios\"\n}\n```\n\n**Ejemplo 2: Feedback muy positivo**\n```\nMensaje: \"Todo estuvo excelente, la comida increíble y el servicio de 10. Volveremos seguro!\"\n\nOutput:\n{\n  \"intent\": \"feedback\",\n  \"entities\": {\n    \"valoracion\": \"excelente\",\n    \"aspectos_positivos\": [\"comida increíble\", \"servicio de 10\"],\n    \"intencion_futura\": \"volver\"\n  },\n  \"sentiment\": \"positive\",\n  \"confidence\": 0.98,\n  \"reasoning\": \"Feedback muy positivo tras visita, múltiples elogios y deseo de volver\"\n}\n```\n\n**Ejemplo 3: Queja clara**\n```\nMensaje: \"Muy decepcionado, la reserva se perdió y nadie nos atendió bien\"\n\nOutput:\n{\n  \"intent\": \"queja\",\n  \"entities\": {\n    \"tipo_problema\": \"reserva perdida\",\n    \"aspecto_negativo\": \"mala atención\"\n  },\n  \"sentiment\": \"negative\",\n  \"confidence\": 0.92,\n  \"reasoning\": \"Expresión clara de insatisfacción con el servicio recibido\"\n}\n```\n\n**Ejemplo 4: Consulta neutra**\n```\nMensaje: \"Hola, ¿a qué hora abren el sábado?\"\n\nOutput:\n{\n  \"intent\": \"consultar\",\n  \"entities\": {\n    \"tema_consulta\": \"horarios\",\n    \"dia\": \"sábado\"\n  },\n  \"sentiment\": \"neutral\",\n  \"confidence\": 0.90,\n  \"reasoning\": \"Consulta simple sobre información del restaurante\"\n}\n```\n\n**Ejemplo 5: Modificación**\n```\nMensaje: \"Necesito cambiar mi reserva del viernes de 4 a 6 personas\"\n\nOutput:\n{\n  \"intent\": \"modificar\",\n  \"entities\": {\n    \"dia\": \"viernes\",\n    \"numero_personas_nuevo\": 6,\n    \"cambio\": \"cantidad de personas\"\n  },\n  \"sentiment\": \"neutral\",\n  \"confidence\": 0.88,\n  \"reasoning\": \"Solicitud de modificación clara en cantidad de comensales\"\n}\n```\n\n---\n\n## ⚠️ IMPORTANTE:\n\n1. **Devuelve ÚNICAMENTE el JSON**, sin texto adicional, sin markdown (```json), sin explicaciones\n2. **Asegúrate de que el sentiment sea correcto**: si hay elogios → positive, si hay quejas → negative\n3. **Confidence alto (>0.9)** solo si estás muy seguro\n4. **Entities vacío `{}`** si no hay información relevante que extraer\n\n---\n\nAnaliza el mensaje del cliente y devuelve SOLO el JSON de clasificación.\n\n\n\n"
+              "message": "=Eres un clasificador rápido de intenciones para un sistema de reservas de restaurante.\n\nTu única tarea es analizar el mensaje del cliente y devolver un JSON simple con:\n1. **intent**: La intención principal\n2. **sentiment**: El tono emocional\n3. **confidence**: Tu nivel de confianza (0.0 a 1.0)\n\n═══════════════════════════════════════════════════════════════════\n📋 INTENCIONES DISPONIBLES\n═══════════════════════════════════════════════════════════════════\n\n**reservation** - Quiere hacer una nueva reserva\n- \"quiero reservar\", \"una mesa para\", \"quisiera ir\", \"para cenar\"\n\n**modification** - Quiere cambiar una reserva existente\n- \"cambiar\", \"modificar\", \"mover la reserva\", \"en vez del\", \"pasar al\"\n\n**cancellation** - Quiere cancelar su reserva\n- \"cancelar\", \"anular\", \"no puedo ir\", \"tengo que cancelar\"\n\n**inquiry** - Preguntas sobre el restaurante\n- \"¿dónde está?\", \"horario\", \"menú\", \"hay mesas\", \"disponibilidad\"\n\n**complaint** - Quejas o problemas\n- \"problema\", \"queja\", \"mal servicio\", \"insatisfecho\", \"decepcionado\"\n\n**thanks** - Agradecimientos o despedidas\n- \"gracias\", \"perfecto\", \"vale\", \"ok\", \"adiós\", \"hasta luego\"\n\n**other** - No encaja en ninguna categoría anterior\n\n═══════════════════════════════════════════════════════════════════\n😊 SENTIMENT\n═══════════════════════════════════════════════════════════════════\n\n**positive** - Tono alegre, agradecido, satisfecho\n- \"genial\", \"perfecto\", \"excelente\", \"encantado\", \"me encanta\"\n\n**neutral** - Sin emoción clara, solo información\n- \"quiero reservar para 4\", \"¿a qué hora abren?\"\n\n**negative** - Molesto, decepcionado, frustrado\n- \"malo\", \"decepcionado\", \"problema\", \"tardó mucho\", \"mal\"\n\n═══════════════════════════════════════════════════════════════════\n🎯 FORMATO DE RESPUESTA\n═══════════════════════════════════════════════════════════════════\n\nResponde SIEMPRE en formato JSON válido (sin markdown, sin ```json):\n\n{\n  \"intent\": \"reservation\",\n  \"sentiment\": \"neutral\",\n  \"confidence\": 0.95\n}\n\n═══════════════════════════════════════════════════════════════════\n📌 EJEMPLOS\n═══════════════════════════════════════════════════════════════════\n\nMensaje: \"Hola, quiero reservar para 4 personas mañana\"\n{\n  \"intent\": \"reservation\",\n  \"sentiment\": \"neutral\",\n  \"confidence\": 0.98\n}\n\nMensaje: \"Necesito cambiar mi reserva del viernes al sábado\"\n{\n  \"intent\": \"modification\",\n  \"sentiment\": \"neutral\",\n  \"confidence\": 0.95\n}\n\nMensaje: \"Tengo que cancelar mi reserva\"\n{\n  \"intent\": \"cancellation\",\n  \"sentiment\": \"neutral\",\n  \"confidence\": 0.96\n}\n\nMensaje: \"¿Tenéis mesa libre para 6 personas el sábado?\"\n{\n  \"intent\": \"inquiry\",\n  \"sentiment\": \"neutral\",\n  \"confidence\": 0.92\n}\n\nMensaje: \"Muchas gracias, perfecto!\"\n{\n  \"intent\": \"thanks\",\n  \"sentiment\": \"positive\",\n  \"confidence\": 0.97\n}\n\nMensaje: \"El servicio fue pésimo\"\n{\n  \"intent\": \"complaint\",\n  \"sentiment\": \"negative\",\n  \"confidence\": 0.98\n}\n\n═══════════════════════════════════════════════════════════════════\n📝 MENSAJE A CLASIFICAR\n═══════════════════════════════════════════════════════════════════\n\nCliente: {{ $json.customer_name }}\nTeléfono: {{ $json.customer_phone }}\n\nMensaje:\n{{ $json.user_message }}\n\n═══════════════════════════════════════════════════════════════════\n\nAnaliza el mensaje y devuelve SOLO el JSON (sin markdown, sin explicaciones).\n\n\n\n"
             }
           ]
         },
@@ -441,128 +298,11 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.7,
       "position": [
-        -2336,
-        -192
+        -2624,
+        224
       ],
-      "id": "d2a63d57-4602-4822-a151-914949c04840",
+      "id": "2264503b-9f0e-4b00-8d60-71c62dea7cbf",
       "name": "Basic LLM Chain"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Parsear clasificación del LLM\nconst inputData = $('📋 Preparar Input').item.json;\nconst llmResponse = $input.item.json.response || $input.item.json.text || '{}';\n\n// Limpiar markdown si lo hay\nlet cleanedResponse = llmResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n\n// Parsear JSON\nlet classification;\ntry {\n  classification = JSON.parse(cleanedResponse);\n  console.log('✅ Clasificación exitosa:', classification);\n} catch (e) {\n  console.error('❌ Error parseando clasificación:', e);\n  console.error('Respuesta recibida:', cleanedResponse);\n  classification = {\n    intent: 'consulta_general',\n    entities: {},\n    sentiment: 'neutral',\n    confidence: 0.5,\n    reasoning: 'Error en clasificación, usando default'\n  };\n}\n\nreturn {\n  ...inputData,\n  classification: classification,\n  intent: classification.intent,\n  entities: classification.entities,\n  sentiment: classification.sentiment,\n  confidence: classification.confidence\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -2032,
-        -192
-      ],
-      "id": "8a6bee64-9d42-4111-ab44-545b5f400428",
-      "name": "📊 Parsear Clasificación1"
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "reservations",
-        "returnAll": true,
-        "filterType": "string",
-        "filterString": "=customer_phone=eq.{{ $json.customer_phone }}&restaurant_id=eq.{{ $json.restaurant_id }}&status=in.(pending,confirmed,pending_approval)"
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        -1712,
-        -368
-      ],
-      "id": "731ea876-e86d-4bfe-a033-013a11254693",
-      "name": "📅 Obtener Reservas Cliente1",
-      "alwaysOutputData": true,
-      "credentials": {
-        "supabaseApi": {
-          "id": "9pdl4V7ImejCLZWo",
-          "name": "Supabase La-IA"
-        }
-      },
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "operation": "get",
-        "tableId": "restaurants",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "id",
-              "condition": "eq",
-              "keyValue": "={{ $('📊 Parsear Clasificación1').item.json.restaurant_id }}"
-            }
-          ]
-        }
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        -1712,
-        -192
-      ],
-      "id": "873a3efe-5ee6-4cce-9706-9d21d6212aff",
-      "name": "🏪 Obtener Info Restaurante1",
-      "credentials": {
-        "supabaseApi": {
-          "id": "9pdl4V7ImejCLZWo",
-          "name": "Supabase La-IA"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "restaurant_operating_hours",
-        "returnAll": true,
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "restaurant_id",
-              "condition": "eq",
-              "keyValue": "={{ $('📊 Parsear Clasificación1').item.json.restaurant_id }}"
-            },
-            {
-              "keyName": "is_open",
-              "condition": "eq",
-              "keyValue": "true"
-            }
-          ]
-        }
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        -1712,
-        0
-      ],
-      "id": "c5965f7d-3fce-4d52-9a5c-5913b2072ca0",
-      "name": "🕐 Obtener Horarios1",
-      "alwaysOutputData": true,
-      "credentials": {
-        "supabaseApi": {
-          "id": "9pdl4V7ImejCLZWo",
-          "name": "Supabase La-IA"
-        }
-      },
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "numberInputs": 4
-      },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        -1456,
-        -224
-      ],
-      "id": "79a7d728-fe66-42e7-949c-6aaf743ed8e8",
-      "name": "Merge1"
     },
     {
       "parameters": {
@@ -571,23 +311,23 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -64,
-        -144
+        240,
+        176
       ],
-      "id": "0e0d5d2e-086c-447c-8785-d711176480f4",
+      "id": "973c9655-b81c-44c4-9dff-82198dbe2201",
       "name": "🔀 Preparar Actualización"
     },
     {
       "parameters": {
-        "jsCode": "// =============================================\n// LÓGICA HÍBRIDA OPTIMIZADA V2\n// Va DESPUÉS de \"🔗 Fusionar Contexto Enriquecido\"\n// CAMBIO: Cancelaciones y modificaciones SIEMPRE al LLM\n// =============================================\n\n// Recibimos el contexto ya fusionado y limpio\nconst context = $input.first().json;\n\n// Extraer datos necesarios (ya vienen normalizados)\nconst intent = context.classification?.intent || 'otro';\nconst sentiment = context.classification?.sentiment || 'neutral';\nconst userMessage = context.user_message || '';\nconst restaurantName = context.restaurant_context?.name || 'nuestro restaurante';\nconst customerName = context.customer_name || '';\n\nconsole.log('🔀 Evaluando lógica híbrida V2:', { \n  intent, \n  sentiment, \n  restaurantName,\n  customer: customerName\n});\n\n// =============================================\n// FUNCIÓN: getRespuestaFija\n// =============================================\nfunction getRespuestaFija(intent, sentiment, userMessage, restaurantName) {\n  \n  // ✅ 1. CASOS QUE SIEMPRE VAN AL LLM (GESTIÓN DE RESERVAS)\n  // Cancelaciones, modificaciones, reservas y consultas → SIEMPRE conversacional\n  const conversationalIntents = [\n    'reservation', 'reservar',\n    'modification', 'modificar', 'modificación',\n    'cancellation', 'cancelar', 'cancelación',\n    'inquiry', 'consultar', 'consulta', 'información'\n  ];\n  \n  if (conversationalIntents.includes(intent)) {\n    console.log(`✅ Intent \"${intent}\" → LLM conversacional`);\n    return {\n      hasFixedResponse: false,\n      useLLM: true\n    };\n  }\n  \n  // ✅ 2. FEEDBACK POSITIVO\n  if (intent === 'feedback' && sentiment === 'positive') {\n    return {\n      hasFixedResponse: true,\n      message: `¡Muchas gracias por tu opinión, ${customerName}! Nos alegra mucho que hayas disfrutado tu visita en ${restaurantName} 😊`,\n      action: \"close\",\n      shouldEscalate: false\n    };\n  }\n  \n  // ✅ 3. FEEDBACK NEGATIVO\n  if (intent === 'feedback' && sentiment === 'negative') {\n    return {\n      hasFixedResponse: true,\n      message: `Lamentamos que tu experiencia en ${restaurantName} no haya sido la esperada. Hemos tomado nota de tus comentarios. Gracias por hacérnoslo saber.`,\n      action: \"close\",\n      shouldEscalate: false,\n      logNegativeFeedback: true\n    };\n  }\n  \n  // ✅ 4. QUEJA GRAVE\n  if (intent === 'complaint' || intent === 'queja') {\n    return {\n      hasFixedResponse: true,\n      message: `Lamentamos muchísimo las molestias, ${customerName}. El encargado de ${restaurantName} ha sido notificado y te contactará en breve para resolver esta situación.`,\n      action: \"escalate\",\n      shouldEscalate: true,\n      escalateReason: \"queja_grave\",\n      urgency: \"high\"\n    };\n  }\n  \n  // ✅ 5. CLIENTE PIDE HABLAR CON HUMANO (detección por palabras clave)\n  const msgLower = userMessage.toLowerCase();\n  const humanKeywords = [\n    'hablar con',\n    'hablar con alguien',\n    'persona real',\n    'persona de verdad',\n    'encargado',\n    'gerente',\n    'jefe',\n    'humano',\n    'operador',\n    'responsable',\n    'alguien de',\n    'pasar con'\n  ];\n  \n  if (humanKeywords.some(keyword => msgLower.includes(keyword))) {\n    return {\n      hasFixedResponse: true,\n      message: \"Por supuesto, te paso con el encargado. Un momento, por favor.\",\n      action: \"escalate\",\n      shouldEscalate: true,\n      escalateReason: \"cliente_solicita\",\n      urgency: \"medium\"\n    };\n  }\n  \n  // ✅ 6. SALUDO SIMPLE\n  if (intent === 'greeting' || intent === 'saludo') {\n    return {\n      hasFixedResponse: true,\n      message: `¡Hola ${customerName}! Soy la asistente virtual de ${restaurantName}. ¿En qué puedo ayudarte? Puedo ayudarte con reservas, modificaciones o consultas.`,\n      action: \"wait\",\n      shouldEscalate: false\n    };\n  }\n  \n  // ✅ 7. AGRADECIMIENTO\n  if (intent === 'thanks' || intent === 'gracias' || intent === 'agradecimiento') {\n    return {\n      hasFixedResponse: true,\n      message: `¡Un placer, ${customerName}! Que tengas un excelente día 😊`,\n      action: \"close\",\n      shouldEscalate: false\n    };\n  }\n  \n  // ✅ 8. FUERA DE ALCANCE\n  if (intent === 'other' || intent === 'otro') {\n    return {\n      hasFixedResponse: true,\n      message: \"Lo siento, mi función es ayudarte con reservas y consultas sobre el restaurante. ¿Hay algo relacionado con esto en lo que pueda ayudarte?\",\n      action: \"wait\",\n      shouldEscalate: false\n    };\n  }\n  \n  // ✅ 9. ERROR / NO RECONOCIDO → Escalar por seguridad\n  return {\n    hasFixedResponse: true,\n    message: \"Disculpa, estoy teniendo dificultades para procesar tu solicitud. Te paso con el encargado para ayudarte mejor.\",\n    action: \"escalate\",\n    shouldEscalate: true,\n    escalateReason: \"error_sistema\",\n    urgency: \"medium\"\n  };\n}\n\n// =============================================\n// EVALUAR RESPUESTA\n// =============================================\nconst respuesta = getRespuestaFija(intent, sentiment, userMessage, restaurantName);\n\nconsole.log('📋 Resultado evaluación V2:', {\n  hasFixedResponse: respuesta.hasFixedResponse,\n  shouldEscalate: respuesta.shouldEscalate,\n  action: respuesta.action,\n  useLLM: respuesta.useLLM || false\n});\n\n// =============================================\n// PREPARAR OUTPUT\n// =============================================\nif (respuesta.hasFixedResponse) {\n  // HAY RESPUESTA FIJA - No usar LLM\n  console.log('✅ Usando respuesta fija');\n  \n  return {\n    ...context, // Mantener TODO el contexto original\n    use_fixed_response: true,\n    use_llm: false,\n    fixed_message: respuesta.message,\n    action: respuesta.action,\n    should_escalate: respuesta.shouldEscalate || false,\n    escalate_reason: respuesta.escalateReason || null,\n    escalate_urgency: respuesta.urgency || 'medium',\n    log_negative_feedback: respuesta.logNegativeFeedback || false\n  };\n  \n} else {\n  // NO HAY RESPUESTA FIJA - Usar LLM\n  console.log('🤖 Usando LLM conversacional');\n  \n  return {\n    ...context, // Pasar TODO el contexto al LLM\n    use_fixed_response: false,\n    use_llm: true,\n    should_escalate: false\n  };\n}\n\n"
+        "jsCode": "// =============================================\n// LÓGICA HÍBRIDA INTELIGENTE\n// Detecta si estamos EN MEDIO de una conversación\n// =============================================\n\nconst context = $input.first().json;\nconst intent = context.classification?.intent || 'otro';\nconst sentiment = context.classification?.sentiment || 'neutral';\nconst userMessage = context.user_message || '';\nconst customerName = context.customer_name || '';\nconst restaurantName = context.restaurant_context?.name || 'nuestro restaurante';\n\n// ✅ NUEVO: Detectar si hay conversación activa\nconst conversationHistory = context.conversation_history || '';\nconst pastConversations = context.past_conversations_summary || '';\n\nconsole.log('🔀 Evaluando lógica híbrida:', { \n  intent, \n  sentiment,\n  hasHistory: conversationHistory.length > 0\n});\n\n// =============================================\n// REGLA #1: SI HAY HISTORIAL → SIEMPRE AL LLM\n// (Estamos en medio de una conversación)\n// =============================================\n\nif (conversationHistory && conversationHistory.length > 0) {\n  console.log('💬 HAY HISTORIAL DE CONVERSACIÓN → TODO AL LLM');\n  console.log('📜 Historial:', conversationHistory.substring(0, 100) + '...');\n  \n  return {\n    ...context,\n    use_fixed_response: false,\n    use_llm: true,\n    should_escalate: false\n  };\n}\n\n// =============================================\n// REGLA #2: PRIMER MENSAJE - EVALUAR CASOS ESPECIALES\n// =============================================\n\nconsole.log('🆕 Primer mensaje de la conversación → Evaluar casos especiales');\n\n// 1. FEEDBACK MUY POSITIVO → Respuesta fija + cerrar\nif (intent === 'feedback' && sentiment === 'positive') {\n  console.log('✅ Feedback positivo (primer mensaje) → Respuesta fija + cerrar');\n  return {\n    ...context,\n    use_fixed_response: true,\n    use_llm: false,\n    fixed_message: `¡Muchas gracias por tu opinión, ${customerName}! Nos alegra muchísimo que hayas disfrutado tu visita en ${restaurantName} 😊`,\n    action: \"close\",\n    should_escalate: false\n  };\n}\n\n// 2. CLIENTE PIDE HUMANO EXPLÍCITAMENTE → Respuesta fija + escalar\nconst msgLower = userMessage.toLowerCase().trim();\nconst humanKeywords = [\n  'hablar con el encargado',\n  'hablar con el gerente',\n  'hablar con una persona',\n  'persona real',\n  'pasar con el encargado',\n  'quiero hablar con'\n];\n\nif (humanKeywords.some(keyword => msgLower.includes(keyword))) {\n  console.log('✅ Cliente pide humano (primer mensaje) → Respuesta fija + escalar');\n  return {\n    ...context,\n    use_fixed_response: true,\n    use_llm: false,\n    fixed_message: \"Por supuesto, te paso con el encargado. Un momento, por favor.\",\n    action: \"escalate\",\n    should_escalate: true,\n    escalate_reason: \"cliente_solicita\",\n    escalate_urgency: \"medium\"\n  };\n}\n\n// 3. QUEJA GRAVE → Respuesta fija + escalar urgente\nif (intent === 'complaint' && sentiment === 'negative') {\n  console.log('✅ Queja grave (primer mensaje) → Respuesta fija + escalar urgente');\n  return {\n    ...context,\n    use_fixed_response: true,\n    use_llm: false,\n    fixed_message: `Lamentamos muchísimo las molestias, ${customerName}. El encargado de ${restaurantName} ha sido notificado y te contactará en breve para resolver esta situación.`,\n    action: \"escalate\",\n    should_escalate: true,\n    escalate_reason: \"queja_grave\",\n    escalate_urgency: \"high\",\n    log_negative_feedback: true\n  };\n}\n\n// =============================================\n// REGLA #3: TODOS LOS DEMÁS CASOS → LLM\n// =============================================\n\nconsole.log('🤖 Caso estándar (primer mensaje) → LLM');\n\nreturn {\n  ...context,\n  use_fixed_response: false,\n  use_llm: true,\n  should_escalate: false\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1104,
-        -192
+        -816,
+        112
       ],
-      "id": "027386be-2aea-461b-9d09-fe328b04c53e",
+      "id": "6332d9e8-6036-4d1d-95fe-5255a6cdde20",
       "name": "Lógica Hibrida"
     },
     {
@@ -618,10 +358,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -912,
-        -192
+        -640,
+        112
       ],
-      "id": "288e933f-e2db-462e-adde-b9252b4f27ea",
+      "id": "ae5f401c-2de0-466b-9ffe-eed223c19554",
       "name": "If ❓ ¿Usar Respuesta Fija?"
     },
     {
@@ -631,10 +371,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -688,
-        -352
+        -384,
+        -48
       ],
-      "id": "5c6aeaf1-7a88-4dd7-bf81-73d1ae74a8e9",
+      "id": "543105e5-6f40-4215-99d6-7761b9a8f483",
       "name": "📝 Preparar Respuesta Fija"
     },
     {
@@ -665,10 +405,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -512,
-        -352
+        -208,
+        -48
       ],
-      "id": "a10e9751-9a3f-4e08-bc2b-55e9e71bd824",
+      "id": "089a4c50-5fb4-4b3d-932d-d0028b7563ab",
       "name": "If ❓ ¿Necesita Escalado?"
     },
     {
@@ -676,10 +416,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolCode",
       "typeVersion": 1.3,
       "position": [
-        224,
-        368
+        464,
+        608
       ],
-      "id": "862cbc51-d993-48b2-82e2-a901de3c879f",
+      "id": "348d19de-0a2c-4c5b-b2c3-fb785cb20829",
       "name": "Tool  - 🆘 Escalar a Humano"
     },
     {
@@ -713,10 +453,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -272,
-        -496
+        32,
+        -192
       ],
-      "id": "632943df-3335-4de4-bbb8-7a4b9e745359",
+      "id": "c6fc34dd-61aa-4c85-91f5-ed5fa4e4d5d1",
       "name": "Call 'TOOL 6 - Escalate to Human'"
     },
     {
@@ -732,23 +472,15 @@
               "keyValue": "={{ $('🔗 Fusionar Contexto Enriquecido').item.json.conversation_id }}"
             }
           ]
-        },
-        "sort": {
-          "sortProperties": [
-            {
-              "property": "timestamp",
-              "direction": "asc"
-            }
-          ]
         }
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -1184,
-        -368
+        -1504,
+        128
       ],
-      "id": "historia1-load-messages",
+      "id": "956eca80-8f8d-414c-b6a9-c7bb3255562b",
       "name": "📜 Cargar Historial Conversación",
       "alwaysOutputData": true,
       "credentials": {
@@ -766,27 +498,17 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1184,
-        -224
+        -1328,
+        128
       ],
-      "id": "historia2-format-messages",
+      "id": "9fe53fee-659e-460e-8362-592f6681dbfd",
       "name": "📝 Formatear Historial"
     },
     {
       "parameters": {
         "operation": "getAll",
         "tableId": "agent_conversations",
-        "returnAll": false,
         "limit": 3,
-        "sort": {
-          "sortProperties": [
-            {
-              "property": "created_at",
-              "direction": "desc"
-            }
-          ]
-        },
-        "filterType": "manual",
         "matchType": "allFilters",
         "filters": {
           "conditions": [
@@ -806,10 +528,10 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -1184,
-        -96
+        -1152,
+        112
       ],
-      "id": "historia3-load-past",
+      "id": "735e6c36-784b-4c9f-8213-bdea66aa328e",
       "name": "📚 Cargar 3 Conversaciones Pasadas",
       "alwaysOutputData": true,
       "credentials": {
@@ -827,11 +549,518 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1184,
-        16
+        -976,
+        112
       ],
-      "id": "historia4-format-past",
+      "id": "a8a639b3-6755-4452-8bd1-a6804b21d405",
       "name": "📝 Formatear Historial Pasado"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsear clasificación del LLM\nconst inputData = $('📋 Preparar Input').item.json;\n\n// ✅✅✅ NUEVO: Si viene directo del If (conversación activa)\nconst vieneDelIf = $('If').item?.json !== undefined;\n\nif (vieneDelIf) {\n  console.log('✅ CONVERSACIÓN ACTIVA - Clasificación ficticia');\n  return {\n    ...inputData,\n    classification: {\n      intent: 'conversation_active',\n      entities: {},\n      sentiment: 'neutral',\n      confidence: 1.0,\n      reasoning: 'Conversación activa, saltó clasificador'\n    },\n    intent: 'conversation_active',\n    entities: {},\n    sentiment: 'neutral',\n    confidence: 1.0\n  };\n}\n\n// ✅ Si viene del clasificador, parsear normalmente\nconst llmResponse = $input.item.json.response || $input.item.json.text || '{}';\n\n// Limpiar markdown si lo hay\nlet cleanedResponse = llmResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n\n// Parsear JSON\nlet classification;\ntry {\n  classification = JSON.parse(cleanedResponse);\n  console.log('✅ Clasificación exitosa:', classification);\n} catch (e) {\n  console.error('❌ Error parseando clasificación:', e);\n  console.error('Respuesta recibida:', cleanedResponse);\n  classification = {\n    intent: 'consulta_general',\n    entities: {},\n    sentiment: 'neutral',\n    confidence: 0.5,\n    reasoning: 'Error en clasificación, usando default'\n  };\n}\n\nreturn {\n  ...inputData,\n  classification: classification,\n  intent: classification.intent,\n  entities: classification.entities,\n  sentiment: classification.sentiment,\n  confidence: classification.confidence\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2336,
+        96
+      ],
+      "id": "38c1e87f-af43-4486-b07d-2858598b6e35",
+      "name": "📊 Parsear Clasificación"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "reservations",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "restaurant_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.restaurant_id }}"
+            },
+            {
+              "keyName": "customer_phone",
+              "condition": "eq",
+              "keyValue": "={{ $json.customer_phone }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2144,
+        -16
+      ],
+      "id": "b14e1254-3184-49a6-a184-970a37dbc043",
+      "name": "📅 Obtener Reservas Cliente",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "restaurants",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $('📊 Parsear Clasificación').item.json.restaurant_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2144,
+        176
+      ],
+      "id": "379845f0-37e3-4cdd-b0df-fd465f1e4126",
+      "name": "🏪 Obtener Info Restaurante",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1808,
+        112
+      ],
+      "id": "a0e77354-dda6-42a2-926d-e8af7cdee2b0",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "description": "Consulta la disponibilidad del restaurante para una fecha, hora y número de personas específicos. Úsala cuando el cliente pregunte si hay disponibilidad ANTES de crear la reserva.",
+        "workflowId": {
+          "__rl": true,
+          "value": "FRQJg700oLTF7dcG",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/FRQJg700oLTF7dcG",
+          "cachedResultName": " Agent IA — 🔧 TOOL - Check Availability"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "party_size": "={{ $fromAI('party_size', ``, 'number') }}",
+            "date": "={{ $fromAI('date', ``, 'string') }}",
+            "time": "={{ $fromAI('time', ``, 'string') }}",
+            "restaurant_id": "={{ $json.restaurant_id }}",
+            "preferred_zone": "={{ $fromAI('preferred_zone', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "time",
+              "displayName": "time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "party_size",
+              "displayName": "party_size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "preferred_zone",
+              "displayName": "preferred_zone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "restaurant_id",
+              "displayName": "restaurant_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        608
+      ],
+      "id": "4898df03-412f-4e53-822f-f3dd6154a538",
+      "name": "🔧 Tool: Consultar Disponibilidad"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// FILTRAR SOLO RESERVAS ACTIVAS\n// =============================================\n\nconst reservas = $input.all();\n\nconsole.log('📊 Total reservas recibidas:', reservas.length);\n\n// Estados activos permitidos\nconst estadosActivos = ['pending', 'confirmed', 'pending_approval', 'seated'];\n\n// Filtrar solo las activas\nconst reservasActivas = reservas.filter(item => {\n  const status = item.json.status;\n  const esActiva = estadosActivos.includes(status);\n  \n  if (!esActiva) {\n    console.log(`❌ Excluida: ${item.json.id} - status: ${status}`);\n  }\n  \n  return esActiva;\n});\n\nconsole.log('✅ Reservas activas filtradas:', reservasActivas.length);\n\n// Si no hay reservas activas, devolver array vacío\nif (reservasActivas.length === 0) {\n  console.log('ℹ️ No hay reservas activas para este cliente');\n  return [];\n}\n\nreturn reservasActivas;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1984,
+        -16
+      ],
+      "id": "0ec1a837-d855-4770-94ac-070a4f90d98d",
+      "name": "🔍 Filtrar Reservas Activas"
+    },
+    {
+      "parameters": {
+        "description": "Crea una nueva reserva en el restaurante. Usa esta herramienta cuando el cliente quiera hacer una reserva y tengas fecha, hora y número de personas.",
+        "workflowId": {
+          "__rl": true,
+          "value": "5LobAwicedK8INQQ",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/5LobAwicedK8INQQ",
+          "cachedResultName": " Agent IA — 🔧 TOOL: create_reservation"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "party_size": "={{ $fromAI('party_size', ``, 'number') }}",
+            "restaurant_id": "={{ $json.restaurant_id }}",
+            "customer_id": "={{ $json.customer_id }}",
+            "customer_phone": "= {{ $json.customer_phone }}",
+            "customer_name": "={{ $json.customer_name }}",
+            "reservation_date": "={{ $fromAI('reservation_date', ``, 'string') }}",
+            "reservation_time": "={{ $fromAI('reservation_time', ``, 'string') }}",
+            "preferred_zone": "={{ $fromAI('preferred_zone', ``, 'string') }}",
+            "special_requests": "={{ $fromAI('special_requests', ``, 'string') }}",
+            "source": "={{ $json.source }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "restaurant_id",
+              "displayName": "restaurant_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_phone",
+              "displayName": "customer_phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "reservation_date",
+              "displayName": "reservation_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "reservation_time",
+              "displayName": "reservation_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "party_size",
+              "displayName": "party_size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "preferred_zone",
+              "displayName": "preferred_zone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "special_requests",
+              "displayName": "special_requests",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "channel",
+              "displayName": "channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        304,
+        608
+      ],
+      "id": "d240e109-a1cf-4159-b1eb-d6d1f7b3089d",
+      "name": "🔧 Tool: Crear Reserva"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c0016a61-0494-48d1-ab4c-0e4eb3d80fe2",
+              "leftValue": "={{ $json.conversation_active}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2800,
+        112
+      ],
+      "id": "ea7b2af2-7e79-45fa-be28-91d94591a355",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "description": "Cancela reserva y libera slots automáticamente. Requiere reservation_id y restaurant_id.",
+        "workflowId": {
+          "__rl": true,
+          "value": "DNWLHngb1pkeMddG",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/DNWLHngb1pkeMddG",
+          "cachedResultName": " Agent IA — 🔧 TOOL — cancel_reservation"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "reservation_id": "={{ $json.customer_context.active_reservations[0].reservation_id }}",
+            "cancellation_reason": "={{ $fromAI('cancellation_reason', ``, 'string') }}",
+            "restaurant_id": "={{ $json.restaurant_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "reservation_id",
+              "displayName": "reservation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "restaurant_id",
+              "displayName": "restaurant_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "cancellation_reason",
+              "displayName": "cancellation_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        608
+      ],
+      "id": "d2baabde-3da0-4c70-8ba9-2f23dfdbb171",
+      "name": "🔧 Tool: Cancelar Reserva"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "sD6YMR51kFExy880",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/sD6YMR51kFExy880",
+          "cachedResultName": " Agent IA — 04 - Post-Conversation Analyzer"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "aNumber": 0
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "aField",
+              "displayName": "aField",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "aNumber",
+              "displayName": "aNumber",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "thisFieldAcceptsAnyType",
+              "displayName": "thisFieldAcceptsAnyType",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "anArray",
+              "displayName": "anArray",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "array",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        688,
+        -32
+      ],
+      "id": "95485037-f9a0-4c7c-8ddf-a60b43e250f2",
+      "name": "Call '04 - Post-Conversation Analyzer'"
     }
   ],
   "connections": {
@@ -850,7 +1079,7 @@
       "main": [
         [
           {
-            "node": "Basic LLM Chain",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -873,50 +1102,6 @@
         [
           {
             "node": "📜 Cargar Historial Conversación",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "📜 Cargar Historial Conversación": {
-      "main": [
-        [
-          {
-            "node": "📝 Formatear Historial",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "📝 Formatear Historial": {
-      "main": [
-        [
-          {
-            "node": "📚 Cargar 3 Conversaciones Pasadas",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "📚 Cargar 3 Conversaciones Pasadas": {
-      "main": [
-        [
-          {
-            "node": "📝 Formatear Historial Pasado",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "📝 Formatear Historial Pasado": {
-      "main": [
-        [
-          {
-            "node": "Lógica Hibrida",
             "type": "main",
             "index": 0
           }
@@ -951,50 +1136,6 @@
           {
             "node": "🤖 Super Agent (GPT-4o)",
             "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🔧 Tool: Crear Reserva": {
-      "ai_tool": [
-        [
-          {
-            "node": "🤖 Super Agent (GPT-4o)",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🔧 Tool: Modificar Reserva": {
-      "ai_tool": [
-        [
-          {
-            "node": "🤖 Super Agent (GPT-4o)",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🔧 Tool: Cancelar Reserva": {
-      "ai_tool": [
-        [
-          {
-            "node": "🤖 Super Agent (GPT-4o)",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🔧 Tool: Consultar Disponibilidad": {
-      "ai_tool": [
-        [
-          {
-            "node": "🤖 Super Agent (GPT-4o)",
-            "type": "ai_tool",
             "index": 0
           }
         ]
@@ -1038,81 +1179,16 @@
         ]
       ]
     },
+    "📱 Enviar WhatsApp": {
+      "main": [
+        []
+      ]
+    },
     "Basic LLM Chain": {
       "main": [
         [
           {
-            "node": "📊 Parsear Clasificación1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "📊 Parsear Clasificación1": {
-      "main": [
-        [
-          {
-            "node": "Merge1",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "🕐 Obtener Horarios1",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "🏪 Obtener Info Restaurante1",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "📅 Obtener Reservas Cliente1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "📅 Obtener Reservas Cliente1": {
-      "main": [
-        [
-          {
-            "node": "Merge1",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "🏪 Obtener Info Restaurante1": {
-      "main": [
-        [
-          {
-            "node": "Merge1",
-            "type": "main",
-            "index": 2
-          }
-        ]
-      ]
-    },
-    "🕐 Obtener Horarios1": {
-      "main": [
-        [
-          {
-            "node": "Merge1",
-            "type": "main",
-            "index": 3
-          }
-        ]
-      ]
-    },
-    "Merge1": {
-      "main": [
-        [
-          {
-            "node": "🔗 Fusionar Contexto Enriquecido",
+            "node": "📊 Parsear Clasificación",
             "type": "main",
             "index": 0
           }
@@ -1199,15 +1275,184 @@
         ]
       ]
     },
-    "Call 'TOOL 6 - Escalate to Human'": {
+    "📜 Cargar Historial Conversación": {
       "main": [
-        []
+        [
+          {
+            "node": "📝 Formatear Historial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Formatear Historial": {
+      "main": [
+        [
+          {
+            "node": "📚 Cargar 3 Conversaciones Pasadas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📚 Cargar 3 Conversaciones Pasadas": {
+      "main": [
+        [
+          {
+            "node": "📝 Formatear Historial Pasado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Formatear Historial Pasado": {
+      "main": [
+        [
+          {
+            "node": "Lógica Hibrida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Parsear Clasificación": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🏪 Obtener Info Restaurante",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📅 Obtener Reservas Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📅 Obtener Reservas Cliente": {
+      "main": [
+        [
+          {
+            "node": "🔍 Filtrar Reservas Activas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🏪 Obtener Info Restaurante": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "🔗 Fusionar Contexto Enriquecido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Tool: Consultar Disponibilidad": {
+      "ai_tool": [
+        [
+          {
+            "node": "🤖 Super Agent (GPT-4o)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Filtrar Reservas Activas": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "🔧 Tool: Crear Reserva": {
+      "ai_tool": [
+        [
+          {
+            "node": "🤖 Super Agent (GPT-4o)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "📊 Parsear Clasificación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Tool: Cancelar Reserva": {
+      "ai_tool": [
+        [
+          {
+            "node": "🤖 Super Agent (GPT-4o)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
       ]
     }
   },
-  "pinData": {},
+  "pinData": {
+    "▶️ Start (from Gateway)": [
+      {
+        "conversation_id": "35b4fce0-a529-499e-b6e2-a3fa39ad3138",
+        "restaurant_id": "d6b63130-1ebf-4284-98fc-a3b31a85d9d1",
+        "customer_id": "ff4bccb3-17e6-47c3-8c54-898bb1ebf8f0",
+        "customer_name": "Gustau",
+        "customer_phone": "+34671126148",
+        "channel": "whatsapp",
+        "user_message": "si gracias!",
+        "timestamp": "2025-10-19T18:46:26.080Z",
+        "conversation_active": true
+      }
+    ]
+  },
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
   }
 }
-

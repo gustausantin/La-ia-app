@@ -188,35 +188,40 @@ const RESERVATION_STATES = {
 
 // Canales disponibles
 const CHANNELS = {
-    whatsapp: {
-        label: "WhatsApp",
+    agent_whatsapp: {
+        label: "WhatsApp IA",
         icon: <MessageCircle className="w-4 h-4 text-green-600" />,
         color: "text-green-600",
     },
-    vapi: {
+    agent_phone: {
         label: "Llamada IA",
         icon: <PhoneCall className="w-4 h-4 text-orange-600" />,
         color: "text-orange-600",
     },
-    web: {
-        label: "Web",
+    agent_web: {
+        label: "Web IA",
         icon: <Globe className="w-4 h-4 text-blue-600" />,
         color: "text-blue-600",
     },
-    instagram: {
-        label: "Instagram",
+    agent_instagram: {
+        label: "Instagram IA",
         icon: <MessageSquare className="w-4 h-4 text-pink-600" />,
         color: "text-pink-600",
     },
-    facebook: {
-        label: "Facebook",
+    agent_facebook: {
+        label: "Facebook IA",
         icon: <MessageCircle className="w-4 h-4 text-blue-800" />,
         color: "text-blue-800",
     },
-    manual: {
-        label: "Manual",
+    dashboard: {
+        label: "Dashboard",
         icon: <Edit className="w-4 h-4 text-gray-600" />,
         color: "text-gray-600",
+    },
+    external_api: {
+        label: "API Externa",
+        icon: <Globe className="w-4 h-4 text-purple-600" />,
+        color: "text-purple-600",
     },
 };
 
@@ -304,8 +309,8 @@ const ReservationCard = ({ reservation, onAction, onSelect, isSelected }) => {
     const mappedStatus = statusMapping[reservation.status] || 'pendiente';
     const state = RESERVATION_STATES[mappedStatus] || RESERVATION_STATES.pendiente;
     const channel =
-        CHANNELS[reservation.channel || "manual"] || CHANNELS.manual;
-    const isAgentReservation = reservation.source === "agent" || reservation.source === "agent_whatsapp";
+        CHANNELS[reservation.source || "dashboard"] || CHANNELS.dashboard;
+    const isAgentReservation = reservation.source && reservation.source.startsWith('agent_');
     
     // 🚨 CALCULAR SI ES URGENTE (igual que en NoShowControlNuevo)
     const isUrgent = useMemo(() => {
@@ -781,9 +786,9 @@ export default function Reservas() {
         try {
             const today = format(new Date(), 'yyyy-MM-dd');
 
-            // 1. Reservas del agente desde reservations (CAMPO CORRECTO: reservation_source)
-            const agentReservationsData = reservations.filter(r => r.reservation_source === "ia");
-            const manualReservationsData = reservations.filter(r => r.reservation_source === "manual" || !r.reservation_source);
+            // 1. Reservas del agente desde reservations (CAMPO CORRECTO: source)
+            const agentReservationsData = reservations.filter(r => r.source && r.source.startsWith('agent_'));
+            const manualReservationsData = reservations.filter(r => r.source === 'dashboard' || !r.source);
             
             console.log('🔍 DEBUG INSIGHTS:');
             console.log(`  Total reservas: ${reservations.length}`);
@@ -798,7 +803,7 @@ export default function Reservas() {
                 // Calcular métricas desde reservas del agente (CAMPO CORRECTO)
                 const agentReservationsToday = reservations.filter(r => {
                     const reservationDate = format(parseISO(r.created_at), 'yyyy-MM-dd');
-                    return reservationDate === today && r.reservation_source === 'ia';
+                    return reservationDate === today && r.source && r.source.startsWith('agent_');
                 });
                 
                 agentMetrics = {
@@ -818,7 +823,7 @@ export default function Reservas() {
                 // Simular conversaciones desde reservas del agente (CAMPO CORRECTO)
                 const agentReservationsToday = reservations.filter(r => {
                     const reservationDate = format(parseISO(r.created_at), 'yyyy-MM-dd');
-                    return reservationDate === today && r.reservation_source === 'ia';
+                    return reservationDate === today && r.source && r.source.startsWith('agent_');
                 });
                 
                 agentConversations = agentReservationsToday.map(r => ({
@@ -841,7 +846,7 @@ export default function Reservas() {
                 
                 if (todayReservations.length > 0) {
                     const channelCounts = todayReservations.reduce((acc, r) => {
-                        const channel = r.channel || 'web';
+                        const channel = r.source || 'dashboard';
                         acc[channel] = (acc[channel] || 0) + 1;
                         return acc;
                     }, {});
@@ -1015,7 +1020,7 @@ export default function Reservas() {
             }
 
             if (filters.channel) {
-                reservations = reservations.filter(r => r.channel === filters.channel);
+                reservations = reservations.filter(r => r.source === filters.channel);
             }
 
             if (filters.source) {
@@ -1072,8 +1077,8 @@ export default function Reservas() {
             const insights = [];
             
             // Insight 1: Reservas por IA vs Manual
-            const iaReservations = reservations.filter(r => r.reservation_source === 'ia').length;
-            const manualReservations = reservations.filter(r => r.reservation_source === 'manual').length;
+            const iaReservations = reservations.filter(r => r.source && r.source.startsWith('agent_')).length;
+            const manualReservations = reservations.filter(r => r.source === 'dashboard').length;
             
             if (iaReservations > 0) {
                 insights.push(`El agente IA ha gestionado ${iaReservations} reservas, representando el ${Math.round((iaReservations / (iaReservations + manualReservations)) * 100)}% del total`);
@@ -1296,9 +1301,9 @@ export default function Reservas() {
             filtered = filtered.filter((r) => r.source === filters.source);
         }
 
-        // Aplicar filtro por channel con validación
+        // Aplicar filtro por source con validación
         if (filters.channel) {
-            filtered = filtered.filter((r) => r.channel === filters.channel);
+            filtered = filtered.filter((r) => r.source === filters.channel);
         }
 
         // Aplicar filtro por status con mapeo correcto
@@ -2198,8 +2203,11 @@ export default function Reservas() {
                             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                         >
                             <option value="">Todos los orígenes</option>
-                            <option value="agent">🤖 Agente IA</option>
-                            <option value="manual">✏️ Manual</option>
+                            <option value="agent_whatsapp">💬 WhatsApp IA</option>
+                            <option value="agent_phone">📞 Llamada IA</option>
+                            <option value="agent_web">🌐 Web IA</option>
+                            <option value="dashboard">✏️ Dashboard</option>
+                            <option value="external_api">🔌 API Externa</option>
                         </select>
 
                         <select
@@ -2364,7 +2372,7 @@ export default function Reservas() {
                         </div>
                         <div className="flex items-center gap-1">
                             <Edit className="w-3 h-3 text-gray-600" />
-                            <span className="text-gray-600">Manual</span>
+                            <span className="text-gray-600">Dashboard</span>
                         </div>
                     </div>
                 </div>
@@ -3189,8 +3197,7 @@ const ReservationFormModal = ({
                 notes: formData.notes || null,
                 restaurant_id: restaurantId,
                 status: backendStatus, // Usar el estado traducido y validado
-                source: "manual",
-                channel: "manual",
+                source: "dashboard",
                 table_id: formData.table_id || null
             };
 
@@ -4075,7 +4082,7 @@ const InsightsModal = ({ isOpen, onClose, insights, stats }) => {
                         </h4>
                         <div className="space-y-2">
                             {Object.entries(CHANNELS)
-                                .filter(([key]) => key !== "manual")
+                                .filter(([key]) => key !== "dashboard")
                                 .map(([key, channel]) => {
                                     // LIMPIO: Sin porcentajes simulados
                                     const percentage = 0;
