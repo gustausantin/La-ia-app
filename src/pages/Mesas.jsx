@@ -461,12 +461,13 @@ const TableCard = ({
 
 // Componente principal
 export default function Mesas() {
-    const { restaurant, restaurantId, isReady, addNotification } =
+    const { restaurant, restaurantId, isReady, addNotification, user, fetchRestaurantInfo } =
         useAuthContext();
     const changeDetection = useAvailabilityChangeDetection(restaurantId);
     const { isModalOpen, modalChangeReason, modalChangeDetails, showRegenerationModal, closeModal } = useRegenerationModal();
 
     // Estados principales
+    const [activeTab, setActiveTab] = useState("mesas"); // 'zonas' | 'mesas'
     const [loading, setLoading] = useState(true);
     const [tables, setTables] = useState([]);
     const [reservations, setReservations] = useState([]);
@@ -486,6 +487,18 @@ export default function Mesas() {
     const [searchTerm, setSearchTerm] = useState("");
     const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'list'
     const [showAgentView, setShowAgentView] = useState(false);
+    
+    // Estados para gestión de zonas
+    const [zonesConfig, setZonesConfig] = useState({
+        zones: {
+            interior: { enabled: false },
+            terraza: { enabled: false },
+            barra: { enabled: false },
+            privado: { enabled: false }
+        },
+        default_zone: 'interior'
+    });
+    const [savingZones, setSavingZones] = useState(false);
 
     // Estados de modales
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -802,6 +815,23 @@ export default function Mesas() {
             ]).finally(() => setLoading(false));
         }
     }, [isReady, restaurantId]); // SOLO dependencies estables
+    
+    // Cargar configuración de zonas desde restaurant.settings
+    useEffect(() => {
+        const loadZonesConfig = async () => {
+            if (!restaurant || !restaurant.settings) return;
+            
+            const settings = restaurant.settings;
+            if (settings.zones) {
+                setZonesConfig({
+                    zones: settings.zones,
+                    default_zone: settings.default_zone || 'interior'
+                });
+            }
+        };
+        
+        loadZonesConfig();
+    }, [restaurant]);
 
     // Recalcular métricas del agente cuando cambien datos
     useEffect(() => {
@@ -1077,11 +1107,12 @@ export default function Mesas() {
     return (
         <div className="max-w-7xl mx-auto space-y-6">
             {/* Header mejorado con estadísticas */}
+            {/* Header con estadísticas */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2">
                     <div>
                         <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            Gestión de Mesas
+                            Zonas y Mesas
                             <Bot className="w-6 h-6 text-purple-600" />
                         </h1>
                         <p className="text-gray-600 mt-1">
@@ -1091,36 +1122,60 @@ export default function Mesas() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        <button
-                            onClick={() => setShowAgentView(!showAgentView)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                                showAgentView
-                                    ? "bg-purple-600 text-white"
-                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            }`}
-                        >
-                            <Brain className="w-4 h-4" />
-                            Vista IA
-                        </button>
+                        {/* Botón Vista IA - SOLO EN TAB MESAS */}
+                        {activeTab === "mesas" && (
+                            <button
+                                onClick={() => setShowAgentView(!showAgentView)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                                    showAgentView
+                                        ? "bg-purple-600 text-white"
+                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                }`}
+                            >
+                                <Brain className="w-4 h-4" />
+                                Vista IA
+                            </button>
+                        )}
 
                         <button
-                            onClick={() => {
-                                loadTables();
-                                loadTodayReservations();
+                            onClick={async () => {
+                                setLoading(true);
+                                try {
+                                    await Promise.all([
+                                        loadTables(),
+                                        loadTodayReservations()
+                                    ]);
+                                    
+                                    // ✅ RECARGAR RESTAURANT DEL CONTEXTO TAMBIÉN
+                                    if (user?.id) {
+                                        await fetchRestaurantInfo(user.id, true);
+                                    }
+                                    
+                                    toast.success("✅ Datos actualizados");
+                                } catch (error) {
+                                    console.error("Error al actualizar:", error);
+                                    toast.error("Error al actualizar datos");
+                                } finally {
+                                    setLoading(false);
+                                }
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                            disabled={loading}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <RefreshCw className="w-4 h-4" />
+                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                             Actualizar
                         </button>
 
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Nueva Mesa
-                        </button>
+                        {/* Botón Nueva Mesa - SOLO EN TAB MESAS */}
+                        {activeTab === "mesas" && (
+                            <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Nueva Mesa
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -1204,17 +1259,270 @@ export default function Mesas() {
                 </div>
             </div>
 
+            {/* Tabs: Zonas y Mesas - Estilo grande como Reservas */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        onClick={() => setActiveTab("zonas")}
+                        className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                            activeTab === "zonas"
+                                ? "bg-purple-600 text-white shadow-md"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                    >
+                        <span className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4" />
+                            🗺️ ZONAS
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("mesas")}
+                        className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                            activeTab === "mesas"
+                                ? "bg-blue-600 text-white shadow-md"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                    >
+                        <span className="flex items-center gap-2">
+                            <Grid3X3 className="w-4 h-4" />
+                            🍽️ MESAS
+                        </span>
+                    </button>
+                </div>
+            </div>
+
             {/* Panel de insights del agente */}
-            {showAgentView && (
+            {showAgentView && activeTab === "mesas" && (
                 <AgentInsightsPanel
                     stats={agentStats}
                     suggestions={agentSuggestions}
                 />
             )}
 
-            {/* Filtros y controles */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
-                <div className="flex flex-col lg:flex-row gap-2">
+            {/* ============================================ */}
+            {/* TAB: ZONAS */}
+            {/* ============================================ */}
+            {activeTab === "zonas" && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div className="mb-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                            🗺️ Configuración de Zonas Disponibles
+                        </h2>
+                        <p className="text-sm text-gray-600">
+                            Activa solo las zonas que tu restaurante ofrece. Estas serán las únicas opciones que el agente de IA ofrecerá a los clientes.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        {/* Interior */}
+                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl">🏠</span>
+                                <div>
+                                    <p className="font-medium text-gray-900">Interior</p>
+                                    <p className="text-sm text-gray-500">Zona principal del restaurante</p>
+                                </div>
+                            </div>
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={zonesConfig.zones.interior?.enabled || false}
+                                    onChange={(e) => {
+                                        const newConfig = {
+                                            ...zonesConfig,
+                                            zones: {
+                                                ...zonesConfig.zones,
+                                                interior: {
+                                                    ...zonesConfig.zones.interior,
+                                                    enabled: e.target.checked,
+                                                    display_name: "Interior",
+                                                    description: "Zona principal del restaurante",
+                                                    icon: "🏠",
+                                                    sort_order: 1
+                                                }
+                                            }
+                                        };
+                                        setZonesConfig(newConfig);
+                                    }}
+                                    className="w-5 h-5 text-purple-600 rounded"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Activa</span>
+                            </label>
+                        </div>
+
+                        {/* Terraza */}
+                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl">☀️</span>
+                                <div>
+                                    <p className="font-medium text-gray-900">Terraza</p>
+                                    <p className="text-sm text-gray-500">Zona al aire libre</p>
+                                </div>
+                            </div>
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={zonesConfig.zones.terraza?.enabled || false}
+                                    onChange={(e) => {
+                                        const newConfig = {
+                                            ...zonesConfig,
+                                            zones: {
+                                                ...zonesConfig.zones,
+                                                terraza: {
+                                                    ...zonesConfig.zones.terraza,
+                                                    enabled: e.target.checked,
+                                                    display_name: "Terraza",
+                                                    description: "Zona al aire libre",
+                                                    icon: "☀️",
+                                                    sort_order: 2
+                                                }
+                                            }
+                                        };
+                                        setZonesConfig(newConfig);
+                                    }}
+                                    className="w-5 h-5 text-purple-600 rounded"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Activa</span>
+                            </label>
+                        </div>
+
+                        {/* Barra */}
+                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl">🍷</span>
+                                <div>
+                                    <p className="font-medium text-gray-900">Barra</p>
+                                    <p className="text-sm text-gray-500">Mesas en la zona de barra</p>
+                                </div>
+                            </div>
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={zonesConfig.zones.barra?.enabled || false}
+                                    onChange={(e) => {
+                                        const newConfig = {
+                                            ...zonesConfig,
+                                            zones: {
+                                                ...zonesConfig.zones,
+                                                barra: {
+                                                    ...zonesConfig.zones.barra,
+                                                    enabled: e.target.checked,
+                                                    display_name: "Barra",
+                                                    description: "Mesas en la zona de barra",
+                                                    icon: "🍷",
+                                                    sort_order: 3
+                                                }
+                                            }
+                                        };
+                                        setZonesConfig(newConfig);
+                                    }}
+                                    className="w-5 h-5 text-purple-600 rounded"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Activa</span>
+                            </label>
+                        </div>
+
+                        {/* Privado */}
+                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl">🚪</span>
+                                <div>
+                                    <p className="font-medium text-gray-900">Sala Privada</p>
+                                    <p className="text-sm text-gray-500">Sala privada o reservada</p>
+                                </div>
+                            </div>
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={zonesConfig.zones.privado?.enabled || false}
+                                    onChange={(e) => {
+                                        const newConfig = {
+                                            ...zonesConfig,
+                                            zones: {
+                                                ...zonesConfig.zones,
+                                                privado: {
+                                                    ...zonesConfig.zones.privado,
+                                                    enabled: e.target.checked,
+                                                    display_name: "Sala Privada",
+                                                    description: "Sala privada o reservada",
+                                                    icon: "🚪",
+                                                    sort_order: 4
+                                                }
+                                            }
+                                        };
+                                        setZonesConfig(newConfig);
+                                    }}
+                                    className="w-5 h-5 text-purple-600 rounded"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Activa</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Botón Guardar */}
+                    <div className="mt-6 flex justify-end">
+                        <button
+                            onClick={async () => {
+                                setSavingZones(true);
+                                try {
+                                    const { data: currentRestaurant, error: fetchError } = await supabase
+                                        .from("restaurants")
+                                        .select("settings")
+                                        .eq("id", restaurantId)
+                                        .single();
+
+                                    if (fetchError) throw fetchError;
+
+                                    const currentSettings = currentRestaurant?.settings || {};
+                                    const updatedSettings = {
+                                        ...currentSettings,
+                                        zones: zonesConfig.zones,
+                                        default_zone: zonesConfig.default_zone
+                                    };
+
+                                    const { error: updateError } = await supabase
+                                        .from("restaurants")
+                                        .update({
+                                            settings: updatedSettings,
+                                            updated_at: new Date().toISOString()
+                                        })
+                                        .eq("id", restaurantId);
+
+                                    if (updateError) throw updateError;
+
+                                    // ✅ RECARGAR EL RESTAURANT DEL CONTEXTO
+                                    // Esto actualiza el objeto `restaurant` en el contexto global
+                                    // para que cuando vuelvas a esta página, el useEffect cargue los datos correctos
+                                    if (user?.id) {
+                                        await fetchRestaurantInfo(user.id, true); // true = force refresh
+                                    }
+                                    
+                                    toast.success("✅ Configuración de zonas guardada correctamente");
+                                } catch (error) {
+                                    console.error("Error saving zones:", error);
+                                    toast.error("Error al guardar la configuración de zonas");
+                                } finally {
+                                    setSavingZones(false);
+                                }
+                            }}
+                            disabled={savingZones}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            {savingZones && <RefreshCw className="w-4 h-4 animate-spin" />}
+                            Guardar Configuración
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================ */}
+            {/* TAB: MESAS */}
+            {/* ============================================ */}
+            {activeTab === "mesas" && (
+                <>
+                    {/* Filtros y controles */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+                        <div className="flex flex-col lg:flex-row gap-2">
                     {/* Búsqueda */}
                     <div className="flex-1 relative">
                         <Search
@@ -1413,6 +1721,7 @@ export default function Mesas() {
                         setShowEditModal(false);
                         setSelectedTable(null);
                     }}
+                    zonesConfig={zonesConfig}
                     onSave={(savedTable) => {
                         // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
                         const isNew = !selectedTable;
@@ -1493,13 +1802,15 @@ export default function Mesas() {
                 />
             )}
 
-            {/* 🚨 MODAL BLOQUEANTE DE REGENERACIÓN */}
-            <RegenerationRequiredModal
-                isOpen={isModalOpen}
-                onClose={closeModal}
-                changeReason={modalChangeReason}
-                changeDetails={modalChangeDetails}
-            />
+                    {/* 🚨 MODAL BLOQUEANTE DE REGENERACIÓN */}
+                    <RegenerationRequiredModal
+                        isOpen={isModalOpen}
+                        onClose={closeModal}
+                        changeReason={modalChangeReason}
+                        changeDetails={modalChangeDetails}
+                    />
+                </>
+            )}
         </div>
     );
 }
@@ -1511,6 +1822,7 @@ const TableModal = ({
     onSave,
     restaurantId,
     table = null,
+    zonesConfig = { zones: {}, default_zone: 'interior' }, // ✅ AÑADIDO
 }) => {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -1537,6 +1849,14 @@ const TableModal = ({
 
         if (!formData.zone.trim()) {
             newErrors.zone = "La zona es obligatoria";
+        } else {
+            // ✅ VALIDAR QUE LA ZONA ESTÉ ACTIVA
+            const zoneKey = formData.zone;
+            const isZoneActive = zonesConfig.zones[zoneKey]?.enabled;
+            
+            if (!isZoneActive) {
+                newErrors.zone = `⚠️ La zona "${formData.zone}" no está activa. Actívala en la pestaña Zonas primero.`;
+            }
         }
 
         if (!formData.capacity || formData.capacity < 1) {
@@ -1716,10 +2036,19 @@ const TableModal = ({
                             }`}
                         >
                             <option value="">Seleccionar zona...</option>
-                            <option value="interior">🏠 Interior</option>
-                            <option value="terraza">☀️ Terraza</option>
-                            <option value="barra">🍷 Barra</option>
-                            <option value="privado">🚪 Privado</option>
+                            {/* ✅ SOLO MOSTRAR ZONAS ACTIVAS */}
+                            {zonesConfig.zones.interior?.enabled && (
+                                <option value="interior">🏠 Interior</option>
+                            )}
+                            {zonesConfig.zones.terraza?.enabled && (
+                                <option value="terraza">☀️ Terraza</option>
+                            )}
+                            {zonesConfig.zones.barra?.enabled && (
+                                <option value="barra">🍷 Barra</option>
+                            )}
+                            {zonesConfig.zones.privado?.enabled && (
+                                <option value="privado">🚪 Privado</option>
+                            )}
                         </select>
                         {errors.zone && (
                             <p className="text-xs text-red-600 mt-1">

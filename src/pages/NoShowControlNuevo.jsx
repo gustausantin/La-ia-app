@@ -537,53 +537,61 @@ export default function NoShowControlNuevo() {
                 </div>
 
                 {/* Tabs */}
-                <div className="mb-6">
-                    <div className="border-b border-gray-200">
-                        <nav className="flex gap-4">
-                            <button
-                                onClick={() => setActiveTab('overview')}
-                                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                                    activeTab === 'overview'
-                                        ? 'border-purple-600 text-purple-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                                }`}
-                            >
-                                Reservas de Riesgo Hoy
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('actions')}
-                                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                                    activeTab === 'actions'
-                                        ? 'border-purple-600 text-purple-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                                }`}
-                            >
-                                <div className="flex items-center gap-1">
-                                    <History className="w-4 h-4" />
-                                    Acciones Tomadas
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('trends')}
-                                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                                    activeTab === 'trends'
-                                        ? 'border-purple-600 text-purple-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                                }`}
-                            >
-                                Tendencias
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('config')}
-                                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                                    activeTab === 'config'
-                                        ? 'border-purple-600 text-purple-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                                }`}
-                            >
-                                Configuración
-                            </button>
-                        </nav>
+                {/* Tabs - Estilo grande como Reservas, Mesas y Calendario */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={() => setActiveTab('overview')}
+                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                                activeTab === 'overview'
+                                    ? 'bg-red-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <span className="flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4" />
+                                🚨 RESERVAS DE RIESGO
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('actions')}
+                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                                activeTab === 'actions'
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <span className="flex items-center gap-2">
+                                <History className="w-4 h-4" />
+                                📝 ACCIONES TOMADAS
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('trends')}
+                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                                activeTab === 'trends'
+                                    ? 'bg-purple-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <span className="flex items-center gap-2">
+                                <Activity className="w-4 h-4" />
+                                📊 TENDENCIAS
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('config')}
+                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                                activeTab === 'config'
+                                    ? 'bg-gray-700 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <span className="flex items-center gap-2">
+                                <Settings className="w-4 h-4" />
+                                ⚙️ CONFIGURACIÓN
+                            </span>
+                        </button>
                     </div>
                 </div>
 

@@ -1101,32 +1101,40 @@ export default function Calendario() {
                     </div>
                 </div>
 
-                {/* Tabs de navegación */}
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 mb-6">
-                    <div className="border-b border-gray-200">
-                        <nav className="flex space-x-8 px-6" aria-label="Tabs">
-                            {[
-                                { id: 'horarios', name: 'Horarios del restaurante', icon: Clock },
-                                { id: 'calendario', name: 'Vista calendario', icon: Calendar }
-                            ].map((tab) => {
-                                const Icon = tab.icon;
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`${
-                                            activeTab === tab.id
-                                                ? 'border-purple-500 text-purple-600'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
-                                    >
-                                        <Icon className="w-4 h-4" />
-                                        {tab.name}
-                                    </button>
-                                );
-                            })}
-                        </nav>
+                {/* Tabs de navegación - Estilo grande como Reservas y Mesas */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={() => setActiveTab('horarios')}
+                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                                activeTab === 'horarios'
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <span className="flex items-center gap-2">
+                                <Clock className="w-4 h-4" />
+                                🕐 HORARIOS
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('calendario')}
+                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                                activeTab === 'calendario'
+                                    ? 'bg-purple-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <span className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                📅 CALENDARIO
+                            </span>
+                        </button>
                     </div>
+                </div>
+
+                {/* Contenido de tabs */}
+                <div>
 
                     {/* Tab: Horarios del restaurante */}
                     {activeTab === 'horarios' && (
