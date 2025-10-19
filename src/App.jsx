@@ -22,13 +22,7 @@ const Clientes = lazy(() => import('./pages/Clientes'));
 const PlantillasCRM = lazy(() => import('./pages/PlantillasCRM'));
 const Mesas = lazy(() => import('./pages/Mesas'));
 const Calendario = lazy(() => import('./pages/Calendario'));
-const Comunicacion = lazy(() => 
-  import('./pages/Comunicacion').then(module => {
-    // Preload componentes relacionados
-    import('./components/comunicacion');
-    return module;
-  })
-);
+const Comunicacion = lazy(() => import('./pages/Comunicacion'));
 // const Analytics = lazy(() => import('./pages/Analytics')); // Deshabilitado temporalmente
 const Configuracion = lazy(() => import('./pages/Configuracion'));
 const CRMProximosMensajes = lazy(() => import('./pages/CRMProximosMensajes'));

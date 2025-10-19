@@ -260,7 +260,11 @@ Nota: `preferred_zone` usa SOLO las zonas disponibles del restaurante o "any"
   "party_size": 4,
   "preferred_zone": "terraza",
   "special_requests": "",
-  "restaurant_id": "{{ $json.restaurant_id }}"
+  "restaurant_id": "{{ $json.restaurant_id }}",
+  "customer_id": "{{ $json.customer_id }}",
+  "customer_phone": "{{ $json.customer_phone }}",
+  "customer_name": "{{ $json.customer_name }}",
+  "source": "agent_{{ $json.channel }}"
 }
 ```
 

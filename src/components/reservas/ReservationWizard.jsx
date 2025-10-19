@@ -78,8 +78,7 @@ export const ReservationWizard = ({ restaurantId, initialData = null, onSave, on
       special_requests: formData.specialRequests || null,
       // 🆕 Grupos grandes (≥10 personas) requieren aprobación del restaurante
       status: parseInt(formData.partySize) >= 10 ? 'pending_approval' : (formData.status || 'pending'),
-      reservation_channel: 'manual', // ✅ Corregido: reservation_channel en vez de channel
-      source: 'dashboard',
+      source: 'dashboard', // ✅ Fuente: creada desde dashboard
       // 🆕 ARRAY DE IDS DE MESAS (para insertar en reservation_tables)
       _tableIds: formData.tableIds || [],
       // 🆕 ZONA SELECCIONADA

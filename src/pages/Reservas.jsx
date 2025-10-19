@@ -885,7 +885,9 @@ export default function Reservas() {
         } catch (error) {
             console.error("Error cargando estadísticas del agente:", error);
             // Fallback usando solo datos de reservations (CAMPO CORRECTO)
-            const agentReservations = reservations.filter(r => r.reservation_source === "ia").length;
+            const agentReservations = reservations.filter(r => 
+                r.source && r.source.startsWith('agent_')
+            ).length;
             setAgentStats(prev => ({
                 ...prev,
                 agentReservations: agentReservations,

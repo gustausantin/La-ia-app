@@ -19,8 +19,7 @@ const ReservationFormModal = ({ isOpen, onClose, onSave, tables, restaurantId })
         reservation_time: '20:00',
         party_size: 2,
         table_id: '',
-        special_requests: '',
-        channel: 'manual'
+        special_requests: ''
     });
     
     const [availabilityStatus, setAvailabilityStatus] = useState({
@@ -181,8 +180,7 @@ const ReservationFormModal = ({ isOpen, onClose, onSave, tables, restaurantId })
                     table_id: selectedTableId,
                     special_requests: formData.special_requests || null,
                     status: 'confirmada',
-                    source: 'manual',
-                    channel: formData.channel,
+                    source: 'dashboard', // ✅ Fuente: creada desde dashboard
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 })

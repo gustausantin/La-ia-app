@@ -11,7 +11,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.item.json;\n\nconsole.log('🔍 Input recibido:', JSON.stringify(input, null, 2));\n\n// ✅ Validar datos mínimos\nconst required = ['reservation_date', 'reservation_time', 'party_size', 'restaurant_id'];\nconst missing = required.filter(field => !input[field]);\n\nif (missing.length > 0) {\n  throw new Error(`❌ Faltan campos obligatorios: ${missing.join(', ')}`);\n}\n\nreturn {\n  // ✅ DATOS OBLIGATORIOS\n  restaurant_id: input.restaurant_id,\n  customer_id: input.customer_id,  // ✅ YA VIENE DEL GATEWAY\n  customer_phone: input.customer_phone,  // ✅ YA VIENE DEL GATEWAY\n  customer_name: input.customer_name,  // ✅ YA VIENE DEL GATEWAY\n  \n  // ✅ DATOS DE LA RESERVA\n  reservation_date: input.reservation_date,  // 'YYYY-MM-DD'\n  reservation_time: input.reservation_time,  // 'HH:MM'\n  party_size: parseInt(input.party_size),\n  \n  // ✅ DATOS OPCIONALES\n  preferred_zone: input.preferred_zone || null,\n  special_requests: input.special_requests || null\n};"
+        "jsCode": "const input = $input.item.json;\n\nconsole.log('🔍 Input recibido:', JSON.stringify(input, null, 2));\n\n// ✅ Validar datos mínimos\nconst required = ['reservation_date', 'reservation_time', 'party_size', 'restaurant_id'];\nconst missing = required.filter(field => !input[field]);\n\nif (missing.length > 0) {\n  throw new Error(`❌ Faltan campos obligatorios: ${missing.join(', ')}`);\n}\n\nreturn {\n  // ✅ DATOS OBLIGATORIOS\n  restaurant_id: input.restaurant_id,\n  customer_id: input.customer_id,  // ✅ YA VIENE DEL GATEWAY\n  customer_phone: input.customer_phone,  // ✅ YA VIENE DEL GATEWAY\n  customer_name: input.customer_name,  // ✅ YA VIENE DEL GATEWAY\n  \n  // ✅ DATOS DE LA RESERVA\n  reservation_date: input.reservation_date,  // 'YYYY-MM-DD'\n  reservation_time: input.reservation_time,  // 'HH:MM'\n  party_size: parseInt(input.party_size),\n  \n  // ✅ DATOS OPCIONALES\n  preferred_zone: input.preferred_zone || null,\n  special_requests: input.special_requests || null,\n  source: input.source || 'agent_whatsapp'  // ✅ Fuente de la reserva\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -124,10 +124,6 @@
             {
               "fieldId": "source",
               "fieldValue": "agent_whatsapp"
-            },
-            {
-              "fieldId": "channel",
-              "fieldValue": "whatsapp"
             },
             {
               "fieldId": "special_requests",

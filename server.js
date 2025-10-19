@@ -257,6 +257,51 @@ app.listen(PORT, '0.0.0.0', async () => {
   // Ejecutar cada 30 minutos
   setInterval(markExpiredReservations, 30 * 60 * 1000);
   console.log('✅ Cron job configurado: marcar reservas caducadas cada 30 minutos');
+  
+  // 💬 AUTO-MARCAR CONVERSACIONES INACTIVAS COMO RESUELTAS (cada 5 min)
+  console.log('💬 Iniciando auto-marcado de conversaciones inactivas...');
+  
+  const markInactiveConversationsAsResolved = async () => {
+    try {
+      // Calcular timestamp de hace 10 minutos
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      
+      // Buscar conversaciones activas con último mensaje hace más de 10 minutos
+      const { data: conversations, error: fetchError } = await supabase
+        .from('agent_conversations')
+        .select('id, updated_at')
+        .eq('status', 'active')
+        .lt('updated_at', tenMinutesAgo);
+      
+      if (fetchError) throw fetchError;
+      
+      if (conversations && conversations.length > 0) {
+        const conversationIds = conversations.map(c => c.id);
+        
+        // Marcar como resueltas
+        const { error: updateError } = await supabase
+          .from('agent_conversations')
+          .update({ 
+            status: 'resolved',
+            resolved_at: new Date().toISOString()
+          })
+          .in('id', conversationIds);
+        
+        if (updateError) throw updateError;
+        
+        console.log(`✅ Auto-marcadas ${conversations.length} conversaciones como resueltas (10 min inactividad)`);
+      }
+    } catch (error) {
+      console.error('❌ Error auto-marcando conversaciones inactivas:', error.message);
+    }
+  };
+  
+  // Ejecutar inmediatamente al iniciar
+  await markInactiveConversationsAsResolved();
+  
+  // Ejecutar cada 5 minutos
+  setInterval(markInactiveConversationsAsResolved, 5 * 60 * 1000);
+  console.log('✅ Cron job configurado: marcar conversaciones inactivas cada 5 minutos');
 });
 
 // Manejar errores de puerto
