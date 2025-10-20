@@ -1030,8 +1030,8 @@ export default function Calendario() {
 
         return (
         <CalendarioErrorBoundary>
-        <div className="min-h-screen bg-gray-50 p-2 md:p-6">
-            <div className="max-w-7xl mx-auto">
+        <div className="min-h-screen bg-gray-50 px-4 py-4">
+            <div className="max-w-[85%] mx-auto">
                 {/* Header */}
                 <div className="mb-6">
                     <div className="flex items-center justify-between">

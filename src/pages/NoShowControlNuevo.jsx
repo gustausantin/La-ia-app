@@ -183,8 +183,8 @@ export default function NoShowControlNuevo() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-            <div className="max-w-7xl mx-auto">
+        <div className="min-h-screen bg-gray-50 px-4 py-4 md:px-4 md:py-4">
+            <div className="max-w-[85%] mx-auto">
                 
                 {/* Header */}
                 <div className="mb-6">

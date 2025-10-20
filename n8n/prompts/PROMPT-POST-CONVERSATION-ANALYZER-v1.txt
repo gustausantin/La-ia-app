@@ -161,6 +161,21 @@ Observaciones adicionales relevantes.
 - Resumen de la conversación (ya está en `conversation_summary`)
 - Información redundante
 
+### **11. conversation_should_close** (boolean)
+¿La conversación ha llegado a un cierre natural?
+
+**true** si:
+- Cliente se despidió (ej: "gracias", "adiós", "perfecto")
+- Objetivo cumplido (reserva creada, consulta respondida, etc.)
+- Cliente confirmó que no necesita nada más
+- Conversación claramente terminada
+
+**false** si:
+- Cliente hizo pregunta sin respuesta
+- Hay algo pendiente de acción
+- Cliente no dio señal de cierre
+- Conversación interrumpida abruptamente
+
 ═══════════════════════════════════════════════════════════════════
 📊 FORMATO DE RESPUESTA
 ═══════════════════════════════════════════════════════════════════

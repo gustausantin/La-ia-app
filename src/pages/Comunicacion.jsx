@@ -8,7 +8,8 @@ import {
     MessageSquare, Phone, Search, User, AlertCircle, 
     RefreshCw, Instagram, Facebook, Globe, Bot, X, Send, Clock, 
     ExternalLink, MessageCircle, Users, CheckCheck,
-    AlertTriangle, Shield, Check, HelpCircle
+    AlertTriangle, Shield, Check, HelpCircle, Smile, Meh, Frown,
+    Star, Tag, TrendingUp, AlertOctagon, Award
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -21,32 +22,60 @@ const CHANNELS = {
 };
 
 const STATUS_CONFIG = {
-    active: { label: 'Activa', icon: MessageCircle, bgClass: 'bg-green-100', textClass: 'text-green-700', borderClass: 'border-green-300' },
-    resolved: { label: 'Resuelta', icon: CheckCheck, bgClass: 'bg-blue-100', textClass: 'text-blue-700', borderClass: 'border-blue-300' },
-    abandoned: { label: 'Abandonada', icon: AlertTriangle, bgClass: 'bg-gray-100', textClass: 'text-gray-700', borderClass: 'border-gray-300' }
+    active: { label: 'Activa', icon: MessageCircle, bgClass: 'bg-white', textClass: 'text-green-700', borderClass: 'border-gray-300' },
+    resolved: { label: 'Resuelta', icon: CheckCheck, bgClass: 'bg-white', textClass: 'text-blue-700', borderClass: 'border-gray-300' },
+    abandoned: { label: 'Abandonada', icon: AlertTriangle, bgClass: 'bg-white', textClass: 'text-gray-600', borderClass: 'border-gray-300' }
 };
 
 // Helper para determinar el tipo basado en outcome
 const getConversationType = (conv) => {
     if (conv.outcome === 'reservation_created') {
-        return { label: 'Reserva', bgClass: 'bg-green-100', textClass: 'text-green-700', borderClass: 'border-green-300' };
+        return { label: 'Reserva', bgClass: 'bg-white', textClass: 'text-green-700', borderClass: 'border-gray-300' };
     }
     if (conv.outcome === 'reservation_modified') {
-        return { label: 'Modificación', bgClass: 'bg-blue-100', textClass: 'text-blue-700', borderClass: 'border-blue-300' };
+        return { label: 'Modificación', bgClass: 'bg-white', textClass: 'text-blue-700', borderClass: 'border-gray-300' };
     }
     if (conv.outcome === 'reservation_cancelled') {
-        return { label: 'Cancelación', bgClass: 'bg-red-100', textClass: 'text-red-700', borderClass: 'border-red-300' };
+        return { label: 'Cancelación', bgClass: 'bg-white', textClass: 'text-red-700', borderClass: 'border-gray-300' };
     }
     // Si no hay outcome o es inquiry
-    return { label: 'Consulta', bgClass: 'bg-purple-100', textClass: 'text-purple-700', borderClass: 'border-purple-300' };
+    return { label: 'Consulta', bgClass: 'bg-white', textClass: 'text-purple-700', borderClass: 'border-gray-300' };
 };
 
 // Helper para determinar completitud
 const getCompletionStatus = (conv) => {
     if (conv.outcome && ['reservation_created', 'reservation_modified', 'inquiry_answered'].includes(conv.outcome)) {
-        return { label: 'Completada', icon: Check, bgClass: 'bg-green-50', textClass: 'text-green-600', borderClass: 'border-green-200' };
+        return { label: 'Completada', icon: Check, bgClass: 'bg-white', textClass: 'text-green-600', borderClass: 'border-gray-300' };
     }
-    return { label: 'Pendiente', icon: HelpCircle, bgClass: 'bg-orange-50', textClass: 'text-orange-600', borderClass: 'border-orange-200' };
+    return { label: 'Pendiente', icon: HelpCircle, bgClass: 'bg-orange-50', textClass: 'text-orange-600', borderClass: 'border-orange-300' };
+};
+
+// Helper para sentiment badge
+const getSentimentBadge = (sentiment) => {
+    if (!sentiment) return null;
+    
+    const configs = {
+        positive: { emoji: '😊', label: 'Positivo', icon: Smile, bgClass: 'bg-white', textClass: 'text-green-700', borderClass: 'border-gray-300' },
+        neutral: { emoji: '😐', label: 'Neutral', icon: Meh, bgClass: 'bg-white', textClass: 'text-gray-600', borderClass: 'border-gray-300' },
+        negative: { emoji: '😞', label: 'Negativo', icon: Frown, bgClass: 'bg-white', textClass: 'text-red-700', borderClass: 'border-gray-300' }
+    };
+    
+    return configs[sentiment] || null;
+};
+
+// Helper para satisfaction stars
+const getSatisfactionStars = (metadata) => {
+    if (!metadata || typeof metadata !== 'object') return 0;
+    
+    const satisfactionMap = {
+        very_satisfied: 5,
+        satisfied: 4,
+        neutral: 3,
+        unsatisfied: 2,
+        very_unsatisfied: 1
+    };
+    
+    return satisfactionMap[metadata.satisfaction_level] || 0;
 };
 
 export default function Comunicacion() {
@@ -58,8 +87,17 @@ export default function Comunicacion() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterChannel, setFilterChannel] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
-    const [newMessage, setNewMessage] = useState('');
-    const [stats, setStats] = useState({ total: 0, active: 0, resolved: 0, abandoned: 0 });
+    const [stats, setStats] = useState({ 
+        total: 0, 
+        active: 0, 
+        resolved: 0, 
+        abandoned: 0,
+        // Nuevas estadísticas enriquecidas
+        avgSatisfaction: 0,
+        positivePercent: 0,
+        escalations: 0,
+        avgQuality: 0
+    });
 
     const loadConversations = useCallback(async () => {
         if (!restaurant?.id) return;
@@ -73,11 +111,43 @@ export default function Comunicacion() {
                 .order('created_at', { ascending: false });
             if (error) throw error;
             setConversations(data || []);
+            
+            // Calcular estadísticas enriquecidas
+            const conversationsWithAnalysis = (data || []).filter(c => c.metadata && typeof c.metadata === 'object');
+            const totalAnalyzed = conversationsWithAnalysis.length;
+            
+            // % Positivos
+            const positiveCount = conversationsWithAnalysis.filter(c => c.sentiment === 'positive').length;
+            const positivePercent = totalAnalyzed > 0 ? Math.round((positiveCount / totalAnalyzed) * 100) : 0;
+            
+            // Escalaciones
+            const escalations = conversationsWithAnalysis.filter(c => c.metadata?.escalation_needed === true).length;
+            
+            // Satisfacción promedio (1-5)
+            const satisfactionScores = conversationsWithAnalysis
+                .map(c => getSatisfactionStars(c.metadata))
+                .filter(score => score > 0);
+            const avgSatisfaction = satisfactionScores.length > 0 
+                ? (satisfactionScores.reduce((a, b) => a + b, 0) / satisfactionScores.length).toFixed(1)
+                : 0;
+            
+            // Calidad promedio (1-5)
+            const qualityScores = conversationsWithAnalysis
+                .map(c => c.metadata?.resolution_quality)
+                .filter(q => typeof q === 'number' && q > 0);
+            const avgQuality = qualityScores.length > 0
+                ? (qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length).toFixed(1)
+                : 0;
+            
             setStats({
                 total: (data || []).length,
                 active: (data || []).filter(c => c.status === 'active').length,
                 resolved: (data || []).filter(c => c.status === 'resolved').length,
-                abandoned: (data || []).filter(c => c.status === 'abandoned').length
+                abandoned: (data || []).filter(c => c.status === 'abandoned').length,
+                avgSatisfaction: parseFloat(avgSatisfaction),
+                positivePercent,
+                escalations,
+                avgQuality: parseFloat(avgQuality)
             });
         } catch (error) {
             console.error('Error:', error);
@@ -103,25 +173,47 @@ export default function Comunicacion() {
         }
     }, []);
 
-    const sendMessage = async () => {
-        if (!newMessage.trim() || !selectedConversation) return;
+    // 🆕 FUNCIÓN: Resolver conversación manualmente
+    const closeConversation = async (conversationId) => {
+        if (!confirm('¿Marcar esta conversación como resuelta?')) return;
+        
         try {
-            const { data, error } = await supabase.from('agent_messages').insert({
-                conversation_id: selectedConversation.id,
-                restaurant_id: restaurant.id,
-                direction: 'outbound',
-                sender: 'agent',
-                message_text: newMessage.trim(),
-                timestamp: new Date().toISOString()
-            }).select().single();
+            const { error } = await supabase
+                .from('agent_conversations')
+                .update({
+                    status: 'resolved',
+                    resolved_at: new Date().toISOString()
+                })
+                .eq('id', conversationId)
+                .eq('restaurant_id', restaurant.id);
+            
             if (error) throw error;
-            setMessages([...messages, data]);
-            setNewMessage('');
-            toast.success('Mensaje enviado');
+            
+            toast.success('Conversación resuelta correctamente');
+            loadConversations();
+            setSelectedConversation(null);
         } catch (error) {
             console.error('Error:', error);
-            toast.error('Error al enviar mensaje');
+            toast.error('Error al cerrar conversación');
         }
+    };
+
+    // 🆕 FUNCIÓN: Calcular tiempo de inactividad
+    const getInactivityTime = (conversation) => {
+        if (!conversation.created_at) return null;
+        
+        const now = new Date();
+        const lastActivity = new Date(conversation.created_at);
+        const diffMs = now - lastActivity;
+        const diffMins = Math.floor(diffMs / 60000);
+        
+        if (diffMins < 1) return 'Ahora mismo';
+        if (diffMins === 1) return 'Hace 1 minuto';
+        if (diffMins < 60) return `Hace ${diffMins} minutos`;
+        
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours === 1) return 'Hace 1 hora';
+        return `Hace ${diffHours} horas`;
     };
 
     const getFilteredConversations = useCallback(() => {
@@ -159,7 +251,7 @@ export default function Comunicacion() {
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
             {/* HEADER SIN SOMBRA */}
             <div className="bg-white">
-                <div className="max-w-7xl mx-auto px-6 py-4">
+                <div className="max-w-[85%] mx-auto px-4 py-4">
                     {/* Título + Badge */}
                     <div className="flex items-center gap-3 mb-3">
                         <div className="p-2.5 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg">
@@ -205,42 +297,89 @@ export default function Comunicacion() {
                         </div>
                     </div>
 
-                    {/* Estadísticas MÁS COMPACTAS (mitad de ancho) */}
-                    <div className="grid grid-cols-4 gap-2">
-                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-2 rounded-lg border border-gray-200 hover:shadow transition-shadow">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-xs font-medium text-gray-600 uppercase">Total</p>
-                                    <p className="text-xl font-bold text-gray-900">{stats.total}</p>
+                    {/* Estadísticas MÁS COMPACTAS Y PROFESIONALES - 2 filas */}
+                    <div className="space-y-1.5">
+                        {/* Fila 1: Estadísticas básicas */}
+                        <div className="grid grid-cols-4 gap-1.5">
+                            <div className="bg-white p-1.5 rounded-md border border-gray-200 hover:shadow-sm transition-shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Total</p>
+                                        <p className="text-lg font-bold text-gray-900">{stats.total}</p>
+                                    </div>
+                                    <Users className="w-5 h-5 text-gray-400" />
                                 </div>
-                                <Users className="w-6 h-6 text-gray-400" />
+                            </div>
+                            <div className="bg-white p-1.5 rounded-md border border-gray-200 hover:shadow-sm transition-shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Activas</p>
+                                        <p className="text-lg font-bold text-green-600">{stats.active}</p>
+                                    </div>
+                                    <MessageCircle className="w-5 h-5 text-green-600" />
+                                </div>
+                            </div>
+                            <div className="bg-white p-1.5 rounded-md border border-gray-200 hover:shadow-sm transition-shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Resueltas</p>
+                                        <p className="text-lg font-bold text-blue-600">{stats.resolved}</p>
+                                    </div>
+                                    <CheckCheck className="w-5 h-5 text-blue-600" />
+                                </div>
+                            </div>
+                            <div className="bg-white p-1.5 rounded-md border border-gray-200 hover:shadow-sm transition-shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Abandonadas</p>
+                                        <p className="text-lg font-bold text-gray-600">{stats.abandoned}</p>
+                                    </div>
+                                    <AlertTriangle className="w-5 h-5 text-gray-400" />
+                                </div>
                             </div>
                         </div>
-                        <div className="bg-gradient-to-br from-green-50 to-green-100 p-2 rounded-lg border border-green-200 hover:shadow transition-shadow">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-xs font-medium text-green-700 uppercase">Activas</p>
-                                    <p className="text-xl font-bold text-green-900">{stats.active}</p>
+                        
+                        {/* Fila 2: Estadísticas enriquecidas (análisis IA) - Más sobrias */}
+                        <div className="grid grid-cols-4 gap-1.5">
+                            <div className="bg-white p-1.5 rounded-md border border-gray-200 hover:shadow-sm transition-shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Satisfacción</p>
+                                        <p className="text-lg font-bold text-purple-600">
+                                            {stats.avgSatisfaction > 0 ? `${stats.avgSatisfaction}/5` : 'N/A'}
+                                        </p>
+                                    </div>
+                                    <Star className="w-5 h-5 text-purple-600" />
                                 </div>
-                                <MessageCircle className="w-6 h-6 text-green-500" />
                             </div>
-                        </div>
-                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-2 rounded-lg border border-blue-200 hover:shadow transition-shadow">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-xs font-medium text-blue-700 uppercase">Resueltas</p>
-                                    <p className="text-xl font-bold text-blue-900">{stats.resolved}</p>
+                            <div className="bg-white p-1.5 rounded-md border border-gray-200 hover:shadow-sm transition-shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">% Positivos</p>
+                                        <p className="text-lg font-bold text-green-600">{stats.positivePercent}%</p>
+                                    </div>
+                                    <TrendingUp className="w-5 h-5 text-green-600" />
                                 </div>
-                                <CheckCheck className="w-6 h-6 text-blue-500" />
                             </div>
-                        </div>
-                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-2 rounded-lg border border-gray-200 hover:shadow transition-shadow">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-xs font-medium text-gray-600 uppercase">Abandonadas</p>
-                                    <p className="text-xl font-bold text-gray-900">{stats.abandoned}</p>
+                            <div className="bg-white p-1.5 rounded-md border border-gray-200 hover:shadow-sm transition-shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Escalaciones</p>
+                                        <p className="text-lg font-bold text-red-600">{stats.escalations}</p>
+                                    </div>
+                                    <AlertOctagon className="w-5 h-5 text-red-600" />
                                 </div>
-                                <AlertTriangle className="w-6 h-6 text-gray-400" />
+                            </div>
+                            <div className="bg-white p-1.5 rounded-md border border-gray-200 hover:shadow-sm transition-shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Calidad</p>
+                                        <p className="text-lg font-bold text-blue-600">
+                                            {stats.avgQuality > 0 ? `${stats.avgQuality}/5` : 'N/A'}
+                                        </p>
+                                    </div>
+                                    <Award className="w-5 h-5 text-blue-600" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -248,12 +387,29 @@ export default function Comunicacion() {
             </div>
 
             {/* CONTENIDO PRINCIPAL - SIN LÍNEA DIVISORIA */}
-            <div className="max-w-7xl mx-auto p-6 pt-4">
+            <div className="max-w-[85%] mx-auto px-4 py-4">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-380px)]">
                     {/* LISTA DE CONVERSACIONES - MODERNIZADA */}
                     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col">
                         {/* Filtros Modernos */}
                         <div className="p-3 bg-gradient-to-br from-gray-50 to-white border-b border-gray-200">
+                            {/* 🆕 Header con contador y botón actualizar */}
+                            <div className="flex items-center justify-between mb-2">
+                                <h2 className="font-bold text-sm text-gray-900">
+                                    Conversaciones ({filteredConversations.length})
+                                </h2>
+                                
+                                {/* 🆕 Botón actualizar */}
+                                <button
+                                    onClick={() => loadConversations()}
+                                    className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200 transition-colors"
+                                    title="Actualizar lista de conversaciones"
+                                >
+                                    <RefreshCw className="w-3 h-3" />
+                                    <span>Actualizar</span>
+                                </button>
+                            </div>
+                            
                             <div className="space-y-2">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -358,6 +514,32 @@ export default function Comunicacion() {
                                                             <CompletionIcon className="w-3 h-3" />
                                                             {completionStatus.label}
                                                         </span>
+                                                        
+                                                        {/* NUEVO: Sentiment Badge */}
+                                                        {(() => {
+                                                            const sentimentBadge = getSentimentBadge(conv.sentiment);
+                                                            if (!sentimentBadge) return null;
+                                                            const SentimentIcon = sentimentBadge.icon;
+                                                            return (
+                                                                <span className={`text-xs px-2 py-0.5 rounded-md font-medium flex items-center gap-1 ${sentimentBadge.bgClass} ${sentimentBadge.textClass} border ${sentimentBadge.borderClass}`}>
+                                                                    <span>{sentimentBadge.emoji}</span>
+                                                                    <span className="hidden sm:inline">{sentimentBadge.label}</span>
+                                                                </span>
+                                                            );
+                                                        })()}
+                                                        
+                                                        {/* NUEVO: Satisfaction Stars */}
+                                                        {(() => {
+                                                            const stars = getSatisfactionStars(conv.metadata);
+                                                            if (stars === 0) return null;
+                                                            return (
+                                                                <span className="text-xs px-2 py-0.5 rounded-md font-medium flex items-center gap-0.5 bg-white text-purple-700 border border-gray-300">
+                                                                    {[...Array(stars)].map((_, i) => (
+                                                                        <Star key={i} className="w-3 h-3 fill-purple-500 text-purple-500" />
+                                                                    ))}
+                                                                </span>
+                                                            );
+                                                        })()}
                                                     </div>
                                                 </div>
                                             </div>
@@ -396,6 +578,19 @@ export default function Comunicacion() {
                                                     Ver reserva
                                                 </button>
                                             )}
+                                            
+                                            {/* 🆕 NUEVO: Botón "Resolver conversación" */}
+                                            {selectedConversation.status === 'active' && (
+                                                <button
+                                                    onClick={() => closeConversation(selectedConversation.id)}
+                                                    className="px-3 py-1.5 text-xs bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold shadow hover:shadow-md transition-all"
+                                                    title="Marcar conversación como resuelta"
+                                                >
+                                                    <CheckCheck className="w-3 h-3 inline mr-1" />
+                                                    Resolver
+                                                </button>
+                                            )}
+                                            
                                             <button
                                                 onClick={() => setSelectedConversation(null)}
                                                 className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
@@ -413,6 +608,17 @@ export default function Comunicacion() {
                                                 Iniciada {format(parseISO(selectedConversation.created_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
                                             </span>
                                         </div>
+                                        
+                                        {/* 🆕 NUEVO: Indicador de inactividad */}
+                                        {selectedConversation.status === 'active' && (
+                                            <div className="flex items-center gap-1">
+                                                <AlertCircle className="w-3 h-3 text-orange-500" />
+                                                <span className="text-orange-600 font-medium">
+                                                    {getInactivityTime(selectedConversation)}
+                                                </span>
+                                            </div>
+                                        )}
+                                        
                                         {selectedConversation.resolved_at && (
                                             <div className="flex items-center gap-1">
                                                 <CheckCheck className="w-3 h-3 text-green-600" />
@@ -421,6 +627,100 @@ export default function Comunicacion() {
                                         )}
                                     </div>
                                 </div>
+                                
+                                {/* NUEVO: Panel de Análisis IA (si existe metadata) */}
+                                {selectedConversation.metadata && typeof selectedConversation.metadata === 'object' && Object.keys(selectedConversation.metadata).length > 0 && (
+                                    <div className="border-b bg-gradient-to-br from-purple-50 via-blue-50 to-purple-50 p-3">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Bot className="w-4 h-4 text-purple-600" />
+                                            <h4 className="font-bold text-sm text-gray-900">Análisis IA</h4>
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                            {/* Resumen */}
+                                            {selectedConversation.metadata.conversation_summary && (
+                                                <div className="bg-white p-2 rounded-lg border border-gray-200">
+                                                    <p className="text-xs text-gray-600 font-semibold mb-1">📝 Resumen:</p>
+                                                    <p className="text-xs text-gray-800">{selectedConversation.metadata.conversation_summary}</p>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Grid de métricas */}
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {/* Calidad de resolución */}
+                                                {typeof selectedConversation.metadata.resolution_quality === 'number' && (
+                                                    <div className="bg-white p-2 rounded-lg border border-purple-200">
+                                                        <p className="text-xs text-gray-600 font-semibold mb-1 flex items-center gap-1">
+                                                            <Award className="w-3 h-3 text-purple-600" />
+                                                            Calidad:
+                                                        </p>
+                                                        <div className="flex items-center gap-1">
+                                                            {[...Array(5)].map((_, i) => (
+                                                                <Star 
+                                                                    key={i} 
+                                                                    className={`w-3 h-3 ${i < selectedConversation.metadata.resolution_quality ? 'fill-purple-400 text-purple-400' : 'text-gray-300'}`} 
+                                                                />
+                                                            ))}
+                                                            <span className="text-xs text-gray-700 ml-1">{selectedConversation.metadata.resolution_quality}/5</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Escalación */}
+                                                {typeof selectedConversation.metadata.escalation_needed === 'boolean' && (
+                                                    <div className={`p-2 rounded-lg border ${selectedConversation.metadata.escalation_needed ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                                                        <p className="text-xs text-gray-600 font-semibold mb-1 flex items-center gap-1">
+                                                            <AlertOctagon className={`w-3 h-3 ${selectedConversation.metadata.escalation_needed ? 'text-red-600' : 'text-green-600'}`} />
+                                                            Escalación:
+                                                        </p>
+                                                        <p className={`text-xs font-bold ${selectedConversation.metadata.escalation_needed ? 'text-red-700' : 'text-green-700'}`}>
+                                                            {selectedConversation.metadata.escalation_needed ? '⚠️ Requerida' : '✅ No necesaria'}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Temas clave */}
+                                            {selectedConversation.metadata.key_topics && Array.isArray(selectedConversation.metadata.key_topics) && selectedConversation.metadata.key_topics.length > 0 && (
+                                                <div className="bg-white p-2 rounded-lg border border-blue-200">
+                                                    <p className="text-xs text-gray-600 font-semibold mb-1 flex items-center gap-1">
+                                                        <Tag className="w-3 h-3 text-blue-600" />
+                                                        Temas tratados:
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {selectedConversation.metadata.key_topics.map((topic, idx) => (
+                                                            <span key={idx} className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">
+                                                                {topic}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Peticiones especiales */}
+                                            {selectedConversation.metadata.special_requests && Array.isArray(selectedConversation.metadata.special_requests) && selectedConversation.metadata.special_requests.length > 0 && (
+                                                <div className="bg-white p-2 rounded-lg border border-amber-200">
+                                                    <p className="text-xs text-gray-600 font-semibold mb-1">🎯 Peticiones especiales:</p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {selectedConversation.metadata.special_requests.map((request, idx) => (
+                                                            <span key={idx} className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">
+                                                                {request}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Notas */}
+                                            {selectedConversation.metadata.notes && (
+                                                <div className="bg-white p-2 rounded-lg border border-gray-200">
+                                                    <p className="text-xs text-gray-600 font-semibold mb-1">💡 Notas:</p>
+                                                    <p className="text-xs text-gray-700 italic">{selectedConversation.metadata.notes}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Mensajes */}
                                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-br from-gray-50 to-white">
@@ -463,27 +763,6 @@ export default function Comunicacion() {
                                     )}
                                 </div>
 
-                                {/* Input de mensaje */}
-                                <div className="p-3 border-t bg-white">
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={newMessage}
-                                            onChange={(e) => setNewMessage(e.target.value)}
-                                            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                                            placeholder="Escribe un mensaje..."
-                                            className="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                                        />
-                                        <button
-                                            onClick={sendMessage}
-                                            disabled={!newMessage.trim()}
-                                            className="px-4 py-2 bg-gradient-to-br from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-300 disabled:to-gray-400 text-white rounded-lg font-semibold shadow hover:shadow-md transition-all disabled:cursor-not-allowed"
-                                        >
-                                            <Send className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-2">Presiona Enter para enviar</p>
-                                </div>
                             </>
                         ) : (
                             <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">

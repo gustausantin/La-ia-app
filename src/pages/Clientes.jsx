@@ -247,8 +247,8 @@ export default function Clientes() {
     // Pantallas de carga y error
     if (!isReady) {
         return (
-            <div className="min-h-screen bg-gray-50 p-6">
-                <div className="max-w-7xl mx-auto">
+            <div className="min-h-screen bg-gray-50 px-4 py-4">
+                <div className="max-w-[85%] mx-auto">
                     <div className="bg-white rounded-lg shadow-sm p-8 text-center">
                         <RefreshCw className="w-8 h-8 text-gray-400 mx-auto mb-2 animate-spin" />
                         <h3 className="text-sm font-medium text-gray-900 mb-2">
@@ -262,8 +262,8 @@ export default function Clientes() {
 
     if (!restaurantId) {
         return (
-            <div className="min-h-screen bg-gray-50 p-6">
-                <div className="max-w-7xl mx-auto">
+            <div className="min-h-screen bg-gray-50 px-4 py-4">
+                <div className="max-w-[85%] mx-auto">
                     <div className="bg-white rounded-lg shadow-sm p-8 text-center">
                         <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-2" />
                         <h3 className="text-sm font-medium text-gray-900 mb-2">
@@ -286,8 +286,8 @@ export default function Clientes() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+        <div className="min-h-screen bg-gray-50 px-4 py-4">
+            <div className="max-w-[85%] mx-auto space-y-6">
                 {/* Header con gradiente corporativo */}
                 <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-xl p-8 text-white">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">

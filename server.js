@@ -266,30 +266,46 @@ app.listen(PORT, '0.0.0.0', async () => {
       // Calcular timestamp de hace 10 minutos
       const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
       
-      // Buscar conversaciones activas con último mensaje hace más de 10 minutos
-      const { data: conversations, error: fetchError } = await supabase
+      // 1. Buscar conversaciones activas
+      const { data: activeConversations, error: fetchError } = await supabase
         .from('agent_conversations')
-        .select('id, updated_at')
-        .eq('status', 'active')
-        .lt('updated_at', tenMinutesAgo);
+        .select('id')
+        .eq('status', 'active');
       
       if (fetchError) throw fetchError;
+      if (!activeConversations || activeConversations.length === 0) return;
       
-      if (conversations && conversations.length > 0) {
-        const conversationIds = conversations.map(c => c.id);
+      // 2. Para cada conversación, obtener su último mensaje
+      const conversationsToResolve = [];
+      
+      for (const conv of activeConversations) {
+        const { data: lastMessage } = await supabase
+          .from('agent_messages')
+          .select('timestamp')
+          .eq('conversation_id', conv.id)
+          .order('timestamp', { ascending: false })
+          .limit(1)
+          .single();
         
-        // Marcar como resueltas
+        // Si el último mensaje fue hace más de 10 min, marcar para resolver
+        if (lastMessage && lastMessage.timestamp < tenMinutesAgo) {
+          conversationsToResolve.push(conv.id);
+        }
+      }
+      
+      // 3. Marcar conversaciones inactivas como resueltas
+      if (conversationsToResolve.length > 0) {
         const { error: updateError } = await supabase
           .from('agent_conversations')
           .update({ 
             status: 'resolved',
             resolved_at: new Date().toISOString()
           })
-          .in('id', conversationIds);
+          .in('id', conversationsToResolve);
         
         if (updateError) throw updateError;
         
-        console.log(`✅ Auto-marcadas ${conversations.length} conversaciones como resueltas (10 min inactividad)`);
+        console.log(`✅ Auto-marcadas ${conversationsToResolve.length} conversaciones como resueltas (10 min inactividad)`);
       }
     } catch (error) {
       console.error('❌ Error auto-marcando conversaciones inactivas:', error.message);

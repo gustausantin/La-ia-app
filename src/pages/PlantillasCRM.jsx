@@ -276,7 +276,7 @@ export default function PlantillasCRM() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/20 to-blue-50/20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-[85%] mx-auto px-4 py-4">
                 {/* Header Principal con degradado */}
                 <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 mb-8 shadow-lg">
                     <div className="flex items-center justify-between">
