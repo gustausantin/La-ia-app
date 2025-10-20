@@ -103,11 +103,11 @@ function AppContent() {
           <>
             <Route element={<Layout />}>
               {/* Ruta por defecto al dashboard */}
-              <Route index element={<Navigate to="/dashboard-agente" replace />} />
+              <Route index element={<Navigate to="/dashboard" replace />} />
 
-              {/* Rutas principales con lazy loading */}
+              {/* Dashboard principal */}
               <Route 
-                path="/dashboard-agente" 
+                path="/dashboard" 
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <DashboardAgente />
@@ -216,12 +216,10 @@ function AppContent() {
                 } 
               />
               
-              {/* Redirect legacy dashboard to new one */}
-              <Route path="/dashboard" element={<Navigate to="/dashboard-agente" replace />} />
             </Route>
 
             {/* Redirigir cualquier ruta no válida al dashboard */}
-            <Route path="*" element={<Navigate to="/dashboard-agente" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>
         )}
       </Routes>

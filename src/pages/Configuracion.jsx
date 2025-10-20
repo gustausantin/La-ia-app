@@ -13,7 +13,6 @@ import {
     RefreshCw,
     Bot,
     Power,
-    Image as ImageIcon,
     Phone,
     Instagram,
     Facebook,
@@ -111,7 +110,6 @@ const Configuracion = () => {
         timezone: "Europe/Madrid",
         currency: "EUR",
         language: "es",
-        logo_url: "",
         capacity_total: 0,
         price_range: "",
         agent: {
@@ -312,7 +310,6 @@ const Configuracion = () => {
                     contact_name: dbSettings.contact_name || "",
                     description: dbSettings.description || "",
                     website: dbSettings.website || "",
-                    logo_url: dbSettings.logo_url || "",
                     capacity: dbSettings.capacity_total || dbSettings.capacity || 50,
                     average_ticket: dbSettings.average_ticket || 45,
                     
@@ -470,7 +467,6 @@ const Configuracion = () => {
                             contact_name: settings.contact_name,
                             description: settings.description,
                             website: settings.website,
-                            logo_url: settings.logo_url,
                             capacity_total: settings.capacity || settings.capacity_total,
                             average_ticket: settings.average_ticket,
                             price_range: settings.price_range
@@ -678,6 +674,14 @@ const Configuracion = () => {
 
             toast.success(`✅ ${section} guardado correctamente`);
             
+            // ✅ Si se guardaron canales, disparar evento para refrescar Dashboard
+            if (section === "Canales") {
+                window.dispatchEvent(new CustomEvent('channels-updated', {
+                    detail: { channels: settings.channels }
+                }));
+                console.log('✅ Evento channels-updated disparado');
+            }
+            
             // SINCRONIZAR CONTEXTO: Forzar recarga del restaurant en AuthContext
             // Esto asegura que el Dashboard y otras páginas vean los cambios inmediatamente
             if (section === "Agente IA") {
@@ -762,81 +766,6 @@ const Configuracion = () => {
                                 icon={<Building2 />}
                             >
                                 <div className="space-y-6">
-                                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200">
-                                        <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                            <ImageIcon className="w-5 h-5 text-blue-600" />
-                                            Logo del Restaurante
-                                        </h4>
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-24 h-24 bg-white rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
-                                                {settings.logo_url ? (
-                                                    <img
-                                                        src={settings.logo_url}
-                                                        alt="Logo"
-                                                        className="w-full h-full object-cover rounded-lg"
-                                                    />
-                                                ) : (
-                                                    <ImageIcon className="w-8 h-8 text-gray-400" />
-                                                )}
-                                            </div>
-                                            <div className="flex-1">
-                                                <input
-                                                    type="file"
-                                                    id="logo-upload"
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files[0];
-                                                        if (file) {
-                                                            const reader = new FileReader();
-                                                            reader.onload = (event) => {
-                                                                setSettings(prev => ({
-                                                                    ...prev,
-                                                                    logo_url: event.target.result
-                                                                }));
-                                                                toast.success('Logo cargado correctamente');
-                                                            };
-                                                            reader.readAsDataURL(file);
-                                                        }
-                                                    }}
-                                                />
-                                                <div className="space-y-2">
-                                                    <div className="flex gap-2">
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => document.getElementById('logo-upload').click()}
-                                                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
-                                                        >
-                                                            <Upload className="w-4 h-4" />
-                                                            Subir logo
-                                                        </button>
-                                                        {settings.logo_url && (
-                                                            <button 
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    if (window.confirm('¿Estás seguro de eliminar el logo?')) {
-                                                                        setSettings(prev => ({
-                                                                            ...prev,
-                                                                            logo_url: ''
-                                                                        }));
-                                                                        toast.success('Logo eliminado correctamente');
-                                                                    }
-                                                                }}
-                                                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200"
-                                                            >
-                                                                <X className="w-4 h-4" />
-                                                                Eliminar
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-xs text-gray-500">
-                                                        PNG, JPG o SVG (máx. 5MB) • Recomendado: 400x400px
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">

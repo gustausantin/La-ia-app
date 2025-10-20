@@ -15,11 +15,18 @@ import {
     Info,
     CheckCircle,
     Mail,
-    LayoutDashboard
+    LayoutDashboard,
+    Brain, // 🆕 Para sección Agente IA
+    Star, 
+    Smile, 
+    Frown, 
+    CheckCircle2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { format } from 'date-fns';
+import { format, subDays, parseISO } from 'date-fns';
 import PlantillasCRM from './PlantillasCRM'; // Importar componente de Plantillas
+// 🆕 Imports para gráficos
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const CRMSimple = () => {
     const { restaurant } = useAuthContext();
@@ -36,6 +43,17 @@ const CRMSimple = () => {
     
     // Estado para tabs
     const [activeTab, setActiveTab] = useState('dashboard');
+    
+    // 🆕 Estado para performance del agente IA
+    const [agentPerformance, setAgentPerformance] = useState({
+        satisfaction: 0,
+        positivePercent: 0,
+        escalations: 0,
+        quality: 0,
+        totalConversations: 0,
+        sentimentTrend: [],
+        problematicConversations: []
+    });
 
     // Detectar si viene de /plantillas para abrir el tab correcto
     useEffect(() => {
@@ -47,6 +65,7 @@ const CRMSimple = () => {
     useEffect(() => {
         if (restaurant?.id) {
             cargarDatos();
+            loadAgentPerformance(); // 🆕 Cargar performance del agente IA
         }
     }, [restaurant]);
     
@@ -120,6 +139,124 @@ const CRMSimple = () => {
             toast.error('Error al cargar datos del CRM');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // 🆕 CARGAR PERFORMANCE DEL AGENTE IA
+    const loadAgentPerformance = async () => {
+        if (!restaurant?.id) return;
+        
+        try {
+            console.log('📊 Cargando performance del agente IA...');
+            
+            const thirtyDaysAgo = subDays(new Date(), 30);
+            const sevenDaysAgo = subDays(new Date(), 7);
+            
+            // 1. MÉTRICAS AGREGADAS (últimos 30 días)
+            const { data: conversations, error: convError } = await supabase
+                .from('agent_conversations')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .eq('status', 'resolved')
+                .gte('created_at', format(thirtyDaysAgo, 'yyyy-MM-dd'))
+                .order('created_at', { ascending: true });
+            
+            if (convError) {
+                console.error('Error cargando conversaciones:', convError);
+                return;
+            }
+            
+            const totalConversations = conversations?.length || 0;
+            
+            // Calcular satisfacción promedio (satisfaction_level)
+            const satisfactionMap = {
+                'very_satisfied': 5,
+                'satisfied': 4,
+                'neutral': 3,
+                'unsatisfied': 2,
+                'very_unsatisfied': 1
+            };
+            
+            const satisfactionScores = conversations
+                ?.filter(c => c.metadata?.satisfaction_level)
+                .map(c => satisfactionMap[c.metadata.satisfaction_level] || 0) || [];
+            
+            const avgSatisfaction = satisfactionScores.length > 0
+                ? satisfactionScores.reduce((a, b) => a + b, 0) / satisfactionScores.length
+                : 0;
+            
+            // % Sentiment positivo
+            const positiveCount = conversations?.filter(c => c.sentiment === 'positive').length || 0;
+            const positivePercent = totalConversations > 0 ? (positiveCount / totalConversations) * 100 : 0;
+            
+            // Escalaciones
+            const escalations = conversations?.filter(c => 
+                c.metadata?.escalation_needed === true
+            ).length || 0;
+            
+            // Calidad de resolución promedio
+            const qualityScores = conversations
+                ?.filter(c => c.metadata?.resolution_quality)
+                .map(c => c.metadata.resolution_quality) || [];
+            
+            const avgQuality = qualityScores.length > 0
+                ? qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length
+                : 0;
+            
+            // 2. EVOLUCIÓN DE SENTIMENT (últimos 30 días, agrupado por día)
+            const sentimentByDate = {};
+            conversations?.forEach(conv => {
+                const date = format(parseISO(conv.created_at), 'yyyy-MM-dd');
+                if (!sentimentByDate[date]) {
+                    sentimentByDate[date] = { date, positive: 0, neutral: 0, negative: 0, total: 0 };
+                }
+                sentimentByDate[date].total++;
+                if (conv.sentiment === 'positive') sentimentByDate[date].positive++;
+                if (conv.sentiment === 'neutral') sentimentByDate[date].neutral++;
+                if (conv.sentiment === 'negative') sentimentByDate[date].negative++;
+            });
+            
+            const sentimentTrend = Object.values(sentimentByDate).map(day => ({
+                date: day.date,
+                positive: day.total > 0 ? Math.round((day.positive / day.total) * 100) : 0,
+                neutral: day.total > 0 ? Math.round((day.neutral / day.total) * 100) : 0,
+                negative: day.total > 0 ? Math.round((day.negative / day.total) * 100) : 0
+            }));
+            
+            // 3. CONVERSACIONES PROBLEMÁTICAS (últimos 7 días)
+            const { data: problematic, error: probError } = await supabase
+                .from('agent_conversations')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .gte('created_at', format(sevenDaysAgo, 'yyyy-MM-dd'))
+                .or('sentiment.eq.negative,metadata->>escalation_needed.eq.true')
+                .order('created_at', { ascending: false })
+                .limit(10);
+            
+            if (probError) {
+                console.error('Error cargando conversaciones problemáticas:', probError);
+            }
+            
+            setAgentPerformance({
+                satisfaction: avgSatisfaction,
+                positivePercent: positivePercent,
+                escalations: escalations,
+                quality: avgQuality,
+                totalConversations: totalConversations,
+                sentimentTrend: sentimentTrend,
+                problematicConversations: problematic || []
+            });
+            
+            console.log('✅ Performance del agente IA cargada:', {
+                satisfaction: avgSatisfaction.toFixed(1),
+                positivePercent: positivePercent.toFixed(1) + '%',
+                escalations,
+                quality: avgQuality.toFixed(1),
+                totalConversations
+            });
+            
+        } catch (error) {
+            console.error('❌ Error cargando performance del agente IA:', error);
         }
     };
 
@@ -235,28 +372,26 @@ const CRMSimple = () => {
                 <p className="text-gray-600">Gestiona la comunicación con tus clientes de forma inteligente</p>
             </div>
 
-            {/* TABS DE NAVEGACIÓN */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-                <div className="border-b border-gray-200">
-                    <nav className="flex space-x-8 px-6" aria-label="Tabs">
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`${
-                                        activeTab === tab.id
-                                            ? 'border-purple-500 text-purple-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
-                                >
-                                    <Icon className="w-4 h-4" />
-                                    {tab.label}
-                                </button>
-                            );
-                        })}
-                    </nav>
+            {/* TABS DE NAVEGACIÓN - Estilo coherente con el resto de la app */}
+            <div className="bg-white rounded-xl shadow-sm border p-1 mb-6">
+                <div className="flex space-x-1">
+                    {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
+                                    activeTab === tab.id
+                                        ? 'bg-purple-600 text-white shadow-md'
+                                        : 'text-gray-600 hover:bg-gray-100'
+                                }`}
+                            >
+                                <Icon className="w-4 h-4" />
+                                {tab.label}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -396,6 +531,214 @@ const CRMSimple = () => {
                         ))}
                     </div>
                 )}
+            </div>
+
+            {/* 🆕 SECCIÓN: PERFORMANCE DEL AGENTE IA */}
+            <div className="bg-white rounded-xl shadow-sm border mt-6">
+                <div className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <Brain className="w-5 h-5 text-purple-600" />
+                        🤖 Performance del Agente IA
+                        <span className="text-sm text-gray-500 font-normal ml-auto">
+                            (últimos 30 días)
+                        </span>
+                    </h3>
+                    
+                    {/* Métricas principales */}
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                        <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                            <div className="flex items-center justify-center mb-1">
+                                <MessageSquare className="w-4 h-4 text-purple-600 mr-1" />
+                                <div className="text-xs text-purple-700 font-medium">Total Conversaciones</div>
+                            </div>
+                            <div className="text-2xl font-bold text-purple-600">
+                                {agentPerformance.totalConversations}
+                            </div>
+                        </div>
+                        
+                        <div className="text-center p-3 bg-amber-50 rounded-lg border border-amber-200">
+                            <div className="flex items-center justify-center mb-1">
+                                <Star className="w-4 h-4 text-amber-600 mr-1" />
+                                <div className="text-xs text-amber-700 font-medium">Satisfacción</div>
+                            </div>
+                            <div className="text-2xl font-bold text-amber-600">
+                                {agentPerformance.satisfaction > 0 
+                                    ? agentPerformance.satisfaction.toFixed(1) 
+                                    : '-'}/5
+                            </div>
+                        </div>
+                        
+                        <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                            <div className="flex items-center justify-center mb-1">
+                                <Smile className="w-4 h-4 text-green-600 mr-1" />
+                                <div className="text-xs text-green-700 font-medium">Positivos</div>
+                            </div>
+                            <div className="text-2xl font-bold text-green-600">
+                                {agentPerformance.positivePercent > 0 
+                                    ? agentPerformance.positivePercent.toFixed(0) 
+                                    : '0'}%
+                            </div>
+                        </div>
+                        
+                        <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                            <div className="flex items-center justify-center mb-1">
+                                <AlertTriangle className="w-4 h-4 text-orange-600 mr-1" />
+                                <div className="text-xs text-orange-700 font-medium">Escalaciones</div>
+                            </div>
+                            <div className="text-2xl font-bold text-orange-600">
+                                {agentPerformance.escalations}
+                            </div>
+                        </div>
+                        
+                        <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-center mb-1">
+                                <CheckCircle2 className="w-4 h-4 text-blue-600 mr-1" />
+                                <div className="text-xs text-blue-700 font-medium">Calidad</div>
+                            </div>
+                            <div className="text-2xl font-bold text-blue-600">
+                                {agentPerformance.quality > 0 
+                                    ? agentPerformance.quality.toFixed(1) 
+                                    : '-'}/5
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Gráfico de evolución de sentiment */}
+                    {agentPerformance.sentimentTrend.length > 0 && (
+                        <div className="mb-6">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4" />
+                                Evolución del Sentimiento
+                            </h4>
+                            <ResponsiveContainer width="100%" height={250}>
+                                <LineChart data={agentPerformance.sentimentTrend}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                    <XAxis 
+                                        dataKey="date" 
+                                        tick={{ fontSize: 11 }}
+                                        tickFormatter={(date) => {
+                                            const d = new Date(date);
+                                            return `${d.getDate()}/${d.getMonth() + 1}`;
+                                        }}
+                                    />
+                                    <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} />
+                                    <Tooltip 
+                                        formatter={(value) => `${value}%`}
+                                        labelFormatter={(date) => {
+                                            const d = new Date(date);
+                                            return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+                                        }}
+                                    />
+                                    <Legend />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="positive" 
+                                        stroke="#10b981" 
+                                        name="Positivo"
+                                        strokeWidth={2}
+                                        dot={{ r: 3 }}
+                                    />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="neutral" 
+                                        stroke="#f59e0b" 
+                                        name="Neutral"
+                                        strokeWidth={2}
+                                        dot={{ r: 3 }}
+                                    />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="negative" 
+                                        stroke="#ef4444" 
+                                        name="Negativo"
+                                        strokeWidth={2}
+                                        dot={{ r: 3 }}
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
+
+                    {/* Tabla de conversaciones problemáticas */}
+                    {agentPerformance.problematicConversations.length > 0 && (
+                        <div>
+                            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4 text-orange-600" />
+                                Conversaciones Problemáticas (últimos 7 días)
+                            </h4>
+                            <div className="bg-gray-50 rounded-lg overflow-hidden">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-gray-100 border-b border-gray-200">
+                                        <tr>
+                                            <th className="text-left p-3 text-xs font-semibold text-gray-700">Cliente</th>
+                                            <th className="text-left p-3 text-xs font-semibold text-gray-700">Fecha</th>
+                                            <th className="text-left p-3 text-xs font-semibold text-gray-700">Canal</th>
+                                            <th className="text-left p-3 text-xs font-semibold text-gray-700">Motivo</th>
+                                            <th className="text-left p-3 text-xs font-semibold text-gray-700">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {agentPerformance.problematicConversations.map((conv) => (
+                                            <tr key={conv.id} className="hover:bg-white transition-colors">
+                                                <td className="p-3">
+                                                    <div className="font-medium text-gray-900">{conv.customer_name || 'Sin nombre'}</div>
+                                                    <div className="text-xs text-gray-500">{conv.customer_phone}</div>
+                                                </td>
+                                                <td className="p-3 text-gray-600">
+                                                    {format(parseISO(conv.created_at), 'dd/MM/yyyy HH:mm')}
+                                                </td>
+                                                <td className="p-3">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                                        {conv.source_channel}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3">
+                                                    <div className="flex items-center gap-2">
+                                                        {conv.sentiment === 'negative' && (
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                                                <Frown className="w-3 h-3 mr-1" />
+                                                                Negativo
+                                                            </span>
+                                                        )}
+                                                        {conv.metadata?.escalation_needed && (
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                                                <AlertTriangle className="w-3 h-3 mr-1" />
+                                                                Escalación
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {conv.metadata?.conversation_summary && (
+                                                        <div className="text-xs text-gray-500 mt-1 max-w-xs truncate">
+                                                            {conv.metadata.conversation_summary}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="p-3">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                                        conv.status === 'resolved' 
+                                                            ? 'bg-green-100 text-green-800' 
+                                                            : 'bg-orange-100 text-orange-800'
+                                                    }`}>
+                                                        {conv.status === 'resolved' ? '✅ Resuelta' : '⏳ Activa'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Mensaje si no hay datos */}
+                    {agentPerformance.totalConversations === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                            <Brain className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                            <p className="text-sm">No hay conversaciones analizadas en los últimos 30 días</p>
+                            <p className="text-xs mt-1">Los datos aparecerán cuando el agente IA complete conversaciones</p>
+                        </div>
+                    )}
+                </div>
             </div>
             </div>
             )}

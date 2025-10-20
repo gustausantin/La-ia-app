@@ -66,7 +66,7 @@ export default function Layout() {
     // - useEffect para simular notificaciones (vienen del contexto real-time)
 
     const menuItems = [
-        { name: "Dashboard", path: "/dashboard-agente", icon: Home, badge: null },
+        { name: "Dashboard", path: "/dashboard", icon: Home, badge: null },
         { name: "Reservas", path: "/reservas", icon: Calendar, badge: null },
         { name: "No-Shows", path: "/no-shows", icon: AlertTriangle, badge: null },
         {
