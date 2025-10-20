@@ -2215,16 +2215,51 @@ const Configuracion = () => {
 
                     {activeTab === "documentos" && (
                         <div className="space-y-6">
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex gap-3">
-                                <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                                <div className="text-sm text-blue-800">
-                                    <p className="font-medium mb-1">📚 Base de Conocimiento del Restaurante</p>
-                                    <p className="text-blue-700">
-                                        Sube documentos (menú, políticas, información) para que tu Agente IA 
-                                        pueda responder preguntas automáticamente.
-                                    </p>
+                            {/* Info destacada */}
+                            <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-300 rounded-xl p-6 shadow-sm">
+                                <div className="flex gap-4">
+                                    <div className="flex-shrink-0">
+                                        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                                            <AlertCircle className="w-7 h-7 text-white" />
+                                        </div>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-lg font-bold text-gray-900 mb-2">
+                                            📚 Base de Conocimiento del Restaurante
+                                        </h3>
+                                        <p className="text-base text-gray-700 mb-3">
+                                            Sube documentos (menú, políticas, información) para que tu <strong>Agente IA</strong> pueda 
+                                            responder preguntas automáticamente.
+                                        </p>
+                                        <div className="bg-white rounded-lg p-4 border border-blue-200">
+                                            <p className="text-sm font-semibold text-gray-900 mb-2">🚀 ¿Cómo funciona?</p>
+                                            <ul className="space-y-1.5 text-sm text-gray-700">
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-green-600 font-bold mt-0.5">✓</span>
+                                                    <span><strong>1. Sube tus documentos</strong> (PDF, Word o TXT) en las categorías correspondientes</span>
+                                                </li>
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-green-600 font-bold mt-0.5">✓</span>
+                                                    <span><strong>2. Procesamiento automático</strong> (1-2 minutos) - El sistema leerá y analizará el contenido</span>
+                                                </li>
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-green-600 font-bold mt-0.5">✓</span>
+                                                    <span><strong>3. ¡Listo!</strong> El Agente IA podrá responder preguntas sobre: menú, precios, servicios, horarios, etc.</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+                                            <span className="font-medium">📋 Formatos aceptados:</span>
+                                            <span className="px-2 py-1 bg-white rounded text-xs font-mono border">PDF</span>
+                                            <span className="px-2 py-1 bg-white rounded text-xs font-mono border">DOCX</span>
+                                            <span className="px-2 py-1 bg-white rounded text-xs font-mono border">DOC</span>
+                                            <span className="px-2 py-1 bg-white rounded text-xs font-mono border">TXT</span>
+                                            <span className="text-gray-500">• Máximo 5MB por archivo</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                            
                             <BaseConocimientoContent />
                         </div>
                     )}
