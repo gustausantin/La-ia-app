@@ -24,9 +24,11 @@ import {
         AlertTriangle,
         HelpCircle,
         Eye,
-        EyeOff
+        EyeOff,
+        FileText
 } from "lucide-react";
 import toast from "react-hot-toast";
+import BaseConocimientoContent from "../components/BaseConocimientoContent";
 
 const ToggleSwitch = ({ enabled, onChange, label }) => {
     return (
@@ -84,13 +86,13 @@ const Configuracion = () => {
     // Leer tab de la URL o del state al cargar
     useEffect(() => {
         // Prioridad 1: state de navegación (desde navigate con state)
-        if (location.state?.activeTab && ['general', 'agent', 'channels', 'notifications'].includes(location.state.activeTab)) {
+        if (location.state?.activeTab && ['general', 'agent', 'channels', 'notifications', 'documentos'].includes(location.state.activeTab)) {
             setActiveTab(location.state.activeTab);
         }
         // Prioridad 2: parámetro de URL
         else {
             const tabFromUrl = searchParams.get('tab');
-            if (tabFromUrl && ['general', 'agent', 'channels', 'notifications'].includes(tabFromUrl)) {
+            if (tabFromUrl && ['general', 'agent', 'channels', 'notifications', 'documentos'].includes(tabFromUrl)) {
                 setActiveTab(tabFromUrl);
             }
         }
@@ -201,22 +203,27 @@ const Configuracion = () => {
         {
             id: "general",
             label: "General",
-            icon: <Building2 className="w-4 h-4" />,
+            icon: <Building2 className="w-5 h-5" />,
         },
         {
             id: "agent",
             label: "Agente IA",
-            icon: <Bot className="w-4 h-4" />,
+            icon: <Bot className="w-5 h-5" />,
         },
         {
             id: "channels",
             label: "Canales",
-            icon: <MessageSquare className="w-4 h-4" />,
+            icon: <MessageSquare className="w-5 h-5" />,
         },
         {
             id: "notifications",
             label: "Notificaciones",
-            icon: <Bell className="w-4 h-4" />,
+            icon: <Bell className="w-5 h-5" />,
+        },
+        {
+            id: "documentos",
+            label: "Documentos",
+            icon: <FileText className="w-5 h-5" />,
         }
     ];
 
@@ -736,24 +743,26 @@ const Configuracion = () => {
                     </p>
                 </div>
 
+                {/* Tabs estilo moderno (como CRM) */}
                 <div className="mb-8">
-                    <div className="border-b border-gray-200">
-                        <nav className="-mb-px flex space-x-8 overflow-x-auto">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-colors ${
-                                        activeTab === tab.id
-                                            ? "border-purple-500 text-purple-600"
-                                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                    }`}
-                                >
-                                    {tab.icon}
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </nav>
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`
+                                    px-6 py-3 rounded-lg font-medium text-sm whitespace-nowrap 
+                                    flex items-center gap-2 transition-all duration-200
+                                    ${activeTab === tab.id
+                                        ? "bg-purple-600 text-white shadow-md"
+                                        : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                                    }
+                                `}
+                            >
+                                {tab.icon}
+                                {tab.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
@@ -2202,6 +2211,22 @@ const Configuracion = () => {
                                 </button>
                             </div>
                         </SettingSection>
+                    )}
+
+                    {activeTab === "documentos" && (
+                        <div className="space-y-6">
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex gap-3">
+                                <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                                <div className="text-sm text-blue-800">
+                                    <p className="font-medium mb-1">📚 Base de Conocimiento del Restaurante</p>
+                                    <p className="text-blue-700">
+                                        Sube documentos (menú, políticas, información) para que tu Agente IA 
+                                        pueda responder preguntas automáticamente.
+                                    </p>
+                                </div>
+                            </div>
+                            <BaseConocimientoContent />
+                        </div>
                     )}
                 </div>
             </div>

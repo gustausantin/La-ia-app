@@ -38,9 +38,6 @@ const NoShowControl = lazy(() => import('./pages/NoShowControlNuevo'));
 // 🤖 Dashboard del Agente IA
 const DashboardAgente = lazy(() => import('./pages/DashboardAgente'));
 
-// 📚 Base de Conocimiento (RAG)
-const BaseConocimiento = lazy(() => import('./pages/BaseConocimiento'));
-
 // Páginas de prueba eliminadas - funcionalidad migrada al Dashboard original
 
 // Componente de carga mejorado
@@ -207,14 +204,6 @@ function AppContent() {
                 element={
                   <Suspense fallback={<PageLoading />}>
                     <Configuracion />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/base-conocimiento" 
-                element={
-                  <Suspense fallback={<PageLoading />}>
-                    <BaseConocimiento />
                   </Suspense>
                 } 
               />
