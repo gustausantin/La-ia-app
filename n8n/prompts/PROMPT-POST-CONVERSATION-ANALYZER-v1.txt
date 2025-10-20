@@ -316,3 +316,4 @@ Output:
 
 Analiza la conversación y devuelve SOLO el JSON (sin markdown, sin ```json).
 
+
