@@ -2236,7 +2236,7 @@ const Configuracion = () => {
                                             <ul className="space-y-1.5 text-sm text-gray-700">
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-green-600 font-bold mt-0.5">✓</span>
-                                                    <span><strong>1. Sube tus documentos</strong> (PDF, Word o TXT) en las categorías correspondientes</span>
+                                                    <span><strong>1. Sube tus documentos</strong> (PDF, TXT, Excel, HTML, Google Docs/Sheets) en las categorías correspondientes</span>
                                                 </li>
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-green-600 font-bold mt-0.5">✓</span>
@@ -2248,12 +2248,15 @@ const Configuracion = () => {
                                                 </li>
                                             </ul>
                                         </div>
-                                        <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+                                        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-600">
                                             <span className="font-medium">📋 Formatos aceptados:</span>
                                             <span className="px-2 py-1 bg-white rounded text-xs font-mono border">PDF</span>
-                                            <span className="px-2 py-1 bg-white rounded text-xs font-mono border">DOCX</span>
-                                            <span className="px-2 py-1 bg-white rounded text-xs font-mono border">DOC</span>
                                             <span className="px-2 py-1 bg-white rounded text-xs font-mono border">TXT</span>
+                                            <span className="px-2 py-1 bg-white rounded text-xs font-mono border">HTML</span>
+                                            <span className="px-2 py-1 bg-white rounded text-xs font-mono border">XLSX</span>
+                                            <span className="px-2 py-1 bg-white rounded text-xs font-mono border">XLS</span>
+                                            <span className="px-2 py-1 bg-white rounded text-xs font-mono border">Google Docs</span>
+                                            <span className="px-2 py-1 bg-white rounded text-xs font-mono border">Google Sheets</span>
                                             <span className="text-gray-500">• Máximo 5MB por archivo</span>
                                         </div>
                                     </div>

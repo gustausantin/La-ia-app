@@ -33,9 +33,12 @@ export default function BaseConocimientoContent() {
   
   const ACCEPTED_TYPES = {
     'application/pdf': '.pdf',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
-    'application/msword': '.doc',
-    'text/plain': '.txt'
+    'text/plain': '.txt',
+    'text/html': '.html',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+    'application/vnd.ms-excel': '.xls',
+    'application/vnd.google-apps.document': '.gdoc',
+    'application/vnd.google-apps.spreadsheet': '.gsheet'
   };
 
   useEffect(() => {
@@ -82,7 +85,7 @@ export default function BaseConocimientoContent() {
     
     // Validar tipo
     if (!ACCEPTED_TYPES[file.type]) {
-      toast.error('Formato no soportado. Solo PDF, DOCX, DOC y TXT');
+      toast.error('Formato no soportado. Solo PDF, TXT, HTML, Excel (XLSX/XLS), Google Docs y Google Sheets');
       return;
     }
     
@@ -295,7 +298,7 @@ export default function BaseConocimientoContent() {
               {uploading ? 'Subiendo...' : 'Click para subir archivo'}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              PDF, DOCX, DOC o TXT
+              PDF, TXT, HTML, Excel, Google Docs/Sheets
             </p>
           </label>
         )}
