@@ -401,6 +401,13 @@ export default function DashboardAgenteV2() {
             
             const channelConfigurations = [
                 {
+                    key: 'manual',
+                    name: 'Manual',
+                    enabled: true, // ✅ SIEMPRE activo (reservas desde Dashboard)
+                    icon: <Calendar className="w-5 h-5 text-gray-600" />,
+                    color: 'bg-gray-600'
+                },
+                {
                     key: 'whatsapp',
                     name: 'WhatsApp',
                     enabled: channelsConfig.whatsapp?.enabled === true,
