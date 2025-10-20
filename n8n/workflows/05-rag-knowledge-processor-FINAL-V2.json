@@ -346,12 +346,26 @@
     },
     {
       "parameters": {
+        "jsCode": "// =====================================\n// NODO: 🔄 Actualizar restaurant_id\n// Insertar restaurant_id en la columna\n// =====================================\n\nconst inputData = $('🔍 Validar Input').first().json;\n\nconsole.log('🔄 Actualizando restaurant_id en vectores...');\n\n// Actualizar todos los vectores con este file_id\nconst { error } = await this.helpers.httpRequestWithAuthentication.call(\n  this,\n  'supabaseApi',\n  {\n    method: 'PATCH',\n    url: `https://ktsqwvhqamedpmzkzjaz.supabase.co/rest/v1/restaurant_knowledge_vectors?metadata->>file_id=eq.${inputData.file_id}`,\n    headers: {\n      'Content-Type': 'application/json',\n      'Prefer': 'return=minimal'\n    },\n    body: {\n      restaurant_id: inputData.restaurant_id\n    }\n  }\n);\n\nif (error) {\n  console.error('❌ Error:', error);\n  throw new Error(`Error actualizando restaurant_id: ${error.message}`);\n}\n\nconsole.log('✅ restaurant_id actualizado correctamente');\n\nreturn inputData;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1450,
+        300
+      ],
+      "id": "update-restaurant-id",
+      "name": "🔄 Actualizar restaurant_id",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
         "jsCode": "// =====================================\n// NODO: ✅ Marcar como Procesado\n// Actualizar estado en restaurant_knowledge_files\n// =====================================\n\nconst inputData = $('🔍 Validar Input').first().json;\n\nconsole.log('✅ Archivo procesado correctamente');\nconsole.log('📄 File:', inputData.file_name);\nconsole.log('🆔 File ID:', inputData.file_id);\n\n// Actualizar estado en Supabase (si existe file_id)\nif (inputData.file_id) {\n  try {\n    const { data, error } = await this.helpers.httpRequestWithAuthentication.call(\n      this,\n      'supabaseApi',\n      {\n        method: 'PATCH',\n        url: `https://ktsqwvhqamedpmzkzjaz.supabase.co/rest/v1/restaurant_knowledge_files?id=eq.${inputData.file_id}`,\n        headers: {\n          'Content-Type': 'application/json',\n          'Prefer': 'return=minimal'\n        },\n        body: {\n          status: 'completed',\n          processed_at: new Date().toISOString()\n        }\n      }\n    );\n    \n    if (error) {\n      console.error('⚠️ Error al actualizar estado:', error);\n    } else {\n      console.log('✅ Estado actualizado en BD: completed');\n    }\n  } catch (e) {\n    console.error('⚠️ Error al conectar con Supabase:', e.message);\n  }\n} else {\n  console.log('⚠️ No hay file_id, saltando actualización de BD');\n}\n\nreturn {\n  success: true,\n  restaurant_id: inputData.restaurant_id,\n  file_name: inputData.file_name,\n  file_id: inputData.file_id,\n  category: inputData.category,\n  processed_at: new Date().toISOString()\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1560,
+        1670,
         300
       ],
       "id": "mark-completed",
@@ -537,12 +551,23 @@
       "main": [
         [
           {
-            "node": "✅ Marcar como Procesado",
+            "node": "🔄 Actualizar restaurant_id",
             "type": "main",
             "index": 0
           },
           {
             "node": "❌ Error Handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔄 Actualizar restaurant_id": {
+      "main": [
+        [
+          {
+            "node": "✅ Marcar como Procesado",
             "type": "main",
             "index": 0
           }
