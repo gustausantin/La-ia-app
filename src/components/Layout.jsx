@@ -18,6 +18,7 @@ import {
     Brain,
     Bell,
     ChevronDown,
+    BookOpen,
     LogOut,
     Phone,
     MessageCircle,
@@ -96,6 +97,12 @@ export default function Layout() {
             badge: null,
         },
         // { name: "Analytics", path: "/analytics", icon: BarChart2, badge: null }, // Deshabilitado temporalmente
+        {
+            name: "Base de Conocimiento",
+            path: "/base-conocimiento",
+            icon: BookOpen,
+            badge: null,
+        },
         {
             name: "Configuración",
             path: "/configuracion",
