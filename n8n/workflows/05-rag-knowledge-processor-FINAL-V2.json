@@ -1,0 +1,608 @@
+{
+  "name": "05 - RAG Knowledge Processor ✅",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-knowledge",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "id": "webhook-trigger",
+      "name": "📥 Webhook Trigger",
+      "webhookId": "process-knowledge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =====================================\n// NODO: 🔍 Validar Input\n// Verificar que tenemos todos los datos necesarios del frontend\n// =====================================\n\nconst data = $input.first().json;\n\nconsole.log('📥 Input recibido desde frontend:', {\n  restaurant_id: data.restaurant_id,\n  file_name: data.file_name,\n  category: data.category,\n  file_type: data.file_type\n});\n\n// ========== VALIDACIONES ==========\nif (!data.restaurant_id) {\n  throw new Error('❌ restaurant_id es obligatorio');\n}\n\nif (!data.file_path) {\n  throw new Error('❌ file_path es obligatorio (ej: {restaurant_id}/menu/carta.pdf)');\n}\n\nif (!data.category) {\n  throw new Error('❌ category es obligatorio');\n}\n\nif (!['menu', 'services', 'other'].includes(data.category)) {\n  throw new Error('❌ category debe ser: menu, services, o other');\n}\n\nif (!data.file_type) {\n  throw new Error('❌ file_type es obligatorio (MIME type)');\n}\n\n// Validar tipos de archivo aceptados\nconst acceptedTypes = [\n  'application/pdf',\n  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX\n  'application/msword', // DOC\n  'text/plain' // TXT\n];\n\nif (!acceptedTypes.includes(data.file_type)) {\n  throw new Error(`❌ Tipo de archivo no soportado: ${data.file_type}`);\n}\n\nconsole.log('✅ Validación correcta');\nconsole.log('📂 Restaurant ID:', data.restaurant_id);\nconsole.log('📁 Category:', data.category);\nconsole.log('📄 File:', data.file_name);\nconsole.log('🗂️ Type:', data.file_type);\nconsole.log('🆔 File ID:', data.file_id || 'N/A');\n\nreturn {\n  restaurant_id: data.restaurant_id,\n  file_path: data.file_path,\n  file_name: data.file_name || 'documento',\n  file_type: data.file_type,\n  category: data.category,\n  file_id: data.file_id || null,\n  uploaded_at: data.uploaded_at || new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ],
+      "id": "validate-input",
+      "name": "🔍 Validar Input"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "=https://ktsqwvhqamedpmzkzjaz.supabase.co/storage/v1/object/restaurant-knowledge/{{ $json.file_path }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ],
+      "id": "download-from-storage",
+      "name": "📥 Descargar de Supabase Storage",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase-storage-auth",
+          "name": "Supabase Storage Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('🔍 Validar Input').item.json.file_type }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('🔍 Validar Input').item.json.file_type }}",
+                    "rightValue": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "DOCX"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('🔍 Validar Input').item.json.file_type }}",
+                    "rightValue": "application/msword",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "DOC"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('🔍 Validar Input').item.json.file_type }}",
+                    "rightValue": "text/plain",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "TXT"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        900,
+        300
+      ],
+      "id": "switch-file-type",
+      "name": "🔀 Switch por Tipo de Archivo"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        120
+      ],
+      "id": "extract-pdf",
+      "name": "📄 Extract PDF"
+    },
+    {
+      "parameters": {
+        "operation": "docx"
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        260
+      ],
+      "id": "extract-docx",
+      "name": "📝 Extract DOCX"
+    },
+    {
+      "parameters": {
+        "operation": "doc"
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        400
+      ],
+      "id": "extract-doc",
+      "name": "📝 Extract DOC"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        540
+      ],
+      "id": "extract-txt",
+      "name": "📃 Extract TXT"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "restaurant_knowledge_vectors",
+          "mode": "list",
+          "cachedResultName": "restaurant_knowledge_vectors"
+        },
+        "options": {
+          "queryName": "match_restaurant_knowledge"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        300
+      ],
+      "id": "vector-store",
+      "name": "💾 Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-laia-creds",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1180,
+        480
+      ],
+      "id": "embeddings-openai",
+      "name": "🧠 Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-laia-creds",
+          "name": "OpenAI La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "restaurant_id",
+                "value": "={{ $('🔍 Validar Input').item.json.restaurant_id }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $('🔍 Validar Input').item.json.category }}"
+              },
+              {
+                "name": "file_name",
+                "value": "={{ $('🔍 Validar Input').item.json.file_name }}"
+              },
+              {
+                "name": "file_type",
+                "value": "={{ $('🔍 Validar Input').item.json.file_type }}"
+              },
+              {
+                "name": "file_id",
+                "value": "={{ $('🔍 Validar Input').item.json.file_id }}"
+              },
+              {
+                "name": "uploaded_at",
+                "value": "={{ $('🔍 Validar Input').item.json.uploaded_at }}"
+              },
+              {
+                "name": "processed_at",
+                "value": "={{ $now.toISO() }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        580
+      ],
+      "id": "data-loader",
+      "name": "📚 Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 2000,
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        680
+      ],
+      "id": "text-splitter",
+      "name": "✂️ Text Splitter"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =====================================\n// NODO: ✅ Marcar como Procesado\n// Actualizar estado en restaurant_knowledge_files\n// =====================================\n\nconst inputData = $('🔍 Validar Input').first().json;\n\nconsole.log('✅ Archivo procesado correctamente');\nconsole.log('📄 File:', inputData.file_name);\nconsole.log('🆔 File ID:', inputData.file_id);\n\n// Actualizar estado en Supabase (si existe file_id)\nif (inputData.file_id) {\n  try {\n    const { data, error } = await this.helpers.httpRequestWithAuthentication.call(\n      this,\n      'supabaseApi',\n      {\n        method: 'PATCH',\n        url: `https://ktsqwvhqamedpmzkzjaz.supabase.co/rest/v1/restaurant_knowledge_files?id=eq.${inputData.file_id}`,\n        headers: {\n          'Content-Type': 'application/json',\n          'Prefer': 'return=minimal'\n        },\n        body: {\n          status: 'completed',\n          processed_at: new Date().toISOString()\n        }\n      }\n    );\n    \n    if (error) {\n      console.error('⚠️ Error al actualizar estado:', error);\n    } else {\n      console.log('✅ Estado actualizado en BD: completed');\n    }\n  } catch (e) {\n    console.error('⚠️ Error al conectar con Supabase:', e.message);\n  }\n} else {\n  console.log('⚠️ No hay file_id, saltando actualización de BD');\n}\n\nreturn {\n  success: true,\n  restaurant_id: inputData.restaurant_id,\n  file_name: inputData.file_name,\n  file_id: inputData.file_id,\n  category: inputData.category,\n  processed_at: new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        300
+      ],
+      "id": "mark-completed",
+      "name": "✅ Marcar como Procesado",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Documento procesado correctamente', file_name: $json.file_name, restaurant_id: $json.restaurant_id, file_id: $json.file_id }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1780,
+        300
+      ],
+      "id": "response-ok",
+      "name": "✅ Respuesta OK"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =====================================\n// NODO: ❌ Error Handler\n// Capturar errores y actualizar BD\n// =====================================\n\nconst error = $input.first().json.error || $input.first().json.message || 'Error desconocido';\nlet inputData;\n\ntry {\n  inputData = $('🔍 Validar Input').first().json;\n} catch (e) {\n  // Si falla antes de validar, no tenemos inputData\n  inputData = {\n    file_name: 'desconocido',\n    restaurant_id: null,\n    file_id: null\n  };\n}\n\nconsole.error('❌ Error al procesar archivo:', error);\nconsole.error('📄 File:', inputData.file_name);\n\n// Actualizar estado en Supabase (si existe file_id)\nif (inputData.file_id) {\n  try {\n    await this.helpers.httpRequestWithAuthentication.call(\n      this,\n      'supabaseApi',\n      {\n        method: 'PATCH',\n        url: `https://ktsqwvhqamedpmzkzjaz.supabase.co/rest/v1/restaurant_knowledge_files?id=eq.${inputData.file_id}`,\n        headers: {\n          'Content-Type': 'application/json',\n          'Prefer': 'return=minimal'\n        },\n        body: {\n          status: 'failed',\n          error_message: error.toString().substring(0, 500)\n        }\n      }\n    );\n    console.log('✅ Estado actualizado en BD: failed');\n  } catch (e) {\n    console.error('⚠️ No se pudo actualizar estado de error en BD:', e.message);\n  }\n}\n\nreturn {\n  success: false,\n  error: error.toString(),\n  restaurant_id: inputData.restaurant_id,\n  file_name: inputData.file_name,\n  file_id: inputData.file_id\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        100
+      ],
+      "id": "error-handler",
+      "name": "❌ Error Handler",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, error: $json.error, file_name: $json.file_name, file_id: $json.file_id }) }}",
+        "options": {
+          "responseCode": 500,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1780,
+        100
+      ],
+      "id": "response-error",
+      "name": "❌ Respuesta Error"
+    }
+  ],
+  "connections": {
+    "📥 Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "🔍 Validar Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Validar Input": {
+      "main": [
+        [
+          {
+            "node": "📥 Descargar de Supabase Storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📥 Descargar de Supabase Storage": {
+      "main": [
+        [
+          {
+            "node": "🔀 Switch por Tipo de Archivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 Switch por Tipo de Archivo": {
+      "main": [
+        [
+          {
+            "node": "📄 Extract PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📝 Extract DOCX",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📝 Extract DOC",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📃 Extract TXT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📄 Extract PDF": {
+      "main": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Extract DOCX": {
+      "main": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Extract DOC": {
+      "main": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📃 Extract TXT": {
+      "main": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "✅ Marcar como Procesado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "❌ Error Handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Marcar como Procesado": {
+      "main": [
+        [
+          {
+            "node": "✅ Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ Error Handler": {
+      "main": [
+        [
+          {
+            "node": "❌ Respuesta Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧠 Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📚 Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✂️ Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "📚 Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-10-20T00:00:00.000Z",
+      "updatedAt": "2025-10-20T00:00:00.000Z",
+      "id": "rag-system",
+      "name": "RAG System"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-20T00:00:00.000Z",
+  "versionId": "v2-optimized"
+}
+
