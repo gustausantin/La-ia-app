@@ -319,67 +319,7 @@ app.listen(PORT, '0.0.0.0', async () => {
   setInterval(markInactiveConversationsAsResolved, 5 * 60 * 1000);
   console.log('✅ Cron job configurado: marcar conversaciones inactivas cada 5 minutos');
   
-  // 🤖 ANALIZAR CONVERSACIONES ABANDONADAS VÍA N8N (cada 10 min)
-  console.log('🤖 Iniciando análisis de conversaciones abandonadas vía N8N...');
-  
-  const analyzeAbandonedConversations = async () => {
-    try {
-      // Calcular timestamp de hace 10 minutos
-      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-      
-      // Buscar conversaciones resueltas que NO han sido analizadas
-      const { data: unresolvedConversations, error: fetchError } = await supabase
-        .from('agent_conversations')
-        .select('id, restaurant_id, customer_name, customer_phone')
-        .eq('status', 'resolved')
-        .is('sentiment', null) // No ha sido analizada todavía
-        .lt('resolved_at', tenMinutesAgo); // Hace más de 10 min que se resolvió
-      
-      if (fetchError) throw fetchError;
-      if (!unresolvedConversations || unresolvedConversations.length === 0) return;
-      
-      console.log(`🔍 Encontradas ${unresolvedConversations.length} conversaciones abandonadas sin analizar`);
-      
-      // Llamar al Workflow 04 de N8N para cada conversación
-      const n8nWebhook = 'https://gustausantin.app.n8n.cloud/webhook/c9f9420d-8e5c-4f9f-adbe-477f0358d90b';
-      
-      for (const conv of unresolvedConversations) {
-        try {
-          const response = await fetch(n8nWebhook, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              conversation_id: conv.id,
-              restaurant_id: conv.restaurant_id,
-              source: 'cron_abandoned'
-            })
-          });
-          
-          if (!response.ok) {
-            console.error(`❌ Error llamando N8N para conversación ${conv.id}:`, response.statusText);
-            continue;
-          }
-          
-          console.log(`✅ Análisis iniciado para conversación ${conv.id} (${conv.customer_name})`);
-          
-        } catch (error) {
-          console.error(`❌ Error procesando conversación ${conv.id}:`, error.message);
-        }
-      }
-      
-      console.log(`✅ Enviadas ${unresolvedConversations.length} conversaciones a N8N para análisis`);
-      
-    } catch (error) {
-      console.error('❌ Error analizando conversaciones abandonadas:', error.message);
-    }
-  };
-  
-  // Ejecutar inmediatamente al iniciar
-  await analyzeAbandonedConversations();
-  
-  // Ejecutar cada 10 minutos
-  setInterval(analyzeAbandonedConversations, 10 * 60 * 1000);
-  console.log('✅ Cron job configurado: analizar conversaciones abandonadas (N8N) cada 10 minutos');
+  console.log('✅ Análisis de conversaciones: SOLO se ejecuta cuando el agente cierra la conversación (sin cron)');
 });
 
 // Manejar errores de puerto

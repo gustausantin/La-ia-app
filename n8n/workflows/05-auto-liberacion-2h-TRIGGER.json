@@ -1,0 +1,416 @@
+{
+  "name": "05 - Auto-Liberación 2h (Trigger)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "AUTO-LIBERACION-2H",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "3f4e5c6d-7890-1234-5678-9abcdef01234",
+      "name": "📥 Webhook: Recibir Reservas",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        0
+      ],
+      "webhookId": "auto-liberacion-2h-trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nif (!input.reservations || !Array.isArray(input.reservations)) {\n  throw new Error('❌ No hay reservations array en el input');\n}\n\nconst reservations = input.reservations;\n\nconsole.log(`📊 Recibidas ${reservations.length} reservas sin confirmar <2h`);\n\nreturn reservations.map(r => ({\n  reservation_id: r.reservation_id,\n  restaurant_id: r.restaurant_id,\n  customer_id: r.customer_id,\n  customer_name: r.customer_name,\n  reservation_date: r.reservation_date,\n  reservation_time: r.reservation_time,\n  party_size: r.party_size,\n  hours_until: r.hours_until\n}));"
+      },
+      "id": "4f5e6d7e-8901-2345-6789-abcdef012345",
+      "name": "🔍 Validar Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $input.all().length }}",
+              "value2": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5f6e7d8e-9012-3456-7890-bcdef0123456",
+      "name": "❓ ¿Hay Reservas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6f7e8d9e-0123-4567-8901-cdef01234567",
+      "name": "🔄 Procesar Una por Una",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -200,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "reservations",
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.reservation_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "no_show"
+            },
+            {
+              "fieldId": "updated_at",
+              "fieldValue": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      },
+      "id": "7f8e9d0e-1234-5678-9012-def012345678",
+      "name": "🚫 Marcar como No-Show",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "availability_slots",
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "restaurant_id",
+              "condition": "eq",
+              "keyValue": "={{ $('🔄 Procesar Una por Una').item.json.restaurant_id }}"
+            },
+            {
+              "keyName": "date",
+              "condition": "eq",
+              "keyValue": "={{ $('🔄 Procesar Una por Una').item.json.reservation_date }}"
+            },
+            {
+              "keyName": "time_slot",
+              "condition": "eq",
+              "keyValue": "={{ $('🔄 Procesar Una por Una').item.json.reservation_time }}"
+            }
+          ]
+        },
+        "options": {
+          "queryName": "UPDATE availability_slots SET current_bookings = GREATEST(0, current_bookings - {{ $('🔄 Procesar Una por Una').item.json.party_size }}) WHERE restaurant_id = '{{ $('🔄 Procesar Una por Una').item.json.restaurant_id }}' AND date = '{{ $('🔄 Procesar Una por Una').item.json.reservation_date }}' AND time_slot = '{{ $('🔄 Procesar Una por Una').item.json.reservation_time }}'"
+        }
+      },
+      "id": "8f9e0d1e-2345-6789-0123-ef0123456789",
+      "name": "🔓 Liberar Slot",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        200,
+        -100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "noshow_actions",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "restaurant_id",
+              "fieldValue": "={{ $('🔄 Procesar Una por Una').item.json.restaurant_id }}"
+            },
+            {
+              "fieldId": "reservation_id",
+              "fieldValue": "={{ $('🔄 Procesar Una por Una').item.json.reservation_id }}"
+            },
+            {
+              "fieldId": "action_type",
+              "fieldValue": "auto_release"
+            },
+            {
+              "fieldId": "action_date",
+              "fieldValue": "={{ $now.toISO().split('T')[0] }}"
+            },
+            {
+              "fieldId": "action_description",
+              "fieldValue": "Reserva auto-liberada por sistema - No confirmó en plazo (<2h)"
+            },
+            {
+              "fieldId": "success",
+              "fieldValue": "true"
+            },
+            {
+              "fieldId": "notes",
+              "fieldValue": "={{ 'Auto-liberado automáticamente. Cliente: ' + $('🔄 Procesar Una por Una').item.json.customer_name + '. Horas hasta reserva: ' + $('🔄 Procesar Una por Una').item.json.hours_until.toFixed(2) + 'h. Slot liberado correctamente.' }}"
+            }
+          ]
+        }
+      },
+      "id": "9f0e1d2e-3456-7890-1234-f01234567890",
+      "name": "📝 Registrar Acción",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        400,
+        -100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $('🔄 Procesar Una por Una').item.json;\nconsole.log(`✅ ${r.customer_name} - No-Show registrado y slot liberado`);\nreturn { success: true, customer: r.customer_name };"
+      },
+      "id": "0f1e2d3e-4567-8901-2345-012345678901",
+      "name": "✅ Log Procesado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const total = $('🔍 Validar Input').all().length;\nconsole.log(`✅ Procesadas ${total} reservas - Slots liberados correctamente`);\nreturn { total_processed: total, status: 'success' };"
+      },
+      "id": "1f2e3d4e-5678-9012-3456-123456789012",
+      "name": "📊 Resumen Final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, message: 'Procesadas ' + $json.total_processed + ' reservas', processed: $json.total_processed } }}"
+      },
+      "id": "2f3e4d5e-6789-0123-4567-234567890123",
+      "name": "✅ Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('ℹ️ No hay reservas para procesar');\nreturn { message: 'No reservations to process' };"
+      },
+      "id": "3f4e5d6e-7890-1234-5678-345678901234",
+      "name": "ℹ️ Log Vacío",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, message: 'No hay reservas para procesar', processed: 0 } }}"
+      },
+      "id": "4f5e6d7e-8901-2345-6789-456789012345",
+      "name": "✅ Responder Vacío",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "📥 Webhook: Recibir Reservas": {
+      "main": [
+        [
+          {
+            "node": "🔍 Validar Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Validar Input": {
+      "main": [
+        [
+          {
+            "node": "❓ ¿Hay Reservas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❓ ¿Hay Reservas?": {
+      "main": [
+        [
+          {
+            "node": "🔄 Procesar Una por Una",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ℹ️ Log Vacío",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔄 Procesar Una por Una": {
+      "main": [
+        [],
+        [
+          {
+            "node": "🚫 Marcar como No-Show",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📊 Resumen Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚫 Marcar como No-Show": {
+      "main": [
+        [
+          {
+            "node": "🔓 Liberar Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔓 Liberar Slot": {
+      "main": [
+        [
+          {
+            "node": "📝 Registrar Acción",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Registrar Acción": {
+      "main": [
+        [
+          {
+            "node": "✅ Log Procesado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Log Procesado": {
+      "main": [
+        [
+          {
+            "node": "🔄 Procesar Una por Una",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Resumen Final": {
+      "main": [
+        [
+          {
+            "node": "✅ Responder OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ℹ️ Log Vacío": {
+      "main": [
+        [
+          {
+            "node": "✅ Responder Vacío",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-21T00:00:00.000Z",
+  "versionId": "1"
+}
+
