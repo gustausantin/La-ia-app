@@ -1,0 +1,857 @@
+{
+  "name": "05 - RAG Knowledge Processor ✅ V8 DEFINITIVO",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-knowledge",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -944,
+        -96
+      ],
+      "id": "8051603e-277f-4477-893b-9266da01b653",
+      "name": "📥 Webhook Trigger",
+      "webhookId": "process-knowledge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhookData = $input.first().json;\nconst data = webhookData.body || webhookData;\n\nconsole.log('📥 Input recibido desde frontend:', {\n  restaurant_id: data.restaurant_id,\n  file_name: data.file_name,\n  category: data.category,\n  file_type: data.file_type\n});\n\n// ========== VALIDACIONES ==========\nif (!data.restaurant_id) throw new Error('❌ restaurant_id es obligatorio');\nif (!data.file_path) throw new Error('❌ file_path es obligatorio');\nif (!data.category) throw new Error('❌ category es obligatorio');\nif (!['menu', 'services', 'other'].includes(data.category)) {\n  throw new Error('❌ category debe ser: menu, services, o other');\n}\nif (!data.file_type) throw new Error('❌ file_type es obligatorio');\n\n// ========== TIPOS DE ARCHIVO ACEPTADOS ==========\nconst acceptedTypes = [\n  'application/pdf',                                                      // PDF\n  'text/plain',                                                           // TXT\n  'text/html',                                                            // HTML\n  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',  // Excel (.xlsx)\n  'application/vnd.ms-excel',                                            // Excel (.xls)\n  'application/vnd.google-apps.document',                                // Google Docs\n  'application/vnd.google-apps.spreadsheet'                              // Google Sheets\n];\n\nif (!acceptedTypes.includes(data.file_type)) {\n  throw new Error(`❌ Tipo de archivo no soportado: ${data.file_type}`);\n}\n\nconsole.log('✅ Validación correcta');\nconsole.log('📂 Restaurant ID:', data.restaurant_id);\nconsole.log('📁 Category:', data.category);\nconsole.log('📄 File:', data.file_name);\nconsole.log('🗂️ Type:', data.file_type);\nconsole.log('🆔 File ID:', data.file_id || 'N/A');\n\nreturn {\n  restaurant_id: data.restaurant_id,\n  file_path: data.file_path,\n  file_name: data.file_name || 'documento',\n  file_type: data.file_type,\n  category: data.category,\n  file_id: data.file_id || null,\n  uploaded_at: data.uploaded_at || new Date().toISOString()\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -752,
+        -96
+      ],
+      "id": "12b214a7-ed73-4989-afe2-f1fdcff7677b",
+      "name": "🔍 Validar Input"
+    },
+    {
+      "parameters": {
+        "url": "=https://ktsqwvhqamedpmzkzjaz.supabase.co/storage/v1/object/restaurant-knowledge/{{ $json.file_path }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -576,
+        -96
+      ],
+      "id": "7decffdb-5822-489a-acce-ecbf6f340fab",
+      "name": "📥 Descargar de Supabase Storage",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "y7UzPImBxsERYUyS",
+          "name": "💾 Supabase Vector Store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('🔍 Validar Input').item.json.file_type }}",
+                    "rightValue": "application/vnd.google-apps.document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "e3e7e6d5-eab2-4e1f-b469-ea6715c7199c"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d2923a3b-7778-415b-aebc-850fac4043df",
+                    "leftValue": "={{ $('🔍 Validar Input').item.json.file_type }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Pdf"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8284b096-24cf-4cde-b8d0-077308a504aa",
+                    "leftValue": "={{ $('🔍 Validar Input').item.json.file_type }}",
+                    "rightValue": "application/vnd.google-apps.spreadsheet",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Excel"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "af83041b-992c-47f9-84cf-56cbf561e3a3",
+                    "leftValue": "={{ $('🔍 Validar Input').item.json.file_type }}",
+                    "rightValue": "text/html",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HTML"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "dfed79db-d79a-4bef-b0a2-d85e818eb9b0",
+                    "leftValue": "={{ $('🔍 Validar Input').item.json.file_type }}",
+                    "rightValue": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Excel"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ccd3682b-7711-446e-9d94-767ca48ed394",
+                    "leftValue": "={{ $('🔍 Validar Input').item.json.file_type }}",
+                    "rightValue": "application/vnd.ms-excel",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Excel.97"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "28faa399-1c90-4f56-b333-60ddd99a3686",
+                    "leftValue": "={{ $('🔍 Validar Input').item.json.file_type }}",
+                    "rightValue": "text/plain",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -400,
+        -176
+      ],
+      "id": "80858d79-8662-4ed9-a6e7-68de64b6c08f",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -304
+      ],
+      "id": "f8e75381-2e35-46c5-b466-b517e54f232d",
+      "name": "📄 Extract PDF"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -144
+      ],
+      "id": "35d6248c-505c-44e1-a2e6-fe7a1811595c",
+      "name": "📃 Extract TXT"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        32,
+        16
+      ],
+      "id": "1f379eba-adb8-4f96-9adc-5ba1d52bf25b",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        16
+      ],
+      "id": "ccb70efb-65f8-4b10-94d3-8d3c0d693f18",
+      "name": "Summarize"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        16
+      ],
+      "id": "e9db4c08-08fe-4819-91b0-cff9587fb663",
+      "name": "Extract from XLXS"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        32,
+        176
+      ],
+      "id": "e8dd8504-f004-48a8-beb7-583a2e59861e",
+      "name": "Aggregate1"
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        176
+      ],
+      "id": "a7a735b2-4f03-4f0f-bd2e-ecdd7667864d",
+      "name": "Summarize1"
+    },
+    {
+      "parameters": {
+        "operation": "xls",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        176
+      ],
+      "id": "3be49e74-5d7c-4415-916e-758788f14be6",
+      "name": "Extract from XLX"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "restaurant_knowledge_vectors",
+          "mode": "list"
+        },
+        "options": {
+          "queryName": "match_restaurant_knowledge"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -112
+      ],
+      "id": "9b7a38f4-aabe-490a-be2b-c4f4942a28e8",
+      "name": "💾 Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        128
+      ],
+      "id": "fc22a795-5e9d-4623-8dba-128e74657b11",
+      "name": "🧠 Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "zwtmjTlXACMvkqZx",
+          "name": "OpenAi La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "restaurant_id",
+                "value": "={{ $('🔍 Validar Input').item.json.restaurant_id }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $('🔍 Validar Input').item.json.category }}"
+              },
+              {
+                "name": "file_name",
+                "value": "={{ $('🔍 Validar Input').item.json.file_name }}"
+              },
+              {
+                "name": "file_type",
+                "value": "={{ $('🔍 Validar Input').item.json.file_type }}"
+              },
+              {
+                "name": "file_id",
+                "value": "={{ $('🔍 Validar Input').item.json.file_id }}"
+              },
+              {
+                "name": "uploaded_at",
+                "value": "={{ $('🔍 Validar Input').item.json.uploaded_at }}"
+              },
+              {
+                "name": "processed_at",
+                "value": "={{ $now.toISO() }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        528,
+        96
+      ],
+      "id": "ff5d90fe-bd64-4401-93ff-0cca52634104",
+      "name": "📚 Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 2000,
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        512,
+        272
+      ],
+      "id": "ddc21c9f-4a0f-4479-987d-f88635b78efb",
+      "name": "✂️ Text Splitter"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "restaurant_knowledge_files",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('🔍 Validar Input').first().json.file_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "completed"
+            },
+            {
+              "fieldId": "processed_at",
+              "fieldValue": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        752,
+        -112
+      ],
+      "id": "dfb0139a-b3dd-4bdc-bbfb-5fde1868f619",
+      "name": "✅ Actualizar Estado Archivo",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Documento procesado correctamente', file_name: $('🔍 Validar Input').first().json.file_name, restaurant_id: $('🔍 Validar Input').first().json.restaurant_id, file_id: $('🔍 Validar Input').first().json.file_id }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        928,
+        -112
+      ],
+      "id": "5ae4916c-f25d-4c56-bb65-83c5728efe6c",
+      "name": "✅ Respuesta OK"
+    }
+  ],
+  "connections": {
+    "📥 Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "🔍 Validar Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Validar Input": {
+      "main": [
+        [
+          {
+            "node": "📥 Descargar de Supabase Storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📥 Descargar de Supabase Storage": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "📃 Extract TXT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📄 Extract PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from XLXS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📃 Extract TXT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from XLXS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from XLX",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📃 Extract TXT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📄 Extract PDF": {
+      "main": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📃 Extract TXT": {
+      "main": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from XLXS": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate1": {
+      "main": [
+        [
+          {
+            "node": "Summarize1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize1": {
+      "main": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from XLX": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "✅ Actualizar Estado Archivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧠 Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📚 Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "💾 Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✂️ Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "📚 Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Actualizar Estado Archivo": {
+      "main": [
+        [
+          {
+            "node": "✅ Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "📥 Webhook Trigger": [
+      {
+        "headers": {
+          "host": "gustausantin.app.n8n.cloud",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+          "content-length": "350",
+          "accept": "*/*",
+          "accept-encoding": "gzip, br",
+          "accept-language": "es-ES,es;q=0.9",
+          "cdn-loop": "cloudflare; loops=1; subreqs=1",
+          "cf-connecting-ip": "46.6.42.253",
+          "cf-ew-via": "15",
+          "cf-ipcountry": "ES",
+          "cf-ray": "991e91349172ec8d-MAD",
+          "cf-visitor": "{\"scheme\":\"https\"}",
+          "cf-worker": "n8n.cloud",
+          "content-type": "application/json",
+          "origin": "http://localhost:3000",
+          "priority": "u=1, i",
+          "referer": "http://localhost:3000/",
+          "sec-ch-ua": "\"Google Chrome\";v=\"141\", \"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"141\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "cross-site",
+          "x-forwarded-for": "46.6.42.253, 188.114.111.236",
+          "x-forwarded-host": "gustausantin.app.n8n.cloud",
+          "x-forwarded-port": "443",
+          "x-forwarded-proto": "https",
+          "x-forwarded-server": "traefik-prod-users-gwc-34-f494454b5-q8vzr",
+          "x-is-trusted": "yes",
+          "x-real-ip": "46.6.42.253"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "restaurant_id": "d6b63130-1ebf-4284-98fc-a3b31a85d9d1",
+          "file_path": "d6b63130-1ebf-4284-98fc-a3b31a85d9d1/services/1761026766834_Servicios_Casa_Paco_Detallado.html",
+          "file_name": "Servicios_Casa_Paco_Detallado.html",
+          "file_type": "text/html",
+          "category": "services",
+          "file_id": "cfb80649-833a-4309-a5a8-25d11a15222f",
+          "uploaded_at": "2025-10-21T06:06:07.193Z"
+        },
+        "webhookUrl": "https://gustausantin.app.n8n.cloud/webhook/process-knowledge",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
+  }
+}
+

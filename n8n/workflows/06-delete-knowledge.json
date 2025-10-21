@@ -1,0 +1,247 @@
+{
+  "name": "06 - Delete Knowledge ✅",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "delete-knowledge",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -800,
+        0
+      ],
+      "id": "webhook-delete-trigger",
+      "name": "📥 Webhook Delete",
+      "webhookId": "delete-knowledge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhookData = $input.first().json;\nconst data = webhookData.body || webhookData;\n\nconsole.log('📥 DELETE request recibido:', {\n  restaurant_id: data.restaurant_id,\n  file_id: data.file_id,\n  file_path: data.file_path\n});\n\n// ========== VALIDACIONES ==========\nif (!data.restaurant_id) {\n  throw new Error('❌ restaurant_id es obligatorio');\n}\nif (!data.file_id) {\n  throw new Error('❌ file_id es obligatorio');\n}\nif (!data.file_path) {\n  throw new Error('❌ file_path es obligatorio');\n}\n\nconsole.log('✅ Validación correcta');\nconsole.log('🗑️ Preparando eliminación de:', data.file_path);\n\nreturn {\n  restaurant_id: data.restaurant_id,\n  file_id: data.file_id,\n  file_path: data.file_path\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        0
+      ],
+      "id": "validate-delete-input",
+      "name": "🔍 Validar Input"
+    },
+    {
+      "parameters": {
+        "url": "=https://ktsqwvhqamedpmzkzjaz.supabase.co/storage/v1/object/restaurant-knowledge/{{ $json.file_path }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $credentials.serviceRole }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "method": "DELETE"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -432,
+        0
+      ],
+      "id": "delete-from-storage",
+      "name": "🗑️ Eliminar de Storage",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "y7UzPImBxsERYUyS",
+          "name": "💾 Supabase Vector Store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "restaurant_knowledge_files",
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('🔍 Validar Input').first().json.file_id }}"
+            },
+            {
+              "keyName": "restaurant_id",
+              "condition": "eq",
+              "keyValue": "={{ $('🔍 Validar Input').first().json.restaurant_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        0
+      ],
+      "id": "delete-file-record",
+      "name": "🗑️ Eliminar Fila de Files",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "restaurant_knowledge_vectors",
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "restaurant_id",
+              "condition": "eq",
+              "keyValue": "={{ $('🔍 Validar Input').first().json.restaurant_id }}"
+            }
+          ]
+        },
+        "options": {
+          "queryName": "metadata->>file_id.eq.{{ $('🔍 Validar Input').first().json.file_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "delete-vectors",
+      "name": "🗑️ Eliminar Vectores",
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Documento eliminado correctamente', file_id: $('🔍 Validar Input').first().json.file_id, restaurant_id: $('🔍 Validar Input').first().json.restaurant_id }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        96,
+        0
+      ],
+      "id": "respond-success",
+      "name": "✅ Respuesta OK"
+    }
+  ],
+  "connections": {
+    "📥 Webhook Delete": {
+      "main": [
+        [
+          {
+            "node": "🔍 Validar Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Validar Input": {
+      "main": [
+        [
+          {
+            "node": "🗑️ Eliminar de Storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🗑️ Eliminar de Storage": {
+      "main": [
+        [
+          {
+            "node": "🗑️ Eliminar Fila de Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🗑️ Eliminar Fila de Files": {
+      "main": [
+        [
+          {
+            "node": "🗑️ Eliminar Vectores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🗑️ Eliminar Vectores": {
+      "main": [
+        [
+          {
+            "node": "✅ Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
+

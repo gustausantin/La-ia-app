@@ -176,27 +176,35 @@ export default function BaseConocimientoContent() {
     if (!confirm('¿Estás seguro de eliminar este archivo?')) return;
     
     try {
-      // 1. Eliminar de Storage
-      const { error: storageError } = await supabase.storage
-        .from('restaurant-knowledge')
-        .remove([filePath]);
+      console.log('🗑️ Eliminando archivo:', { fileId, filePath });
       
-      if (storageError) throw storageError;
+      // Llamar a N8N para eliminar (Storage + BD + Vectores)
+      const n8nWebhook = 'https://gustausantin.app.n8n.cloud/webhook/delete-knowledge';
       
-      // 2. Eliminar de BD (el trigger eliminará los vectores automáticamente)
-      const { error: dbError } = await supabase
-        .from('restaurant_knowledge_files')
-        .delete()
-        .eq('id', fileId);
+      const response = await fetch(n8nWebhook, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          restaurant_id: restaurant.id,
+          file_id: fileId,
+          file_path: filePath
+        })
+      });
       
-      if (dbError) throw dbError;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al eliminar archivo');
+      }
       
+      console.log('✅ Archivo eliminado correctamente');
       toast.success('Archivo eliminado');
       await loadFiles();
       
     } catch (error) {
       console.error('Error al eliminar:', error);
-      toast.error('Error al eliminar archivo');
+      toast.error('Error al eliminar archivo: ' + error.message);
     }
   };
 
