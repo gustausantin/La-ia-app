@@ -1,0 +1,94 @@
+{
+  "name": "99 - Error Notifier",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "error-trigger-001",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Formatear información del error\nconst error = $input.item.json;\n\nconst errorMessage = `\n🚨 ERROR EN N8N - LA-IA APP\n\n📍 Workflow: ${error.workflow?.name || 'Desconocido'}\n🆔 Workflow ID: ${error.workflow?.id || 'N/A'}\n📦 Nodo: ${error.node?.name || 'Desconocido'}\n⏰ Timestamp: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })}\n\n❌ ERROR:\n${error.error?.message || JSON.stringify(error.error)}\n\n📊 Ejecución ID: ${error.execution?.id || 'N/A'}\n🔗 Ver en N8N: https://gustausantin.app.n8n.cloud/workflow/${error.workflow?.id}/executions/${error.execution?.id}\n\n---\nStack Trace:\n${error.error?.stack || 'No disponible'}\n`;\n\nconsole.log('🚨 ERROR DETECTADO:', errorMessage);\n\nreturn {\n  subject: `🚨 ERROR N8N: ${error.workflow?.name}`,\n  message: errorMessage,\n  workflow_name: error.workflow?.name,\n  workflow_id: error.workflow?.id,\n  node_name: error.node?.name,\n  error_message: error.error?.message,\n  execution_id: error.execution?.id,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "format-error-001",
+      "name": "📝 Formatear Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/api/send-email",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "noreply@la-ia.site"
+            },
+            {
+              "name": "to",
+              "value": "gustausantin@gmail.com"
+            },
+            {
+              "name": "subject",
+              "value": "={{ $json.subject }}"
+            },
+            {
+              "name": "html",
+              "value": "={{ '<pre>' + $json.message + '</pre>' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-email-001",
+      "name": "📧 Enviar Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "service-role-auth",
+          "name": "Service Role Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('✅ Notificación de error enviada correctamente');\nreturn { success: true };"
+      },
+      "id": "log-success-001",
+      "name": "✅ Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [[{ "node": "📝 Formatear Error", "type": "main", "index": 0 }]]
+    },
+    "📝 Formatear Error": {
+      "main": [[{ "node": "📧 Enviar Email", "type": "main", "index": 0 }]]
+    },
+    "📧 Enviar Email": {
+      "main": [[{ "node": "✅ Log", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-21T18:00:00.000Z",
+  "versionId": "1"
+}
+

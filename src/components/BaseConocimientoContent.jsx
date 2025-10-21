@@ -34,7 +34,6 @@ export default function BaseConocimientoContent() {
   const ACCEPTED_TYPES = {
     'application/pdf': '.pdf',
     'text/plain': '.txt',
-    'text/html': '.html',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
     'application/vnd.ms-excel': '.xls',
     'application/vnd.google-apps.document': '.gdoc',
@@ -85,7 +84,7 @@ export default function BaseConocimientoContent() {
     
     // Validar tipo
     if (!ACCEPTED_TYPES[file.type]) {
-      toast.error('Formato no soportado. Solo PDF, TXT, HTML, Excel (XLSX/XLS), Google Docs y Google Sheets');
+      toast.error('Formato no soportado. Solo PDF, TXT, Excel (XLSX/XLS), Google Docs y Google Sheets');
       return;
     }
     
@@ -114,7 +113,7 @@ export default function BaseConocimientoContent() {
       
       console.log('📤 Archivo subido a Storage:', filePath);
       
-      // 2. Crear registro en tabla de tracking
+      // 2. Crear registro en tabla de tracking (directamente como "completed")
       const { data: fileRecord, error: dbError } = await supabase
         .from('restaurant_knowledge_files')
         .insert({
@@ -124,7 +123,8 @@ export default function BaseConocimientoContent() {
           file_path: filePath,
           file_size: file.size,
           file_type: file.type,
-          status: 'processing'
+          status: 'completed',
+          processed_at: new Date().toISOString()
         })
         .select()
         .single();
@@ -132,33 +132,9 @@ export default function BaseConocimientoContent() {
       if (dbError) throw dbError;
       
       console.log('💾 Registro creado en BD:', fileRecord.id);
+      console.log('✅ Archivo listo para usar');
       
-      // 3. Llamar a N8N para procesar
-      const n8nWebhook = 'https://gustausantin.app.n8n.cloud/webhook/process-knowledge';
-      
-      const response = await fetch(n8nWebhook, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          restaurant_id: restaurant.id,
-          file_path: filePath,
-          file_name: file.name,
-          file_type: file.type,
-          category,
-          file_id: fileRecord.id,
-          uploaded_at: new Date().toISOString()
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Error al procesar archivo en N8N');
-      }
-      
-      console.log('🚀 N8N procesando archivo...');
-      
-      toast.success('Archivo subido. Procesando...');
+      toast.success('Archivo subido correctamente');
       
       // Recargar lista de archivos
       await loadFiles();
@@ -178,28 +154,38 @@ export default function BaseConocimientoContent() {
     try {
       console.log('🗑️ Eliminando archivo:', { fileId, filePath });
       
-      // Llamar a N8N para eliminar (Storage + BD + Vectores)
-      const n8nWebhook = 'https://gustausantin.app.n8n.cloud/webhook/delete-knowledge';
+      // 1. Eliminar de Supabase Storage (ignorar si no existe)
+      const { error: storageError } = await supabase.storage
+        .from('restaurant-knowledge')
+        .remove([filePath]);
       
-      const response = await fetch(n8nWebhook, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          restaurant_id: restaurant.id,
-          file_id: fileId,
-          file_path: filePath
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al eliminar archivo');
+      if (storageError && storageError.message !== 'Not found') {
+        console.warn('⚠️ Error al eliminar de Storage (puede que ya no exista):', storageError);
+      } else {
+        console.log('✅✅✅ ARCHIVO ELIMINADO DE STORAGE - VERSIÓN NUEVA');
       }
       
-      console.log('✅ Archivo eliminado correctamente');
-      toast.success('Archivo eliminado');
+      // 2. Eliminar registro de BD (ignorar si no existe)
+      const { error: dbError, count } = await supabase
+        .from('restaurant_knowledge_files')
+        .delete({ count: 'exact' })
+        .eq('id', fileId)
+        .eq('restaurant_id', restaurant.id);
+      
+      // Ignorar error 404 (PGRST116 = no rows found)
+      if (dbError && dbError.code !== 'PGRST116') {
+        console.error('❌ Error al eliminar de BD:', dbError);
+        // No lanzar error, solo advertir
+        console.warn('⚠️ Error no crítico al eliminar de BD');
+      }
+      
+      if (count === 0) {
+        console.log('⚠️ El archivo ya no existía en BD');
+      } else {
+        console.log('✅ Registro eliminado de BD');
+      }
+      
+      toast.success('Archivo eliminado correctamente');
       await loadFiles();
       
     } catch (error) {
@@ -208,44 +194,6 @@ export default function BaseConocimientoContent() {
     }
   };
 
-  // Reprocesar archivo (si falló)
-  const handleReprocess = async (file) => {
-    try {
-      const n8nWebhook = 'https://gustausantin.app.n8n.cloud/webhook/process-knowledge';
-      
-      const response = await fetch(n8nWebhook, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          restaurant_id: restaurant.id,
-          file_path: file.file_path,
-          file_name: file.file_name,
-          file_type: file.file_type,
-          category: file.category,
-          file_id: file.id,
-          uploaded_at: file.created_at
-        })
-      });
-      
-      if (!response.ok) throw new Error('Error al reprocesar');
-      
-      toast.success('Reprocesando archivo...');
-      
-      // Actualizar estado a "processing"
-      await supabase
-        .from('restaurant_knowledge_files')
-        .update({ status: 'processing', error_message: null })
-        .eq('id', file.id);
-      
-      await loadFiles();
-      
-    } catch (error) {
-      console.error('Error al reprocesar:', error);
-      toast.error('Error al reprocesar archivo');
-    }
-  };
 
   const getCategoryFiles = (category) => {
     switch(category) {
@@ -306,7 +254,7 @@ export default function BaseConocimientoContent() {
               {uploading ? 'Subiendo...' : 'Click para subir archivo'}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              PDF, TXT, HTML, Excel, Google Docs/Sheets
+              PDF, TXT, Excel, Google Docs/Sheets
             </p>
           </label>
         )}
@@ -326,7 +274,6 @@ export default function BaseConocimientoContent() {
                 key={file.id}
                 file={file}
                 onDelete={() => handleDelete(file.id, file.file_path)}
-                onReprocess={() => handleReprocess(file)}
               />
             ))}
           </div>
@@ -336,35 +283,7 @@ export default function BaseConocimientoContent() {
   };
 
   // Componente: File Item
-  const FileItem = ({ file, onDelete, onReprocess }) => {
-    const getStatusBadge = () => {
-      switch(file.status) {
-        case 'completed':
-          return (
-            <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
-              <CheckCircle className="w-3 h-3" />
-              Procesado
-            </span>
-          );
-        case 'processing':
-          return (
-            <span className="flex items-center gap-1 text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded-full">
-              <Loader className="w-3 h-3 animate-spin" />
-              Procesando...
-            </span>
-          );
-        case 'failed':
-          return (
-            <span className="flex items-center gap-1 text-xs text-red-700 bg-red-100 px-2 py-1 rounded-full">
-              <AlertCircle className="w-3 h-3" />
-              Error
-            </span>
-          );
-        default:
-          return null;
-      }
-    };
-    
+  const FileItem = ({ file, onDelete }) => {
     return (
       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
         <FileText className="w-5 h-5 text-gray-600 flex-shrink-0" />
@@ -383,21 +302,12 @@ export default function BaseConocimientoContent() {
             )}
             <span>{(file.file_size / 1024).toFixed(0)} KB</span>
           </div>
-          {file.error_message && (
-            <p className="text-xs text-red-600 mt-1">{file.error_message}</p>
-          )}
         </div>
         <div className="flex items-center gap-2">
-          {getStatusBadge()}
-          {file.status === 'failed' && (
-            <button
-              onClick={onReprocess}
-              className="text-blue-600 hover:text-blue-700 p-1"
-              title="Reprocesar"
-            >
-              <Loader className="w-4 h-4" />
-            </button>
-          )}
+          <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
+            <CheckCircle className="w-3 h-3" />
+            Listo
+          </span>
           <button
             onClick={onDelete}
             className="text-red-600 hover:text-red-700 p-1"

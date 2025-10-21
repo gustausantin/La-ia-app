@@ -341,7 +341,7 @@ app.listen(PORT, '0.0.0.0', async () => {
       console.log(`🔍 Encontradas ${unresolvedConversations.length} conversaciones abandonadas sin analizar`);
       
       // Llamar al Workflow 04 de N8N para cada conversación
-      const n8nWebhook = 'https://gustausantin.app.n8n.cloud/webhook/post-conversation-analyzer';
+      const n8nWebhook = 'https://gustausantin.app.n8n.cloud/webhook/c9f9420d-8e5c-4f9f-adbe-477f0358d90b';
       
       for (const conv of unresolvedConversations) {
         try {
