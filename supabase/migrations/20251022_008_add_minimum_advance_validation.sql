@@ -381,11 +381,11 @@ BEGIN
     RAISE NOTICE '✅ Reserva creada con ID: %', v_reservation_id;
 
     -- =====================================================
-    -- MARCAR SLOTS COMO OCUPADOS
+    -- MARCAR SLOTS COMO RESERVADOS
     -- =====================================================
     UPDATE availability_slots
     SET 
-        status = 'occupied',
+        status = 'reserved',
         is_available = false,
         reservation_id = v_reservation_id
     WHERE id = ANY(p_slot_ids);

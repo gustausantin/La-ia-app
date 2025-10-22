@@ -2,27 +2,16 @@
   "name": "🔧 TOOL: create_reservation — CON CONFIRMACIONES",
   "nodes": [
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.executeWorkflowTrigger",
-      "typeVersion": 1,
-      "position": [
-        -848,
-        -64
-      ],
-      "id": "f2fd611c-05a9-4071-a2f0-e8d7dd0b153a",
-      "name": "▶️ Start"
-    },
-    {
       "parameters": {
         "jsCode": "const input = $input.item.json;\n\nconsole.log('🔍 Input recibido:', JSON.stringify(input, null, 2));\n\n// ✅ Validar datos mínimos\nconst required = ['reservation_date', 'reservation_time', 'party_size', 'restaurant_id'];\nconst missing = required.filter(field => !input[field]);\n\nif (missing.length > 0) {\n  throw new Error(`❌ Faltan campos obligatorios: ${missing.join(', ')}`);\n}\n\nreturn {\n  // ✅ DATOS OBLIGATORIOS\n  restaurant_id: input.restaurant_id,\n  customer_id: input.customer_id,\n  customer_phone: input.customer_phone,\n  customer_name: input.customer_name,\n  \n  // ✅ DATOS DE LA RESERVA\n  reservation_date: input.reservation_date,\n  reservation_time: input.reservation_time,\n  party_size: parseInt(input.party_size),\n  \n  // ✅ DATOS OPCIONALES\n  preferred_zone: input.preferred_zone || null,\n  special_requests: input.special_requests || null,\n  source: input.source || 'agent_whatsapp'\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -656,
-        -64
+        -1120,
+        48
       ],
-      "id": "214ac426-7341-43d4-83a3-069e1922af25",
+      "id": "311129a8-4981-48ff-a1df-17b9813e6789",
       "name": "🔍 Validar Input"
     },
     {
@@ -52,10 +41,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -448,
-        -64
+        -912,
+        48
       ],
-      "id": "b1162361-ab89-46ed-b2f1-5e894200b279",
+      "id": "96866c0c-00a0-4ce9-aab5-ae8771d915ee",
       "name": "🎯 Verificar Disponibilidad",
       "alwaysOutputData": true,
       "credentials": {
@@ -74,10 +63,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -240,
-        -64
+        -704,
+        48
       ],
-      "id": "0ad13612-be1f-4e97-9e80-2ccb7a15547e",
+      "id": "cdcb3032-5176-4cc1-94ce-920065d32e24",
       "name": "🔄 Procesar Disponibilidad"
     },
     {
@@ -86,7 +75,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -95,7 +85,7 @@
               "rightValue": "",
               "operator": {
                 "type": "boolean",
-                "operation": "false",
+                "operation": "true",
                 "singleValue": true
               }
             }
@@ -107,10 +97,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -48,
-        -64
+        -512,
+        48
       ],
-      "id": "a5f16502-bb18-4d72-958a-fc0b0290fbe7",
+      "id": "bd7b1dd2-5ecb-4aa5-9e06-34371b89210d",
       "name": "❓ ¿Disponible?"
     },
     {
@@ -140,10 +130,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        192,
-        -176
+        -256,
+        -32
       ],
-      "id": "25b97b41-8181-4ca9-8ff9-6165d98e8a89",
+      "id": "8d0eea2e-bc8f-4cf7-943c-99029c996893",
       "name": "💾 Crear Reserva (RPC)",
       "credentials": {
         "supabaseApi": {
@@ -160,10 +150,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        384,
-        -176
+        -64,
+        -32
       ],
-      "id": "ecf4e2a0-c489-4e7c-b4aa-87105362bd18",
+      "id": "4d549762-a0d8-4e08-bda6-d6227bea3529",
       "name": "🔄 Procesar Creación"
     },
     {
@@ -173,10 +163,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        192,
-        48
+        -240,
+        144
       ],
-      "id": "2e30b79e-171f-4f9e-a861-0a08ced1952e",
+      "id": "8aef085f-c4db-4a4c-a9e9-f55e1ad138d4",
       "name": "❌ Respuesta: Error"
     },
     {
@@ -196,17 +186,16 @@
         "specifyBody": "json",
         "jsonBody": "={\n  \"reservation_id\": \"{{ $('🔄 Procesar Creación').item.json.reservation_id }}\",\n  \"restaurant_id\": \"{{ $('🔍 Validar Input').item.json.restaurant_id }}\",\n  \"customer_name\": \"{{ $('🔍 Validar Input').item.json.customer_name }}\",\n  \"customer_phone\": \"{{ $('🔍 Validar Input').item.json.customer_phone }}\",\n  \"reservation_date\": \"{{ $('🔍 Validar Input').item.json.reservation_date }}\",\n  \"reservation_time\": \"{{ $('🔍 Validar Input').item.json.reservation_time }}\",\n  \"party_size\": {{ $('🔍 Validar Input').item.json.party_size }}\n}",
         "options": {
-          "ignoreResponseCode": true,
           "timeout": 5000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        576,
-        -176
+        192,
+        -64
       ],
-      "id": "call-confirmation-handler",
+      "id": "017a6eb4-2d67-45ed-a2ee-60b92d6cb9b8",
       "name": "📞 Activar Confirmación",
       "continueOnFail": true,
       "notes": "✨ Llama al webhook de confirmación inteligente (no bloquea si falla)"
@@ -218,25 +207,28 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        768,
-        -176
+        400,
+        -64
       ],
-      "id": "final-response",
+      "id": "52d13a2d-ba6e-401c-84b2-e988780b9bca",
       "name": "✅ Respuesta Final"
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"restaurant_id\": \"d6b63130-1ebf-4284-98fc-a3b31a85d9d1\",\n  \"customer_id\": null,\n  \"customer_phone\": \"+34612345678\",\n  \"customer_name\": \"Juan Pérez\",\n  \"reservation_date\": \"2025-10-23\",\n  \"reservation_time\": \"20:00\",\n  \"party_size\": 4,\n  \"preferred_zone\": null,\n  \"special_requests\": null,\n  \"source\": \"agent_whatsapp\"\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1312,
+        48
+      ],
+      "id": "fb89fc30-3b52-4498-a5d2-7924ef220f04",
+      "name": "Start"
     }
   ],
   "connections": {
-    "▶️ Start": {
-      "main": [
-        [
-          {
-            "node": "🔍 Validar Input",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "🔍 Validar Input": {
       "main": [
         [
@@ -274,14 +266,14 @@
       "main": [
         [
           {
-            "node": "❌ Respuesta: Error",
+            "node": "💾 Crear Reserva (RPC)",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "💾 Crear Reserva (RPC)",
+            "node": "❌ Respuesta: Error",
             "type": "main",
             "index": 0
           }
@@ -315,6 +307,17 @@
         [
           {
             "node": "✅ Respuesta Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "🔍 Validar Input",
             "type": "main",
             "index": 0
           }

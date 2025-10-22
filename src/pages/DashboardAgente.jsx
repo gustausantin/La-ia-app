@@ -475,7 +475,8 @@ export default function DashboardAgenteV2() {
                 .slice(0, 3)
                 .map(p => ({
                     customerName: p.customer_name || 'Cliente',
-                    time: p.reservation_time || '',
+                    tableNames: p.table_names || 'Sin mesa',
+                    time: p.reservation_time ? p.reservation_time.substring(0, 5) : '', // Sin segundos
                     riskLevel: p.risk_level,
                     riskScore: p.risk_score
                 }));
@@ -830,8 +831,10 @@ export default function DashboardAgenteV2() {
                             <div className="space-y-2 mb-4">
                                 {dashboardData.noShowAlerts.map((alert, idx) => (
                                     <div key={idx} className="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
-                                        <span className="text-sm font-medium text-gray-700">• {alert.customerName}</span>
-                                        <span className="text-sm text-gray-600">{alert.time}</span>
+                                        <span className="text-sm font-medium text-gray-700">
+                                            <span className="font-bold">{alert.tableNames}</span> - {alert.customerName}
+                                        </span>
+                                        <span className="text-base font-bold text-gray-900">{alert.time}</span>
                                     </div>
                                 ))}
                             </div>
