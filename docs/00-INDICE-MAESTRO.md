@@ -105,6 +105,21 @@ Documentación de los sistemas core de la aplicación.
    - Workflows completos
    - **Estado:** ✅ Producción
 
+6. **[SISTEMA-VOZ-TWILIO-ARQUITECTURA-EMPRESARIAL.md](02-sistemas/SISTEMA-VOZ-TWILIO-ARQUITECTURA-EMPRESARIAL.md)** ⭐ **NUEVO**
+   - **Sistema de voz con Twilio + N8N**
+   - Arquitectura de nivel mundial
+   - 4 workflows especializados
+   - Conversaciones naturales (<3s latencia)
+   - Integración total con agente existente
+   - **Estado:** 🎯 Diseño aprobado
+
+7. **[RESUMEN-EJECUTIVO-VOZ.md](02-sistemas/RESUMEN-EJECUTIVO-VOZ.md)** 📞 **NUEVO**
+   - Resumen ejecutivo del sistema de voz
+   - Decisiones arquitectónicas clave
+   - Plan de implementación
+   - Costes y ROI
+   - **Estado:** ✅ Listo para revisar
+
 ---
 
 ## 📖 03-MANUALES

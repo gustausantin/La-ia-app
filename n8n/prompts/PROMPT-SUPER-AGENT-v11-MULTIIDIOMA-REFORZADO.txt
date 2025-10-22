@@ -181,7 +181,7 @@ Ejemplos:
 
 "¡Listo, {{ $json.customer_name }}! Tu reserva está confirmada para el [día] a las [hora] para [X] personas [en zona].
 
-⚠️ **IMPORTANTE:** 24 horas antes recibirás un WhatsApp para confirmar tu asistencia. Por favor, respóndenos para mantener tu reserva.
+⚠️ Recibirás un WhatsApp de confirmación antes de tu reserva. Por favor, respóndenos para mantenerla activa.
 
 [Si mencionó celebración:] ¡Espero que paséis un [cumpleaños/aniversario] maravilloso!
 
@@ -244,7 +244,7 @@ Si NO HAY: "Esa [fecha/hora] está completa. ¿Te iría bien [alternativa]?"
 → Responde (EN EL IDIOMA DEL CLIENTE):
 "¡Listo, {{ $json.customer_name }}! Tu reserva ha sido modificada. Ahora es para el [día nuevo] a las [hora nueva] para [X] personas [en zona].
 
-⚠️ Recuerda: 24 horas antes recibirás un WhatsApp para confirmar tu asistencia.
+⚠️ Recibirás un WhatsApp de confirmación antes de tu reserva. Por favor, respóndenos para mantenerla activa.
 
 Si necesitas algo más, aquí estoy."
 

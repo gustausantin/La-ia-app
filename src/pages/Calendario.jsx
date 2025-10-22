@@ -553,25 +553,45 @@ export default function Calendario() {
             // Actualizar estado local
             setEvents(prev => prev.filter(e => e.id !== event.id));
             
-            toast.success(`✅ Evento "${event.title}" eliminado correctamente`);
+            // ✅ VERIFICAR SI EL EVENTO ELIMINADO ESTÁ DENTRO DEL RANGO
+            const eventDate = event.event_date;
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const advanceDays = restaurant?.settings?.advance_booking_days || 20;
+            const maxDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
             
-            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
-            changeDetection.checkExistingSlots().then(slotsExist => {
-                if (slotsExist) {
-                    changeDetection.onSpecialEventChange('removed', event.title);
-                    showRegenerationModal(
-                        'special_event_deleted', 
-                        `Evento "${event.title}" eliminado (${format(parseISO(event.event_date), 'dd/MM/yyyy')})`
-                    );
-                } else {
-                    console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
-                }
+            const isWithinRange = eventDate >= today && eventDate <= maxDate;
+            
+            console.log('🔍 Validando rango de evento eliminado:', {
+                eventDate,
+                today,
+                maxDate,
+                advanceDays,
+                isWithinRange
             });
+            
+            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN solo si está dentro del rango
+            if (isWithinRange) {
+                changeDetection.checkExistingSlots().then(slotsExist => {
+                    if (slotsExist) {
+                        changeDetection.onSpecialEventChange('removed', event.title);
+                        showRegenerationModal(
+                            'special_event_deleted', 
+                            `Evento "${event.title}" eliminado (${format(parseISO(event.event_date), 'dd/MM/yyyy')})`
+                        );
+                    } else {
+                        console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
+                    }
+                });
+            } else {
+                console.log(`ℹ️ Evento eliminado fuera de rango (${eventDate} > ${maxDate}) - NO se requiere regeneración`);
+            }
+            
+            toast.success(`✅ Evento "${event.title}" eliminado correctamente`);
         } catch (error) {
             console.error('❌ Error eliminando evento:', error);
             toast.error('Error al eliminar el evento');
         }
-    }, [changeDetection, showRegenerationModal]);
+    }, [changeDetection, showRegenerationModal, restaurant]);
 
     // Guardar evento especial
     const handleSaveEvent = async (e) => {
@@ -628,16 +648,8 @@ export default function Calendario() {
                         );
                         
                         if (!userConfirmed) {
-                            toast("Cierre cancelado por el usuario", { icon: 'ℹ️' });
-                            return;
+                            return; // Cancelado silenciosamente
                         }
-                        
-                        toast(
-                            `🔄 Cierre programado\n\n` +
-                            `Se eliminarán ${validationData.existing_slots} slots disponibles.\n` +
-                            `Regenera disponibilidades después.`,
-                            { icon: '🔄', duration: 4000 }
-                        );
                     }
                 } catch (validationCheckError) {
                     console.warn("⚠️ Error validando cierre:", validationCheckError);
@@ -650,8 +662,7 @@ export default function Calendario() {
                     );
                     
                     if (!userConfirmed) {
-                        toast.error("Cierre cancelado por seguridad");
-                        return;
+                        return; // Cancelado silenciosamente
                     }
                 }
             }
@@ -676,7 +687,7 @@ export default function Calendario() {
                     open_time: null,
                     close_time: null,
                     reason: eventForm.title || 'Cerrado',
-                    created_by: user?.id || 'user'
+                    created_by: 'frontend'
                 };
                 
                 const { error: exceptionError } = await supabase
@@ -713,7 +724,6 @@ export default function Calendario() {
                 if (!error) {
                     // Actualizar estado local
                     setEvents(prev => prev.map(e => e.id === existingEvent.id ? data : e));
-                    toast.success(`✅ Evento "${eventForm.title}" actualizado correctamente`);
                 }
             } else {
                 // CREAR evento nuevo
@@ -729,55 +739,58 @@ export default function Calendario() {
                 if (!error) {
                     // Actualizar estado local
                     setEvents(prev => [...prev, data]);
-                    toast.success(`✅ Evento "${eventForm.title}" creado para ${format(selectedDay, 'dd/MM/yyyy')}`);
                 }
             }
             
-            if (error) throw error;            
-            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN (solo si existen slots)
-            changeDetection.checkExistingSlots().then(slotsExist => {
-                if (slotsExist) {
-                    changeDetection.onSpecialEventChange(
-                        eventForm.closed ? 'closed' : 'special_hours',
-                        format(selectedDay, 'dd/MM/yyyy')
-                    );
-                    
-                    // MOSTRAR MODAL
-                    if (eventForm.closed) {
-                        showRegenerationModal('special_event_closed', `Día ${format(selectedDay, 'dd/MM/yyyy')} cerrado`);
-                    } else {
-                        showRegenerationModal('special_event_created', `Evento "${eventForm.title}" en ${format(selectedDay, 'dd/MM/yyyy')}`);
-                    }
-                } else {
-                    console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
-                }
-            });
-            setShowEventModal(false);
+            if (error) throw error;
             
+            // ✅ VERIFICAR SI EL EVENTO ESTÁ DENTRO DEL RANGO DE DÍAS CONFIGURADOS
+            // (eventDate ya está declarado al inicio de la función)
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const advanceDays = restaurant?.settings?.advance_booking_days || 20;
+            const maxDate = format(addDays(new Date(), advanceDays), 'yyyy-MM-dd');
+            
+            const isWithinRange = eventDate >= today && eventDate <= maxDate;
+            
+            console.log('🔍 Validando rango de evento:', {
+                eventDate,
+                today,
+                maxDate,
+                advanceDays,
+                isWithinRange
+            });
+            
+            // 🚨 MOSTRAR MODAL BLOQUEANTE DE REGENERACIÓN solo si:
+            // 1. Existen slots
+            // 2. El evento está DENTRO del rango de días configurados
+            if (isWithinRange) {
+                changeDetection.checkExistingSlots().then(slotsExist => {
+                    if (slotsExist) {
+                        changeDetection.onSpecialEventChange(
+                            eventForm.closed ? 'closed' : 'special_hours',
+                            format(selectedDay, 'dd/MM/yyyy')
+                        );
+                        
+                        // MOSTRAR MODAL
+                        if (eventForm.closed) {
+                            showRegenerationModal('special_event_closed', `Día ${format(selectedDay, 'dd/MM/yyyy')} cerrado`);
+                        } else {
+                            showRegenerationModal('special_event_created', `Evento "${eventForm.title}" en ${format(selectedDay, 'dd/MM/yyyy')}`);
+                        }
+                    } else {
+                        console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
+                    }
+                });
+            } else {
+                console.log(`ℹ️ Evento fuera de rango (${eventDate} > ${maxDate}) - NO se requiere regeneración`);
+            }
+            
+            setShowEventModal(false);
             console.log('✅ Evento guardado:', data);
             
-            // 🔄 AVISO DE REGENERACIÓN PARA EVENTOS DE CIERRE
-            if (eventForm.closed) {
-                setTimeout(() => {
-                    toast(
-                        `🔄 REGENERACIÓN RECOMENDADA\n\n` +
-                        `Has cerrado el día ${format(selectedDay, 'dd/MM/yyyy')}.\n\n` +
-                        `📍 Ve a "Gestión de Horarios de Reserva"\n` +
-                        `🗑️ Usa "Borrar Disponibilidades" para limpiar\n` +
-                        `🎯 Luego "Generar Disponibilidades" para actualizar\n\n` +
-                        `Esto elimina slots del día cerrado.`,
-                        { 
-                            icon: '🔄',
-                            duration: 8000,
-                            style: { 
-                                minWidth: '350px',
-                                whiteSpace: 'pre-line',
-                                fontSize: '14px'
-                            }
-                        }
-                    );
-                }, 1500);
-            }
+            // ✅ ÚNICO TOAST AL FINAL (simple y claro) - se adapta a crear/actualizar
+            const action = isEditing ? 'actualizado' : 'creado';
+            toast.success(`✅ Evento "${eventForm.title}" ${action} para ${format(selectedDay, 'dd/MM/yyyy')}`);
         } catch (error) {
             console.error('❌ Error guardando evento:', error);
             toast.error('Error al guardar el evento');

@@ -1,5 +1,5 @@
 {
-  "name": "TOOL — cancel_reservation",
+  "name": "TOOL — cancel_reservation (CON COMBINACIONES)",
   "nodes": [
     {
       "parameters": {
@@ -62,7 +62,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const inputData = $('🔍 Validar Input').item.json;\nconst reservation = $input.item.json;\n\nif (!reservation || !reservation.id) {\n  throw new Error('❌ Reserva no encontrada');\n}\n\nconsole.log('📋 Reserva encontrada:', {\n  id: reservation.id,\n  status: reservation.status,\n  date: reservation.reservation_date,\n  time: reservation.reservation_time,\n  table_id: reservation.table_id,\n  customer_name: reservation.customer_name\n});\n\n// ✅ Validar que la reserva se puede cancelar\nconst validStatuses = ['pending', 'confirmed', 'pending_approval'];\nif (!validStatuses.includes(reservation.status)) {\n  throw new Error(`❌ No se puede cancelar una reserva con estado: ${reservation.status}`);\n}\n\nreturn {\n  reservation_id: reservation.id,\n  restaurant_id: reservation.restaurant_id,\n  customer_id: reservation.customer_id,\n  customer_name: reservation.customer_name,\n  customer_phone: reservation.customer_phone,\n  table_id: reservation.table_id,\n  reservation_date: reservation.reservation_date,\n  reservation_time: reservation.reservation_time,\n  party_size: reservation.party_size,\n  cancellation_reason: inputData.cancellation_reason\n};"
+        "jsCode": "const inputData = $('🔍 Validar Input').item.json;\nconst reservation = $input.item.json;\n\nif (!reservation || !reservation.id) {\n  throw new Error('❌ Reserva no encontrada');\n}\n\nconsole.log('📋 Reserva encontrada:', {\n  id: reservation.id,\n  status: reservation.status,\n  date: reservation.reservation_date,\n  time: reservation.reservation_time,\n  customer_name: reservation.customer_name\n});\n\n// ✅ Validar que la reserva se puede cancelar\nconst validStatuses = ['pending', 'confirmed', 'pending_approval'];\nif (!validStatuses.includes(reservation.status)) {\n  throw new Error(`❌ No se puede cancelar una reserva con estado: ${reservation.status}`);\n}\n\nreturn {\n  reservation_id: reservation.id,\n  restaurant_id: reservation.restaurant_id,\n  customer_id: reservation.customer_id,\n  customer_name: reservation.customer_name,\n  customer_phone: reservation.customer_phone,\n  reservation_date: reservation.reservation_date,\n  reservation_time: reservation.reservation_time,\n  party_size: reservation.party_size,\n  cancellation_reason: inputData.cancellation_reason\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -121,19 +121,9 @@
         "filters": {
           "conditions": [
             {
-              "keyName": "slot_date",
+              "keyName": "reservation_id",
               "condition": "eq",
-              "keyValue": "={{ $json.reservation_date }}"
-            },
-            {
-              "keyName": "start_time",
-              "condition": "eq",
-              "keyValue": "={{ $json.reservation_time }}"
-            },
-            {
-              "keyName": "table_id",
-              "condition": "eq",
-              "keyValue": "={{ $json.table_id }}"
+              "keyValue": "={{ $('🔄 Preparar Cancelación').item.json.reservation_id }}"
             }
           ]
         },
@@ -146,6 +136,10 @@
             {
               "fieldId": "is_available",
               "fieldValue": true
+            },
+            {
+              "fieldId": "reservation_id",
+              "fieldValue": ""
             }
           ]
         }
@@ -157,13 +151,14 @@
         240
       ],
       "id": "free-slots",
-      "name": "🔓 Liberar Slots",
+      "name": "🔓 Liberar TODOS los Slots",
       "credentials": {
         "supabaseApi": {
           "id": "9pdl4V7ImejCLZWo",
           "name": "Supabase La-IA"
         }
-      }
+      },
+      "notes": "✅ CORREGIDO: Libera TODOS los slots con este reservation_id (incluso combinaciones)"
     },
     {
       "parameters": {
@@ -228,14 +223,14 @@
       "main": [
         [
           {
-            "node": "🔓 Liberar Slots",
+            "node": "🔓 Liberar TODOS los Slots",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "🔓 Liberar Slots": {
+    "🔓 Liberar TODOS los Slots": {
       "main": [
         [
           {
@@ -258,6 +253,13 @@
   },
   "meta": {
     "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
-  }
+  },
+  "tags": [
+    {
+      "createdAt": "2025-10-22T19:30:00.000Z",
+      "updatedAt": "2025-10-22T19:30:00.000Z",
+      "id": "cancel-combinaciones",
+      "name": "✅ Soporta Combinaciones de Mesas"
+    }
+  ]
 }
-

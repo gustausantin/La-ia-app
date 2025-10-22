@@ -1,8 +1,8 @@
-# ✅ MANTENIMIENTO AUTOMÁTICO DIARIO - LISTO PARA USAR
+# ✅ MANTENIMIENTO AUTOMÁTICO DIARIO - GUÍA COMPLETA
 
-> **Estado:** ✅ Implementado y listo  
-> **Fecha:** 8 de Octubre 2025  
-> **Job activo:** `daily-availability-maintenance` (ID: 3)
+> **Estado:** ✅ Implementado y activo  
+> **Última actualización:** 22 de Octubre 2025  
+> **Job:** `daily-availability-maintenance`
 
 ---
 
@@ -32,23 +32,46 @@
 
 ---
 
-## 📁 ARCHIVOS IMPORTANTES
+## 📁 ARCHIVOS EN ESTA CARPETA
 
-| Archivo | Propósito |
-|---------|-----------|
-| `EJECUTAR_EN_SUPABASE_DAILY_MAINTENANCE.sql` | **Script principal** (ya ejecutado) |
-| `PROBAR_MANUALMENTE.sql` | **Probar ejecución manual** |
-| `TEST_DAILY_MAINTENANCE.sql` | Verificación y testing |
-| `docs/DAILY_AVAILABILITY_MAINTENANCE.md` | Documentación técnica completa |
-| `supabase/migrations/20251008_001_daily_availability_maintenance.sql` | Migración SQL |
+| Archivo | Propósito | Cuándo Usar |
+|---------|-----------|-------------|
+| `README_DAILY_MAINTENANCE.md` | **📖 Esta guía** | Consulta y referencia |
+| `EJECUTAR_EN_SUPABASE_DAILY_MAINTENANCE.sql` | Script de instalación | Solo primera vez o reinstalación |
+| `TEST_DAILY_MAINTENANCE.sql` | Scripts de verificación | Después de instalar o para monitoreo |
+| `create_email_notification_triggers.sql` | Triggers de notificaciones email | Si usas notificaciones por email |
+
+**Documentación relacionada:**
+- Migración original: `supabase/migrations/20251008_001_daily_availability_maintenance.sql`
+- Sistema completo: `docs/02-sistemas/SISTEMA-DISPONIBILIDADES-COMPLETO.md`
 
 ---
 
-## 🧪 PRÓXIMOS PASOS (RECOMENDADOS)
+## 🚀 INSTALACIÓN (Si aún no está activo)
 
-### **1. Probar ejecución manual**
+### **Paso 1: Ejecutar Script Principal**
 
-Ve a Supabase SQL Editor y ejecuta:
+1. Abre Supabase SQL Editor
+2. Abre el archivo `EJECUTAR_EN_SUPABASE_DAILY_MAINTENANCE.sql`
+3. Copia y pega TODO el contenido
+4. Click en **RUN**
+
+**Resultado esperado:** `✅ Success. No rows returned`
+
+### **Paso 2: Verificar Instalación**
+
+Ejecuta las queries del archivo `TEST_DAILY_MAINTENANCE.sql`:
+
+```sql
+-- Ver job programado
+SELECT jobid, jobname, schedule, active
+FROM cron.job 
+WHERE jobname = 'daily-availability-maintenance';
+```
+
+**Debe mostrar:** `active = true`
+
+### **Paso 3: Probar Ejecución Manual**
 
 ```sql
 SELECT daily_availability_maintenance();
@@ -65,38 +88,7 @@ SELECT daily_availability_maintenance();
 }
 ```
 
----
-
-### **2. Verificar que funciona correctamente**
-
-Ejecuta `PROBAR_MANUALMENTE.sql` completo:
-
-1. **ANTES:** Ver estado actual
-2. **EJECUTAR:** `daily_availability_maintenance()`
-3. **DESPUÉS:** Ver estado actualizado
-4. **VERIFICAR:** Ventana de días mantenida
-
-**Resultado esperado:**
-- ✅ 0 slots antiguos libres
-- ✅ Ventana de X días mantenida
-- ✅ Nuevo día generado al final
-
----
-
-### **3. Esperar a mañana (4 AM)**
-
-El job se ejecutará automáticamente. Luego verifica:
-
-```sql
-SELECT * FROM cron.job_run_details 
-WHERE command LIKE '%daily_availability_maintenance%'
-ORDER BY start_time DESC 
-LIMIT 1;
-```
-
-**Resultado esperado:**
-- `status = 'succeeded'`
-- `return_message` con resumen JSON
+✅ **¡Listo! El sistema se ejecutará automáticamente cada día a las 4 AM UTC**
 
 ---
 

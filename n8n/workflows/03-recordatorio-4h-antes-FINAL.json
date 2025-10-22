@@ -1,5 +1,5 @@
 {
-  "name": "03 - Recordatorio 4h Antes ⏰",
+  "name": "03 - Recordatorio 4h (CON VERIFICACIÓN) ✅",
   "nodes": [
     {
       "parameters": {
@@ -44,10 +44,10 @@
     },
     {
       "parameters": {
-        "jsCode": "const now = new Date();\nconst fourHoursLater = new Date(now.getTime() + (4 * 60 * 60 * 1000));\nconst todayStr = now.toISOString().split('T')[0];\n\nconst filtered = $input.all().filter(item => {\n  const data = item.json;\n  \n  // Verificar que la reserva sea para hoy\n  if (data.reservation_date !== todayStr) return false;\n  \n  // Verificar que esté pendiente y tenga teléfono\n  if (data.status !== 'pending' || !data.customer_phone) return false;\n  \n  // Calcular tiempo hasta la reserva\n  const reservationDateTime = new Date(`${data.reservation_date}T${data.reservation_time}`);\n  const hoursUntil = (reservationDateTime - now) / (1000 * 60 * 60);\n  \n  // Filtrar reservas entre 4 y 4.5 horas (ventana de 30 min)\n  return hoursUntil >= 4 && hoursUntil <= 4.5;\n});\n\nreturn filtered;"
+        "jsCode": "const now = new Date();\nconst in4Hours = new Date(now.getTime() + 4 * 60 * 60 * 1000);\nconst in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);\n\nconst filtered = $input.all().filter(item => {\n  const data = item.json;\n  if (!data.reservation_date || !data.reservation_time) return false;\n  \n  const reservationDateTime = new Date(`${data.reservation_date}T${data.reservation_time}`);\n  \n  return reservationDateTime >= in4Hours &&\n         reservationDateTime <= in24Hours &&\n         data.status === 'pending' &&\n         data.customer_phone !== null &&\n         data.customer_phone !== '';\n});\n\nconsole.log(`🔍 Encontradas ${filtered.length} reservas en 4-24h`);\n\nreturn filtered;"
       },
       "id": "0fa54462-f859-4903-94d6-27bbf65135dc",
-      "name": "🔍 Filtrar: 4h Antes + Pending",
+      "name": "🔍 Filtrar: 4-24h + Pending",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -95,6 +95,87 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "https://ktsqwvhqamedpmzkzjaz.supabase.co/rest/v1/rpc/check_confirmation_sent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"p_reservation_id\": \"{{ $json.id }}\",\n  \"p_message_type\": \"4h\"\n}",
+        "options": {}
+      },
+      "id": "check-duplicate-4h",
+      "name": "🔍 Verificar Si Ya Enviado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -848,
+        608
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "9pdl4V7ImejCLZWo",
+          "name": "Supabase La-IA"
+        }
+      },
+      "notes": "✅ Verifica duplicados vía RPC"
+    },
+    {
+      "parameters": {
+        "jsCode": "const reservation = $('🔁 Loop Cada Reserva').first().json;\nconst checkResult = $input.first().json;\n\nconst alreadySent = checkResult === true;\n\nconsole.log(`🔍 Reserva ${reservation.id}: ${alreadySent ? '⚠️ YA ENVIADO' : '✅ PENDIENTE DE ENVIAR'}`);\n\nreturn {\n  ...reservation,\n  already_sent: alreadySent,\n  should_send: !alreadySent\n};"
+      },
+      "id": "process-check-4h",
+      "name": "🔄 Procesar Verificación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -624,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "should-send",
+              "leftValue": "={{ $json.should_send }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-should-send-4h",
+      "name": "❓ ¿Enviar Mensaje?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -400,
+        608
+      ]
+    },
+    {
+      "parameters": {
         "jsCode": "const items = $input.all();\n\nconst results = items.map(item => {\n  const data = item.json;\n  let phone = data.customer_phone || '';\n  \n  if (phone && !phone.startsWith('+')) {\n    if (phone.startsWith('34')) {\n      phone = '+' + phone;\n    } else if (phone.startsWith('0034')) {\n      phone = '+' + phone.substring(2);\n    } else {\n      phone = '+34' + phone;\n    }\n  }\n  \n  return {\n    json: {\n      ...data,\n      customer_phone_normalized: phone\n    }\n  };\n});\n\nreturn results;"
       },
       "id": "e4cc417f-51dd-4ea1-b02c-531889b469f1",
@@ -102,8 +183,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -848,
-        608
+        -176,
+        528
       ]
     },
     {
@@ -126,8 +207,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -656,
-        608
+        16,
+        528
       ],
       "credentials": {
         "supabaseApi": {
@@ -162,8 +243,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -464,
-        608
+        208,
+        528
       ],
       "credentials": {
         "supabaseApi": {
@@ -174,15 +255,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// Obtener la plantilla (este nodo recibe la plantilla)\nconst templateData = $json;\n\n// Obtener datos de nodos anteriores explícitamente\nconst restaurantData = $('📍 Obtener Config Restaurante').first().json;\nconst reservaData = $('📞 Normalizar Teléfono').first().json;\n\n// Validar que tengamos los datos\nif (!reservaData || !restaurantData) {\n  throw new Error('❌ Faltan datos de reserva o restaurante');\n}\n\nconst reserva = reservaData;\nconst restaurant = restaurantData;\n\n// DEBUG: Log de datos recibidos\nconsole.log('🔍 Datos de reserva:', JSON.stringify(reserva, null, 2));\n\n// Intentar obtener la plantilla desde Supabase\nlet template = templateData?.content_markdown || '';\n\n// Si no hay plantilla, usar mensaje por defecto\nif (!template || template.trim() === '') {\n  template = `🚨 RECORDATORIO URGENTE 🚨\\n\\nHola {{customer_name}}!\\n\\nTu reserva en {{restaurant_name}} es en 4 HORAS a las {{reservation_time}} para {{party_size}} persona(s).\\n\\n¡Te esperamos pronto!`;\n  console.log('⚠️ Usando plantilla por defecto para 4h');\n}\n\n// Preparar variables a reemplazar\nconst variables = {\n  customer_name: reserva.customer_name || 'Cliente',\n  restaurant_name: restaurant.name || 'Restaurante',\n  reservation_time: reserva.reservation_time || '',\n  party_size: (reserva.party_size || 1).toString()\n};\n\n// Reemplazar cada variable en la plantilla\nlet message = template;\nfor (const [key, value] of Object.entries(variables)) {\n  const regex = new RegExp(`\\\\{\\\\{${key}\\\\}\\\\}`, 'g');\n  message = message.replace(regex, value);\n}\n\n// VALIDACIÓN CRÍTICA: asegurar que el mensaje no esté vacío\nif (!message || message.trim() === '') {\n  message = `🚨 Hola ${variables.customer_name}! Tu reserva en ${variables.restaurant_name} es HOY a las ${variables.reservation_time}. ¡Te esperamos!`;\n  console.log('⚠️ Mensaje vacío detectado, usando fallback');\n}\n\nconsole.log('✅ Mensaje final generado:', message);\n\n// Retornar EXPLÍCITAMENTE todos los campos necesarios\nreturn [{\n  json: {\n    id: reserva.id,\n    restaurant_id: reserva.restaurant_id,\n    customer_id: reserva.customer_id,\n    customer_name: reserva.customer_name,\n    customer_email: reserva.customer_email,\n    customer_phone: reserva.customer_phone,\n    customer_phone_normalized: reserva.customer_phone_normalized,\n    reservation_date: reserva.reservation_date,\n    reservation_time: reserva.reservation_time,\n    party_size: reserva.party_size,\n    status: reserva.status,\n    restaurant_phone: restaurant.phone,\n    restaurant_name: restaurant.name,\n    message_final: message\n  }\n}];"
+        "jsCode": "const templateData = $json;\nconst restaurantData = $('📍 Obtener Config Restaurante').first().json;\nconst reservaData = $('📞 Normalizar Teléfono').first().json;\n\nif (!reservaData || !restaurantData) {\n  throw new Error('❌ Faltan datos de reserva o restaurante');\n}\n\nconst reserva = reservaData;\nconst restaurant = restaurantData;\n\nlet template = templateData?.content_markdown || '';\n\nif (!template || template.trim() === '') {\n  template = `🚨 RECORDATORIO URGENTE 🚨\\n\\nHola {{customer_name}}!\\n\\nTu reserva en {{restaurant_name}} es en pocas horas a las {{reservation_time}} para {{party_size}} persona(s).\\n\\n¡Te esperamos pronto!`;\n}\n\nconst variables = {\n  customer_name: reserva.customer_name || 'Cliente',\n  restaurant_name: restaurant.name || 'Restaurante',\n  reservation_time: reserva.reservation_time || '',\n  party_size: (reserva.party_size || 1).toString()\n};\n\nlet message = template;\nfor (const [key, value] of Object.entries(variables)) {\n  const regex = new RegExp(`\\\\{\\\\{${key}\\\\}\\\\}`, 'g');\n  message = message.replace(regex, value);\n}\n\nif (!message || message.trim() === '') {\n  message = `🚨 Hola ${variables.customer_name}! Tu reserva en ${variables.restaurant_name} es HOY a las ${variables.reservation_time}. ¡Te esperamos!`;\n}\n\nreturn [{\n  json: {\n    id: reserva.id,\n    restaurant_id: reserva.restaurant_id,\n    customer_id: reserva.customer_id,\n    customer_name: reserva.customer_name,\n    customer_phone: reserva.customer_phone,\n    customer_phone_normalized: reserva.customer_phone_normalized,\n    reservation_date: reserva.reservation_date,\n    reservation_time: reserva.reservation_time,\n    party_size: reserva.party_size,\n    status: reserva.status,\n    restaurant_phone: restaurant.phone,\n    restaurant_name: restaurant.name,\n    message_final: message\n  }\n}];"
       },
       "id": "b0f8c3d2-81d6-40fc-84ae-399d7cd27d0b",
       "name": "🔄 Reemplazar Variables",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -272,
-        608
+        400,
+        528
       ]
     },
     {
@@ -198,8 +279,8 @@
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
       "position": [
-        -80,
-        608
+        592,
+        528
       ],
       "credentials": {
         "twilioApi": {
@@ -210,7 +291,8 @@
     },
     {
       "parameters": {
-        "tableId": "customer_confirmations",
+        "operation": "create",
+        "tableId": "confirmation_messages",
         "fieldsUi": {
           "fieldValues": [
             {
@@ -223,37 +305,77 @@
             },
             {
               "fieldId": "message_type",
-              "fieldValue": "Confirmación 4h antes"
+              "fieldValue": "4h"
             },
             {
-              "fieldId": "sent_at",
-              "fieldValue": "={{ new Date().toISOString() }}"
+              "fieldId": "status",
+              "fieldValue": "sent"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $('🔄 Reemplazar Variables').first().json.customer_phone_normalized }}"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $('🔄 Reemplazar Variables').first().json.customer_name }}"
+            },
+            {
+              "fieldId": "reservation_date",
+              "fieldValue": "={{ $('🔄 Reemplazar Variables').first().json.reservation_date }}"
+            },
+            {
+              "fieldId": "reservation_time",
+              "fieldValue": "={{ $('🔄 Reemplazar Variables').first().json.reservation_time }}"
             },
             {
               "fieldId": "message_content",
               "fieldValue": "={{ $('🔄 Reemplazar Variables').first().json.message_final }}"
-            },
-            {
-              "fieldId": "customer_id",
-              "fieldValue": "={{ $('🔄 Reemplazar Variables').first().json.customer_id }}"
             }
           ]
-        }
+        },
+        "options": {}
       },
       "id": "4b97b15d-9235-4fb6-a980-eec18a707ae8",
-      "name": "💾 Registrar Confirmación",
+      "name": "💾 Registrar en confirmation_messages",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        112,
-        608
+        784,
+        528
       ],
       "credentials": {
         "supabaseApi": {
           "id": "9pdl4V7ImejCLZWo",
           "name": "Supabase La-IA"
         }
-      }
+      },
+      "notes": "✅ Registro en la tabla del nuevo sistema"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('✅ Mensaje 4h enviado y registrado');\nreturn { success: true };"
+      },
+      "id": "log-sent-4h",
+      "name": "✅ Log: Enviado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('⚠️ Mensaje ya enviado anteriormente - Saltando');\nreturn { skipped: true };"
+      },
+      "id": "log-skipped-4h",
+      "name": "⚠️ Log: Saltado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        688
+      ]
     },
     {
       "parameters": {},
@@ -283,14 +405,14 @@
       "main": [
         [
           {
-            "node": "🔍 Filtrar: 4h Antes + Pending",
+            "node": "🔍 Filtrar: 4-24h + Pending",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "🔍 Filtrar: 4h Antes + Pending": {
+    "🔍 Filtrar: 4-24h + Pending": {
       "main": [
         [
           {
@@ -324,7 +446,47 @@
         [],
         [
           {
+            "node": "🔍 Verificar Si Ya Enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Verificar Si Ya Enviado": {
+      "main": [
+        [
+          {
+            "node": "🔄 Procesar Verificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔄 Procesar Verificación": {
+      "main": [
+        [
+          {
+            "node": "❓ ¿Enviar Mensaje?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❓ ¿Enviar Mensaje?": {
+      "main": [
+        [
+          {
             "node": "📞 Normalizar Teléfono",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "⚠️ Log: Saltado",
             "type": "main",
             "index": 0
           }
@@ -379,14 +541,36 @@
       "main": [
         [
           {
-            "node": "💾 Registrar Confirmación",
+            "node": "💾 Registrar en confirmation_messages",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "💾 Registrar Confirmación": {
+    "💾 Registrar en confirmation_messages": {
+      "main": [
+        [
+          {
+            "node": "✅ Log: Enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Log: Enviado": {
+      "main": [
+        [
+          {
+            "node": "🔁 Loop Cada Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚠️ Log: Saltado": {
       "main": [
         [
           {
@@ -401,7 +585,13 @@
   "pinData": {},
   "meta": {
     "instanceId": "968c65341fc947850f62b4a42d249947219a244717952c0dbaf2b62952e73bd9"
-  }
+  },
+  "tags": [
+    {
+      "createdAt": "2025-10-22T19:00:00.000Z",
+      "updatedAt": "2025-10-22T19:00:00.000Z",
+      "id": "recordatorio-4h-verificacion",
+      "name": "✅ Con Verificación de Duplicados"
+    }
+  ]
 }
-
-

@@ -52,37 +52,22 @@ import RegenerationRequiredModal from '../components/RegenerationRequiredModal';
 // - RPC: get_agent_table_insights(restaurant_id)
 // - real-time: suscripción a cambios en tables y reservations
 
-// Estados de mesa con iconos y colores mejorados
+// ✅ Estados de mesa SIMPLIFICADOS (solo activa/inactiva)
 const TABLE_STATES = {
     available: {
-        label: "Disponible",
-        icon: "✅", // Mesa activa = check verde
+        label: "Activa",
+        icon: "✅",
         color: "border-green-400",
         bgColor: "bg-green-50",
         textColor: "text-green-700",
     },
-    reserved: {
-        label: "Reservada",
-        icon: "📅",
-        color: "border-yellow-400",
-        bgColor: "bg-yellow-50",
-        textColor: "text-yellow-700",
-    },
-    occupied: {
-        label: "Ocupada",
-        icon: "🍽️",
-        color: "border-blue-400",
-        bgColor: "bg-blue-50",
-        textColor: "text-blue-700",
-    },
     inactive: {
         label: "Inactiva",
-        icon: "❌", // Mesa inactiva = X roja
+        icon: "❌",
         color: "border-gray-400",
         bgColor: "bg-gray-50",
         textColor: "text-gray-700",
     },
-
 };
 
 // Componente de estadísticas del agente
@@ -171,33 +156,18 @@ const AgentSuggestionBadge = ({ suggestion }) => {
 };
 
 // Componente de tarjeta de mesa visual mejorado
+// ✅ TableCard SIMPLIFICADO (sin reservas ni agente)
 const TableCard = ({
     table,
-    reservation,
     onAction,
     viewMode = "grid",
-    agentPreference,
 }) => {
     const [showActions, setShowActions] = useState(false);
 
-    // Determinar el estado de la mesa
+    // ✅ Determinar el estado de la mesa SIMPLIFICADO
     const getTableStatus = () => {
-        // Verificar primero si la mesa está activa (is_active = true)
         const isActive = table.is_active !== false;
-        
-        if (!isActive) {
-            return "inactive";
-        }
-
-
-
-        if (!reservation) return "available";
-
-        // 🔧 CORRECCIÓN: BD usa estados en inglés, no español
-        if (reservation.status === "seated") return "occupied";
-        if (reservation.status === "confirmed") return "reserved";
-
-        return "available";
+        return isActive ? "available" : "inactive";
     };
 
     const status = getTableStatus();
@@ -207,29 +177,19 @@ const TableCard = ({
         return timeString ? timeString.slice(0, 5) : "";
     };
 
-    // Indicador de si fue asignada por el agente
-    const isAgentAssigned = reservation?.source === "agent";
+    // ✅ Ya no se muestra info del agente (sin reservas)
 
     if (viewMode === "list") {
         return (
             <div
-                className={`bg-white border rounded-xl p-2 shadow-sm hover:shadow-md transition-all duration-200 ${stateInfo.color} ${
-                    agentPreference && agentPreference.score > 80
-                        ? "ring-2 ring-purple-400"
-                        : ""
-                }`}
+                className={`bg-white border rounded-xl p-2 shadow-sm hover:shadow-md transition-all duration-200 ${stateInfo.color}`}
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div
-                            className={`w-12 h-12 ${stateInfo.bgColor} rounded-lg flex items-center justify-center text-lg border relative`}
+                            className={`w-12 h-12 ${stateInfo.bgColor} rounded-lg flex items-center justify-center text-lg border`}
                         >
                             {stateInfo.icon}
-                            {isAgentAssigned && (
-                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
-                                    <Bot className="w-3 h-3 text-white" />
-                                </div>
-                            )}
                         </div>
 
                         <div>
@@ -237,28 +197,10 @@ const TableCard = ({
                                 <h4 className="font-semibold text-gray-900">
                                     {table.name} ({table.table_number})
                                 </h4>
-                                {agentPreference && (
-                                    <AgentSuggestionBadge
-                                        suggestion={agentPreference}
-                                    />
-                                )}
                             </div>
                             <p className="text-sm text-gray-600">
                                 {table.zone} • {table.capacity} personas
                             </p>
-
-                            {reservation && (
-                                <div className="mt-1 text-sm">
-                                    <p className="font-medium text-gray-800">
-                                        {reservation.customer_name} -{" "}
-                                        {formatTime(reservation.time)}
-                                    </p>
-                                    <p className="text-gray-600">
-                                        {reservation.party_size} personas •{" "}
-                                        {reservation.customer_phone}
-                                    </p>
-                                </div>
-                            )}
                         </div>
                     </div>
 
@@ -341,35 +283,12 @@ const TableCard = ({
         );
     }
 
-    // Vista de grid (tarjetas cuadradas)
+    // ✅ Vista de grid SIMPLIFICADA (tarjetas cuadradas)
     return (
         <div
-            className={`relative bg-white border-2 rounded-xl p-2 transition-all duration-200 hover:shadow-lg cursor-pointer ${stateInfo.color} ${
-                agentPreference && agentPreference.score > 80
-                    ? "ring-2 ring-purple-400"
-                    : ""
-            }`}
-            onClick={() => {
-                if (reservation) {
-                    onAction("viewReservation", reservation);
-                } else {
-                    onAction("edit", table);
-                }
-            }}
+            className={`relative bg-white border-2 rounded-xl p-2 transition-all duration-200 hover:shadow-lg cursor-pointer ${stateInfo.color}`}
+            onClick={() => onAction("edit", table)}
         >
-            {/* Badge del agente */}
-            {isAgentAssigned && (
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center shadow-lg">
-                    <Bot className="w-4 h-4 text-white" />
-                </div>
-            )}
-
-            {/* Preferencia del agente */}
-            {agentPreference && (
-                <div className="absolute top-2 left-2">
-                    <AgentSuggestionBadge suggestion={agentPreference} />
-                </div>
-            )}
 
             <div className="flex flex-col items-center justify-center space-y-3">
                 <div
@@ -385,18 +304,6 @@ const TableCard = ({
                         {table.capacity} pax
                     </p>
                 </div>
-
-                {reservation && (
-                    <div className="text-center border-t pt-2 w-full">
-                        <p className="text-xs font-medium text-gray-800 truncate">
-                            {reservation.customer_name}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                            {formatTime(reservation.time)} •{" "}
-                            {reservation.party_size}p
-                        </p>
-                    </div>
-                )}
 
                 <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${stateInfo.bgColor} ${stateInfo.textColor}`}
@@ -470,7 +377,6 @@ export default function Mesas() {
     const [activeTab, setActiveTab] = useState("mesas"); // 'zonas' | 'mesas'
     const [loading, setLoading] = useState(true);
     const [tables, setTables] = useState([]);
-    const [reservations, setReservations] = useState([]);
     const [zones, setZones] = useState([]);
     const [agentStats, setAgentStats] = useState({
         agentAssignments: 0,
@@ -518,7 +424,7 @@ export default function Mesas() {
     // Función para refrescar datos
     const handleRefresh = useCallback(async () => {
         setLoading(true);
-        await Promise.all([loadTables(), loadTodayReservations()]);
+        await loadTables();
         toast.success("Datos de mesas actualizados");
     }, []);
 
@@ -552,197 +458,56 @@ export default function Mesas() {
         }
     }, [restaurantId]);
 
-    // Función para cargar reservas de hoy
-    const loadTodayReservations = useCallback(async () => {
+    // ✅ Función eliminada: loadTodayReservations
+    // La página Mesas es SOLO para configuración, no muestra reservas
+
+    // ✅ Función simplificada: Solo estadísticas básicas de mesas
+    // NO se muestran reservas ni métricas del agente
+    const loadTableStats = useCallback(async () => {
         if (!restaurantId) return;
 
         try {
-            const today = new Date().toISOString().split("T")[0];
-
-            const { data, error } = await supabase
-                .from("reservations")
-                .select("*")
-                .eq("restaurant_id", restaurantId)
-                .eq("reservation_date", today)
-                .in("status", ["pending", "pending_approval", "confirmed", "seated"]);
-
-            if (error) throw error;
-            setReservations(data || []);
-
-            // Calcular estadísticas del agente
-            const agentReservations = (data || []).filter(
-                (r) => r.source === "agent",
-            );
-            setAgentStats((prev) => ({
-                ...prev,
-                agentAssignments: agentReservations.length,
-            }));
-
-        } catch (error) {
-            toast.error("Error al cargar las reservas");
-        }
-    }, [restaurantId]);
-
-    // Función para calcular métricas reales del agente
-    const loadAgentPreferences = useCallback(async () => {
-        if (!restaurantId) return;
-
-        try {
-            // Calcular preferencias reales basadas en datos
-            const preferences = {};
-            const realSuggestions = [];
-            
-            tables.forEach(table => {
-                // Reservas para esta mesa
-                const tableReservations = reservations.filter(r => 
-                    r.table_id === table.id || r.table_number === table.table_number
-                );
-                
-                // Solo calcular score si hay datos reales
-                if (tableReservations.length > 0) {
-                    const score = Math.min(95, 50 + (tableReservations.length * 10));
-                    
-                    let reason = "";
-                    if (tableReservations.length >= 3) {
-                        reason = "Alta rotación, muy solicitada";
-                    } else if (tableReservations.length >= 1) {
-                        reason = "Rotación moderada, buena ubicación";
-                    }
-                    
-                    preferences[table.id] = { score, reason };
-                } 
-                // NO mostrar porcentaje si no hay datos - es confuso y no aporta valor
-            });
-
-            setTablePreferences(preferences);
-
-            // REGLAS CLARAS DE SUGERENCIAS IA - LÓGICA COHERENTE
-            const zoneOccupancy = {};
-            const zoneCapacity = {};
-            
-            // Calcular ocupación y capacidad por zona
-            tables.forEach(table => {
-                if (table.is_active !== false) {
-                    const zone = table.zone;
-                    zoneCapacity[zone] = (zoneCapacity[zone] || 0) + 1;
-                }
-            });
-            
-            reservations.forEach(r => {
-                const table = tables.find(t => t.id === r.table_id || t.table_number === r.table_number);
-                if (table && table.is_active !== false) {
-                    zoneOccupancy[table.zone] = (zoneOccupancy[table.zone] || 0) + 1;
-                }
-            });
-
-            // REGLA 1: Balanceamiento de zonas (si ocupación > 80% en una zona)
-            Object.entries(zoneOccupancy).forEach(([zone, occupied]) => {
-                const capacity = zoneCapacity[zone] || 1;
-                const occupancyRate = (occupied / capacity) * 100;
-                
-                if (occupancyRate >= 80) {
-                    realSuggestions.push({
-                        message: `Zona ${zone} al ${Math.round(occupancyRate)}% de ocupación. Considera optimizar distribución`,
-                        type: "balance",
-                    });
-                }
-            });
-
-            // REGLA 2: Análisis de capacidad vs demanda
-            const avgPartySize = reservations.length > 0 ? 
-                reservations.reduce((sum, r) => sum + (r.party_size || 2), 0) / reservations.length : 0;
-            
-            if (avgPartySize > 0) {
-                const tablesOptimal = tables.filter(t => 
-                    t.is_active !== false && 
-                    Math.abs(t.capacity - avgPartySize) <= 1
-                ).length;
-                
-                const totalActiveTables = tables.filter(t => t.is_active !== false).length;
-                const optimalPercentage = totalActiveTables > 0 ? (tablesOptimal / totalActiveTables) * 100 : 0;
-                
-                if (optimalPercentage < 50) {
-                    realSuggestions.push({
-                        message: `Solo ${Math.round(optimalPercentage)}% de mesas son óptimas para grupos de ${Math.round(avgPartySize)} personas (promedio)`,
-                        type: "optimization",
-                    });
-                } else {
-                    realSuggestions.push({
-                        message: `Configuración óptima: ${Math.round(optimalPercentage)}% de mesas adecuadas para demanda actual`,
-                        type: "insight",
-                    });
-                }
-            }
-
-            // REGLA 3: Detectar mesas infrautilizadas
-            const underutilizedTables = tables.filter(table => {
-                if (table.is_active === false) return false;
-                const tableReservations = reservations.filter(r => 
-                    r.table_id === table.id || r.table_number === table.table_number
-                );
-                return tableReservations.length === 0 && tables.length > 1;
-            });
-
-            if (underutilizedTables.length > 0 && reservations.length > 0) {
-                realSuggestions.push({
-                    message: `${underutilizedTables.length} mesa(s) sin reservas hoy. Considera promociones específicas`,
-                    type: "optimization",
-                });
-            }
-
-            setAgentSuggestions(realSuggestions);
-
-            // ESTADÍSTICAS REALES DEL AGENTE - CÁLCULOS COHERENTES
+            // Estadísticas simples de mesas
             const activeTables = tables.filter(t => t.is_active !== false).length;
-            const occupiedTables = reservations.length;
-            
-            // Eficiencia: % de mesas activas con reservas
-            const efficiency = activeTables > 0 ? Math.round((occupiedTables / activeTables) * 100) : 0;
-            
-            // Rotación promedio: estimación basada en reservas por mesa
-            const avgTurnover = activeTables > 0 ? 
-                `${Math.round(1.5 + (occupiedTables / activeTables))}h` : "0h";
-
-            // Optimización: balance de zonas + utilización
-            let optimization = 100;
-            
-            // Penalizar si hay desbalance de zonas (>30% diferencia)
-            if (Object.keys(zoneOccupancy).length > 1) {
-                const occupancyRates = Object.entries(zoneOccupancy).map(([zone, occupied]) => {
-                    const capacity = zoneCapacity[zone] || 1;
-                    return (occupied / capacity) * 100;
-                });
-                
-                if (occupancyRates.length > 0) {
-                    const maxRate = Math.max(...occupancyRates);
-                    const minRate = Math.min(...occupancyRates);
-                    const balanceScore = Math.max(0, 100 - (maxRate - minRate));
-                    optimization = Math.round((optimization + balanceScore) / 2);
-                }
-            }
-            
-            // Penalizar si hay mesas inactivas innecesarias
             const inactiveTables = tables.filter(t => t.is_active === false).length;
-            if (inactiveTables > 0 && occupiedTables > activeTables * 0.8) {
-                optimization = Math.max(0, optimization - (inactiveTables * 10));
-            }
+            
+            // Agrupar por zona
+            const zoneStats = {};
+            tables.forEach(table => {
+                const zone = table.zone || 'Sin zona';
+                if (!zoneStats[zone]) {
+                    zoneStats[zone] = { active: 0, inactive: 0, totalCapacity: 0 };
+                }
+                if (table.is_active !== false) {
+                    zoneStats[zone].active++;
+                    zoneStats[zone].totalCapacity += table.capacity || 0;
+                } else {
+                    zoneStats[zone].inactive++;
+                }
+            });
 
-            setAgentStats((prev) => ({
-                ...prev,
-                efficiency: Math.min(100, Math.max(0, efficiency)),
-                avgTurnover,
-                optimization: Math.min(100, Math.max(0, optimization)),
-            }));
+            // Actualizar stats básicos
+            setAgentStats({
+                agentAssignments: 0, // Ya no aplica
+                efficiency: activeTables > 0 ? Math.round((activeTables / (activeTables + inactiveTables)) * 100) : 0,
+                avgTurnover: "N/A", // Ya no aplica
+                optimization: activeTables > 0 ? 100 : 0
+            });
+            
+            // Limpiar sugerencias del agente (ya no se usan)
+            setAgentSuggestions([]);
+            setTablePreferences({});
+            
         } catch (error) {
-            console.error("Error calculating agent metrics:", error);
+            console.error("Error calculating table stats:", error);
         }
-    }, [restaurantId, tables, reservations]);
+    }, [restaurantId, tables]);
 
     // Configurar real-time subscriptions
     useEffect(() => {
         if (!restaurantId) return;
 
-        // Suscribirse a cambios en tiempo real
+        // ✅ Suscribirse SOLO a cambios en tables (no reservations)
         const subscription = supabase
             .channel("tables-changes")
             .on(
@@ -755,43 +520,6 @@ export default function Mesas() {
                 },
                 (payload) => {
                     loadTables();
-                },
-            )
-            .on(
-                "postgres_changes",
-                {
-                    event: "*",
-                    schema: "public",
-                    table: "reservations",
-                    filter: `restaurant_id=eq.${restaurantId}`,
-                },
-                (payload) => {
-                    // Notificar si el agente asignó una mesa
-                    if (
-                        payload.eventType === "INSERT" &&
-                        payload.new.source === "agent"
-                    ) {
-                        toast.success(
-                            <div className="flex items-center gap-2">
-                                <Bot className="w-4 h-4" />
-                                <span>
-                                    El agente asignó mesa{" "}
-                                    {payload.new.table_number}!
-                                </span>
-                            </div>,
-                        );
-
-                        // Agregar notificación global
-                        if (addNotification) {
-                            addNotification({
-                                type: "agent",
-                                message: `Mesa ${payload.new.table_number} asignada por el agente`,
-                                priority: "normal",
-                            });
-                        }
-                    }
-
-                    loadTodayReservations();
                 },
             )
             .subscribe();
@@ -809,10 +537,7 @@ export default function Mesas() {
     useEffect(() => {
         if (isReady && restaurantId) {
             setLoading(true);
-            Promise.all([
-                loadTables(),
-                loadTodayReservations(),
-            ]).finally(() => setLoading(false));
+            loadTables().finally(() => setLoading(false));
         }
     }, [isReady, restaurantId]); // SOLO dependencies estables
     
@@ -834,19 +559,15 @@ export default function Mesas() {
     }, [restaurant]);
 
     // Recalcular métricas del agente cuando cambien datos
+    // ✅ Efecto eliminado: Ya no se calculan métricas del agente basadas en reservas
     useEffect(() => {
-        if (tables.length > 0 || reservations.length > 0) {
-            loadAgentPreferences();
+        if (tables.length > 0) {
+            loadTableStats();
         }
-    }, [tables, reservations, loadAgentPreferences]);
+    }, [tables, loadTableStats]);
 
-    // Función para obtener reserva de una mesa
-    const getTableReservation = useCallback(
-        (tableId) => {
-            return reservations.find((r) => r.table_id === tableId) || null;
-        },
-        [reservations],
-    );
+    // ✅ Función eliminada: getTableReservation
+    // Ya no se muestran reservas en la página Mesas
 
     // Filtrar mesas
     const filteredTables = useMemo(() => {
@@ -857,29 +578,21 @@ export default function Mesas() {
             filtered = filtered.filter((table) => table.zone === selectedZone);
         }
 
-                        // Filtro por estado
-                if (selectedStatus !== "all") {
-                    filtered = filtered.filter((table) => {
-                        const reservation = getTableReservation(table.id);
-                        const isActive = table.is_active !== false;
+        // ✅ Filtro por estado SIMPLIFICADO (solo active/inactive)
+        if (selectedStatus !== "all") {
+            filtered = filtered.filter((table) => {
+                const isActive = table.is_active !== false;
 
-                        if (selectedStatus === "available") {
-                            return isActive && !reservation;
-                        }
-                        if (selectedStatus === "reserved") {
-                            return isActive && reservation && reservation.status === "confirmed";
-                        }
-                        if (selectedStatus === "occupied") {
-                            return isActive && reservation && reservation.status === "seated";
-                        }
-                        if (selectedStatus === "inactive") {
-                            return !isActive;
-                        }
-
-
-                        return true;
-                    });
+                if (selectedStatus === "available") {
+                    return isActive;
                 }
+                if (selectedStatus === "inactive") {
+                    return !isActive;
+                }
+
+                return true;
+            });
+        }
 
         // Filtro por búsqueda
         if (searchTerm) {
@@ -907,7 +620,6 @@ export default function Mesas() {
         selectedZone,
         selectedStatus,
         searchTerm,
-        getTableReservation,
         showAgentView,
         tablePreferences,
     ]);
@@ -927,7 +639,7 @@ export default function Mesas() {
         return grouped;
     }, [filteredTables]);
 
-    // Calcular estadísticas - CORREGIDO lógica real mejorada
+    // ✅ Estadísticas SIMPLIFICADAS (solo total, activas, inactivas)
     const stats = useMemo(() => {
         const total = tables.length;
         
@@ -936,34 +648,11 @@ export default function Mesas() {
             t.is_active !== false
         ).length;
         
-        const reserved = reservations.filter(
-            (r) => r.status === "confirmed" || r.status === "pending" || r.status === "pending_approval",
-        ).length;
-        const occupied = reservations.filter(
-            (r) => r.status === "seated",
-        ).length;
-        
-        // Disponibles: mesas activas SIN reservas (ni por table_id ni por table_number)
-        const tablesWithReservations = new Set([
-            ...reservations.map(r => r.table_id).filter(Boolean),
-            ...reservations.map(r => r.table_number).filter(Boolean)
-        ]);
-        
-        const available = tables.filter(t => {
-            // Debe estar activa y operativa
-            const isActive = t.is_active !== false;
-            
+        // Inactivas
+        const inactive = total - active;
 
-            
-            // No debe tener reservas asignadas
-            const hasNoReservations = !tablesWithReservations.has(t.id) && 
-                                     !tablesWithReservations.has(t.table_number);
-            
-            return isActive && hasNoReservations;
-        }).length;
-
-        return { total, active, available, reserved, occupied };
-    }, [tables, reservations]);
+        return { total, active, available: active, reserved: 0, occupied: 0, inactive };
+    }, [tables]);
 
     // Funciones de acciones
     const handleTableAction = useCallback((action, data) => {
@@ -1141,10 +830,7 @@ export default function Mesas() {
                             onClick={async () => {
                                 setLoading(true);
                                 try {
-                                    await Promise.all([
-                                        loadTables(),
-                                        loadTodayReservations()
-                                    ]);
+                                    await loadTables();
                                     
                                     // ✅ RECARGAR RESTAURANT DEL CONTEXTO TAMBIÉN
                                     if (user?.id) {
@@ -1179,81 +865,80 @@ export default function Mesas() {
                     </div>
                 </div>
 
-                {/* Estadísticas rápidas */}
+                {/* ✅ Estadísticas de CONFIGURACIÓN (Simplificadas) */}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-6">
+                    {/* Total de Mesas */}
                     <div className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-lg font-bold text-gray-900">
-                                    {stats.available}
+                                    {stats.total}
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                    Disponibles
+                                    Total
+                                </p>
+                            </div>
+                            <Grid3X3 className="w-8 h-8 text-gray-500" />
+                        </div>
+                    </div>
+
+                    {/* Mesas Activas */}
+                    <div className="bg-gray-50 rounded-lg p-2">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-lg font-bold text-gray-900">
+                                    {stats.active}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    Activas
                                 </p>
                             </div>
                             <CheckCircle2 className="w-8 h-8 text-green-500" />
                         </div>
                     </div>
 
+                    {/* Mesas Inactivas */}
                     <div className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-lg font-bold text-gray-900">
-                                    {stats.reserved}
+                                    {stats.inactive}
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                    Reservadas
+                                    Inactivas
                                 </p>
                             </div>
-                            <Calendar className="w-8 h-8 text-yellow-500" />
+                            <XCircle className="w-8 h-8 text-gray-400" />
                         </div>
                     </div>
 
+                    {/* Capacidad Total */}
                     <div className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-lg font-bold text-gray-900">
-                                    {stats.occupied}
+                                    {tables.filter(t => t.is_active !== false).reduce((sum, t) => sum + (t.capacity || 0), 0)}
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                    Ocupadas
+                                    Capacidad
                                 </p>
                             </div>
                             <Users className="w-8 h-8 text-blue-500" />
                         </div>
                     </div>
 
+                    {/* Zonas Configuradas */}
                     <div className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-lg font-bold text-gray-900">
-                                    {agentStats.agentAssignments}
-                                </p>
-                                <p className="text-sm text-gray-600">Por IA</p>
-                            </div>
-                            <Bot className="w-8 h-8 text-purple-500" />
-                        </div>
-                    </div>
-
-                    <div className="bg-gray-50 rounded-lg p-2">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-lg font-bold text-gray-900">
-                                    {stats.active > 0
-                                        ? Math.round(
-                                              ((stats.occupied +
-                                                  stats.reserved) /
-                                                  stats.active) *
-                                                  100,
-                                          )
-                                        : 0}
-                                    %
+                                    {Object.keys(tablesByZone).length}
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                    Ocupación
+                                    Zonas
                                 </p>
                             </div>
-                            <Activity className="w-8 h-8 text-indigo-500" />
+                            <MapPin className="w-8 h-8 text-purple-500" />
                         </div>
                     </div>
                 </div>
@@ -1559,11 +1244,8 @@ export default function Mesas() {
                             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="all">Todos los estados</option>
-                            <option value="available">Disponibles</option>
-                            <option value="reserved">Reservadas</option>
-                            <option value="occupied">Ocupadas</option>
+                            <option value="available">Activas</option>
                             <option value="inactive">Inactivas</option>
-
                         </select>
 
                         {/* Toggle vista */}
@@ -1643,14 +1325,8 @@ export default function Mesas() {
                                             <TableCard
                                                 key={table.id}
                                                 table={table}
-                                                reservation={getTableReservation(
-                                                    table.id,
-                                                )}
                                                 onAction={handleTableAction}
                                                 viewMode="grid"
-                                                agentPreference={
-                                                    tablePreferences[table.id]
-                                                }
                                             />
                                         ))}
                                     </div>
@@ -1691,10 +1367,8 @@ export default function Mesas() {
                             <TableCard
                                 key={table.id}
                                 table={table}
-                                reservation={getTableReservation(table.id)}
                                 onAction={handleTableAction}
                                 viewMode="list"
-                                agentPreference={tablePreferences[table.id]}
                             />
                         ))
                     ) : (
@@ -1728,7 +1402,7 @@ export default function Mesas() {
                         
                         setShowCreateModal(false);
                         setShowEditModal(false);
-                        setSelectedTable(null);
+                        
                         loadTables();
                         
                         // Verificar si existen slots antes de mostrar modal
@@ -1738,13 +1412,48 @@ export default function Mesas() {
                                     changeDetection.onTableChange('added', savedTable || { name: 'Nueva mesa' });
                                     showRegenerationModal('table_created', `Mesa "${savedTable?.name || 'nueva'}" creada`);
                                 } else {
-                                    changeDetection.onTableChange('modified', selectedTable);
-                                    showRegenerationModal('table_modified', `Mesa "${selectedTable?.name}" modificada`);
+                                    // 🔍 DETECTAR QUÉ HA CAMBIADO EXACTAMENTE
+                                    const changes = [];
+                                    let criticalChange = false;
+                                    
+                                    if (selectedTable.capacity !== savedTable.capacity) {
+                                        changes.push(`Capacidad: ${selectedTable.capacity} → ${savedTable.capacity} personas`);
+                                        criticalChange = true;
+                                    }
+                                    
+                                    if (selectedTable.zone !== savedTable.zone) {
+                                        changes.push(`Zona: ${selectedTable.zone} → ${savedTable.zone}`);
+                                        criticalChange = true;
+                                    }
+                                    
+                                    if (selectedTable.name !== savedTable.name) {
+                                        changes.push(`Nombre: ${selectedTable.name} → ${savedTable.name}`);
+                                        criticalChange = true; // Nombre también afecta a slots
+                                    }
+                                    
+                                    if (selectedTable.is_active !== savedTable.is_active) {
+                                        changes.push(`Estado: ${selectedTable.is_active ? 'Activa' : 'Inactiva'} → ${savedTable.is_active ? 'Activa' : 'Inactiva'}`);
+                                        criticalChange = true; // Desactivar/activar afecta disponibilidad
+                                    }
+                                    
+                                    if (criticalChange) {
+                                        console.log('🚨 Cambios críticos detectados:', changes);
+                                        changeDetection.onTableChange('modified', selectedTable);
+                                        showRegenerationModal(
+                                            'table_modified', 
+                                            `Mesa "${selectedTable?.name}" modificada:\n${changes.join('\n')}`
+                                        );
+                                    } else {
+                                        console.log('ℹ️ Cambios menores (no afectan slots):', changes);
+                                    }
                                 }
                             } else {
                                 console.log('✅ No se muestra aviso: usuario está configurando el sistema por primera vez');
                             }
                         });
+                        
+                        setSelectedTable(null);
+                        
                         toast.success(
                             selectedTable
                                 ? "Mesa actualizada correctamente"
@@ -1911,6 +1620,46 @@ const TableModal = ({
                 }
             }
 
+            // 🛡️ VALIDACIÓN: PROTEGER RESERVAS AL CAMBIAR CAPACIDAD
+            if (table && parseInt(formData.capacity) < table.capacity) {
+                // Si está reduciendo la capacidad, verificar reservas activas
+                console.log('🔍 Verificando reservas activas antes de reducir capacidad...');
+                
+                const { data: activeReservations, error: reservationsError } = await supabase
+                    .from('reservations')
+                    .select('id, customer_name, reservation_date, reservation_time, party_size')
+                    .eq('table_id', table.id)
+                    .gte('reservation_date', new Date().toISOString().split('T')[0])
+                    .in('status', ['pending', 'confirmed', 'pendiente', 'confirmada', 'seated'])
+                    .gt('party_size', parseInt(formData.capacity)); // Reservas con más personas que la nueva capacidad
+                
+                if (reservationsError) {
+                    console.error('Error verificando reservas:', reservationsError);
+                    throw new Error('Error al verificar reservas activas');
+                }
+                
+                if (activeReservations && activeReservations.length > 0) {
+                    console.log('🚨 Reservas activas encontradas:', activeReservations);
+                    
+                    // Construir mensaje detallado
+                    const reservasList = activeReservations.map(r => 
+                        `• ${r.customer_name} - ${r.party_size} personas (${new Date(r.reservation_date).toLocaleDateString('es-ES')} ${r.reservation_time})`
+                    ).join('\n');
+                    
+                    throw new Error(
+                        `⚠️ NO PUEDES REDUCIR LA CAPACIDAD\n\n` +
+                        `Esta mesa tiene ${activeReservations.length} reserva(s) activa(s) con más personas que la nueva capacidad:\n\n` +
+                        `${reservasList}\n\n` +
+                        `🔒 Las reservas están protegidas. Opciones:\n` +
+                        `1. Cancela o modifica estas reservas primero\n` +
+                        `2. Mantén la capacidad actual (${table.capacity} personas)\n` +
+                        `3. Aumenta la capacidad en lugar de reducirla`
+                    );
+                }
+                
+                console.log('✅ No hay conflictos con reservas activas');
+            }
+
             const tableData = {
                 table_number: formData.table_number,
                 name: formData.name,
@@ -1930,6 +1679,14 @@ const TableModal = ({
                     .eq("id", table.id);
 
                 if (error) throw error;
+                
+                console.log('✅ Mesa actualizada correctamente');
+                
+                // Pasar los datos actualizados al callback
+                onSave({
+                    ...table,
+                    ...tableData
+                });
             } else {
                 // Crear
                 const { error } = await supabase
@@ -1937,9 +1694,11 @@ const TableModal = ({
                     .insert([tableData]);
 
                 if (error) throw error;
+                
+                // Pasar los nuevos datos al callback
+                onSave(tableData);
             }
-
-            onSave();
+            
             // Toast movido al componente principal para evitar duplicados
         } catch (error) {
             console.error("Error saving table:", error);
@@ -2066,18 +1825,29 @@ const TableModal = ({
                             min="1"
                             max="20"
                             value={formData.capacity}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                // Permitir campo vacío mientras escribe
                                 setFormData({
                                     ...formData,
-                                    capacity: parseInt(e.target.value) || 1,
-                                })
-                            }
+                                    capacity: value === '' ? '' : parseInt(value)
+                                });
+                            }}
+                            onBlur={(e) => {
+                                // Si está vacío al salir del campo, poner 1 por defecto
+                                if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                                    setFormData({
+                                        ...formData,
+                                        capacity: 1
+                                    });
+                                }
+                            }}
                             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
                                 errors.capacity
                                     ? "border-red-300"
                                     : "border-gray-300"
                             }`}
-                            placeholder="Ej: 4 personas"
+                            placeholder="Ej: 4"
                         />
                         {errors.capacity && (
                             <p className="text-xs text-red-600 mt-1">
