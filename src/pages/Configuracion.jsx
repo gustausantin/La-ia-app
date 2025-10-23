@@ -735,7 +735,7 @@ const Configuracion = () => {
             <div className="max-w-[85%] mx-auto px-4 py-4">
                 <div className="mb-8 text-center">
                     <div className="flex items-center justify-center gap-2 mb-4">
-                        <SettingsIcon className="w-8 h-8 text-purple-600" />
+                        <SettingsIcon className="w-5 h-5 text-purple-600" />
                         <h1 className="text-xl font-bold text-gray-900">Configuración</h1>
                     </div>
                     <p className="text-gray-600 max-w-2xl mx-auto">
@@ -745,17 +745,17 @@ const Configuracion = () => {
 
                 {/* Tabs estilo moderno (como CRM) */}
                 <div className="mb-8">
-                    <div className="flex gap-2 overflow-x-auto pb-2">
+                    <div className="flex gap-3 overflow-x-auto pb-2">
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`
-                                    px-6 py-3 rounded-lg font-medium text-sm whitespace-nowrap 
-                                    flex items-center gap-2 transition-all duration-200
+                                    px-8 py-4 rounded-xl font-semibold text-base whitespace-nowrap 
+                                    flex items-center gap-2 transition-all duration-200 shadow-sm
                                     ${activeTab === tab.id
-                                        ? "bg-purple-600 text-white shadow-md"
-                                        : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-blue-700 shadow-lg scale-105"
+                                        : "bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300"
                                     }
                                 `}
                             >

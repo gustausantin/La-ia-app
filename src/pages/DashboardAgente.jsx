@@ -664,47 +664,47 @@ export default function DashboardAgenteV2() {
 
     return (
         <div className="min-h-screen bg-gray-50 px-4 py-4">
-            <div className="max-w-[85%] mx-auto space-y-6">
+            <div className="max-w-[85%] mx-auto space-y-3">
                 
                 {/* HEADER CON AVATAR Y SALUDO */}
-                <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-white rounded-xl shadow-sm border border-purple-100 p-8">
-                    <div className="flex flex-col md:flex-row items-center gap-8">
+                <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-white rounded-xl shadow-sm border border-purple-100 p-4">
+                    <div className="flex flex-col md:flex-row items-center gap-4">
                         {/* Avatar */}
                         <div className="flex-shrink-0">
-                            <div className="w-40 h-40 md:w-56 md:h-56 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-purple-700 flex items-center justify-center shadow-lg ring-4 ring-purple-100">
+                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-purple-700 flex items-center justify-center shadow-lg ring-2 ring-purple-100">
                                 {agentAvatar ? (
                                     <img src={agentAvatar} alt={agentName} className="w-full h-full object-cover" />
                                 ) : (
-                                    <Bot className="w-28 h-28 text-white opacity-80" />
+                                    <Bot className="w-16 h-16 text-white opacity-80" />
                                 )}
                             </div>
                         </div>
 
                         {/* Información */}
                         <div className="flex-1 text-center md:text-left">
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                            <h1 className="text-xl font-bold text-gray-900 mb-0.5">
                                 {format(new Date(), 'HH') < 12 ? 'Buenos días' : format(new Date(), 'HH') < 20 ? 'Buenas tardes' : 'Buenas noches'}, {contactName}
                             </h1>
-                            <p className="text-base md:text-lg text-gray-700 mb-6">
+                            <p className="text-xs text-gray-600 mb-2">
                                 Aquí tienes los datos más importantes del día para tu restaurante
                             </p>
                             
-                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-base text-gray-700">
-                                <div className="flex items-center gap-2">
-                                    <Calendar className="w-5 h-5 text-purple-600" />
-                                    <span className="font-bold capitalize">
+                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-xs text-gray-700">
+                                <div className="flex items-center gap-1">
+                                    <Calendar className="w-4 h-4 text-purple-600" />
+                                    <span className="font-semibold capitalize">
                                         {format(new Date(), "EEEE d 'de' MMMM", { locale: es })}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Clock className="w-5 h-5 text-blue-600" />
-                                    <span className="font-bold">Actualizado: {format(lastUpdate, 'HH:mm')}</span>
+                                <div className="flex items-center gap-1">
+                                    <Clock className="w-4 h-4 text-blue-600" />
+                                    <span className="font-semibold">Actualizado: {format(lastUpdate, 'HH:mm')}</span>
                                 </div>
                                 <button
                                     onClick={loadDashboardData}
-                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs font-medium"
                                 >
-                                    <RefreshCw className="w-4 h-4" />
+                                    <RefreshCw className="w-3 h-3" />
                                     Actualizar
                                 </button>
                             </div>
@@ -713,48 +713,48 @@ export default function DashboardAgenteV2() {
                 </div>
 
                 {/* 1. HERO SECTION - KPIs CRÍTICOS DEL DÍA (Colores sobrios) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                     {/* Reservas de Hoy */}
-                    <div className="bg-white rounded-xl p-6 shadow-sm border-2 border-blue-200">
-                        <div className="flex items-center justify-between mb-2">
-                            <Target className="w-8 h-8 text-blue-600" />
+                    <div className="bg-white rounded-xl p-3 shadow-sm border-2 border-blue-200">
+                        <div className="flex items-center justify-between mb-1">
+                            <Target className="w-4 h-4 text-blue-600" />
                             {renderDiff(dashboardData.reservationsDiff)}
                         </div>
-                        <div className="text-4xl font-bold mb-1 text-gray-900">{dashboardData.reservationsToday}</div>
-                        <div className="text-sm text-gray-600">Reservas de Hoy</div>
-                        <div className="text-xs text-gray-500 mt-2">vs ayer: {dashboardData.reservationsYesterday}</div>
+                        <div className="text-lg font-bold text-gray-900">{dashboardData.reservationsToday}</div>
+                        <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Reservas de Hoy</div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">vs ayer: {dashboardData.reservationsYesterday}</div>
                     </div>
 
                     {/* Ocupación */}
-                    <div className="bg-white rounded-xl p-6 shadow-sm border-2 border-purple-200">
-                        <div className="flex items-center justify-between mb-2">
-                            <Users className="w-8 h-8 text-purple-600" />
+                    <div className="bg-white rounded-xl p-3 shadow-sm border-2 border-purple-200">
+                        <div className="flex items-center justify-between mb-1">
+                            <Users className="w-4 h-4 text-purple-600" />
                             {renderDiff(dashboardData.occupancyDiff, true)}
                         </div>
-                        <div className="text-4xl font-bold mb-1 text-gray-900">{dashboardData.occupancyPercent}%</div>
-                        <div className="text-sm text-gray-600">Ocupación</div>
-                        <div className="text-xs text-gray-500 mt-2">vs ayer: {dashboardData.occupancyYesterday}%</div>
+                        <div className="text-lg font-bold text-gray-900">{dashboardData.occupancyPercent}%</div>
+                        <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Ocupación</div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">vs ayer: {dashboardData.occupancyYesterday}%</div>
                     </div>
 
                     {/* Clientes Nuevos */}
-                    <div className="bg-white rounded-xl p-6 shadow-sm border-2 border-green-200">
-                        <div className="flex items-center justify-between mb-2">
-                            <Users className="w-8 h-8 text-green-600" />
+                    <div className="bg-white rounded-xl p-3 shadow-sm border-2 border-green-200">
+                        <div className="flex items-center justify-between mb-1">
+                            <Users className="w-4 h-4 text-green-600" />
                             {renderDiff(dashboardData.newCustomersDiff)}
                         </div>
-                        <div className="text-4xl font-bold mb-1 text-gray-900">{dashboardData.newCustomersToday}</div>
-                        <div className="text-sm text-gray-600">Clientes Nuevos</div>
-                        <div className="text-xs text-gray-500 mt-2">vs ayer: {dashboardData.newCustomersYesterday}</div>
+                        <div className="text-lg font-bold text-gray-900">{dashboardData.newCustomersToday}</div>
+                        <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Clientes Nuevos</div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">vs ayer: {dashboardData.newCustomersYesterday}</div>
                     </div>
 
                     {/* Alertas No-Show */}
-                    <div className="bg-white rounded-xl p-6 shadow-sm border-2 border-orange-200">
-                        <div className="flex items-center justify-between mb-2">
-                            <AlertTriangle className="w-8 h-8 text-orange-600" />
+                    <div className="bg-white rounded-xl p-3 shadow-sm border-2 border-orange-200">
+                        <div className="flex items-center justify-between mb-1">
+                            <AlertTriangle className="w-4 h-4 text-orange-600" />
                         </div>
-                        <div className="text-4xl font-bold mb-1 text-gray-900">{dashboardData.highRiskNoShows}</div>
-                        <div className="text-sm text-gray-600">Alertas No-Show</div>
-                        <div className="text-xs text-gray-500 mt-2">Riesgo Alto/Medio</div>
+                        <div className="text-lg font-bold text-gray-900">{dashboardData.highRiskNoShows}</div>
+                        <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Alertas No-Show</div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">Riesgo Alto/Medio</div>
                     </div>
                 </div>
 
@@ -768,45 +768,45 @@ export default function DashboardAgenteV2() {
                         <span className="text-xs text-gray-500">(últimos 7 días)</span>
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        <div className="text-center p-3 bg-indigo-50 rounded-lg">
-                            <div className="text-2xl font-bold text-indigo-600">{dashboardData.aiConversationsCount}</div>
-                            <div className="text-xs text-gray-600 mt-1">Conversaciones</div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                        <div className="text-center p-2 bg-indigo-50 rounded-lg">
+                            <div className="text-lg font-bold text-indigo-600">{dashboardData.aiConversationsCount}</div>
+                            <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-0.5">Conversaciones</div>
                         </div>
                         
-                        <div className="text-center p-3 bg-amber-50 rounded-lg">
-                            <div className="text-2xl font-bold text-amber-600">
+                        <div className="text-center p-2 bg-amber-50 rounded-lg">
+                            <div className="text-lg font-bold text-amber-600">
                                 {dashboardData.aiSatisfaction > 0 ? dashboardData.aiSatisfaction.toFixed(1) : '-'}/5
                             </div>
-                            <div className="text-xs text-gray-600 mt-1">⭐ Satisfacción</div>
+                            <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-0.5">⭐ Satisfacción</div>
                         </div>
                         
-                        <div className="text-center p-3 bg-green-50 rounded-lg">
-                            <div className="text-2xl font-bold text-green-600">
+                        <div className="text-center p-2 bg-green-50 rounded-lg">
+                            <div className="text-lg font-bold text-green-600">
                                 {dashboardData.aiPositivePercent.toFixed(0)}%
                             </div>
-                            <div className="text-xs text-gray-600 mt-1">😊 Positivos</div>
+                            <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-0.5">😊 Positivos</div>
                         </div>
                         
-                        <div className="text-center p-3 bg-orange-50 rounded-lg">
-                            <div className="text-2xl font-bold text-orange-600">
+                        <div className="text-center p-2 bg-orange-50 rounded-lg">
+                            <div className="text-lg font-bold text-orange-600">
                                 {dashboardData.aiEscalationPercent.toFixed(0)}%
                             </div>
-                            <div className="text-xs text-gray-600 mt-1">⚠️ Escalación</div>
+                            <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-0.5">⚠️ Escalación</div>
                         </div>
                         
-                        <div className="text-center p-3 bg-blue-50 rounded-lg">
-                            <div className="text-2xl font-bold text-blue-600">
+                        <div className="text-center p-2 bg-blue-50 rounded-lg">
+                            <div className="text-lg font-bold text-blue-600">
                                 {dashboardData.aiAvgResponseTime.toFixed(1)}h
                             </div>
-                            <div className="text-xs text-gray-600 mt-1">⏱️ Tiempo Resp.</div>
+                            <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-0.5">⏱️ Tiempo Resp.</div>
                         </div>
                         
-                        <div className="text-center p-3 bg-purple-50 rounded-lg">
-                            <div className="text-2xl font-bold text-purple-600">
+                        <div className="text-center p-2 bg-purple-50 rounded-lg">
+                            <div className="text-lg font-bold text-purple-600">
                                 {dashboardData.aiQuality > 0 ? dashboardData.aiQuality.toFixed(1) : '-'}/5
                             </div>
-                            <div className="text-xs text-gray-600 mt-1">✅ Calidad</div>
+                            <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-0.5">✅ Calidad</div>
                         </div>
                     </div>
                     
@@ -820,7 +820,7 @@ export default function DashboardAgenteV2() {
                 </div>
 
                 {/* 3. ALERTAS Y ACCIONES PENDIENTES (Movido aquí para más visibilidad) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {/* Alertas No-Shows */}
                     <div className="bg-white rounded-xl shadow-sm border p-6">
                         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -878,7 +878,7 @@ export default function DashboardAgenteV2() {
                 </div>
 
                 {/* 4. CANALES + TENDENCIA SEMANAL (Misma fila, 50/50) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {/* Canales Activos */}
                     <div className="bg-white rounded-xl shadow-sm border p-6 flex flex-col h-full">
                         <h3 className="text-lg font-bold text-gray-900 mb-4">Canales Activos</h3>
@@ -971,7 +971,7 @@ export default function DashboardAgenteV2() {
                 </div>
 
                 {/* 5. CLIENTES Y VALOR */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {/* Clientes */}
                     <div className="bg-white rounded-xl shadow-sm border p-6 flex flex-col h-full">
                         <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">

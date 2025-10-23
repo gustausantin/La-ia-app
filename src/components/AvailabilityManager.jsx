@@ -1594,14 +1594,14 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
     }, [availabilityStats, generationSuccess, restaurantId]);
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+            <div className="flex items-center justify-between mb-3">
                 <div>
-                    <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                        <Calendar className="w-6 h-6 text-blue-600" />
+                    <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-blue-600" />
                         Gestión de Horarios de Reserva
                     </h2>
-                    <p className="text-gray-600 mt-1">
+                    <p className="text-xs text-gray-600 mt-0.5">
                         Controla cuándo están disponibles tus mesas para reservas
                     </p>
                 </div>
@@ -1611,26 +1611,26 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
 
             {/* Información de Política de Reservas */}
             {restaurantSettings && (
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 mb-6 shadow-sm">
-                    <h3 className="text-base font-semibold text-blue-900 mb-4 flex items-center gap-2">
-                        <Settings className="w-5 h-5" />
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-2 mb-3 shadow-sm">
+                    <h3 className="text-xs font-semibold text-blue-900 mb-2 flex items-center gap-1">
+                        <Settings className="w-3.5 h-3.5" />
                         Política de Reservas Actual
                     </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                        <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
-                            <div className="text-blue-700 font-semibold text-sm mb-1">Días de Antelación</div>
-                            <div className="text-gray-900 text-lg font-bold">{restaurantSettings.advance_booking_days || 30} días</div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <div className="bg-white rounded-lg p-2 shadow-sm border border-blue-100">
+                            <div className="text-blue-700 font-medium text-[10px] mb-0.5 uppercase tracking-wide">Días de Antelación</div>
+                            <div className="text-gray-900 text-xs font-bold">{restaurantSettings.advance_booking_days || 30} días</div>
                         </div>
-                        <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
-                            <div className="text-blue-700 font-semibold text-sm mb-1">Duración Reserva</div>
-                            <div className="text-gray-900 text-lg font-bold">{restaurantSettings.reservation_duration || 90} min</div>
+                        <div className="bg-white rounded-lg p-2 shadow-sm border border-blue-100">
+                            <div className="text-blue-700 font-medium text-[10px] mb-0.5 uppercase tracking-wide">Duración Reserva</div>
+                            <div className="text-gray-900 text-xs font-bold">{restaurantSettings.reservation_duration || 90} min</div>
                         </div>
-                        <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
-                            <div className="text-blue-700 font-semibold text-sm mb-1">Tamaño Grupo</div>
-                            <div className="text-gray-900 text-lg font-bold">{restaurantSettings.min_party_size || 1}-{restaurantSettings.max_party_size || 12} personas</div>
+                        <div className="bg-white rounded-lg p-2 shadow-sm border border-blue-100">
+                            <div className="text-blue-700 font-medium text-[10px] mb-0.5 uppercase tracking-wide">Tamaño Grupo</div>
+                            <div className="text-gray-900 text-xs font-bold">{restaurantSettings.min_party_size || 1}-{restaurantSettings.max_party_size || 12} personas</div>
                         </div>
                     </div>
-                    <div className="mt-3 text-xs text-blue-600">
+                    <div className="mt-1.5 text-[10px] text-blue-600">
                         💡 Estas configuraciones se aplican automáticamente al generar disponibilidades
                     </div>
                 </div>
@@ -1640,105 +1640,115 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             
             {/* 🎯 CASO 1: SÍ HAY SLOTS GENERADOS (libres, no solo protegidos) */}
             {availabilityStats?.free > 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all mb-6">
-                    {/* Header con más presencia */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 shadow-sm">
-                                <CheckCircle2 className="w-6 h-6 text-green-600" />
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-3">
+                    {/* Header compacto */}
+                    <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                                <CheckCircle2 className="w-4 h-4 text-green-600" />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                                <h3 className="text-sm font-bold text-gray-900 mb-1">
                                     Días Disponibles
                                 </h3>
                                 
-                                {/* 📊 Rango de fechas activo - SIMPLE Y PROFESIONAL */}
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
-                                        <Calendar className="w-4 h-4 text-blue-600" />
-                                        <span className="text-sm font-medium text-gray-900">
+                                {/* Rango de fechas compacto */}
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                                        <span className="text-xs font-medium text-gray-900">
                                             Desde hoy: <span className="font-bold">{format(new Date(), 'dd/MM/yyyy')}</span>
                                         </span>
                                     </div>
                                     {dayStats?.fechaHasta && (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
-                                            <CalendarCheck className="w-4 h-4 text-green-600" />
-                                            <span className="text-sm font-medium text-gray-900">
+                                        <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-lg">
+                                            <CalendarCheck className="w-3.5 h-3.5 text-green-600" />
+                                            <span className="text-xs font-medium text-gray-900">
                                                 Hasta: <span className="font-bold">{dayStats.fechaHasta}</span>
                                             </span>
                                         </div>
                                     )}
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg">
-                                        <Clock className="w-4 h-4 text-gray-600" />
-                                        <span className="text-sm font-medium text-gray-900">
+                                    <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 border border-gray-300 rounded-lg">
+                                        <Clock className="w-3.5 h-3.5 text-gray-600" />
+                                        <span className="text-xs font-medium text-gray-900">
                                             <span className="font-bold">{dayStats?.advanceDaysConfig || 30}</span> días configurados
                                         </span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <button 
-                            onClick={handleSmartCleanup}
-                            disabled={loading}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                            Borrar
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleShowRegenerateModal}
+                                disabled={loading}
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 transition-colors font-medium text-sm"
+                            >
+                                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                                {loading ? 'Generando...' : 'Generar Horarios'}
+                            </button>
+                            <button 
+                                onClick={handleSmartCleanup}
+                                disabled={loading}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium text-sm rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Borrar
+                            </button>
+                        </div>
                     </div>
                     
-                    {/* Grid de estadísticas - CON MÁS VIDA */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-5 p-6 bg-gray-50">
-                        <div className="bg-white rounded-lg p-5 shadow-sm hover:shadow-md transition-all border border-gray-100">
-                            <div className="flex items-center justify-center gap-2 mb-3 text-blue-600">
-                                <Calendar className="w-5 h-5" />
-                                <span className="text-xs font-semibold uppercase tracking-wider">Días Totales</span>
+                    {/* Grid de estadísticas - MUY COMPACTO CON MEJOR CONTRASTE */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 bg-gradient-to-br from-blue-50 to-purple-50">
+                        <div className="bg-white rounded-lg p-1.5 shadow-md border-2 border-blue-200">
+                            <div className="flex items-center justify-center gap-0.5 mb-0.5 text-blue-600">
+                                <Calendar className="w-3 h-3" />
+                                <span className="text-[9px] font-medium uppercase tracking-wide">Días Totales</span>
                             </div>
-                            <div className="text-4xl font-bold text-gray-900 text-center">
+                            <div className="text-sm font-bold text-gray-900 text-center">
                                 {dayStats?.diasTotales || 0}
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg p-5 shadow-sm hover:shadow-md transition-all border border-gray-100">
-                            <div className="flex items-center justify-center gap-2 mb-3 text-green-600">
-                                <CalendarCheck className="w-5 h-5" />
-                                <span className="text-xs font-semibold uppercase tracking-wider">Días Libres</span>
+                        <div className="bg-white rounded-lg p-1.5 shadow-md border-2 border-green-200">
+                            <div className="flex items-center justify-center gap-0.5 mb-0.5 text-green-600">
+                                <CalendarCheck className="w-3 h-3" />
+                                <span className="text-[9px] font-medium uppercase tracking-wide">Días Libres</span>
                             </div>
-                            <div className="text-4xl font-bold text-gray-900 text-center">
+                            <div className="text-sm font-bold text-gray-900 text-center">
                                 {dayStats?.diasLibres || 0}
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg p-5 shadow-sm hover:shadow-md transition-all border border-gray-100">
-                            <div className="flex items-center justify-center gap-2 mb-3 text-amber-600">
-                                <CalendarClock className="w-5 h-5" />
-                                <span className="text-xs font-semibold uppercase tracking-wider">Días Ocupados</span>
+                        <div className="bg-white rounded-lg p-1.5 shadow-md border-2 border-amber-200">
+                            <div className="flex items-center justify-center gap-0.5 mb-0.5 text-amber-600">
+                                <CalendarClock className="w-3 h-3" />
+                                <span className="text-[9px] font-medium uppercase tracking-wide">Días Ocupados</span>
                             </div>
-                            <div className="text-4xl font-bold text-gray-900 text-center">
+                            <div className="text-sm font-bold text-gray-900 text-center">
                                 {dayStats?.diasConReservas || 0}
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg p-5 shadow-sm hover:shadow-md transition-all border border-gray-100">
-                            <div className="flex items-center justify-center gap-2 mb-3 text-purple-600">
-                                <Users className="w-5 h-5" />
-                                <span className="text-xs font-semibold uppercase tracking-wider">Reservas</span>
+                        <div className="bg-white rounded-lg p-1.5 shadow-md border-2 border-purple-200">
+                            <div className="flex items-center justify-center gap-0.5 mb-0.5 text-purple-600">
+                                <Users className="w-3 h-3" />
+                                <span className="text-[9px] font-medium uppercase tracking-wide">Reservas</span>
                             </div>
-                            <div className="text-4xl font-bold text-gray-900 text-center">
+                            <div className="text-sm font-bold text-gray-900 text-center">
                                 {dayStats?.reservasActivas || 0}
                             </div>
                         </div>
                     </div>
                     
-                    {/* Footer con info de mantenimiento automático - PROFESIONAL */}
-                    <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 rounded-b-xl">
+                    {/* Footer con info de mantenimiento automático - PIE DE PÁGINA */}
+                    <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 rounded-b-xl">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <RefreshCw className="w-4 h-4 text-gray-500" />
-                                <p className="text-sm text-gray-700">
-                                    <span className="font-semibold">Mantenimiento Automático:</span> Cada día a las 04:00 se mantiene ventana de {dayStats?.advanceDaysConfig || 30} días
+                            <div className="flex items-center gap-1.5">
+                                <RefreshCw className="w-3 h-3 text-gray-400" />
+                                <p className="text-[10px] text-gray-500">
+                                    <span className="font-medium">Mantenimiento Automático:</span> Cada día a las 04:00 se mantiene ventana de {dayStats?.advanceDaysConfig || 30} días
                                 </p>
                             </div>
-                            <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-md">
-                                <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                <span className="text-sm font-medium text-green-900">Activo</span>
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-green-50 border border-green-200 rounded-md">
+                                <CheckCircle2 className="w-3 h-3 text-green-600" />
+                                <span className="text-[10px] font-medium text-green-900">Activo</span>
                             </div>
                         </div>
                     </div>
@@ -1802,12 +1812,12 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                     <div className="p-6 text-center bg-white">
                         <button
                             onClick={handleShowRegenerateModal}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all text-sm"
                         >
-                            <Plus className="w-5 h-5" />
+                            <Plus className="w-4 h-4" />
                             Generar Horarios de Reserva
                         </button>
-                        <p className="text-sm text-gray-600 mt-3 font-medium">
+                        <p className="text-xs text-gray-600 mt-2 font-medium">
                             Crear disponibilidades para los próximos {dayStats.advanceDaysConfig || 20} días
                         </p>
                     </div>
@@ -1846,31 +1856,17 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 </div>
             )}
 
-            {/* Acciones principales */}
-            <div className="flex flex-wrap gap-3">
-                <button
-                    onClick={handleShowRegenerateModal}
-                    disabled={loading}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                >
-                    {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                    {loading ? 'Generando...' : 'Generar Horarios de Reserva'}
-                </button>
-
-            </div>
-
-            {/* Selector de día específico */}
+            {/* Selector de día específico - TODO EN UNA LÍNEA */}
             <div className="mt-4 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
-                    Consultar Día Específico
-                </h3>
-                
-                <div className="flex items-end gap-4 mb-3">
-                    <div className="w-48">
-                        <label className="block text-sm font-medium text-blue-700 mb-1">
-                            Seleccionar fecha:
-                        </label>
+                <div className="flex items-center gap-3">
+                    {/* Título compacto */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <Calendar className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-900">Consultar Día Específico</span>
+                    </div>
+                    
+                    {/* Input de fecha */}
+                    <div className="flex-1 max-w-xs">
                         <input
                             type="date"
                             value={selectedDate}
@@ -1879,11 +1875,12 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                         />
                     </div>
                     
+                    {/* Botón Ver Horarios */}
                     <div className="flex-shrink-0">
                         <button
                             onClick={() => loadDayAvailability(selectedDate)}
                             disabled={loadingDayView}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors h-10"
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 transition-colors font-medium text-sm whitespace-nowrap"
                         >
                             {loadingDayView ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
                             Ver Horarios de Reserva
@@ -1893,11 +1890,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
 
                 {/* Mostrar disponibilidades del día seleccionado */}
                 {Object.keys(dayAvailability).length > 0 && (
-                    <div className="mt-4 border-t border-blue-200 pt-4">
-                        <h4 className="font-medium text-blue-900 mb-3">
-                            📅 Disponibilidades para {format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}
-                        </h4>
-                        
+                    <div className="mt-3 border-t border-blue-200 pt-3">
                         <div className="space-y-3 max-h-60 overflow-y-auto">
                             {Object.entries(dayAvailability).map(([tableName, slots]) => (
                                 <div key={tableName} className={`p-2 rounded border ${

@@ -187,47 +187,47 @@ export default function NoShowControlNuevo() {
             <div className="max-w-[85%] mx-auto">
                 
                 {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Sistema Anti No-Shows</h1>
-                    <p className="text-gray-600">Prevención inteligente con IA y automatización</p>
+                <div className="mb-3">
+                    <h1 className="text-xl font-bold text-gray-900 mb-1">Sistema Anti No-Shows</h1>
+                    <p className="text-xs text-gray-600">Prevención inteligente con IA y automatización</p>
                 </div>
 
                 {/* KPIs Principales */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-6">
+                    <div className="bg-white rounded-xl shadow-sm border p-4">
                         <div className="flex items-center justify-between mb-2">
                             <CheckCircle className="w-8 h-8 text-green-600" />
                             <span className="text-xs text-gray-500">Este mes</span>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900">{stats.evitadosEsteMes}</p>
-                        <p className="text-sm text-gray-600">No-Shows evitados</p>
+                        <p className="text-lg font-bold text-gray-900">{stats.evitadosEsteMes}</p>
+                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">No-Shows evitados</p>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                    <div className="bg-white rounded-xl shadow-sm border p-4">
                         <div className="flex items-center justify-between mb-2">
                             <TrendingDown className="w-8 h-8 text-blue-600" />
                             <span className="text-xs text-gray-500">Tasa actual</span>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900">{stats.tasaNoShow.toFixed(1)}%</p>
-                        <p className="text-sm text-gray-600">Tasa de No-Show</p>
+                        <p className="text-lg font-bold text-gray-900">{stats.tasaNoShow.toFixed(1)}%</p>
+                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Tasa de No-Show</p>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                    <div className="bg-white rounded-xl shadow-sm border p-4">
                         <div className="flex items-center justify-between mb-2">
                             <DollarSign className="w-8 h-8 text-green-600" />
                             <span className="text-xs text-gray-500">ROI mensual</span>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900">{stats.roiMensual}€</p>
-                        <p className="text-sm text-gray-600">Ingresos protegidos</p>
+                        <p className="text-lg font-bold text-gray-900">{stats.roiMensual}€</p>
+                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Ingresos protegidos</p>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                    <div className="bg-white rounded-xl shadow-sm border p-4">
                         <div className="flex items-center justify-between mb-2">
                             <AlertTriangle className="w-8 h-8 text-red-600" />
                             <span className="text-xs text-gray-500">Hoy</span>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900">{stats.reservasRiesgo}</p>
-                        <p className="text-sm text-gray-600">Reservas de riesgo</p>
+                        <p className="text-lg font-bold text-gray-900">{stats.reservasRiesgo}</p>
+                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Reservas de riesgo</p>
                     </div>
                 </div>
 
@@ -241,7 +241,7 @@ export default function NoShowControlNuevo() {
                             <Info className="w-6 h-6 text-purple-600" />
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">¿Cómo Prevenimos los No-Shows?</h2>
-                                <p className="text-sm text-gray-600">Sistema automático de prevención en 5 pasos</p>
+                                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Sistema automático de prevención en 5 pasos</p>
                             </div>
                         </div>
                         {showFlowExplanation ? (
@@ -349,7 +349,7 @@ export default function NoShowControlNuevo() {
                             <Brain className="w-6 h-6 text-blue-600" />
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">Algoritmo Inteligente de Riesgo</h2>
-                                <p className="text-sm text-gray-600">7 factores estáticos + ajustes dinámicos en tiempo real</p>
+                                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">7 factores estáticos + ajustes dinámicos en tiempo real</p>
                             </div>
                         </div>
                         {showAlgorithmExplanation ? (
@@ -361,7 +361,7 @@ export default function NoShowControlNuevo() {
 
                     {showAlgorithmExplanation && (
                         <div className="px-6 pb-6 border-t">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
                                 {/* Factor 1 */}
                                 <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-5 border-2 border-red-200">
                                     <div className="flex items-center gap-2 mb-3">
@@ -369,7 +369,7 @@ export default function NoShowControlNuevo() {
                                         <h3 className="font-bold text-red-900 text-base">Historial del Cliente</h3>
                                     </div>
                                     <p className="text-base text-gray-700 mb-2">0-40 puntos según no-shows previos</p>
-                                    <p className="text-sm text-gray-600 font-medium">Si &gt;30% no-shows → +40pts</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Si &gt;30% no-shows → +40pts</p>
                                 </div>
 
                                 {/* Factor 2 */}
@@ -379,7 +379,7 @@ export default function NoShowControlNuevo() {
                                         <h3 className="font-bold text-orange-900 text-base">Inactividad</h3>
                                     </div>
                                     <p className="text-base text-gray-700 mb-2">0-25 puntos según última visita</p>
-                                    <p className="text-sm text-gray-600 font-medium">Si &gt;6 meses sin venir → +25pts</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Si &gt;6 meses sin venir → +25pts</p>
                                 </div>
 
                                 {/* Factor 3 */}
@@ -389,7 +389,7 @@ export default function NoShowControlNuevo() {
                                         <h3 className="font-bold text-yellow-900 text-base">Horario de Riesgo</h3>
                                     </div>
                                     <p className="text-base text-gray-700 mb-2">0-15 puntos según hora</p>
-                                    <p className="text-sm text-gray-600 font-medium">Cenas tardías (≥21h) → +15pts</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Cenas tardías (≥21h) → +15pts</p>
                                 </div>
 
                                 {/* Factor 4 */}
@@ -399,7 +399,7 @@ export default function NoShowControlNuevo() {
                                         <h3 className="font-bold text-blue-900 text-base">Tamaño de Grupo</h3>
                                     </div>
                                     <p className="text-base text-gray-700 mb-2">0-10 puntos según personas</p>
-                                    <p className="text-sm text-gray-600 font-medium">Grupos ≥6 personas → +10pts</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Grupos ≥6 personas → +10pts</p>
                                 </div>
 
                                 {/* Factor 5 */}
@@ -409,7 +409,7 @@ export default function NoShowControlNuevo() {
                                         <h3 className="font-bold text-purple-900 text-base">Canal de Reserva</h3>
                                     </div>
                                     <p className="text-base text-gray-700 mb-2">0-10 puntos según origen</p>
-                                    <p className="text-sm text-gray-600 font-medium">Teléfono/Walk-in → +10pts</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Teléfono/Walk-in → +10pts</p>
                                 </div>
 
                                 {/* Factor 6 */}
@@ -419,7 +419,7 @@ export default function NoShowControlNuevo() {
                                         <h3 className="font-bold text-pink-900 text-base">Antelación</h3>
                                     </div>
                                     <p className="text-base text-gray-700 mb-2">0-20 puntos según cuándo reservó</p>
-                                    <p className="text-sm text-gray-600 font-medium">Reserva &lt;4h antes → +20pts</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Reserva &lt;4h antes → +20pts</p>
                                 </div>
 
                                 {/* Factor 7: Urgencia Temporal */}
@@ -597,7 +597,7 @@ export default function NoShowControlNuevo() {
 
                 {/* Contenido según tab */}
                 {activeTab === 'overview' && (
-                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                    <div className="bg-white rounded-xl shadow-sm border p-4">
                         <h3 className="text-lg font-bold text-gray-900 mb-4">Reservas HOY con Riesgo</h3>
                         
                         {riskReservations.length === 0 ? (
@@ -634,13 +634,13 @@ export default function NoShowControlNuevo() {
                                             </div>
                                         )}
                                         
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-2">
                                             <div className={`px-3 py-1 rounded-full border text-xs font-semibold ${getRiskColor(reservation.risk_level)}`}>
                                                 {getRiskLabel(reservation.risk_level)}
                                             </div>
                                             <div>
                                                 <p className="font-semibold text-gray-900">{reservation.customer_name}</p>
-                                                <p className="text-sm text-gray-600">
+                                                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
                                                     {reservation.reservation_time?.slice(0, 5) || reservation.reservation_time} • {reservation.party_size} personas
                                                 </p>
                                                 {/* Estado de confirmación dinámico */}
@@ -674,7 +674,7 @@ export default function NoShowControlNuevo() {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-2">
                                             <div className="text-right">
                                                 <p className="font-bold text-purple-600">
                                                     Score: {reservation.risk_score}
@@ -697,7 +697,7 @@ export default function NoShowControlNuevo() {
                 )}
 
                 {activeTab === 'actions' && (
-                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                    <div className="bg-white rounded-xl shadow-sm border p-4">
                         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                             <History className="w-5 h-5 text-purple-600" />
                             Acciones Tomadas Recientemente
@@ -716,7 +716,7 @@ export default function NoShowControlNuevo() {
                                         key={action.id}
                                         className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
                                     >
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-2">
                                             {action.action_type === 'call' && (
                                                 <Phone className="w-5 h-5 text-blue-600" />
                                             )}
@@ -730,7 +730,7 @@ export default function NoShowControlNuevo() {
                                                 <p className="font-semibold text-gray-900">
                                                     {action.customer_name || 'Cliente'}
                                                 </p>
-                                                <p className="text-sm text-gray-600">
+                                                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
                                                     {format(parseISO(action.created_at), "d 'de' MMM", { locale: es })} • 
                                                     {action.action_type === 'call_made' && ' Llamada realizada'}
                                                     {action.action_type === 'confirmation_sent_24h' && ' Confirmación 24h enviada'}
@@ -764,7 +764,7 @@ export default function NoShowControlNuevo() {
                 )}
 
                 {activeTab === 'trends' && (
-                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                    <div className="bg-white rounded-xl shadow-sm border p-4">
                         <h3 className="text-lg font-bold text-gray-900 mb-4">Tendencia últimos 30 días</h3>
                         <NoShowTrendChart data={trendData} />
                     </div>

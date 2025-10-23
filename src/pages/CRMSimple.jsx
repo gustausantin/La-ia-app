@@ -551,7 +551,7 @@ const CRMSimple = () => {
                                 <MessageSquare className="w-4 h-4 text-purple-600 mr-1" />
                                 <div className="text-xs text-purple-700 font-medium">Total Conversaciones</div>
                             </div>
-                            <div className="text-2xl font-bold text-purple-600">
+                            <div className="text-lg font-bold text-purple-600">
                                 {agentPerformance.totalConversations}
                             </div>
                         </div>
@@ -561,7 +561,7 @@ const CRMSimple = () => {
                                 <Star className="w-4 h-4 text-amber-600 mr-1" />
                                 <div className="text-xs text-amber-700 font-medium">Satisfacción</div>
                             </div>
-                            <div className="text-2xl font-bold text-amber-600">
+                            <div className="text-lg font-bold text-amber-600">
                                 {agentPerformance.satisfaction > 0 
                                     ? agentPerformance.satisfaction.toFixed(1) 
                                     : '-'}/5
@@ -573,7 +573,7 @@ const CRMSimple = () => {
                                 <Smile className="w-4 h-4 text-green-600 mr-1" />
                                 <div className="text-xs text-green-700 font-medium">Positivos</div>
                             </div>
-                            <div className="text-2xl font-bold text-green-600">
+                            <div className="text-lg font-bold text-green-600">
                                 {agentPerformance.positivePercent > 0 
                                     ? agentPerformance.positivePercent.toFixed(0) 
                                     : '0'}%
@@ -585,7 +585,7 @@ const CRMSimple = () => {
                                 <AlertTriangle className="w-4 h-4 text-orange-600 mr-1" />
                                 <div className="text-xs text-orange-700 font-medium">Escalaciones</div>
                             </div>
-                            <div className="text-2xl font-bold text-orange-600">
+                            <div className="text-lg font-bold text-orange-600">
                                 {agentPerformance.escalations}
                             </div>
                         </div>
@@ -595,7 +595,7 @@ const CRMSimple = () => {
                                 <CheckCircle2 className="w-4 h-4 text-blue-600 mr-1" />
                                 <div className="text-xs text-blue-700 font-medium">Calidad</div>
                             </div>
-                            <div className="text-2xl font-bold text-blue-600">
+                            <div className="text-lg font-bold text-blue-600">
                                 {agentPerformance.quality > 0 
                                     ? agentPerformance.quality.toFixed(1) 
                                     : '-'}/5

@@ -946,30 +946,30 @@ export default function Mesas() {
 
             {/* Tabs: Zonas y Mesas - Estilo grande como Reservas */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                     <button
                         onClick={() => setActiveTab("zonas")}
-                        className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                        className={`px-8 py-4 rounded-xl font-semibold text-base transition-all shadow-sm ${
                             activeTab === "zonas"
-                                ? "bg-purple-600 text-white shadow-md"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-blue-700 shadow-lg scale-105"
+                                : "bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300"
                         }`}
                     >
                         <span className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
+                            <MapPin className="w-5 h-5" />
                             🗺️ ZONAS
                         </span>
                     </button>
                     <button
                         onClick={() => setActiveTab("mesas")}
-                        className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                        className={`px-8 py-4 rounded-xl font-semibold text-base transition-all shadow-sm ${
                             activeTab === "mesas"
-                                ? "bg-blue-600 text-white shadow-md"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-purple-700 shadow-lg scale-105"
+                                : "bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-purple-300"
                         }`}
                     >
                         <span className="flex items-center gap-2">
-                            <Grid3X3 className="w-4 h-4" />
+                            <Grid3X3 className="w-5 h-5" />
                             🍽️ MESAS
                         </span>
                     </button>

@@ -1050,7 +1050,7 @@ export default function Calendario() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                <Calendar className="w-8 h-8 text-blue-600" />
+                                <Calendar className="w-5 h-5 text-blue-600" />
                                 Horarios y Calendario
                             </h1>
                             <p className="text-gray-600 mt-1">
@@ -1116,30 +1116,30 @@ export default function Calendario() {
 
                 {/* Tabs de navegación - Estilo grande como Reservas y Mesas */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-3">
                         <button
                             onClick={() => setActiveTab('horarios')}
-                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                            className={`px-8 py-4 rounded-xl font-semibold text-base transition-all shadow-sm ${
                                 activeTab === 'horarios'
-                                    ? 'bg-blue-600 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-blue-700 shadow-lg scale-105'
+                                    : 'bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300'
                             }`}
                         >
                             <span className="flex items-center gap-2">
-                                <Clock className="w-4 h-4" />
+                                <Clock className="w-5 h-5" />
                                 🕐 HORARIOS
                             </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('calendario')}
-                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                            className={`px-8 py-4 rounded-xl font-semibold text-base transition-all shadow-sm ${
                                 activeTab === 'calendario'
-                                    ? 'bg-purple-600 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-purple-700 shadow-lg scale-105'
+                                    : 'bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-purple-300'
                             }`}
                         >
                             <span className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4" />
+                                <Calendar className="w-5 h-5" />
                                 📅 CALENDARIO
                             </span>
                         </button>

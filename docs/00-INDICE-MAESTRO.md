@@ -1,8 +1,8 @@
 # 📚 ÍNDICE MAESTRO - LA-IA APP V1
 
-**Fecha de última actualización:** 09 Octubre 2025  
-**Versión:** 2.0  
-**Estado del Proyecto:** ✅ Producción - 100% Funcional
+**Fecha de última actualización:** 23 Octubre 2025  
+**Versión:** 2.1  
+**Estado del Proyecto:** ✅ Producción - 100% Funcional + Sistema de Voz
 
 ---
 
@@ -105,20 +105,24 @@ Documentación de los sistemas core de la aplicación.
    - Workflows completos
    - **Estado:** ✅ Producción
 
-6. **[SISTEMA-VOZ-TWILIO-ARQUITECTURA-EMPRESARIAL.md](02-sistemas/SISTEMA-VOZ-TWILIO-ARQUITECTURA-EMPRESARIAL.md)** ⭐ **NUEVO**
-   - **Sistema de voz con Twilio + N8N**
-   - Arquitectura de nivel mundial
-   - 4 workflows especializados
-   - Conversaciones naturales (<3s latencia)
-   - Integración total con agente existente
-   - **Estado:** 🎯 Diseño aprobado
+6. **[SISTEMA-VOZ-OPENAI-COMPLETO.md](02-sistemas/SISTEMA-VOZ-OPENAI-COMPLETO.md)** 🎙️ **NUEVO - PRODUCCIÓN**
+   - **Sistema de voz 100% OpenAI (Profesional & Rentable)**
+   - STT: Whisper-1 | Agent: GPT-4o-mini | TTS: TTS-1
+   - 6 voces profesionales (seleccionables por restaurante)
+   - Latencia < 1.2s | Costo: $0.08/llamada
+   - Streaming bidireccional + VAD inteligente
+   - **Estado:** ✅ LISTO PARA PRODUCCIÓN
+   - **ROI:** 142% margen por llamada 🔥
 
-7. **[RESUMEN-EJECUTIVO-VOZ.md](02-sistemas/RESUMEN-EJECUTIVO-VOZ.md)** 📞 **NUEVO**
-   - Resumen ejecutivo del sistema de voz
-   - Decisiones arquitectónicas clave
-   - Plan de implementación
-   - Costes y ROI
-   - **Estado:** ✅ Listo para revisar
+7. **[SISTEMA-VOZ-TWILIO-ARQUITECTURA-EMPRESARIAL.md](02-sistemas/SISTEMA-VOZ-TWILIO-ARQUITECTURA-EMPRESARIAL.md)** 📚 **LEGACY**
+   - Diseño inicial (pre-optimización)
+   - Reemplazado por SISTEMA-VOZ-OPENAI-COMPLETO.md
+   - **Estado:** 📦 Archivo
+
+8. **[RESUMEN-EJECUTIVO-VOZ.md](02-sistemas/RESUMEN-EJECUTIVO-VOZ.md)** 📚 **LEGACY**
+   - Resumen ejecutivo inicial
+   - Reemplazado por versión optimizada
+   - **Estado:** 📦 Archivo
 
 ---
 
