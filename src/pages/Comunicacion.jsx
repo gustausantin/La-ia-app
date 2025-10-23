@@ -23,8 +23,7 @@ const CHANNELS = {
 
 const STATUS_CONFIG = {
     active: { label: 'Activa', icon: MessageCircle, bgClass: 'bg-white', textClass: 'text-green-700', borderClass: 'border-gray-300' },
-    resolved: { label: 'Resuelta', icon: CheckCheck, bgClass: 'bg-white', textClass: 'text-blue-700', borderClass: 'border-gray-300' },
-    abandoned: { label: 'Abandonada', icon: AlertTriangle, bgClass: 'bg-white', textClass: 'text-gray-600', borderClass: 'border-gray-300' }
+    resolved: { label: 'Resuelta', icon: CheckCheck, bgClass: 'bg-white', textClass: 'text-blue-700', borderClass: 'border-gray-300' }
 };
 
 // Helper para determinar el tipo basado en outcome
@@ -90,9 +89,8 @@ export default function Comunicacion() {
     const [stats, setStats] = useState({ 
         total: 0, 
         active: 0, 
-        resolved: 0, 
-        abandoned: 0,
-        // Nuevas estadísticas enriquecidas
+        resolved: 0,
+        // Estadísticas enriquecidas
         avgSatisfaction: 0,
         positivePercent: 0,
         escalations: 0,
@@ -143,7 +141,6 @@ export default function Comunicacion() {
                 total: (data || []).length,
                 active: (data || []).filter(c => c.status === 'active').length,
                 resolved: (data || []).filter(c => c.status === 'resolved').length,
-                abandoned: (data || []).filter(c => c.status === 'abandoned').length,
                 avgSatisfaction: parseFloat(avgSatisfaction),
                 positivePercent,
                 escalations,
@@ -282,15 +279,12 @@ export default function Comunicacion() {
                                     Aquí ves <strong>todas las conversaciones</strong> que tu asistente IA mantiene con clientes. 
                                     Se agrupan en ventanas de <strong>10 minutos</strong>. Color <strong className="text-purple-600">lila</strong> = agente, <strong>blanco</strong> = cliente.
                                 </p>
-                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                <div className="grid grid-cols-2 gap-2 text-xs">
                                     <div className="bg-white p-1.5 rounded border border-green-200">
                                         <span className="font-semibold text-green-900">🟢 Activa:</span> En curso
                                     </div>
                                     <div className="bg-white p-1.5 rounded border border-blue-200">
                                         <span className="font-semibold text-blue-900">🔵 Resuelta:</span> Cerrada (auto 10min)
-                                    </div>
-                                    <div className="bg-white p-1.5 rounded border border-gray-200">
-                                        <span className="font-semibold text-gray-900">⚪ Abandonada:</span> Sin respuesta
                                     </div>
                                 </div>
                             </div>
@@ -300,7 +294,7 @@ export default function Comunicacion() {
                     {/* Estadísticas MÁS COMPACTAS Y PROFESIONALES - 2 filas */}
                     <div className="space-y-1.5">
                         {/* Fila 1: Estadísticas básicas */}
-                        <div className="grid grid-cols-4 gap-1.5">
+                        <div className="grid grid-cols-3 gap-1.5">
                             <div className="bg-white p-1.5 rounded-md border border-gray-200 hover:shadow-sm transition-shadow">
                                 <div className="flex items-center justify-between">
                                     <div>
@@ -326,15 +320,6 @@ export default function Comunicacion() {
                                         <p className="text-lg font-bold text-blue-600">{stats.resolved}</p>
                                     </div>
                                     <CheckCheck className="w-5 h-5 text-blue-600" />
-                                </div>
-                            </div>
-                            <div className="bg-white p-1.5 rounded-md border border-gray-200 hover:shadow-sm transition-shadow">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Abandonadas</p>
-                                        <p className="text-lg font-bold text-gray-600">{stats.abandoned}</p>
-                                    </div>
-                                    <AlertTriangle className="w-5 h-5 text-gray-400" />
                                 </div>
                             </div>
                         </div>
@@ -439,7 +424,6 @@ export default function Comunicacion() {
                                     <option value="all">🔍 Todos los estados</option>
                                     <option value="active">✅ Activas</option>
                                     <option value="resolved">✔️ Resueltas</option>
-                                    <option value="abandoned">❌ Abandonadas</option>
                                 </select>
                             </div>
                         </div>
@@ -455,7 +439,7 @@ export default function Comunicacion() {
                             ) : (
                                 filteredConversations.map((conv) => {
                                     const channel = CHANNELS[conv.source_channel] || CHANNELS.webchat;
-                                    const status = STATUS_CONFIG[conv.status] || STATUS_CONFIG.abandoned;
+                                    const status = STATUS_CONFIG[conv.status] || STATUS_CONFIG.resolved;
                                     const Icon = channel.icon;
                                     const StatusIcon = status.icon;
                                     const isSelected = selectedConversation?.id === conv.id;
