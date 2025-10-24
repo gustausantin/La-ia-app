@@ -146,13 +146,13 @@ export default function NoShowAutomationConfigSimple() {
                     <button
                         onClick={() => handleToggle(!enabled)}
                         disabled={saving}
-                        className={`relative inline-flex h-12 w-24 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${
+                        className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${
                             enabled ? 'bg-green-600' : 'bg-gray-300'
                         } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <span
-                            className={`inline-block h-10 w-10 transform rounded-full bg-white shadow-lg transition-transform ${
-                                enabled ? 'translate-x-12' : 'translate-x-1'
+                            className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${
+                                enabled ? 'translate-x-8' : 'translate-x-1'
                             }`}
                         />
                     </button>

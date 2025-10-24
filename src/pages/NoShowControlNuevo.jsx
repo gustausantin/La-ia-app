@@ -188,149 +188,149 @@ export default function NoShowControlNuevo() {
                 
                 {/* Header */}
                 <div className="mb-3">
-                    <h1 className="text-xl font-bold text-gray-900 mb-1">Sistema Anti No-Shows</h1>
+                    <h1 className="text-sm font-bold text-gray-900 mb-1">Sistema Anti No-Shows</h1>
                     <p className="text-xs text-gray-600">Prevención inteligente con IA y automatización</p>
                 </div>
 
-                {/* KPIs Principales */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-6">
-                    <div className="bg-white rounded-xl shadow-sm border p-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <CheckCircle className="w-8 h-8 text-green-600" />
-                            <span className="text-xs text-gray-500">Este mes</span>
+                {/* KPIs Principales - Compactas como Reservas */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
+                    <div className="bg-white rounded-lg shadow-sm border p-2">
+                        <div className="flex items-center justify-between mb-1">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <span className="text-[9px] text-gray-500">Este mes</span>
                         </div>
-                        <p className="text-lg font-bold text-gray-900">{stats.evitadosEsteMes}</p>
-                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">No-Shows evitados</p>
+                        <p className="text-base font-bold text-gray-900">{stats.evitadosEsteMes}</p>
+                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-0.5">No-Shows evitados</p>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border p-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <TrendingDown className="w-8 h-8 text-blue-600" />
-                            <span className="text-xs text-gray-500">Tasa actual</span>
+                    <div className="bg-white rounded-lg shadow-sm border p-2">
+                        <div className="flex items-center justify-between mb-1">
+                            <TrendingDown className="w-4 h-4 text-blue-600" />
+                            <span className="text-[9px] text-gray-500">Tasa actual</span>
                         </div>
-                        <p className="text-lg font-bold text-gray-900">{stats.tasaNoShow.toFixed(1)}%</p>
-                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Tasa de No-Show</p>
+                        <p className="text-base font-bold text-gray-900">{stats.tasaNoShow.toFixed(1)}%</p>
+                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-0.5">Tasa de No-Show</p>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border p-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <DollarSign className="w-8 h-8 text-green-600" />
-                            <span className="text-xs text-gray-500">ROI mensual</span>
+                    <div className="bg-white rounded-lg shadow-sm border p-2">
+                        <div className="flex items-center justify-between mb-1">
+                            <DollarSign className="w-4 h-4 text-green-600" />
+                            <span className="text-[9px] text-gray-500">ROI mensual</span>
                         </div>
-                        <p className="text-lg font-bold text-gray-900">{stats.roiMensual}€</p>
-                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Ingresos protegidos</p>
+                        <p className="text-base font-bold text-gray-900">{stats.roiMensual}€</p>
+                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-0.5">Ingresos protegidos</p>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border p-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <AlertTriangle className="w-8 h-8 text-red-600" />
-                            <span className="text-xs text-gray-500">Hoy</span>
+                    <div className="bg-white rounded-lg shadow-sm border p-2">
+                        <div className="flex items-center justify-between mb-1">
+                            <AlertTriangle className="w-4 h-4 text-red-600" />
+                            <span className="text-[9px] text-gray-500">Hoy</span>
                         </div>
-                        <p className="text-lg font-bold text-gray-900">{stats.reservasRiesgo}</p>
-                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Reservas de riesgo</p>
+                        <p className="text-base font-bold text-gray-900">{stats.reservasRiesgo}</p>
+                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-0.5">Reservas de riesgo</p>
                     </div>
                 </div>
 
                 {/* Sección Colapsable: Cómo Prevenimos los No-Shows */}
-                <div className="bg-white rounded-xl shadow-sm border mb-6">
+                <div className="bg-white rounded-lg shadow-sm border mb-4">
                     <button
                         onClick={() => setShowFlowExplanation(!showFlowExplanation)}
-                        className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+                        className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
                     >
-                        <div className="flex items-center gap-3">
-                            <Info className="w-6 h-6 text-purple-600" />
+                        <div className="flex items-center gap-2">
+                            <Info className="w-4 h-4 text-purple-600" />
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900">¿Cómo Prevenimos los No-Shows?</h2>
+                                <h2 className="text-sm font-bold text-gray-900">¿Cómo Prevenimos los No-Shows?</h2>
                                 <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Sistema automático de prevención en 5 pasos</p>
                             </div>
                         </div>
                         {showFlowExplanation ? (
-                            <ChevronUp className="w-6 h-6 text-gray-400" />
+                            <ChevronUp className="w-4 h-4 text-gray-400" />
                         ) : (
-                            <ChevronDown className="w-6 h-6 text-gray-400" />
+                            <ChevronDown className="w-4 h-4 text-gray-400" />
                         )}
                     </button>
 
                     {showFlowExplanation && (
-                        <div className="px-6 pb-6 border-t">
-                            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-6 mt-4">
+                        <div className="px-3 pb-3 border-t">
+                            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-3 mt-2">
                                 {/* Timeline Visual */}
                                 <div className="relative">
                                     {/* Línea vertical */}
                                     <div className="absolute left-8 top-8 bottom-8 w-1 bg-gradient-to-b from-blue-400 via-yellow-400 via-orange-400 to-red-400"></div>
                                     
                                     {/* Paso 1: RESERVA CREADA */}
-                                    <div className="relative pl-20 pb-8">
-                                        <div className="absolute left-5 top-0 w-7 h-7 rounded-full bg-purple-500 border-4 border-white shadow-lg flex items-center justify-center">
-                                            <Calendar className="w-4 h-4 text-white" />
+                                    <div className="relative pl-16 pb-6">
+                                        <div className="absolute left-3.5 top-0 w-5 h-5 rounded-full bg-purple-500 border-4 border-white shadow-lg flex items-center justify-center">
+                                            <Calendar className="w-3 h-3 text-white" />
                                         </div>
-                                        <div className="bg-white rounded-lg p-4 shadow-md border-2 border-purple-200">
-                                            <h3 className="font-bold text-purple-900 mb-2 text-base">RESERVA CREADA</h3>
-                                            <p className="text-base text-gray-600">Cliente hace una reserva (cualquier día, cualquier hora)</p>
-                                            <p className="text-sm text-purple-600 font-medium mt-2">Estado: Pendiente</p>
+                                        <div className="bg-white rounded-lg p-2 shadow-md border border-purple-200">
+                                            <h3 className="font-bold text-purple-900 mb-1 text-xs">RESERVA CREADA</h3>
+                                            <p className="text-xs text-gray-600">Cliente hace una reserva (cualquier día, cualquier hora)</p>
+                                            <p className="text-[10px] text-purple-600 font-medium mt-1">Estado: Pendiente</p>
                                         </div>
                                     </div>
 
                                     {/* Paso 2: 24 HORAS ANTES */}
-                                    <div className="relative pl-20 pb-8">
-                                        <div className="absolute left-5 top-0 w-7 h-7 rounded-full bg-blue-500 border-4 border-white shadow-lg flex items-center justify-center">
-                                            <MessageSquare className="w-4 h-4 text-white" />
+                                    <div className="relative pl-16 pb-6">
+                                        <div className="absolute left-3.5 top-0 w-5 h-5 rounded-full bg-blue-500 border-4 border-white shadow-lg flex items-center justify-center">
+                                            <MessageSquare className="w-3 h-3 text-white" />
                                         </div>
-                                        <div className="bg-white rounded-lg p-4 shadow-md border-2 border-blue-200">
-                                            <h3 className="font-bold text-blue-900 mb-2 text-base">📱 CONFIRMACIÓN 24 HORAS ANTES</h3>
-                                            <p className="text-base text-gray-700 mb-3">WhatsApp automático: <span className="font-semibold">"Confirma tu reserva para mañana"</span></p>
-                                            <div className="flex gap-2 text-sm flex-wrap">
-                                                <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded font-medium">✅ Responde → Confirmada</span>
-                                                <span className="px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded font-medium">❌ No responde → Riesgo BAJO</span>
+                                        <div className="bg-white rounded-lg p-2 shadow-md border border-blue-200">
+                                            <h3 className="font-bold text-blue-900 mb-1 text-xs">📱 CONFIRMACIÓN 24 HORAS ANTES</h3>
+                                            <p className="text-xs text-gray-700 mb-2">WhatsApp automático: <span className="font-semibold">"Confirma tu reserva para mañana"</span></p>
+                                            <div className="flex gap-1.5 text-[10px] flex-wrap">
+                                                <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">✅ Responde → Confirmada</span>
+                                                <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded font-medium">❌ No responde → Riesgo BAJO</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Paso 3: 4 HORAS ANTES */}
-                                    <div className="relative pl-20 pb-8">
-                                        <div className="absolute left-5 top-0 w-7 h-7 rounded-full bg-yellow-500 border-4 border-white shadow-lg flex items-center justify-center">
-                                            <MessageSquare className="w-4 h-4 text-white" />
+                                    <div className="relative pl-16 pb-6">
+                                        <div className="absolute left-3.5 top-0 w-5 h-5 rounded-full bg-yellow-500 border-4 border-white shadow-lg flex items-center justify-center">
+                                            <MessageSquare className="w-3 h-3 text-white" />
                                         </div>
-                                        <div className="bg-white rounded-lg p-4 shadow-md border-2 border-yellow-200">
-                                            <h3 className="font-bold text-yellow-900 mb-2 text-base">⏰ RECORDATORIO 4 HORAS ANTES</h3>
-                                            <p className="text-base text-gray-700 mb-3">WhatsApp recordatorio: <span className="font-semibold">"Te esperamos en 4 horas"</span></p>
-                                            <div className="flex gap-2 text-sm flex-wrap">
-                                                <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded font-medium">✅ Responde → Confirmada</span>
-                                                <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded font-medium">❌ No responde → Riesgo MEDIO</span>
+                                        <div className="bg-white rounded-lg p-2 shadow-md border border-yellow-200">
+                                            <h3 className="font-bold text-yellow-900 mb-1 text-xs">⏰ RECORDATORIO 4 HORAS ANTES</h3>
+                                            <p className="text-xs text-gray-700 mb-2">WhatsApp recordatorio: <span className="font-semibold">"Te esperamos en 4 horas"</span></p>
+                                            <div className="flex gap-1.5 text-[10px] flex-wrap">
+                                                <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">✅ Responde → Confirmada</span>
+                                                <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded font-medium">❌ No responde → Riesgo MEDIO</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Paso 4: 2h 15min ANTES - ALARMA */}
-                                    <div className="relative pl-20 pb-8">
-                                        <div className="absolute left-5 top-0 w-7 h-7 rounded-full bg-orange-500 border-4 border-white shadow-lg flex items-center justify-center animate-pulse">
-                                            <Phone className="w-4 h-4 text-white" />
+                                    <div className="relative pl-16 pb-6">
+                                        <div className="absolute left-3.5 top-0 w-5 h-5 rounded-full bg-orange-500 border-4 border-white shadow-lg flex items-center justify-center animate-pulse">
+                                            <Phone className="w-3 h-3 text-white" />
                                         </div>
-                                        <div className="bg-orange-50 rounded-lg p-4 shadow-md border-2 border-orange-300">
-                                            <h3 className="font-bold text-orange-900 mb-2 text-base">🚨 LLAMADA URGENTE (2h 15min antes)</h3>
-                                            <p className="text-base text-gray-700 mb-3"><span className="font-bold text-orange-600">ALARMA EN DASHBOARD</span> → Personal del restaurante LLAMA al cliente</p>
-                                            <div className="flex gap-2 text-sm flex-wrap">
-                                                <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded font-medium">✅ Confirma → Resolver alarma</span>
-                                                <span className="px-3 py-1.5 bg-red-100 text-red-700 rounded font-medium">❌ No contesta → Esperar T-2h</span>
+                                        <div className="bg-orange-50 rounded-lg p-2 shadow-md border border-orange-300">
+                                            <h3 className="font-bold text-orange-900 mb-1 text-xs">🚨 LLAMADA URGENTE (2h 15min antes)</h3>
+                                            <p className="text-xs text-gray-700 mb-2"><span className="font-bold text-orange-600">ALARMA EN DASHBOARD</span> → Personal del restaurante LLAMA al cliente</p>
+                                            <div className="flex gap-1.5 text-[10px] flex-wrap">
+                                                <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">✅ Confirma → Resolver alarma</span>
+                                                <span className="px-2 py-1 bg-red-100 text-red-700 rounded font-medium">❌ No contesta → Esperar T-2h</span>
                                             </div>
-                                            <p className="text-sm text-orange-600 font-semibold mt-3">Riesgo: ALTO</p>
+                                            <p className="text-[10px] text-orange-600 font-semibold mt-1.5">Riesgo: ALTO</p>
                                         </div>
                                     </div>
 
                                     {/* Paso 5: 2h ANTES (1h 59min) - AUTO-LIBERACIÓN */}
-                                    <div className="relative pl-20">
-                                        <div className="absolute left-5 top-0 w-7 h-7 rounded-full bg-red-500 border-4 border-white shadow-lg flex items-center justify-center">
-                                            <AlertCircle className="w-4 h-4 text-white" />
+                                    <div className="relative pl-16">
+                                        <div className="absolute left-3.5 top-0 w-5 h-5 rounded-full bg-red-500 border-4 border-white shadow-lg flex items-center justify-center">
+                                            <AlertCircle className="w-3 h-3 text-white" />
                                         </div>
-                                        <div className="bg-red-50 rounded-lg p-4 shadow-md border-2 border-red-300">
-                                            <h3 className="font-bold text-red-900 mb-2 text-base">⚠️ AUTO-LIBERACIÓN (2 horas antes)</h3>
-                                            <p className="text-base text-gray-700 mb-3 font-semibold">Si no confirmó en 1h 59min:</p>
-                                            <ul className="text-base space-y-2 text-gray-700">
+                                        <div className="bg-red-50 rounded-lg p-2 shadow-md border border-red-300">
+                                            <h3 className="font-bold text-red-900 mb-1 text-xs">⚠️ AUTO-LIBERACIÓN (2 horas antes)</h3>
+                                            <p className="text-xs text-gray-700 mb-2 font-semibold">Si no confirmó en 1h 59min:</p>
+                                            <ul className="text-xs space-y-1 text-gray-700">
                                                 <li>• Estado de reserva: <span className="font-semibold text-red-600">no-show</span></li>
                                                 <li>• Slot de mesa: <span className="font-semibold text-green-600">LIBERADO</span> (disponible para otros)</li>
                                                 <li>• Reserva: <span className="font-semibold">NO se elimina</span> (queda en historial)</li>
                                             </ul>
-                                            <p className="text-sm text-gray-500 mt-3 italic">Si el cliente aparece después, se resuelve manualmente</p>
+                                            <p className="text-[10px] text-gray-500 mt-1.5 italic">Si el cliente aparece después, se resuelve manualmente</p>
                                         </div>
                                     </div>
                                 </div>
@@ -340,96 +340,96 @@ export default function NoShowControlNuevo() {
                 </div>
 
                 {/* Sección Colapsable: Algoritmo de Riesgo */}
-                <div className="bg-white rounded-xl shadow-sm border mb-6">
+                <div className="bg-white rounded-lg shadow-sm border mb-4">
                     <button
                         onClick={() => setShowAlgorithmExplanation(!showAlgorithmExplanation)}
-                        className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+                        className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
                     >
-                        <div className="flex items-center gap-3">
-                            <Brain className="w-6 h-6 text-blue-600" />
+                        <div className="flex items-center gap-2">
+                            <Brain className="w-4 h-4 text-blue-600" />
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900">Algoritmo Inteligente de Riesgo</h2>
+                                <h2 className="text-sm font-bold text-gray-900">Algoritmo Inteligente de Riesgo</h2>
                                 <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">7 factores estáticos + ajustes dinámicos en tiempo real</p>
                             </div>
                         </div>
                         {showAlgorithmExplanation ? (
-                            <ChevronUp className="w-6 h-6 text-gray-400" />
+                            <ChevronUp className="w-4 h-4 text-gray-400" />
                         ) : (
-                            <ChevronDown className="w-6 h-6 text-gray-400" />
+                            <ChevronDown className="w-4 h-4 text-gray-400" />
                         )}
                     </button>
 
                     {showAlgorithmExplanation && (
-                        <div className="px-6 pb-6 border-t">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
+                        <div className="px-3 pb-3 border-t">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 mt-2">
                                 {/* Factor 1 */}
-                                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-5 border-2 border-red-200">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Target className="w-6 h-6 text-red-600" />
-                                        <h3 className="font-bold text-red-900 text-base">Historial del Cliente</h3>
+                                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-2 border border-red-200">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                        <Target className="w-3.5 h-3.5 text-red-600" />
+                                        <h3 className="font-bold text-red-900 text-xs">Historial del Cliente</h3>
                                     </div>
-                                    <p className="text-base text-gray-700 mb-2">0-40 puntos según no-shows previos</p>
-                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Si &gt;30% no-shows → +40pts</p>
+                                    <p className="text-xs text-gray-700 mb-0.5">0-40 puntos según no-shows previos</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Si &gt;30% no-shows → +40pts</p>
                                 </div>
 
                                 {/* Factor 2 */}
-                                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-5 border-2 border-orange-200">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Clock className="w-6 h-6 text-orange-600" />
-                                        <h3 className="font-bold text-orange-900 text-base">Inactividad</h3>
+                                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-2 border border-orange-200">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                        <Clock className="w-3.5 h-3.5 text-orange-600" />
+                                        <h3 className="font-bold text-orange-900 text-xs">Inactividad</h3>
                                     </div>
-                                    <p className="text-base text-gray-700 mb-2">0-25 puntos según última visita</p>
-                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Si &gt;6 meses sin venir → +25pts</p>
+                                    <p className="text-xs text-gray-700 mb-0.5">0-25 puntos según última visita</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Si &gt;6 meses sin venir → +25pts</p>
                                 </div>
 
                                 {/* Factor 3 */}
-                                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-5 border-2 border-yellow-200">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Clock className="w-6 h-6 text-yellow-600" />
-                                        <h3 className="font-bold text-yellow-900 text-base">Horario de Riesgo</h3>
+                                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-2 border border-yellow-200">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                        <Clock className="w-3.5 h-3.5 text-yellow-600" />
+                                        <h3 className="font-bold text-yellow-900 text-xs">Horario de Riesgo</h3>
                                     </div>
-                                    <p className="text-base text-gray-700 mb-2">0-15 puntos según hora</p>
-                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Cenas tardías (≥21h) → +15pts</p>
+                                    <p className="text-xs text-gray-700 mb-0.5">0-15 puntos según hora</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Cenas tardías (≥21h) → +15pts</p>
                                 </div>
 
                                 {/* Factor 4 */}
-                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-5 border-2 border-blue-200">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Users className="w-6 h-6 text-blue-600" />
-                                        <h3 className="font-bold text-blue-900 text-base">Tamaño de Grupo</h3>
+                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-2 border border-blue-200">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                        <Users className="w-3.5 h-3.5 text-blue-600" />
+                                        <h3 className="font-bold text-blue-900 text-xs">Tamaño de Grupo</h3>
                                     </div>
-                                    <p className="text-base text-gray-700 mb-2">0-10 puntos según personas</p>
-                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Grupos ≥6 personas → +10pts</p>
+                                    <p className="text-xs text-gray-700 mb-0.5">0-10 puntos según personas</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Grupos ≥6 personas → +10pts</p>
                                 </div>
 
                                 {/* Factor 5 */}
-                                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-5 border-2 border-purple-200">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <MessageSquare className="w-6 h-6 text-purple-600" />
-                                        <h3 className="font-bold text-purple-900 text-base">Canal de Reserva</h3>
+                                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-2 border border-purple-200">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                        <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
+                                        <h3 className="font-bold text-purple-900 text-xs">Canal de Reserva</h3>
                                     </div>
-                                    <p className="text-base text-gray-700 mb-2">0-10 puntos según origen</p>
-                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Teléfono/Walk-in → +10pts</p>
+                                    <p className="text-xs text-gray-700 mb-0.5">0-10 puntos según origen</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Teléfono/Walk-in → +10pts</p>
                                 </div>
 
                                 {/* Factor 6 */}
-                                <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg p-5 border-2 border-pink-200">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Calendar className="w-6 h-6 text-pink-600" />
-                                        <h3 className="font-bold text-pink-900 text-base">Antelación</h3>
+                                <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg p-2 border border-pink-200">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                        <Calendar className="w-3.5 h-3.5 text-pink-600" />
+                                        <h3 className="font-bold text-pink-900 text-xs">Antelación</h3>
                                     </div>
-                                    <p className="text-base text-gray-700 mb-2">0-20 puntos según cuándo reservó</p>
-                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide font-medium">Reserva &lt;4h antes → +20pts</p>
+                                    <p className="text-xs text-gray-700 mb-0.5">0-20 puntos según cuándo reservó</p>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Reserva &lt;4h antes → +20pts</p>
                                 </div>
 
                                 {/* Factor 7: Urgencia Temporal */}
-                                <div className="bg-gradient-to-br from-red-50 to-orange-100 rounded-lg p-5 border-2 border-red-300 shadow-lg">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <AlertTriangle className="w-6 h-6 text-red-600 animate-pulse" />
-                                        <h3 className="font-bold text-red-900 text-base">⚠️ Urgencia Temporal</h3>
+                                <div className="bg-gradient-to-br from-red-50 to-orange-100 rounded-lg p-2 border border-red-300 shadow-md">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                        <AlertTriangle className="w-3.5 h-3.5 text-red-600 animate-pulse" />
+                                        <h3 className="font-bold text-red-900 text-xs">⚠️ Urgencia Temporal</h3>
                                     </div>
-                                    <p className="text-base text-gray-700 mb-2 font-semibold">0-50 puntos según proximidad sin confirmar</p>
-                                    <div className="space-y-1 text-sm text-gray-700 font-medium">
+                                    <p className="text-xs text-gray-700 mb-1 font-semibold">0-50 puntos según proximidad sin confirmar</p>
+                                    <div className="space-y-0.5 text-[10px] text-gray-700 font-medium">
                                         <p>• &lt;2h 15min sin confirmar → <span className="text-red-700 font-bold">+50pts 🔴</span></p>
                                         <p>• &lt;4h sin confirmar → <span className="text-orange-700 font-bold">+35pts ⚠️</span></p>
                                         <p>• &lt;24h sin confirmar → <span className="text-yellow-700 font-bold">+15pts</span></p>
@@ -536,60 +536,59 @@ export default function NoShowControlNuevo() {
                     )}
                 </div>
 
-                {/* Tabs */}
-                {/* Tabs - Estilo grande como Reservas, Mesas y Calendario */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-                    <div className="flex flex-wrap gap-2">
+                {/* Tabs - Compactos y homogéneos como Reservas */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
+                    <div className="flex flex-wrap gap-3">
                         <button
                             onClick={() => setActiveTab('overview')}
-                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                                 activeTab === 'overview'
                                     ? 'bg-red-600 text-white shadow-md'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                         >
-                            <span className="flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4" />
-                                🚨 RESERVAS DE RIESGO
+                            <span className="flex items-center gap-1.5">
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                                Reservas de riesgo
                             </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('actions')}
-                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                                 activeTab === 'actions'
-                                    ? 'bg-blue-600 text-white shadow-md'
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                         >
-                            <span className="flex items-center gap-2">
-                                <History className="w-4 h-4" />
-                                📝 ACCIONES TOMADAS
+                            <span className="flex items-center gap-1.5">
+                                <History className="w-3.5 h-3.5" />
+                                Acciones tomadas
                             </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('trends')}
-                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                                 activeTab === 'trends'
-                                    ? 'bg-purple-600 text-white shadow-md'
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                         >
-                            <span className="flex items-center gap-2">
-                                <Activity className="w-4 h-4" />
-                                📊 TENDENCIAS
+                            <span className="flex items-center gap-1.5">
+                                <Activity className="w-3.5 h-3.5" />
+                                Tendencias
                             </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('config')}
-                            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                                 activeTab === 'config'
-                                    ? 'bg-gray-700 text-white shadow-md'
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                         >
-                            <span className="flex items-center gap-2">
-                                <Settings className="w-4 h-4" />
-                                ⚙️ CONFIGURACIÓN
+                            <span className="flex items-center gap-1.5">
+                                <Settings className="w-3.5 h-3.5" />
+                                Configuración
                             </span>
                         </button>
                     </div>
