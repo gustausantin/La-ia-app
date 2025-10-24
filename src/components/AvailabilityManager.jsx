@@ -1474,8 +1474,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 `)
                 .eq('restaurant_id', restaurantId)
                 .eq('slot_date', date)
-                .eq('status', 'free')  // 🔥 SOLO slots libres
-                .eq('is_available', true)  // 🔥 SOLO disponibles
+                // ✅ MOSTRAR TODOS LOS SLOTS (libres y ocupados)
                 .order('start_time', { ascending: true })
                 .order('table_id', { ascending: true });
 
@@ -1609,48 +1608,26 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
             </div>
 
 
-            {/* Información de Política de Reservas */}
-            {restaurantSettings && (
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-2 mb-3 shadow-sm">
-                    <h3 className="text-xs font-semibold text-blue-900 mb-2 flex items-center gap-1">
-                        <Settings className="w-3.5 h-3.5" />
-                        Política de Reservas Actual
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        <div className="bg-white rounded-lg p-2 shadow-sm border border-blue-100">
-                            <div className="text-blue-700 font-medium text-[10px] mb-0.5 uppercase tracking-wide">Días de Antelación</div>
-                            <div className="text-gray-900 text-xs font-bold">{restaurantSettings.advance_booking_days || 30} días</div>
-                        </div>
-                        <div className="bg-white rounded-lg p-2 shadow-sm border border-blue-100">
-                            <div className="text-blue-700 font-medium text-[10px] mb-0.5 uppercase tracking-wide">Duración Reserva</div>
-                            <div className="text-gray-900 text-xs font-bold">{restaurantSettings.reservation_duration || 90} min</div>
-                        </div>
-                        <div className="bg-white rounded-lg p-2 shadow-sm border border-blue-100">
-                            <div className="text-blue-700 font-medium text-[10px] mb-0.5 uppercase tracking-wide">Tamaño Grupo</div>
-                            <div className="text-gray-900 text-xs font-bold">{restaurantSettings.min_party_size || 1}-{restaurantSettings.max_party_size || 12} personas</div>
-                        </div>
-                    </div>
-                    <div className="mt-1.5 text-[10px] text-blue-600">
-                        💡 Estas configuraciones se aplican automáticamente al generar disponibilidades
-                    </div>
-                </div>
-            )}
-
             {/* Panel de Estado de Disponibilidades - CONDICIONAL */}
             
             {/* 🎯 CASO 1: SÍ HAY SLOTS GENERADOS (libres, no solo protegidos) */}
             {availabilityStats?.free > 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-3">
-                    {/* Header compacto */}
-                    <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                <div className="bg-white rounded-xl border border-blue-200 shadow-sm mb-3">
+                    {/* Header compacto con fondo azul */}
+                    <div className="flex items-center justify-between p-3 border-b border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
                         <div className="flex items-center gap-2">
                             <div className="p-1.5 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
                                 <CheckCircle2 className="w-4 h-4 text-green-600" />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-sm font-bold text-gray-900 mb-1">
-                                    Días Disponibles
-                                </h3>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <h3 className="text-sm font-bold text-blue-900">
+                                        📅 Días Disponibles
+                                    </h3>
+                                    <span className="text-[10px] text-blue-600 italic">
+                                        (según Política de Reservas)
+                                    </span>
+                                </div>
                                 
                                 {/* Rango de fechas compacto */}
                                 <div className="flex items-center gap-2">
@@ -1697,8 +1674,8 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                         </div>
                     </div>
                     
-                    {/* Grid de estadísticas - MUY COMPACTO CON MEJOR CONTRASTE */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 bg-gradient-to-br from-blue-50 to-purple-50">
+                    {/* Grid de estadísticas - PROFESIONAL Y UNIFORME */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 bg-gradient-to-br from-blue-50 to-indigo-50">
                         <div className="bg-white rounded-lg p-1.5 shadow-md border-2 border-blue-200">
                             <div className="flex items-center justify-center gap-0.5 mb-0.5 text-blue-600">
                                 <Calendar className="w-3 h-3" />
@@ -1708,7 +1685,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                                 {dayStats?.diasTotales || 0}
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg p-1.5 shadow-md border-2 border-green-200">
+                        <div className="bg-white rounded-lg p-1.5 shadow-md border-2 border-blue-200">
                             <div className="flex items-center justify-center gap-0.5 mb-0.5 text-green-600">
                                 <CalendarCheck className="w-3 h-3" />
                                 <span className="text-[9px] font-medium uppercase tracking-wide">Días Libres</span>
@@ -1717,7 +1694,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                                 {dayStats?.diasLibres || 0}
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg p-1.5 shadow-md border-2 border-amber-200">
+                        <div className="bg-white rounded-lg p-1.5 shadow-md border-2 border-blue-200">
                             <div className="flex items-center justify-center gap-0.5 mb-0.5 text-amber-600">
                                 <CalendarClock className="w-3 h-3" />
                                 <span className="text-[9px] font-medium uppercase tracking-wide">Días Ocupados</span>
@@ -1726,7 +1703,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                                 {dayStats?.diasConReservas || 0}
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg p-1.5 shadow-md border-2 border-purple-200">
+                        <div className="bg-white rounded-lg p-1.5 shadow-md border-2 border-blue-200">
                             <div className="flex items-center justify-center gap-0.5 mb-0.5 text-purple-600">
                                 <Users className="w-3 h-3" />
                                 <span className="text-[9px] font-medium uppercase tracking-wide">Reservas</span>
@@ -1891,7 +1868,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                 {/* Mostrar disponibilidades del día seleccionado */}
                 {Object.keys(dayAvailability).length > 0 && (
                     <div className="mt-3 border-t border-blue-200 pt-3">
-                        <div className="space-y-3 max-h-60 overflow-y-auto">
+                        <div className="space-y-3 max-h-[calc(100vh-350px)] overflow-y-auto">
                             {Object.entries(dayAvailability).map(([tableName, slots]) => (
                                 <div key={tableName} className={`p-2 rounded border ${
                                     slots[0]?.isClosed 
@@ -1922,15 +1899,16 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                                                             {slots.map((slot) => (
                                                                 <span
                                                                     key={slot.id}
-                                                                    className={`px-2 py-1 text-xs rounded ${
-                                                                        slot.hasReservation 
-                                                                            ? 'bg-purple-100 text-purple-700 border border-purple-300' 
-                                                                            : slot.status === 'free'
+                                                                    className={`px-2 py-1 text-xs font-medium rounded ${
+                                                                        slot.status === 'free'
                                                                             ? 'bg-green-100 text-green-700 border border-green-300'
-                                                                            : 'bg-gray-100 text-gray-700 border border-gray-300'
+                                                                            : 'bg-red-100 text-red-700 border border-red-300'
                                                                     }`}
+                                                                    title={`${slot.start_time.slice(0, 5)} - Estado: ${slot.status}`}
                                                                 >
-                                                                    {slot.start_time.slice(0, 5)} {slot.hasReservation ? '📋' : '✅'}
+                                                                    {slot.start_time.slice(0, 5)} {
+                                                                        slot.status === 'free' ? '✅' : '❌'
+                                                                    }
                                                                 </span>
                                                             ))}
                                                         </div>
@@ -1941,26 +1919,6 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                     </div>
                 )}
             </div>
-
-            {/* Info del período actual - ACTUALIZADO DINÁMICAMENTE */}
-            {availabilityStats?.total > 0 && (
-                <div className="mt-4 p-2 bg-gray-50 rounded-lg">
-                    <div className="text-sm text-gray-600">
-                        <strong>Período actual:</strong> {' '}
-                        {availabilityStats?.dateRange?.start ? (
-                            <>
-                                {format(new Date(availabilityStats.dateRange.start), 'dd/MM/yyyy', { locale: es })} - {' '}
-                                {format(new Date(availabilityStats.dateRange.end), 'dd/MM/yyyy', { locale: es })}
-                            </>
-                        ) : (
-                            <>
-                                {format(new Date(), 'dd/MM/yyyy', { locale: es })} - {' '}
-                                {format(addDays(new Date(), restaurantSettings?.advance_booking_days || 30), 'dd/MM/yyyy', { locale: es })}
-                            </>
-                        )}
-                    </div>
-                </div>
-            )}
 
             {/* Vista detallada de disponibilidades */}
             {showAvailabilityGrid && (
@@ -1977,7 +1935,7 @@ const AvailabilityManager = ({ autoTriggerRegeneration = false }) => {
                             <p className="text-sm">Usa el botón "Generar Horarios de Reserva" para crear slots</p>
                         </div>
                     ) : (
-                        <div className="space-y-6 max-h-96 overflow-y-auto">
+                        <div className="space-y-6 max-h-[calc(100vh-400px)] overflow-y-auto">
                             {Object.entries(availabilityGrid).map(([date, tables]) => (
                                 <div key={date} className="border border-gray-100 rounded-lg p-2">
                                     <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">

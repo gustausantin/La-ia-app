@@ -77,28 +77,28 @@ export const OccupancyHeatMap = ({ occupancyData, loading, onSlotClick }) => {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4">
-            {/* Header */}
-            <div className="mb-4">
-                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-2">
-                    <Table className="w-5 h-5 text-purple-600" />
+        <div className="bg-white rounded-lg shadow-md border border-gray-100 p-2">
+            {/* Header Compacto */}
+            <div className="mb-2">
+                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-1.5 mb-1">
+                    <Table className="w-4 h-4 text-purple-600" />
                     Mapa de Ocupación por Mesas
                 </h3>
-                <p className="text-xs text-gray-600 flex items-center gap-3">
-                    <span className="flex items-center gap-1">
-                        <span className="w-3 h-3 bg-green-500 rounded-sm"></span>
+                <p className="text-[10px] text-gray-600 flex items-center gap-2">
+                    <span className="flex items-center gap-0.5">
+                        <span className="w-2 h-2 bg-green-500 rounded-sm"></span>
                         Libre
                     </span>
-                    <span className="flex items-center gap-1">
-                        <span className="w-3 h-3 bg-red-500 rounded-sm"></span>
+                    <span className="flex items-center gap-0.5">
+                        <span className="w-2 h-2 bg-red-500 rounded-sm"></span>
                         Reservado
                     </span>
-                    <span className="flex items-center gap-1">
-                        <span className="w-3 h-3 bg-yellow-500 rounded-sm"></span>
+                    <span className="flex items-center gap-0.5">
+                        <span className="w-2 h-2 bg-yellow-500 rounded-sm"></span>
                         Ocupado
                     </span>
-                    <span className="flex items-center gap-1">
-                        <span className="w-3 h-3 bg-gray-200 rounded-sm"></span>
+                    <span className="flex items-center gap-0.5">
+                        <span className="w-2 h-2 bg-gray-200 rounded-sm"></span>
                         No disponible
                     </span>
                 </p>
@@ -113,7 +113,7 @@ export const OccupancyHeatMap = ({ occupancyData, loading, onSlotClick }) => {
                                 <tr>
                                     <th 
                                         scope="col" 
-                                        className="sticky left-0 z-20 px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-100 border-r border-gray-300"
+                                        className="sticky left-0 z-20 px-2 py-1.5 text-left text-xs font-bold text-gray-700 uppercase tracking-wide bg-gray-100 border-r border-gray-300"
                                     >
                                         Mesa / Zona
                                     </th>
@@ -121,7 +121,7 @@ export const OccupancyHeatMap = ({ occupancyData, loading, onSlotClick }) => {
                                         <th 
                                             key={time} 
                                             scope="col" 
-                                            className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider min-w-[80px]"
+                                            className="px-1.5 py-1.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide min-w-[50px]"
                                         >
                                             {time}
                                         </th>
@@ -134,16 +134,16 @@ export const OccupancyHeatMap = ({ occupancyData, loading, onSlotClick }) => {
                                         key={table.table_id}
                                         className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
                                     >
-                                        <td className="sticky left-0 z-10 px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900 bg-inherit border-r border-gray-200">
-                                            <div className="flex flex-col gap-1">
-                                                <div className="flex items-center gap-2">
-                                                    <Users className="w-4 h-4 text-purple-600" />
-                                                    <span className="font-bold">{table.table_name}</span>
+                                        <td className="sticky left-0 z-10 px-2 py-1.5 whitespace-nowrap text-xs font-semibold text-gray-900 bg-inherit border-r border-gray-200">
+                                            <div className="flex flex-col gap-0.5">
+                                                <div className="flex items-center gap-1">
+                                                    <Users className="w-3.5 h-3.5 text-purple-600" />
+                                                    <span className="font-bold text-xs">{table.table_name}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                <div className="flex items-center gap-1 text-[10px] text-gray-500">
                                                     <MapPin className="w-3 h-3 text-blue-500" />
                                                     <span>{table.table_zone}</span>
-                                                    <span className="ml-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">
+                                                    <span className="ml-0.5 px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">
                                                         {table.table_capacity}p
                                                     </span>
                                                 </div>
@@ -156,13 +156,13 @@ export const OccupancyHeatMap = ({ occupancyData, loading, onSlotClick }) => {
                                             return (
                                                 <td
                                                     key={time}
-                                                    className={`relative px-1 py-1 text-center cursor-pointer transition-all duration-150 border border-gray-200 ${
+                                                    className={`relative px-0.5 py-0.5 text-center cursor-pointer transition-all duration-150 border border-gray-200 ${
                                                         getSlotStatusClass(slot)
                                                     }`}
                                                     onClick={() => onSlotClick && onSlotClick({ slot, table, time })}
                                                     title={getSlotTooltip(slot)}
                                                 >
-                                                    <div className="min-h-[50px] flex items-center justify-center text-xs font-semibold">
+                                                    <div className="min-h-[30px] flex items-center justify-center text-[9px] font-semibold">
                                                         {getSlotContent(slot)}
                                                     </div>
                                                 </td>
@@ -176,13 +176,13 @@ export const OccupancyHeatMap = ({ occupancyData, loading, onSlotClick }) => {
                 </div>
             </div>
 
-            {/* Footer Info */}
-            <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-                <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-blue-900">
-                    <span className="font-semibold">Tip:</span> Haz clic en cualquier slot para ver más detalles o realizar acciones. 
-                    Los slots en <span className="font-bold text-red-600">rojo</span> están reservados, 
-                    los <span className="font-bold text-green-600">verdes</span> están libres y listos para reservar.
+            {/* Footer Info Compacto */}
+            <div className="mt-2 p-1.5 bg-blue-50 border border-blue-200 rounded flex items-start gap-1.5">
+                <Info className="w-3 h-3 text-blue-600 flex-shrink-0 mt-0.5" />
+                <p className="text-[10px] text-blue-900 leading-tight">
+                    <span className="font-semibold">Tip:</span> Clic en slot para detalles. 
+                    <span className="font-bold text-red-600">Rojo</span> = reservado, 
+                    <span className="font-bold text-green-600">verde</span> = libre.
                 </p>
             </div>
         </div>

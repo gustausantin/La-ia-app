@@ -125,11 +125,20 @@ export const ReservationDetailsModal = ({ reservation, onClose, isOpen }) => {
                     <p className="font-semibold text-gray-900">{formattedDate}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-purple-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Hora</p>
-                    <p className="font-semibold text-gray-900">{reservation.reservation_time?.substring(0, 5) || 'N/A'}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Hora Inicio</p>
+                      <p className="font-semibold text-gray-900">{reservation.reservation_time?.substring(0, 5) || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Hora Fin</p>
+                      <p className="font-semibold text-gray-900">{reservation.reservation_end_time?.substring(0, 5) || 'N/A'}</p>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

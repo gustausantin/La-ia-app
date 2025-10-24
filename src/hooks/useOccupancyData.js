@@ -44,6 +44,8 @@ export const useOccupancyData = (restaurantId, selectedDate, selectedZone) => {
                 return;
             }
 
+            console.log('📊 Mesas encontradas:', tables.length, tables);
+
             const tableIds = tables.map(table => table.id);
 
             // 2. Obtener slots de disponibilidad para la fecha y mesas seleccionadas
@@ -56,6 +58,28 @@ export const useOccupancyData = (restaurantId, selectedDate, selectedZone) => {
                 .order('start_time', { ascending: true });
 
             if (slotsError) throw slotsError;
+            
+            console.log('🎯 Slots encontrados para', dateStr, ':', slots?.length || 0);
+            
+            // 🚨 DETECTAR SLOTS INCONSISTENTES
+            const inconsistentSlots = slots?.filter(s => s.status === 'reserved' && !s.reservation_id) || [];
+            if (inconsistentSlots.length > 0) {
+                console.error('🚨🚨🚨 SLOTS INCONSISTENTES DETECTADOS:', inconsistentSlots.length);
+                console.error('❌ Estos slots están marcados como "reserved" pero NO tienen reservation_id:');
+                inconsistentSlots.forEach(s => {
+                    const table = tables.find(t => t.id === s.table_id);
+                    console.error(`   - ${table?.name} a las ${s.start_time} (ID: ${s.id})`);
+                });
+                console.error('🔧 SOLUCIÓN: Ejecutar scripts/sql/FIX_SLOTS_INCONSISTENTES.sql en Supabase');
+            }
+            
+            console.log('📍 Slots por mesa:', tableIds.map(tid => ({
+                table_id: tid,
+                table_name: tables.find(t => t.id === tid)?.name,
+                slots_count: slots?.filter(s => s.table_id === tid).length || 0,
+                reserved: slots?.filter(s => s.table_id === tid && s.status === 'reserved').length || 0,
+                with_reservation_id: slots?.filter(s => s.table_id === tid && s.status === 'reserved' && s.reservation_id).length || 0
+            })));
 
             // 3. Obtener detalles de reservas para los slots ocupados
             const reservedSlotIds = slots

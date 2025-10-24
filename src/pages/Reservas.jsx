@@ -1986,14 +1986,21 @@ export default function Reservas() {
                         <button
                             onClick={async () => {
                                 setLoading(true);
-                                await loadReservations();
+                                if (activeTab === 'ocupacion') {
+                                    // Si estamos en Ocupación, recargar datos de ocupación
+                                    await reloadOccupancy();
+                                    toast.success("Datos de ocupación actualizados");
+                                } else {
+                                    // Si estamos en Reservas, recargar reservas
+                                    await loadReservations();
+                                    toast.success("Datos de reservas actualizados");
+                                }
                                 setLoading(false);
-                                toast.success("Datos de reservas actualizados");
                             }}
                             disabled={loading}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 shadow-md font-medium"
                         >
-                            <RefreshCw className="w-4 h-4" />
+                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                             Actualizar
                         </button>
 
@@ -2571,27 +2578,25 @@ export default function Reservas() {
 
             {/* Pestaña de Política de Reservas */}
             {activeTab === 'politica' && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="p-2 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg">
-                            <Settings className="w-6 h-6 text-purple-600" />
-                        </div>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Settings className="w-4 h-4 text-blue-600" />
                         <div>
-                            <h2 className="text-base font-semibold text-gray-900">
+                            <h2 className="text-sm font-bold text-gray-900">
                                 Política de Reservas
                             </h2>
-                            <p className="text-gray-600">
+                            <p className="text-xs text-gray-600">
                                 Configuración que rige las disponibilidades y reservas
                             </p>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4">
-                            <h3 className="font-medium text-gray-900">Configuración Principal</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide">Configuración Principal</h3>
                             
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     Tamaño mínimo de grupo
                                 </label>
                                 <input
@@ -2603,12 +2608,12 @@ export default function Reservas() {
                                     }))}
                                     min="1"
                                     max="20"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     Tamaño máximo de grupo
                                 </label>
                                 <input
@@ -2620,15 +2625,15 @@ export default function Reservas() {
                                     }))}
                                     min="1"
                                     max="50"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-[10px] text-gray-500 mt-0.5">
                                     Máximo de personas por reserva individual
                                 </p>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     Días de antelación máxima
                                 </label>
                                 <input
@@ -2640,19 +2645,19 @@ export default function Reservas() {
                                     }))}
                                     min="1"
                                     max="365"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-[10px] text-gray-500 mt-0.5">
                                     Cuántos días hacia adelante se pueden hacer reservas
                                 </p>
                             </div>
                         </div>
 
-                        <div className="space-y-4">
-                            <h3 className="font-medium text-gray-900">Duración y Tiempos</h3>
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide">Duración y Tiempos</h3>
                             
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     Duración estándar de reserva (minutos)
                                 </label>
                                 <select 
@@ -2661,13 +2666,13 @@ export default function Reservas() {
                                         ...prev,
                                         reservation_duration: parseInt(e.target.value) || 90
                                     }))}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 >
                                     <option value="60">60 minutos</option>
                                     <option value="90">90 minutos</option>
                                     <option value="120">120 minutos</option>
                                 </select>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-[10px] text-gray-500 mt-0.5">
                                     Tiempo estimado que cada mesa estará ocupada
                                 </p>
                             </div>
@@ -2675,7 +2680,7 @@ export default function Reservas() {
                             {/* Buffer eliminado - versión 2 */}
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     ⏰ Minutos mínimos de antelación
                                 </label>
                                 <input
@@ -2688,23 +2693,23 @@ export default function Reservas() {
                                     min="0"
                                     max="1440"
                                     step="15"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-[10px] text-gray-500 mt-0.5">
                                     Tiempo mínimo en MINUTOS para hacer una reserva (ej: 60 = 1 hora, 120 = 2 horas)
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="mt-6 p-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-purple-200">
+                    <div className="mt-4 p-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-purple-200">
                         <div className="flex items-start gap-2">
-                            <CheckCircle2 className="w-5 h-5 text-purple-600 mt-0.5" />
+                            <CheckCircle2 className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
                             <div>
-                                <div className="font-medium text-purple-900">
+                                <div className="text-xs font-semibold text-purple-900">
                                     💡 Configuración Integrada
                                 </div>
-                                <div className="text-sm text-purple-800 mt-1">
+                                <div className="text-[10px] text-purple-800 mt-0.5 leading-tight">
                                     Esta configuración se aplica automáticamente cuando generas disponibilidades. 
                                     Los cambios aquí afectan directamente a cómo se crean los slots de reserva.
                                 </div>
@@ -2712,7 +2717,7 @@ export default function Reservas() {
                         </div>
                     </div>
 
-                    <div className="mt-6">
+                    <div className="mt-4">
                         <button 
                             onClick={async () => {
                                 try {
@@ -2766,9 +2771,9 @@ export default function Reservas() {
                                 }
                             }}
                             disabled={savingPolicy}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md disabled:opacity-50"
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md disabled:opacity-50"
                         >
-                            {savingPolicy ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                            {savingPolicy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             {savingPolicy ? 'Guardando...' : 'Guardar Política de Reservas'}
                         </button>
                     </div>
@@ -2777,49 +2782,41 @@ export default function Reservas() {
 
             {/* 🔥 PESTAÑA DE OCUPACIÓN - HEAT MAP PROFESIONAL */}
             {activeTab === 'ocupacion' && (
-                <div className="space-y-6">
-                    {/* Controles de fecha y zona */}
-                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-                        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                <CalendarIcon className="w-5 h-5 text-purple-600" />
-                                <h3 className="text-lg font-semibold text-gray-900">
+                <div className="space-y-3">
+                    {/* Controles compactos en una línea */}
+                    <div className="bg-blue-50 rounded-lg border border-blue-200 p-2">
+                        <div className="flex items-center gap-3">
+                            {/* Título compacto */}
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <CalendarIcon className="w-4 h-4 text-blue-600" />
+                                <h3 className="text-sm font-medium text-blue-900">
                                     Seleccionar Día
                                 </h3>
                             </div>
-                            <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                                {/* Selector de fecha */}
-                                <input
-                                    type="date"
-                                    value={format(occupancyDate, 'yyyy-MM-dd')}
-                                    onChange={(e) => setOccupancyDate(new Date(e.target.value))}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                />
-                                {/* Selector de zona */}
-                                <select
-                                    value={occupancyZone}
-                                    onChange={(e) => setOccupancyZone(e.target.value)}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                >
-                                    <option value="all">📍 Todas las zonas</option>
-                                    {restaurant?.settings?.zones && Object.entries(restaurant.settings.zones)
-                                        .filter(([, zoneData]) => zoneData.enabled)
-                                        .map(([zoneKey, zoneData]) => (
-                                            <option key={zoneKey} value={zoneKey}>
-                                                {zoneData.icon} {zoneData.display_name}
-                                            </option>
-                                        ))}
-                                </select>
-                                {/* Botón reload */}
-                                <button
-                                    onClick={reloadOccupancy}
-                                    disabled={occupancyLoading}
-                                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors disabled:opacity-50 flex items-center space-x-2 shadow-md"
-                                >
-                                    <RefreshCw className={`w-4 h-4 ${occupancyLoading ? 'animate-spin' : ''}`} />
-                                    <span>Actualizar</span>
-                                </button>
-                            </div>
+                            
+                            {/* Selector de fecha */}
+                            <input
+                                type="date"
+                                value={format(occupancyDate, 'yyyy-MM-dd')}
+                                onChange={(e) => setOccupancyDate(new Date(e.target.value))}
+                                className="px-3 py-1.5 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            
+                            {/* Selector de zona */}
+                            <select
+                                value={occupancyZone}
+                                onChange={(e) => setOccupancyZone(e.target.value)}
+                                className="px-3 py-1.5 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="all">📍 Todas las zonas</option>
+                                {restaurant?.settings?.zones && Object.entries(restaurant.settings.zones)
+                                    .filter(([, zoneData]) => zoneData.enabled)
+                                    .map(([zoneKey, zoneData]) => (
+                                        <option key={zoneKey} value={zoneKey}>
+                                            {zoneData.icon} {zoneData.display_name}
+                                        </option>
+                                    ))}
+                            </select>
                         </div>
                     </div>
 
@@ -2847,9 +2844,44 @@ export default function Reservas() {
                     <OccupancyHeatMap 
                         occupancyData={occupancyData}
                         loading={occupancyLoading}
-                        onSlotClick={(slotData) => {
-                            console.log('Slot clicked:', slotData);
-                            // Aquí podrías abrir un modal o navegar a la reserva
+                        onSlotClick={async (slotData) => {
+                            const { slot } = slotData;
+                            
+                            // Solo abrir modal si el slot está reservado Y tiene reservation_id
+                            if (!slot || slot.status !== 'reserved' || !slot.reservation_id) {
+                                console.log('⚠️ Slot no válido para abrir modal');
+                                return;
+                            }
+                            
+                            try {
+                                // Buscar la reserva DIRECTAMENTE por ID
+                                const { data: reservation, error } = await supabase
+                                    .from('reservations')
+                                    .select(`
+                                        *,
+                                        tables (
+                                            id,
+                                            name,
+                                            table_number,
+                                            zone,
+                                            capacity
+                                        )
+                                    `)
+                                    .eq('id', slot.reservation_id)
+                                    .single();
+                                
+                                if (error) throw error;
+                                
+                                if (reservation) {
+                                    setViewingReservation(reservation);
+                                    setShowDetailsModal(true);
+                                } else {
+                                    toast.error('No se encontró la reserva');
+                                }
+                            } catch (error) {
+                                console.error('Error al cargar reserva:', error);
+                                toast.error('Error al cargar los detalles de la reserva');
+                            }
                         }}
                     />
 
