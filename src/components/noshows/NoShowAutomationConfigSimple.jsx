@@ -108,33 +108,33 @@ export default function NoShowAutomationConfigSimple() {
     }
 
     return (
-        <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl shadow-lg p-8 border-2 border-purple-200">
+        <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg shadow-sm p-3 border border-purple-200">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <Shield className="w-8 h-8 text-white" />
+            <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                    <Shield className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Sistema Anti No-Shows</h2>
-                    <p className="text-gray-600">Configuración del sistema inteligente</p>
+                    <h2 className="text-sm font-bold text-gray-900">Sistema Anti No-Shows</h2>
+                    <p className="text-xs text-gray-600">Configuración del sistema inteligente</p>
                 </div>
             </div>
 
             {/* Main Switch */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border-2 border-gray-200">
+            <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
                 <div className="flex items-center justify-between">
                     <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex items-center gap-2 mb-1">
                             {enabled ? (
-                                <CheckCircle className="w-6 h-6 text-green-600" />
+                                <CheckCircle className="w-4 h-4 text-green-600" />
                             ) : (
-                                <XCircle className="w-6 h-6 text-gray-400" />
+                                <XCircle className="w-4 h-4 text-gray-400" />
                             )}
-                            <h3 className="text-xl font-bold text-gray-900">
+                            <h3 className="text-sm font-bold text-gray-900">
                                 Sistema {enabled ? 'Activo' : 'Pausado'}
                             </h3>
                         </div>
-                        <p className="text-gray-600 ml-9">
+                        <p className="text-xs text-gray-600 ml-6">
                             {enabled 
                                 ? 'El sistema está funcionando automáticamente'
                                 : 'El sistema está pausado temporalmente'
@@ -160,29 +160,29 @@ export default function NoShowAutomationConfigSimple() {
             </div>
 
             {/* Información del Sistema */}
-            <div className="mt-6 bg-blue-50 rounded-lg p-5 border border-blue-200">
-                <h4 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
-                    <Shield className="w-5 h-5" />
+            <div className="mt-3 bg-blue-50 rounded-lg p-2.5 border border-blue-200">
+                <h4 className="text-xs font-bold text-blue-900 mb-2 flex items-center gap-1.5">
+                    <Shield className="w-4 h-4" />
                     ¿Qué hace el sistema cuando está activo?
                 </h4>
-                <ul className="space-y-2 text-sm text-blue-800">
-                    <li className="flex items-start gap-2">
+                <ul className="space-y-1.5 text-xs text-blue-800">
+                    <li className="flex items-start gap-1.5">
                         <span className="text-green-600 font-bold mt-0.5">✓</span>
                         <span><strong>Recordatorio 24h antes:</strong> Envía mensaje automático a todos los clientes</span>
                     </li>
-                    <li className="flex items-start gap-2">
+                    <li className="flex items-start gap-1.5">
                         <span className="text-green-600 font-bold mt-0.5">✓</span>
                         <span><strong>Recordatorio 4h antes:</strong> Segundo mensaje de confirmación</span>
                     </li>
-                    <li className="flex items-start gap-2">
+                    <li className="flex items-start gap-1.5">
                         <span className="text-green-600 font-bold mt-0.5">✓</span>
                         <span><strong>Detección de riesgo:</strong> Calcula automáticamente el riesgo de cada reserva</span>
                     </li>
-                    <li className="flex items-start gap-2">
+                    <li className="flex items-start gap-1.5">
                         <span className="text-green-600 font-bold mt-0.5">✓</span>
                         <span><strong>Alertas inteligentes:</strong> Te avisa solo cuando hay riesgo alto</span>
                     </li>
-                    <li className="flex items-start gap-2">
+                    <li className="flex items-start gap-1.5">
                         <span className="text-green-600 font-bold mt-0.5">✓</span>
                         <span><strong>Auto-liberación:</strong> Libera automáticamente reservas sin confirmar 2h antes</span>
                     </li>
@@ -190,23 +190,23 @@ export default function NoShowAutomationConfigSimple() {
             </div>
 
             {/* Nota importante */}
-            <div className="mt-4 bg-purple-50 rounded-lg p-4 border border-purple-200">
-                <p className="text-sm text-purple-900">
+            <div className="mt-2 bg-purple-50 rounded-lg p-2.5 border border-purple-200">
+                <p className="text-xs text-purple-900">
                     <span className="font-bold">💡 Sistema 100% automático:</span> No necesitas configurar nada más. 
                     El algoritmo inteligente decide automáticamente cuándo y cómo contactar a cada cliente según su perfil de riesgo.
                 </p>
             </div>
 
-            {/* Estado visual grande */}
-            <div className={`mt-6 rounded-xl p-6 text-center ${
+            {/* Estado visual compacto */}
+            <div className={`mt-3 rounded-lg p-3 text-center ${
                 enabled 
                     ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
                     : 'bg-gradient-to-r from-gray-400 to-gray-500'
             }`}>
-                <p className="text-white text-lg font-bold">
+                <p className="text-white text-sm font-bold">
                     {enabled ? '🛡️ Sistema Protegiendo tu Restaurante' : '⏸️ Sistema en Pausa'}
                 </p>
-                <p className="text-white/90 text-sm mt-1">
+                <p className="text-white/90 text-xs mt-0.5">
                     {enabled 
                         ? 'Todas las reservas están siendo monitoreadas' 
                         : 'Las automatizaciones están desactivadas temporalmente'

@@ -1046,14 +1046,14 @@ export default function Calendario() {
         <div className="min-h-screen bg-gray-50 px-4 py-4">
             <div className="max-w-[85%] mx-auto">
                 {/* Header */}
-                <div className="mb-6">
+                <div className="mb-3">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                <Calendar className="w-5 h-5 text-blue-600" />
+                            <h1 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-blue-600" />
                                 Horarios y Calendario
                             </h1>
-                            <p className="text-gray-600 mt-1">
+                            <p className="text-xs text-gray-600 mt-0.5">
                                 Gestiona los horarios del restaurante y eventos especiales
                             </p>
                         </div>
@@ -1061,86 +1061,86 @@ export default function Calendario() {
                     </div>
 
                                     {/* Estadísticas rápidas - Diseño vertical mejorado */}
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
-                    <h2 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-blue-600" />
+                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-3 mb-3">
+                    <h2 className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1.5">
+                        <Activity className="w-4 h-4 text-blue-600" />
                         RESUMEN DE ACTIVIDAD
                     </h2>
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                         <div className="text-center">
-                            <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-2">
-                                <CheckCircle className="w-6 h-6 text-green-600" />
+                            <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-lg mx-auto mb-1.5">
+                                <CheckCircle className="w-5 h-5 text-green-600" />
                                 </div>
                             <p className="text-base font-bold text-gray-900">{stats.daysOpen}</p>
-                                    <p className="text-sm text-gray-600">Días abiertos</p>
-                            <p className="text-sm text-gray-500">de 7 días</p>
+                                    <p className="text-[10px] text-gray-600 font-medium uppercase tracking-wide mt-0.5">Días abiertos</p>
+                            <p className="text-xs text-gray-500">de 7 días</p>
                         </div>
 
                         <div className="text-center">
-                            <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-2">
-                                <Clock className="w-6 h-6 text-blue-600" />
+                            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg mx-auto mb-1.5">
+                                <Clock className="w-5 h-5 text-blue-600" />
                                 </div>
                             <p className="text-base font-bold text-gray-900">{stats.weeklyHours}h</p>
-                                    <p className="text-sm text-gray-600">Horas semanales</p>
-                            <p className="text-sm text-gray-500">tiempo de servicio</p>
+                                    <p className="text-[10px] text-gray-600 font-medium uppercase tracking-wide mt-0.5">Horas semanales</p>
+                            <p className="text-xs text-gray-500">tiempo de servicio</p>
                         </div>
 
                         <div className="text-center">
-                            <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mx-auto mb-2">
-                                <MessageSquare className="w-6 h-6 text-purple-600" />
+                            <div className="flex items-center justify-center w-10 h-10 bg-purple-100 rounded-lg mx-auto mb-1.5">
+                                <MessageSquare className="w-5 h-5 text-purple-600" />
                                 </div>
                             <p className="text-base font-bold text-gray-900">{stats.activeChannels}</p>
-                            <p className="text-sm text-gray-600">Canales activos</p>
-                            <p className="text-sm text-gray-500">comunicación</p>
+                            <p className="text-[10px] text-gray-600 font-medium uppercase tracking-wide mt-0.5">Canales activos</p>
+                            <p className="text-xs text-gray-500">comunicación</p>
                         </div>
 
                         <div className="text-center">
-                            <div className="flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-lg mx-auto mb-2">
-                                <Users className="w-6 h-6 text-indigo-600" />
+                            <div className="flex items-center justify-center w-10 h-10 bg-indigo-100 rounded-lg mx-auto mb-1.5">
+                                <Users className="w-5 h-5 text-indigo-600" />
                                 </div>
                             <p className="text-base font-bold text-gray-900">{stats.activeReservations}</p>
-                            <p className="text-sm text-gray-600">Reservas activas</p>
-                            <p className="text-sm text-gray-500">próximos 7 días</p>
+                            <p className="text-[10px] text-gray-600 font-medium uppercase tracking-wide mt-0.5">Reservas activas</p>
+                            <p className="text-xs text-gray-500">próximos 7 días</p>
                         </div>
 
                         <div className="text-center">
-                            <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-lg mx-auto mb-2">
-                                <Star className="w-6 h-6 text-amber-600" />
+                            <div className="flex items-center justify-center w-10 h-10 bg-amber-100 rounded-lg mx-auto mb-1.5">
+                                <Star className="w-5 h-5 text-amber-600" />
                                 </div>
                             <p className="text-base font-bold text-gray-900">{stats.upcomingEvents}</p>
-                            <p className="text-sm text-gray-600">Eventos especiales</p>
-                            <p className="text-sm text-gray-500">próximos 30 días</p>
+                            <p className="text-[10px] text-gray-600 font-medium uppercase tracking-wide mt-0.5">Eventos especiales</p>
+                            <p className="text-xs text-gray-500">próximos 30 días</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Tabs de navegación - Estilo grande como Reservas y Mesas */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+                {/* Tabs de navegación - Estilo homogéneo compacto */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-3">
                     <div className="flex flex-wrap gap-3">
                         <button
                             onClick={() => setActiveTab('horarios')}
-                            className={`px-8 py-4 rounded-xl font-semibold text-base transition-all shadow-sm ${
+                            className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all ${
                                 activeTab === 'horarios'
-                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-blue-700 shadow-lg scale-105'
-                                    : 'bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300'
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300'
                             }`}
                         >
                             <span className="flex items-center gap-2">
-                                <Clock className="w-5 h-5" />
-                                🕐 HORARIOS
+                                <Clock className="w-4 h-4" />
+                                Horarios
                             </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('calendario')}
-                            className={`px-8 py-4 rounded-xl font-semibold text-base transition-all shadow-sm ${
+                            className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all ${
                                 activeTab === 'calendario'
-                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-purple-700 shadow-lg scale-105'
-                                    : 'bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-purple-300'
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-purple-300'
                             }`}
                         >
                             <span className="flex items-center gap-2">
-                                <Calendar className="w-5 h-5" />
-                                📅 CALENDARIO
+                                <Calendar className="w-4 h-4" />
+                                Calendario
                             </span>
                         </button>
                     </div>
@@ -1151,12 +1151,12 @@ export default function Calendario() {
 
                     {/* Tab: Horarios del restaurante */}
                     {activeTab === 'horarios' && (
-                        <div className="p-6">
+                        <div className="p-3">
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                                 {schedule.map((day, index) => (
-                                    <div key={day.day_of_week} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all">
+                                    <div key={day.day_of_week} className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm hover:shadow-md transition-all">
                                         <div className="flex items-center justify-between mb-2">
-                                            <h3 className="font-medium text-gray-900">{day.day_name}</h3>
+                                            <h3 className="font-medium text-xs text-gray-900">{day.day_name}</h3>
                                                     <button
                                                 onClick={() => {
                                                     const newSchedule = [...schedule];
@@ -1167,7 +1167,7 @@ export default function Calendario() {
                                                     }
                                                     setSchedule(newSchedule);
                                                 }}
-                                                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                                                        className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
                                                             day.is_open 
                                                                 ? 'bg-green-100 text-green-800 hover:bg-green-200'
                                                                 : 'bg-red-100 text-red-800 hover:bg-red-200'
@@ -1178,10 +1178,10 @@ export default function Calendario() {
                                                 </div>
                                                 
                                         {day.is_open && (
-                                            <div className="space-y-3">
+                                            <div className="space-y-2">
                                                 {/* Horario Simple (SIN TURNOS) */}
                                                 <div className="bg-gray-50 p-2 rounded-lg">
-                                                    <div className="text-sm font-medium text-gray-800 mb-2">
+                                                    <div className="text-xs font-medium text-gray-800 mb-1.5">
                                                         Horario de Apertura
                                                     </div>
                                                     <div className="flex items-center gap-2">
@@ -1193,7 +1193,7 @@ export default function Calendario() {
                                                                 newSchedule[index].open_time = e.target.value;
                                                                 setSchedule(newSchedule);
                                                             }}
-                                                            className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                            className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-purple-500"
                                                         />
                                                         <span className="text-gray-500 text-xs">a</span>
                                                         <input
@@ -1204,7 +1204,7 @@ export default function Calendario() {
                                                                 newSchedule[index].close_time = e.target.value;
                                                                 setSchedule(newSchedule);
                                                             }}
-                                                            className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500"
+                                                            className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-purple-500"
                                                         />
                                                     </div>
                                                 </div>
@@ -1214,11 +1214,11 @@ export default function Calendario() {
                                 ))}
                                                     </div>
                                                     
-                            <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                            <div className="flex justify-end mt-3 pt-3 border-t border-gray-200">
                                                         <button
                                     onClick={saveWeeklySchedule}
                                     disabled={saving}
-                                    className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:opacity-90 transition-all disabled:opacity-50 text-sm font-medium"
                                 >
                                     {saving ? (
                                         <>
@@ -1238,28 +1238,28 @@ export default function Calendario() {
 
                     {/* Tab: Calendario */}
                     {activeTab === 'calendario' && (
-                        <div className="p-6">
+                        <div className="p-3">
                             {/* Controles del calendario */}
-                            <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => navigateMonth('prev')}
-                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                        className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                                     >
-                                        <ChevronLeft className="w-5 h-5" />
+                                        <ChevronLeft className="w-4 h-4" />
                                     </button>
-                                    <h3 className="text-base font-semibold text-gray-900">
+                                    <h3 className="text-xs font-semibold text-gray-900">
                                         {format(currentDate, 'MMMM yyyy', { locale: es })}
                                     </h3>
                                     <button
                                         onClick={() => navigateMonth('next')}
-                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                        className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                                     >
-                                        <ChevronRight className="w-5 h-5" />
+                                        <ChevronRight className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => setCurrentDate(new Date())}
-                                        className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                        className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                                     >
                                         Hoy
                                     </button>
@@ -1274,9 +1274,9 @@ export default function Calendario() {
                                         });
                                         // setShowEventModal(true);
                                     }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:opacity-90 transition-all text-xs font-medium"
                                     >
-                                        <Plus className="w-4 h-4" />
+                                        <Plus className="w-3.5 h-3.5" />
                                         Nuevo evento
                                     </button>
                             </div>
@@ -1286,7 +1286,7 @@ export default function Calendario() {
                                 {/* Encabezados de días */}
                                 <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
                                     {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day, index) => (
-                                        <div key={day} className="p-2 text-center text-sm font-medium text-gray-600">
+                                        <div key={day} className="p-1.5 text-center text-xs font-medium text-gray-600">
                                             {day}
                                         </div>
                                     ))}
@@ -1306,15 +1306,15 @@ export default function Calendario() {
                                             console.log(`Columna ${index} (${columnDays[index]}): ${format(day, 'EEEE dd/MM', { locale: es })} | getDaySchedule dice: ${daySchedule.day_name} ${daySchedule.is_open ? '✅' : '❌'}`);
                                         }
 
-                                        return (
+                                                        return (
                                             <div
                                                 key={index}
-                                                className={`min-h-[120px] p-2 border-b border-r border-gray-100 ${
+                                                className={`min-h-[90px] p-1.5 border-b border-r border-gray-100 ${
                                                     isCurrentMonth ? 'bg-white' : 'bg-gray-50'
                                                 } ${isToday && isCurrentMonth ? 'bg-blue-50' : ''} ${dayEvent && isCurrentMonth ? 'bg-yellow-50' : ''} ${isCurrentMonth ? 'hover:bg-gray-50 cursor-pointer' : ''}`}
                                                 onClick={() => isCurrentMonth && handleDayClick(day)}
                                             >
-                                                <div className={`text-sm font-medium mb-1 ${
+                                                <div className={`text-xs font-medium mb-1 ${
                                                     isToday && isCurrentMonth ? 'text-blue-600' : isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
                                                     }`}>
                                                         {format(day, 'd')}
@@ -1322,15 +1322,15 @@ export default function Calendario() {
 
                                                 {/* Estado del día - EVENTOS TIENEN PRIORIDAD */}
                                                 {isCurrentMonth && (
-                                                    <div className="text-xs">
+                                                    <div className="text-[10px]">
                                                         {/* Si hay evento y está cerrado, mostrar CERRADO */}
                                                         {dayEvent && dayEvent.is_closed ? (
                                                             <div>
-                                                                <span className="text-red-600 bg-red-100 px-2 py-1 rounded block mb-1">
+                                                                <span className="text-red-600 bg-red-100 px-1.5 py-0.5 rounded block mb-1 text-[10px]">
                                                                     Cerrado
                                                                 </span>
-                                                                <div className="flex items-center justify-between text-orange-600 bg-orange-100 px-2 py-1 rounded mb-1">
-                                                                    <span className="text-xs">🔒 {dayEvent.title}</span>
+                                                                <div className="flex items-center justify-between text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded mb-1">
+                                                                    <span className="text-[10px]">🔒 {dayEvent.title}</span>
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
@@ -1339,18 +1339,18 @@ export default function Calendario() {
                                                                         className="text-red-600 hover:text-red-800 ml-1"
                                                                         title="Eliminar evento"
                                                                     >
-                                                                        <X className="w-3 h-3" />
+                                                                        <X className="w-2.5 h-2.5" />
                                                                     </button>
                                                                 </div>
                                                             </div>
                                                         ) : dayEvent ? (
                                                             // Si hay evento pero NO está cerrado, mostrar evento especial
                                                             <div>
-                                                                <span className="text-green-600 bg-green-100 px-2 py-1 rounded block mb-1">
+                                                                <span className="text-green-600 bg-green-100 px-1.5 py-0.5 rounded block mb-1 text-[10px]">
                                                                     Abierto {(dayEvent.start_time || daySchedule.open_time || '09:00').substring(0, 5)}-{(dayEvent.end_time || daySchedule.close_time || '22:00').substring(0, 5)}
                                                                 </span>
-                                                                <div className="flex items-center justify-between text-orange-600 bg-orange-100 px-2 py-1 rounded">
-                                                                    <span className="text-xs">🎉 {dayEvent.title}</span>
+                                                                <div className="flex items-center justify-between text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded">
+                                                                    <span className="text-[10px]">🎉 {dayEvent.title}</span>
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
@@ -1359,13 +1359,13 @@ export default function Calendario() {
                                                                         className="text-red-600 hover:text-red-800 ml-1"
                                                                         title="Eliminar evento"
                                                                     >
-                                                                        <X className="w-3 h-3" />
+                                                                        <X className="w-2.5 h-2.5" />
                                                                     </button>
                                                                 </div>
                                                             </div>
                                                         ) : (
                                                             // Si NO hay evento, mostrar horario regular
-                                                            <span className={`px-2 py-1 rounded block ${
+                                                            <span className={`px-1.5 py-0.5 rounded block text-[10px] ${
                                                                 daySchedule.is_open 
                                                                     ? 'text-green-600 bg-green-100' 
                                                                     : 'text-red-600 bg-red-100'

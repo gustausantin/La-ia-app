@@ -275,69 +275,68 @@ export default function PlantillasCRM() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/20 to-blue-50/20">
+        <div className="min-h-screen bg-gray-50">
             <div className="max-w-[85%] mx-auto px-4 py-4">
-                {/* Header Principal con degradado */}
-                <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 mb-8 shadow-lg">
+                {/* Header Principal - REDUCIDO A LA MITAD */}
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-3 mb-3 shadow-sm">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-white/20 backdrop-blur-xl rounded-xl flex items-center justify-center">
-                                <Mail className="w-7 h-7 text-white" />
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-white/20 backdrop-blur-xl rounded-lg flex items-center justify-center">
+                                <Mail className="w-4 h-4 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                                <h1 className="text-sm font-bold text-white flex items-center gap-2">
                                     Plantillas CRM
-                                    <Sparkles className="w-5 h-5" />
                                 </h1>
-                                <p className="text-purple-100 mt-1">
+                                <p className="text-xs text-white/80">
                                     Gestiona y personaliza las plantillas de mensajes para cada tipo de cliente
                                 </p>
                             </div>
                         </div>
                         <button
                             onClick={loadTemplates}
-                            className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-xl text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-xl text-white text-xs rounded-lg transition-all duration-200 shadow-sm"
                         >
-                            <RefreshCw className="w-4 h-4" />
+                            <RefreshCw className="w-3.5 h-3.5" />
                             Actualizar
                         </button>
                     </div>
                 </div>
 
-                {/* Estadísticas con toques de color */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                {/* Estadísticas - MÁS PEQUEÑAS Y PROFESIONALES */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+                    <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200">
                         <div className="flex items-center">
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                                <Mail className="w-6 h-6 text-white" />
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                                <Mail className="w-4 h-4 text-white" />
                             </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Total Plantillas</p>
-                                <p className="text-2xl font-bold text-gray-900">{templates.length}</p>
+                            <div className="ml-3">
+                                <p className="text-[10px] font-medium text-gray-600">Total Plantillas</p>
+                                <p className="text-base font-bold text-gray-900">{templates.length}</p>
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                    <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200">
                         <div className="flex items-center">
-                            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm">
-                                <CheckCircle2 className="w-6 h-6 text-white" />
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                                <CheckCircle2 className="w-4 h-4 text-white" />
                             </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Activas</p>
-                                <p className="text-2xl font-bold text-gray-900">
+                            <div className="ml-3">
+                                <p className="text-[10px] font-medium text-gray-600">Activas</p>
+                                <p className="text-base font-bold text-gray-900">
                                     {templates.filter(t => t.is_active).length}
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                    <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200">
                         <div className="flex items-center">
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
-                                <Target className="w-6 h-6 text-white" />
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                                <Target className="w-4 h-4 text-white" />
                             </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Categorías</p>
-                                <p className="text-2xl font-bold text-gray-900">
+                            <div className="ml-3">
+                                <p className="text-[10px] font-medium text-gray-600">Categorías</p>
+                                <p className="text-base font-bold text-gray-900">
                                     {Object.keys(templatesByCategory).length}
                                 </p>
                             </div>
@@ -346,7 +345,7 @@ export default function PlantillasCRM() {
                 </div>
 
                 {/* Plantillas por Categoría */}
-                <div className="space-y-6">
+                <div className="space-y-3">
                     {Object.entries(templatesByCategory).map(([category, categoryTemplates]) => {
                         const categoryInfo = TEMPLATE_CATEGORIES[category] || {
                             name: category,
@@ -356,19 +355,19 @@ export default function PlantillasCRM() {
                         const IconComponent = categoryInfo.icon;
 
                         return (
-                            <div key={category} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                                {/* Header de categoría con degradado sutil */}
-                                <div className="px-6 py-4 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
+                            <div key={category} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                                {/* Header de categoría - MÁS COMPACTO */}
+                                <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                                                <IconComponent className="w-5 h-5 text-white" />
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                                                <IconComponent className="w-4 h-4 text-white" />
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-semibold text-gray-900">
+                                                <h3 className="text-xs font-semibold text-gray-900">
                                                     {categoryInfo.name}
                                                 </h3>
-                                                <p className="text-sm text-gray-600">
+                                                <p className="text-[10px] text-gray-600">
                                                     {categoryInfo.description} · {categoryTemplates.length} plantilla{categoryTemplates.length !== 1 ? 's' : ''}
                                                 </p>
                                             </div>
@@ -376,12 +375,12 @@ export default function PlantillasCRM() {
                                     </div>
                                 </div>
 
-                                <div className="p-6">
-                                    <div className="space-y-4">
+                                <div className="p-3">
+                                    <div className="space-y-2">
                                         {categoryTemplates.map(template => (
                                             <div 
                                                 key={template.id} 
-                                                className={`border-2 rounded-xl p-4 transition-all duration-200 ${
+                                                className={`border rounded-lg p-2 transition-all duration-200 ${
                                                     template.is_active 
                                                         ? 'border-green-300 bg-green-50/50 shadow-sm' 
                                                         : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
@@ -389,69 +388,69 @@ export default function PlantillasCRM() {
                                             >
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
-                                                        <div className="flex items-center gap-3 mb-2">
-                                                            <h4 className="font-semibold text-gray-900">{template.name}</h4>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <h4 className="font-semibold text-xs text-gray-900">{template.name}</h4>
                                                             {template.is_active && (
-                                                                <span className="px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-semibold rounded-full flex items-center gap-1 shadow-sm">
-                                                                    <Power className="w-3 h-3" />
+                                                                <span className="px-2 py-0.5 bg-green-600 text-white text-[10px] font-semibold rounded-md flex items-center gap-1 shadow-sm">
+                                                                    <Power className="w-2.5 h-2.5" />
                                                                     Activa
                                                                 </span>
                                                             )}
                                                         </div>
                                                         {template.subject && (
-                                                            <p className="text-sm text-gray-600 mb-2">
+                                                            <p className="text-[10px] text-gray-600 mb-1">
                                                                 <strong>Asunto:</strong> {template.subject}
                                                             </p>
                                                         )}
-                                                        <p className="text-sm text-gray-500 line-clamp-2">
-                                                            {(template.content_markdown || '').substring(0, 150)}...
+                                                        <p className="text-[10px] text-gray-500 line-clamp-2">
+                                                            {(template.content_markdown || '').substring(0, 100)}...
                                                         </p>
-                                                        <div className="flex items-center gap-4 mt-3">
-                                                            <span className="text-xs text-gray-500 flex items-center gap-1">
-                                                                <Mail className="w-3 h-3" />
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                                                                <Mail className="w-2.5 h-2.5" />
                                                                 {template.channel || 'email'}
                                                             </span>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2 ml-4">
+                                                    <div className="flex items-center gap-1 ml-3">
                                         <button
                                             onClick={() => handleToggleActive(template)}
-                                            className={`p-2 rounded-lg transition-all duration-200 cursor-pointer ${
+                                            className={`p-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
                                                 template.is_active
-                                                    ? 'text-green-600 bg-green-100 hover:bg-green-200 shadow-sm'
-                                                    : 'text-red-600 bg-red-100 hover:bg-red-200 hover:shadow-sm'
+                                                    ? 'text-green-700 bg-green-100 hover:bg-green-200 shadow-sm'
+                                                    : 'text-gray-500 bg-gray-100 hover:bg-gray-200'
                                             }`}
                                             title={template.is_active ? "Desactivar plantilla" : "Activar plantilla"}
                                         >
-                                            {template.is_active ? <Power className="w-5 h-5" /> : <PowerOff className="w-5 h-5" />}
+                                            {template.is_active ? <Power className="w-3.5 h-3.5" /> : <PowerOff className="w-3.5 h-3.5" />}
                                         </button>
                                                         <button
                                                             onClick={() => openPreviewModal(template)}
-                                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                                                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
                                                             title="Vista previa"
                                                         >
-                                                            <Eye className="w-5 h-5" />
+                                                            <Eye className="w-3.5 h-3.5" />
                                                         </button>
                                                         <button
                                                             onClick={() => openEditModal(template)}
-                                                            className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200"
+                                                            className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200"
                                                             title="Editar"
                                                         >
-                                                            <Edit2 className="w-5 h-5" />
+                                                            <Edit2 className="w-3.5 h-3.5" />
                                                         </button>
                                                         <button
                                                             onClick={() => duplicateTemplate(template)}
-                                                            className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                                            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200"
                                                             title="Duplicar"
                                                         >
-                                                            <Copy className="w-5 h-5" />
+                                                            <Copy className="w-3.5 h-3.5" />
                                                         </button>
                                                         <button
                                                             onClick={() => deleteTemplate(template.id)}
-                                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
                                                             title="Eliminar"
                                                         >
-                                                            <Trash2 className="w-5 h-5" />
+                                                            <Trash2 className="w-3.5 h-3.5" />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -467,26 +466,26 @@ export default function PlantillasCRM() {
                 {/* Modal de Confirmación de Activación */}
                 {showConfirmModal && templateToActivate && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
-                            <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 rounded-t-2xl">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-xl flex items-center justify-center">
-                                        <Power className="w-6 h-6 text-white" />
+                        <div className="bg-white rounded-xl max-w-md w-full shadow-xl">
+                            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-t-xl">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-white/20 backdrop-blur-xl rounded-lg flex items-center justify-center">
+                                        <Power className="w-4 h-4 text-white" />
                                     </div>
-                                    <h3 className="text-xl font-bold text-white">
+                                    <h3 className="text-sm font-bold text-white">
                                         Confirmar Activación
                                     </h3>
                                 </div>
                             </div>
 
-                            <div className="p-6">
-                                <div className="mb-6">
-                                    <p className="text-gray-700 mb-4 leading-relaxed">
+                            <div className="p-4">
+                                <div className="mb-4">
+                                    <p className="text-xs text-gray-700 mb-3 leading-relaxed">
                                         Ya existe otra plantilla <strong>"{templateToActivate.name}"</strong> activa.
                                     </p>
-                                    <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
-                                        <p className="text-amber-800 text-sm font-medium flex items-start gap-2">
-                                            <span className="text-lg">⚠️</span>
+                                    <div className="bg-gray-100 border border-gray-300 rounded-lg p-3">
+                                        <p className="text-gray-800 text-xs font-medium flex items-start gap-2">
+                                            <span className="text-sm">⚠️</span>
                                             <span>
                                                 Al activar esta plantilla, la otra será desactivada automáticamente. 
                                                 Solo puede haber una plantilla activa de cada tipo.
@@ -495,18 +494,18 @@ export default function PlantillasCRM() {
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end gap-3">
+                                <div className="flex justify-end gap-2">
                                     <button
                                         onClick={cancelActivation}
-                                        className="px-6 py-2.5 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                                        className="px-4 py-1.5 text-xs text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                                     >
                                         Cancelar
                                     </button>
                                     <button
                                         onClick={confirmActivation}
-                                        className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+                                        className="flex items-center gap-1.5 px-4 py-1.5 text-xs bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm font-medium"
                                     >
-                                        <Power className="w-4 h-4" />
+                                        <Power className="w-3.5 h-3.5" />
                                         Activar de todos modos
                                     </button>
                                 </div>
@@ -518,53 +517,53 @@ export default function PlantillasCRM() {
                 {/* Modal de Edición/Vista Previa */}
                 {showModal && editingTemplate && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-                            {/* Header del modal con degradado */}
-                            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 rounded-t-2xl">
+                        <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+                            {/* Header del modal */}
+                            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-t-xl">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                        {previewMode ? <Eye className="w-5 h-5" /> : <Edit2 className="w-5 h-5" />}
+                                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                        {previewMode ? <Eye className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
                                         {previewMode ? 'Vista Previa' : 'Editar'} Plantilla
                                     </h3>
                                     <button
                                         onClick={() => setShowModal(false)}
-                                        className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors"
+                                        className="p-1.5 text-white hover:bg-white/20 rounded-lg transition-colors"
                                     >
-                                        <X className="w-5 h-5" />
+                                        <X className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="p-6">
+                            <div className="p-4">
                                 {previewMode ? (
-                                    <div className="space-y-4">
+                                    <div className="space-y-3">
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
                                                 Nombre de la Plantilla
                                             </label>
-                                            <p className="text-gray-900 text-lg">{editingTemplate.name}</p>
+                                            <p className="text-gray-900 text-sm">{editingTemplate.name}</p>
                                         </div>
                                         {editingTemplate.subject && (
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1">
                                                     Asunto del Mensaje
                                                 </label>
-                                                <p className="text-gray-900">{editingTemplate.subject}</p>
+                                                <p className="text-gray-900 text-xs">{editingTemplate.subject}</p>
                                             </div>
                                         )}
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
                                                 Contenido del Mensaje
                                             </label>
-                                            <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 rounded-lg whitespace-pre-wrap border border-gray-200">
+                                            <div className="bg-gray-50 p-3 rounded-lg whitespace-pre-wrap border border-gray-200 text-xs">
                                                 {editingTemplate.content_markdown}
                                             </div>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4">
+                                    <div className="space-y-3">
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
                                                 Nombre de la Plantilla
                                             </label>
                                             <input
@@ -574,12 +573,12 @@ export default function PlantillasCRM() {
                                                     ...prev,
                                                     name: e.target.value
                                                 }))}
-                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                                                className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                             />
                                         </div>
                                         {editingTemplate.channel === 'email' && (
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1">
                                                     Asunto del Mensaje
                                                 </label>
                                                 <input
@@ -589,12 +588,12 @@ export default function PlantillasCRM() {
                                                         ...prev,
                                                         subject: e.target.value
                                                     }))}
-                                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                                                    className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                                 />
                                             </div>
                                         )}
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
                                                 Contenido del Mensaje
                                             </label>
                                             <textarea
@@ -604,54 +603,54 @@ export default function PlantillasCRM() {
                                                     content_markdown: e.target.value
                                                 }))}
                                                 rows={12}
-                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors font-mono text-sm"
+                                                className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors font-mono"
                                             />
                                         </div>
-                                        <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-lg border-2 border-blue-200">
-                                            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                                <Sparkles className="w-4 h-4 text-purple-600" />
+                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                            <h4 className="font-semibold text-xs text-gray-900 mb-2 flex items-center gap-1.5">
+                                                <Sparkles className="w-3.5 h-3.5 text-gray-600" />
                                                 Variables Disponibles:
                                             </h4>
-                                            <div className="flex flex-wrap gap-2 text-sm">
-                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                            <div className="flex flex-wrap gap-1.5 text-xs">
+                                                <span className="bg-white border border-gray-300 text-gray-700 px-2 py-0.5 rounded font-mono">
                                                     {'{{customer_name}}'}
                                                 </span>
-                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                                <span className="bg-white border border-gray-300 text-gray-700 px-2 py-0.5 rounded font-mono">
                                                     {'{{restaurant_name}}'}
                                                 </span>
-                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                                <span className="bg-white border border-gray-300 text-gray-700 px-2 py-0.5 rounded font-mono">
                                                     {'{{reservation_time}}'}
                                                 </span>
-                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                                <span className="bg-white border border-gray-300 text-gray-700 px-2 py-0.5 rounded font-mono">
                                                     {'{{reservation_date}}'}
                                                 </span>
-                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                                <span className="bg-white border border-gray-300 text-gray-700 px-2 py-0.5 rounded font-mono">
                                                     {'{{party_size}}'}
                                                 </span>
-                                                <span className="bg-white border-2 border-purple-300 text-purple-700 px-3 py-1 rounded-md font-mono shadow-sm">
+                                                <span className="bg-white border border-gray-300 text-gray-700 px-2 py-0.5 rounded font-mono">
                                                     {'{{restaurant_phone}}'}
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-gray-700 mt-3 font-medium">
+                                            <p className="text-[10px] text-gray-700 mt-2 font-medium">
                                                 💡 Usa estas variables en tus mensajes. Se reemplazarán automáticamente con los datos reales.
                                             </p>
                                         </div>
                                     </div>
                                 )}
 
-                                <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                                <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
                                     <button
                                         onClick={() => setShowModal(false)}
-                                        className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                                        className="px-4 py-1.5 text-xs text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                                     >
                                         Cancelar
                                     </button>
                                     {!previewMode && (
                                         <button
                                             onClick={() => saveTemplate(editingTemplate)}
-                                            className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+                                            className="flex items-center gap-1.5 px-4 py-1.5 text-xs bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm font-medium"
                                         >
-                                            <Save className="w-4 h-4" />
+                                            <Save className="w-3.5 h-3.5" />
                                             Guardar Plantilla
                                         </button>
                                     )}

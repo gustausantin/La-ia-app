@@ -198,7 +198,7 @@ const TableCard = ({
                                     {table.name} ({table.table_number})
                                 </h4>
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 capitalize">
                                 {table.zone} • {table.capacity} personas
                             </p>
                         </div>
@@ -283,30 +283,30 @@ const TableCard = ({
         );
     }
 
-    // ✅ Vista de grid SIMPLIFICADA (tarjetas cuadradas)
+    // ✅ Vista de grid SIMPLIFICADA (tarjetas compactas)
     return (
         <div
-            className={`relative bg-white border-2 rounded-xl p-2 transition-all duration-200 hover:shadow-lg cursor-pointer ${stateInfo.color}`}
+            className={`relative bg-white border-2 rounded-lg p-1.5 transition-all duration-200 hover:shadow-lg cursor-pointer ${stateInfo.color}`}
             onClick={() => onAction("edit", table)}
         >
 
-            <div className="flex flex-col items-center justify-center space-y-3">
+            <div className="flex flex-col items-center justify-center space-y-1">
                 <div
-                    className={`w-16 h-16 ${stateInfo.bgColor} rounded-full flex items-center justify-center text-xl`}
+                    className={`w-10 h-10 ${stateInfo.bgColor} rounded-full flex items-center justify-center text-base`}
                 >
                     {stateInfo.icon}
                 </div>
 
                 <div className="text-center">
-                    <h4 className="font-bold text-gray-900">{table.name}</h4>
-                    <p className="text-xs text-gray-600 mt-1">{table.zone}</p>
-                    <p className="text-xs text-gray-500">
+                    <h4 className="font-bold text-xs text-gray-900">{table.name}</h4>
+                    <p className="text-[10px] text-gray-600 capitalize">{table.zone}</p>
+                    <p className="text-[10px] text-gray-500">
                         {table.capacity} pax
                     </p>
                 </div>
 
                 <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${stateInfo.bgColor} ${stateInfo.textColor}`}
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${stateInfo.bgColor} ${stateInfo.textColor}`}
                 >
                     {stateInfo.label}
                 </span>
@@ -318,7 +318,7 @@ const TableCard = ({
                     e.stopPropagation();
                     setShowActions(!showActions);
                 }}
-                className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                className="absolute top-1 right-1 p-0.5 hover:bg-gray-100 rounded transition-colors"
             >
                 <MoreVertical className="w-3 h-3 text-gray-600" />
             </button>
@@ -579,20 +579,20 @@ export default function Mesas() {
         }
 
         // ✅ Filtro por estado SIMPLIFICADO (solo active/inactive)
-        if (selectedStatus !== "all") {
-            filtered = filtered.filter((table) => {
-                const isActive = table.is_active !== false;
+                if (selectedStatus !== "all") {
+                    filtered = filtered.filter((table) => {
+                        const isActive = table.is_active !== false;
 
-                if (selectedStatus === "available") {
+                        if (selectedStatus === "available") {
                     return isActive;
-                }
-                if (selectedStatus === "inactive") {
-                    return !isActive;
-                }
+                        }
+                        if (selectedStatus === "inactive") {
+                            return !isActive;
+                        }
 
-                return true;
-            });
-        }
+                        return true;
+                    });
+                }
 
         // Filtro por búsqueda
         if (searchTerm) {
@@ -797,35 +797,20 @@ export default function Mesas() {
         <div className="max-w-[85%] mx-auto space-y-6">
             {/* Header mejorado con estadísticas */}
             {/* Header con estadísticas */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2">
                     <div>
-                        <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <h1 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                             Zonas y Mesas
-                            <Bot className="w-6 h-6 text-purple-600" />
+                            <Bot className="w-4 h-4 text-purple-600" />
                         </h1>
-                        <p className="text-gray-600 mt-1">
+                        <p className="text-xs text-gray-600 mt-0.5">
                             {stats.total} mesas • {stats.active} activas •{" "}
                             {stats.available} disponibles
                         </p>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        {/* Botón Vista IA - SOLO EN TAB MESAS */}
-                        {activeTab === "mesas" && (
-                            <button
-                                onClick={() => setShowAgentView(!showAgentView)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                                    showAgentView
-                                        ? "bg-purple-600 text-white"
-                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                }`}
-                            >
-                                <Brain className="w-4 h-4" />
-                                Vista IA
-                            </button>
-                        )}
-
                         <button
                             onClick={async () => {
                                 setLoading(true);
@@ -846,7 +831,7 @@ export default function Mesas() {
                                 }
                             }}
                             disabled={loading}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shadow-md font-medium text-sm"
                         >
                             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                             Actualizar
@@ -854,19 +839,19 @@ export default function Mesas() {
 
                         {/* Botón Nueva Mesa - SOLO EN TAB MESAS */}
                         {activeTab === "mesas" && (
-                            <button
-                                onClick={() => setShowCreateModal(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Nueva Mesa
-                            </button>
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:opacity-90 shadow-md font-medium text-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Nueva Mesa
+                        </button>
                         )}
                     </div>
                 </div>
 
                 {/* ✅ Estadísticas de CONFIGURACIÓN (Simplificadas) */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-3">
                     {/* Total de Mesas */}
                     <div className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center justify-between">
@@ -944,63 +929,56 @@ export default function Mesas() {
                 </div>
             </div>
 
-            {/* Tabs: Zonas y Mesas - Estilo grande como Reservas */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            {/* Tabs: Zonas y Mesas - Estilo homogéneo compacto */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
                 <div className="flex flex-wrap gap-3">
                     <button
                         onClick={() => setActiveTab("zonas")}
-                        className={`px-8 py-4 rounded-xl font-semibold text-base transition-all shadow-sm ${
+                        className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all shadow-sm ${
                             activeTab === "zonas"
-                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-blue-700 shadow-lg scale-105"
-                                : "bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300"
+                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md"
+                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300"
                         }`}
                     >
                         <span className="flex items-center gap-2">
-                            <MapPin className="w-5 h-5" />
-                            🗺️ ZONAS
+                            <MapPin className="w-4 h-4" />
+                            Zonas
                         </span>
                     </button>
                     <button
                         onClick={() => setActiveTab("mesas")}
-                        className={`px-8 py-4 rounded-xl font-semibold text-base transition-all shadow-sm ${
+                        className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all shadow-sm ${
                             activeTab === "mesas"
-                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-purple-700 shadow-lg scale-105"
-                                : "bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-purple-300"
+                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md"
+                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300"
                         }`}
                     >
                         <span className="flex items-center gap-2">
-                            <Grid3X3 className="w-5 h-5" />
-                            🍽️ MESAS
+                            <Grid3X3 className="w-4 h-4" />
+                            Mesas
                         </span>
                     </button>
                 </div>
             </div>
 
-            {/* Panel de insights del agente */}
-            {showAgentView && activeTab === "mesas" && (
-                <AgentInsightsPanel
-                    stats={agentStats}
-                    suggestions={agentSuggestions}
-                />
-            )}
 
             {/* ============================================ */}
             {/* TAB: ZONAS */}
             {/* ============================================ */}
             {activeTab === "zonas" && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div className="mb-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+                    <div className="mb-3">
+                        <h2 className="text-sm font-semibold text-gray-900 mb-1">
                             🗺️ Configuración de Zonas Disponibles
                         </h2>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs text-gray-600">
                             Activa solo las zonas que tu restaurante ofrece. Estas serán las únicas opciones que el agente de IA ofrecerá a los clientes.
                         </p>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {/* Interior */}
-                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex items-center gap-3">
                                 <span className="text-3xl">🏠</span>
                                 <div>
@@ -1205,9 +1183,9 @@ export default function Mesas() {
             {/* ============================================ */}
             {activeTab === "mesas" && (
                 <>
-                    {/* Filtros y controles */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
-                        <div className="flex flex-col lg:flex-row gap-2">
+            {/* Filtros y controles */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+                <div className="flex flex-col lg:flex-row gap-2">
                     {/* Búsqueda */}
                     <div className="flex-1 relative">
                         <Search
@@ -1228,7 +1206,7 @@ export default function Mesas() {
                         <select
                             value={selectedZone}
                             onChange={(e) => setSelectedZone(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="all">Todas las zonas</option>
                             {zones.map((zone) => (
@@ -1241,7 +1219,7 @@ export default function Mesas() {
                         <select
                             value={selectedStatus}
                             onChange={(e) => setSelectedStatus(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="all">Todos los estados</option>
                             <option value="available">Activas</option>
@@ -1252,16 +1230,16 @@ export default function Mesas() {
                         <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                             <button
                                 onClick={() => setViewMode("grid")}
-                                className={`px-3 py-2 flex items-center gap-2 ${viewMode === "grid" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:bg-gray-50"}`}
+                                className={`px-2 py-1.5 flex items-center gap-1.5 text-xs ${viewMode === "grid" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:bg-gray-50"}`}
                             >
-                                <Grid3X3 className="w-4 h-4" />
+                                <Grid3X3 className="w-3.5 h-3.5" />
                                 Grid
                             </button>
                             <button
                                 onClick={() => setViewMode("list")}
-                                className={`px-3 py-2 flex items-center gap-2 border-l border-gray-300 ${viewMode === "list" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:bg-gray-50"}`}
+                                className={`px-2 py-1.5 flex items-center gap-1.5 border-l border-gray-300 text-xs ${viewMode === "list" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:bg-gray-50"}`}
                             >
-                                <List className="w-4 h-4" />
+                                <List className="w-3.5 h-3.5" />
                                 Lista
                             </button>
                         </div>
@@ -1269,23 +1247,23 @@ export default function Mesas() {
                 </div>
 
                 {/* Leyenda de estados */}
-                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-200 text-sm">
+                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200 text-xs">
                     {Object.entries(TABLE_STATES).map(([key, state]) => (
-                        <div key={key} className="flex items-center gap-2">
-                            <span className="text-sm">{state.icon}</span>
-                            <span className="text-gray-600">{state.label}</span>
+                        <div key={key} className="flex items-center gap-1.5">
+                            <span className="text-xs">{state.icon}</span>
+                            <span className="text-gray-600 text-xs">{state.label}</span>
                         </div>
                     ))}
-                    <div className="flex items-center gap-2 ml-auto">
-                        <Bot className="w-4 h-4 text-purple-600" />
-                        <span className="text-gray-600">Asignada por IA</span>
+                    <div className="flex items-center gap-1.5 ml-auto">
+                        <Bot className="w-3.5 h-3.5 text-purple-600" />
+                        <span className="text-gray-600 text-xs">Asignada por IA</span>
                     </div>
                 </div>
             </div>
 
             {/* Vista de mesas */}
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
                     {[...Array(8)].map((_, i) => (
                         <div
                             key={i}
@@ -1312,7 +1290,7 @@ export default function Mesas() {
                                 <div key={zone}>
                                     <div className="flex items-center gap-2 mb-4">
                                         <MapPin className="w-5 h-5 text-blue-600" />
-                                        <h3 className="text-sm font-semibold text-gray-900">
+                                        <h3 className="text-sm font-semibold text-gray-900 capitalize">
                                             {zone}
                                         </h3>
                                         <span className="text-sm text-gray-500">
@@ -1320,7 +1298,7 @@ export default function Mesas() {
                                         </span>
                                     </div>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+                                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
                                         {zoneTables.map((table) => (
                                             <TableCard
                                                 key={table.id}
@@ -1438,7 +1416,7 @@ export default function Mesas() {
                                     
                                     if (criticalChange) {
                                         console.log('🚨 Cambios críticos detectados:', changes);
-                                        changeDetection.onTableChange('modified', selectedTable);
+                                    changeDetection.onTableChange('modified', selectedTable);
                                         showRegenerationModal(
                                             'table_modified', 
                                             `Mesa "${selectedTable?.name}" modificada:\n${changes.join('\n')}`
@@ -1511,13 +1489,13 @@ export default function Mesas() {
                 />
             )}
 
-                    {/* 🚨 MODAL BLOQUEANTE DE REGENERACIÓN */}
-                    <RegenerationRequiredModal
-                        isOpen={isModalOpen}
-                        onClose={closeModal}
-                        changeReason={modalChangeReason}
-                        changeDetails={modalChangeDetails}
-                    />
+            {/* 🚨 MODAL BLOQUEANTE DE REGENERACIÓN */}
+            <RegenerationRequiredModal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                changeReason={modalChangeReason}
+                changeDetails={modalChangeDetails}
+            />
                 </>
             )}
         </div>
@@ -1698,7 +1676,7 @@ const TableModal = ({
                 // Pasar los nuevos datos al callback
                 onSave(tableData);
             }
-            
+
             // Toast movido al componente principal para evitar duplicados
         } catch (error) {
             console.error("Error saving table:", error);

@@ -1943,38 +1943,38 @@ export default function Reservas() {
                                 onClick={() => setActiveTab('reservas')}
                                 className={`px-6 py-2.5 rounded-lg font-medium transition-all text-sm shadow-sm ${
                                     activeTab === 'reservas'
-                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-blue-700 shadow-lg scale-105'
-                                        : 'bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300'
+                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300'
                                 }`}
                             >
                                 📅 Reservas
                             </button>
                             <button
-                                onClick={() => setActiveTab('disponibilidades')}
-                                className={`px-6 py-2.5 rounded-lg font-medium transition-all text-sm shadow-sm ${
-                                    activeTab === 'disponibilidades'
-                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-purple-700 shadow-lg scale-105'
-                                        : 'bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-purple-300'
-                                }`}
-                            >
-                                🗓️ Horarios de Reserva
-                            </button>
-                            <button
                                 onClick={() => setActiveTab('ocupacion')}
                                 className={`px-6 py-2.5 rounded-lg font-medium transition-all text-sm shadow-sm ${
                                     activeTab === 'ocupacion'
-                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-purple-700 shadow-lg scale-105'
-                                        : 'bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-purple-300'
+                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300'
                                 }`}
                             >
                                 📊 Ocupación
                             </button>
                             <button
+                                onClick={() => setActiveTab('disponibilidades')}
+                                className={`px-6 py-2.5 rounded-lg font-medium transition-all text-sm shadow-sm ${
+                                    activeTab === 'disponibilidades'
+                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300'
+                                }`}
+                            >
+                                ⚡ Generar Disponibilidad
+                            </button>
+                            <button
                                 onClick={() => setActiveTab('politica')}
                                 className={`px-6 py-2.5 rounded-lg font-medium transition-all text-sm shadow-sm ${
                                     activeTab === 'politica'
-                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-blue-700 shadow-lg scale-105'
-                                        : 'bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300'
+                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300'
                                 }`}
                             >
                                 ⚙️ Política de Reservas
@@ -2008,7 +2008,7 @@ export default function Reservas() {
                         {activeTab === 'reservas' && (
                             <button
                                 onClick={handleCreateReservation}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:opacity-90 shadow-md font-medium"
                             >
                                 <Plus className="w-4 h-4" />
                                 Nueva Reserva
@@ -2399,7 +2399,7 @@ export default function Reservas() {
                             !filters.source && (
                                 <button
                                     onClick={handleCreateReservation}
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:opacity-90 shadow-md font-medium"
                                 >
                                     <Plus className="w-4 h-4" />
                                     Crear primera reserva

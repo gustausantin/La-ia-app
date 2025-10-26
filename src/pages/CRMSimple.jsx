@@ -367,13 +367,20 @@ const CRMSimple = () => {
     return (
         <div className="p-6 max-w-7xl mx-auto">
             {/* HEADER */}
-            <div className="mb-6">
-                <h1 className="text-lg font-bold text-gray-900">CRM Inteligente</h1>
-                <p className="text-gray-600">Gestiona la comunicación con tus clientes de forma inteligente</p>
+            <div className="mb-3 p-3 bg-white rounded-xl shadow-sm border">
+                <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg p-2 shadow-md">
+                        <Brain className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-sm font-bold text-gray-900">CRM Inteligente</h1>
+                        <p className="text-xs text-gray-600">Gestiona la comunicación con tus clientes de forma inteligente</p>
+                    </div>
+                </div>
             </div>
 
             {/* TABS DE NAVEGACIÓN - Estilo coherente con el resto de la app */}
-            <div className="bg-white rounded-xl shadow-sm border p-1 mb-6">
+            <div className="bg-white rounded-xl shadow-sm border p-1 mb-3">
                 <div className="flex space-x-1">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
@@ -381,9 +388,9 @@ const CRMSimple = () => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
+                                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-sm transition-all ${
                                     activeTab === tab.id
-                                        ? 'bg-purple-600 text-white shadow-md'
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
                                         : 'text-gray-600 hover:bg-gray-100'
                                 }`}
                             >
@@ -400,61 +407,67 @@ const CRMSimple = () => {
             <div>
 
             {/* MINI DASHBOARD */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-6">
-                <div className="bg-blue-50 p-2 rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <div className="text-lg font-bold text-blue-600">{stats.mensajesEnviados}</div>
-                            <div className="text-sm text-blue-700">Mensajes esta semana</div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+                <div className="bg-white border border-gray-200 p-2 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+                            <MessageSquare className="w-5 h-5 text-white" />
                         </div>
-                        <MessageSquare className="w-8 h-8 text-blue-400" />
+                        <div>
+                            <div className="text-base font-bold text-gray-900">{stats.mensajesEnviados}</div>
+                            <div className="text-xs text-gray-600">Mensajes esta semana</div>
+                        </div>
                     </div>
                 </div>
                 
-                <div className="bg-green-50 p-2 rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <div className="text-lg font-bold text-green-600">{stats.clientesRecuperados}</div>
-                            <div className="text-sm text-green-700">Clientes respondieron</div>
+                <div className="bg-white border border-gray-200 p-2 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                            <Users className="w-5 h-5 text-white" />
                         </div>
-                        <Users className="w-8 h-8 text-green-400" />
+                        <div>
+                            <div className="text-base font-bold text-gray-900">{stats.clientesRecuperados}</div>
+                            <div className="text-xs text-gray-600">Clientes respondieron</div>
+                        </div>
                     </div>
                 </div>
                 
-                <div className="bg-purple-50 p-2 rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <div className="text-lg font-bold text-purple-600">€{stats.valorGenerado}</div>
-                            <div className="text-sm text-purple-700">Valor generado</div>
+                <div className="bg-white border border-gray-200 p-2 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm">
+                            <DollarSign className="w-5 h-5 text-white" />
                         </div>
-                        <DollarSign className="w-8 h-8 text-purple-400" />
+                        <div>
+                            <div className="text-base font-bold text-gray-900">€{stats.valorGenerado}</div>
+                            <div className="text-xs text-gray-600">Valor generado</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* BOTÓN DE INFO */}
-            <div className="mb-4">
+            <div className="mb-2">
                 <button
                     onClick={() => setMostrarInfo(!mostrarInfo)}
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                    className="flex items-center gap-2 text-xs text-gray-600 hover:text-gray-900 transition-colors"
                 >
-                    <Info className="w-5 h-5" />
+                    <Info className="w-4 h-4" />
                     ¿Cuándo aparecen las alertas?
                 </button>
             </div>
 
             {/* INFO EXPANDIBLE */}
             {mostrarInfo && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-6">
-                    <h3 className="font-semibold text-blue-900 mb-2">📊 Las alertas aparecen automáticamente cuando:</h3>
-                    <ul className="space-y-2 text-sm text-blue-800">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 mb-3">
+                    <h3 className="font-semibold text-xs text-gray-900 mb-2">📊 Las alertas aparecen automáticamente cuando:</h3>
+                    <ul className="space-y-1 text-xs text-gray-700">
                         <li>• <strong>Bienvenida:</strong> Cliente nuevo hace su primera reserva</li>
                         <li>• <strong>VIP:</strong> Cliente alcanza 5+ visitas</li>
                         <li>• <strong>Riesgo:</strong> Cliente regular no viene en 30+ días</li>
                         <li>• <strong>Reactivación:</strong> Cliente inactivo 60+ días</li>
                         <li>• <strong>Cumpleaños:</strong> 3 días antes del cumpleaños</li>
                     </ul>
-                    <p className="mt-3 text-xs text-blue-700">
+                    <p className="mt-2 text-[10px] text-gray-600">
                         💡 Los mensajes se generan automáticamente. Solo tienes que decidir si enviar o ignorar.
                     </p>
                 </div>
@@ -462,17 +475,17 @@ const CRMSimple = () => {
 
             {/* ALERTAS */}
             <div className="bg-white rounded-xl shadow-sm border">
-                <div className="p-2 border-b bg-gradient-to-r from-purple-50 to-blue-50">
-                    <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                        <Bell className="w-5 h-5 text-purple-600" />
+                <div className="p-2 border-b bg-gray-50">
+                    <h2 className="text-xs font-semibold text-gray-900 flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-gray-700" />
                         Alertas CRM - Acciones Pendientes ({alertas.length})
                     </h2>
                 </div>
 
                 {alertas.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500">
-                        <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-500" />
-                        <p>¡Todo al día! No hay alertas pendientes.</p>
+                    <div className="p-6 text-center text-gray-500">
+                        <CheckCircle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-xs">¡Todo al día! No hay alertas pendientes.</p>
                     </div>
                 ) : (
                     <div className="divide-y">
@@ -481,22 +494,22 @@ const CRMSimple = () => {
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1">
                                         {/* Título y descripción */}
-                                        <h3 className="font-semibold text-gray-900 mb-1">
+                                        <h3 className="font-semibold text-xs text-gray-900 mb-1">
                                             {alerta.titulo}
                                         </h3>
-                                        <p className="text-sm text-gray-600 mb-2">
+                                        <p className="text-xs text-gray-600 mb-2">
                                             {alerta.descripcion}
                                         </p>
                                         
                                         {/* Mensaje pre-generado */}
                                         <div className="bg-gray-50 p-2 rounded-lg mb-2">
-                                            <p className="text-sm text-gray-700">
+                                            <p className="text-xs text-gray-700">
                                                 <strong>Mensaje:</strong> {alerta.mensaje}
                                             </p>
                                         </div>
 
                                         {/* Info del cliente */}
-                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                        <div className="flex items-center gap-2 text-[10px] text-gray-500">
                                             {alerta.telefono && (
                                                 <span>📱 {alerta.telefono}</span>
                                             )}
@@ -513,16 +526,16 @@ const CRMSimple = () => {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => enviarMensaje(alerta)}
-                                            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+                                            className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-xs rounded-lg flex items-center gap-1.5 transition-all shadow-sm"
                                         >
-                                            <Send className="w-4 h-4" />
+                                            <Send className="w-3.5 h-3.5" />
                                             Enviar
                                         </button>
                                         <button
                                             onClick={() => ignorarAlerta(alerta)}
-                                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg flex items-center gap-2 transition-colors"
+                                            className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs rounded-lg flex items-center gap-1.5 transition-colors"
                                         >
-                                            <X className="w-4 h-4" />
+                                            <X className="w-3.5 h-3.5" />
                                             Ignorar
                                         </button>
                                     </div>
@@ -534,68 +547,78 @@ const CRMSimple = () => {
             </div>
 
             {/* 🆕 SECCIÓN: PERFORMANCE DEL AGENTE IA */}
-            <div className="bg-white rounded-xl shadow-sm border mt-6">
-                <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Brain className="w-5 h-5 text-purple-600" />
-                        🤖 Performance del Agente IA
-                        <span className="text-sm text-gray-500 font-normal ml-auto">
+            <div className="bg-white rounded-xl shadow-sm border mt-3">
+                <div className="p-3">
+                    <h3 className="text-xs font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                        <Brain className="w-4 h-4 text-gray-700" />
+                        Performance del Agente IA
+                        <span className="text-[10px] text-gray-500 font-normal ml-auto">
                             (últimos 30 días)
                         </span>
                     </h3>
                     
                     {/* Métricas principales */}
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                        <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
-                            <div className="flex items-center justify-center mb-1">
-                                <MessageSquare className="w-4 h-4 text-purple-600 mr-1" />
-                                <div className="text-xs text-purple-700 font-medium">Total Conversaciones</div>
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 mb-3">
+                        <div className="p-2 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                                <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-md flex items-center justify-center">
+                                    <MessageSquare className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <div className="text-[10px] text-gray-600 font-medium">Total</div>
                             </div>
-                            <div className="text-lg font-bold text-purple-600">
+                            <div className="text-base font-bold text-gray-900 text-center">
                                 {agentPerformance.totalConversations}
                             </div>
                         </div>
                         
-                        <div className="text-center p-3 bg-amber-50 rounded-lg border border-amber-200">
-                            <div className="flex items-center justify-center mb-1">
-                                <Star className="w-4 h-4 text-amber-600 mr-1" />
-                                <div className="text-xs text-amber-700 font-medium">Satisfacción</div>
+                        <div className="p-2 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                                <div className="w-6 h-6 bg-gradient-to-br from-amber-500 to-amber-600 rounded-md flex items-center justify-center">
+                                    <Star className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <div className="text-[10px] text-gray-600 font-medium">Satisfacción</div>
                             </div>
-                            <div className="text-lg font-bold text-amber-600">
+                            <div className="text-base font-bold text-gray-900 text-center">
                                 {agentPerformance.satisfaction > 0 
                                     ? agentPerformance.satisfaction.toFixed(1) 
                                     : '-'}/5
                             </div>
                         </div>
                         
-                        <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                            <div className="flex items-center justify-center mb-1">
-                                <Smile className="w-4 h-4 text-green-600 mr-1" />
-                                <div className="text-xs text-green-700 font-medium">Positivos</div>
+                        <div className="p-2 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                                <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-green-600 rounded-md flex items-center justify-center">
+                                    <Smile className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <div className="text-[10px] text-gray-600 font-medium">Positivos</div>
                             </div>
-                            <div className="text-lg font-bold text-green-600">
+                            <div className="text-base font-bold text-gray-900 text-center">
                                 {agentPerformance.positivePercent > 0 
                                     ? agentPerformance.positivePercent.toFixed(0) 
                                     : '0'}%
                             </div>
                         </div>
                         
-                        <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                            <div className="flex items-center justify-center mb-1">
-                                <AlertTriangle className="w-4 h-4 text-orange-600 mr-1" />
-                                <div className="text-xs text-orange-700 font-medium">Escalaciones</div>
+                        <div className="p-2 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                                <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-orange-600 rounded-md flex items-center justify-center">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <div className="text-[10px] text-gray-600 font-medium">Escalaciones</div>
                             </div>
-                            <div className="text-lg font-bold text-orange-600">
+                            <div className="text-base font-bold text-gray-900 text-center">
                                 {agentPerformance.escalations}
                             </div>
                         </div>
                         
-                        <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <div className="flex items-center justify-center mb-1">
-                                <CheckCircle2 className="w-4 h-4 text-blue-600 mr-1" />
-                                <div className="text-xs text-blue-700 font-medium">Calidad</div>
+                        <div className="p-2 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                                <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-md flex items-center justify-center">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <div className="text-[10px] text-gray-600 font-medium">Calidad</div>
                             </div>
-                            <div className="text-lg font-bold text-blue-600">
+                            <div className="text-base font-bold text-gray-900 text-center">
                                 {agentPerformance.quality > 0 
                                     ? agentPerformance.quality.toFixed(1) 
                                     : '-'}/5
@@ -605,23 +628,23 @@ const CRMSimple = () => {
 
                     {/* Gráfico de evolución de sentiment */}
                     {agentPerformance.sentimentTrend.length > 0 && (
-                        <div className="mb-6">
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4" />
+                        <div className="mb-3">
+                            <h4 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                <TrendingUp className="w-3.5 h-3.5" />
                                 Evolución del Sentimiento
                             </h4>
-                            <ResponsiveContainer width="100%" height={250}>
+                            <ResponsiveContainer width="100%" height={200}>
                                 <LineChart data={agentPerformance.sentimentTrend}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                     <XAxis 
                                         dataKey="date" 
-                                        tick={{ fontSize: 11 }}
+                                        tick={{ fontSize: 10 }}
                                         tickFormatter={(date) => {
                                             const d = new Date(date);
                                             return `${d.getDate()}/${d.getMonth() + 1}`;
                                         }}
                                     />
-                                    <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} />
+                                    <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
                                     <Tooltip 
                                         formatter={(value) => `${value}%`}
                                         labelFormatter={(date) => {
@@ -629,14 +652,14 @@ const CRMSimple = () => {
                                             return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
                                         }}
                                     />
-                                    <Legend />
+                                    <Legend wrapperStyle={{ fontSize: '10px' }} />
                                     <Line 
                                         type="monotone" 
                                         dataKey="positive" 
                                         stroke="#10b981" 
                                         name="Positivo"
                                         strokeWidth={2}
-                                        dot={{ r: 3 }}
+                                        dot={{ r: 2 }}
                                     />
                                     <Line 
                                         type="monotone" 
@@ -644,7 +667,7 @@ const CRMSimple = () => {
                                         stroke="#f59e0b" 
                                         name="Neutral"
                                         strokeWidth={2}
-                                        dot={{ r: 3 }}
+                                        dot={{ r: 2 }}
                                     />
                                     <Line 
                                         type="monotone" 
@@ -652,7 +675,7 @@ const CRMSimple = () => {
                                         stroke="#ef4444" 
                                         name="Negativo"
                                         strokeWidth={2}
-                                        dot={{ r: 3 }}
+                                        dot={{ r: 2 }}
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
@@ -662,62 +685,62 @@ const CRMSimple = () => {
                     {/* Tabla de conversaciones problemáticas */}
                     {agentPerformance.problematicConversations.length > 0 && (
                         <div>
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4 text-orange-600" />
+                            <h4 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                <AlertTriangle className="w-3.5 h-3.5 text-gray-600" />
                                 Conversaciones Problemáticas (últimos 7 días)
                             </h4>
                             <div className="bg-gray-50 rounded-lg overflow-hidden">
-                                <table className="w-full text-sm">
+                                <table className="w-full text-xs">
                                     <thead className="bg-gray-100 border-b border-gray-200">
                                         <tr>
-                                            <th className="text-left p-3 text-xs font-semibold text-gray-700">Cliente</th>
-                                            <th className="text-left p-3 text-xs font-semibold text-gray-700">Fecha</th>
-                                            <th className="text-left p-3 text-xs font-semibold text-gray-700">Canal</th>
-                                            <th className="text-left p-3 text-xs font-semibold text-gray-700">Motivo</th>
-                                            <th className="text-left p-3 text-xs font-semibold text-gray-700">Estado</th>
+                                            <th className="text-left p-2 text-[10px] font-semibold text-gray-700">Cliente</th>
+                                            <th className="text-left p-2 text-[10px] font-semibold text-gray-700">Fecha</th>
+                                            <th className="text-left p-2 text-[10px] font-semibold text-gray-700">Canal</th>
+                                            <th className="text-left p-2 text-[10px] font-semibold text-gray-700">Motivo</th>
+                                            <th className="text-left p-2 text-[10px] font-semibold text-gray-700">Estado</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
                                         {agentPerformance.problematicConversations.map((conv) => (
                                             <tr key={conv.id} className="hover:bg-white transition-colors">
-                                                <td className="p-3">
-                                                    <div className="font-medium text-gray-900">{conv.customer_name || 'Sin nombre'}</div>
-                                                    <div className="text-xs text-gray-500">{conv.customer_phone}</div>
+                                                <td className="p-2">
+                                                    <div className="font-medium text-xs text-gray-900">{conv.customer_name || 'Sin nombre'}</div>
+                                                    <div className="text-[10px] text-gray-500">{conv.customer_phone}</div>
                                                 </td>
-                                                <td className="p-3 text-gray-600">
+                                                <td className="p-2 text-xs text-gray-600">
                                                     {format(parseISO(conv.created_at), 'dd/MM/yyyy HH:mm')}
                                                 </td>
-                                                <td className="p-3">
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                                <td className="p-2">
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-700 border border-gray-200">
                                                         {conv.source_channel}
                                                     </span>
                                                 </td>
-                                                <td className="p-3">
-                                                    <div className="flex items-center gap-2">
+                                                <td className="p-2">
+                                                    <div className="flex items-center gap-1">
                                                         {conv.sentiment === 'negative' && (
-                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                                                <Frown className="w-3 h-3 mr-1" />
+                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-200 text-gray-700">
+                                                                <Frown className="w-2.5 h-2.5 mr-0.5" />
                                                                 Negativo
                                                             </span>
                                                         )}
                                                         {conv.metadata?.escalation_needed && (
-                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
-                                                                <AlertTriangle className="w-3 h-3 mr-1" />
+                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-200 text-gray-700">
+                                                                <AlertTriangle className="w-2.5 h-2.5 mr-0.5" />
                                                                 Escalación
                                                             </span>
                                                         )}
                                                     </div>
                                                     {conv.metadata?.conversation_summary && (
-                                                        <div className="text-xs text-gray-500 mt-1 max-w-xs truncate">
+                                                        <div className="text-[10px] text-gray-500 mt-1 max-w-xs truncate">
                                                             {conv.metadata.conversation_summary}
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="p-3">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                                <td className="p-2">
+                                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                                         conv.status === 'resolved' 
-                                                            ? 'bg-green-100 text-green-800' 
-                                                            : 'bg-orange-100 text-orange-800'
+                                                            ? 'bg-gray-100 text-gray-700 border border-gray-200' 
+                                                            : 'bg-gray-200 text-gray-800'
                                                     }`}>
                                                         {conv.status === 'resolved' ? '✅ Resuelta' : '⏳ Activa'}
                                                     </span>
@@ -732,10 +755,10 @@ const CRMSimple = () => {
 
                     {/* Mensaje si no hay datos */}
                     {agentPerformance.totalConversations === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                            <Brain className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                            <p className="text-sm">No hay conversaciones analizadas en los últimos 30 días</p>
-                            <p className="text-xs mt-1">Los datos aparecerán cuando el agente IA complete conversaciones</p>
+                        <div className="text-center py-6 text-gray-500">
+                            <Brain className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                            <p className="text-xs">No hay conversaciones analizadas en los últimos 30 días</p>
+                            <p className="text-[10px] mt-1">Los datos aparecerán cuando el agente IA complete conversaciones</p>
                         </div>
                     )}
                 </div>

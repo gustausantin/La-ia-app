@@ -279,7 +279,7 @@ export default function NoShowControlNuevo() {
                                         <div className="bg-white rounded-lg p-2 shadow-md border border-blue-200">
                                             <h3 className="font-bold text-blue-900 mb-1 text-xs">📱 CONFIRMACIÓN 24 HORAS ANTES</h3>
                                             <p className="text-xs text-gray-700 mb-2">WhatsApp automático: <span className="font-semibold">"Confirma tu reserva para mañana"</span></p>
-                                            <div className="flex gap-1.5 text-[10px] flex-wrap">
+                                            <div className="flex gap-1.5 text-xs flex-wrap">
                                                 <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">✅ Responde → Confirmada</span>
                                                 <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded font-medium">❌ No responde → Riesgo BAJO</span>
                                             </div>
@@ -294,7 +294,7 @@ export default function NoShowControlNuevo() {
                                         <div className="bg-white rounded-lg p-2 shadow-md border border-yellow-200">
                                             <h3 className="font-bold text-yellow-900 mb-1 text-xs">⏰ RECORDATORIO 4 HORAS ANTES</h3>
                                             <p className="text-xs text-gray-700 mb-2">WhatsApp recordatorio: <span className="font-semibold">"Te esperamos en 4 horas"</span></p>
-                                            <div className="flex gap-1.5 text-[10px] flex-wrap">
+                                            <div className="flex gap-1.5 text-xs flex-wrap">
                                                 <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">✅ Responde → Confirmada</span>
                                                 <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded font-medium">❌ No responde → Riesgo MEDIO</span>
                                             </div>
@@ -309,11 +309,11 @@ export default function NoShowControlNuevo() {
                                         <div className="bg-orange-50 rounded-lg p-2 shadow-md border border-orange-300">
                                             <h3 className="font-bold text-orange-900 mb-1 text-xs">🚨 LLAMADA URGENTE (2h 15min antes)</h3>
                                             <p className="text-xs text-gray-700 mb-2"><span className="font-bold text-orange-600">ALARMA EN DASHBOARD</span> → Personal del restaurante LLAMA al cliente</p>
-                                            <div className="flex gap-1.5 text-[10px] flex-wrap">
+                                            <div className="flex gap-1.5 text-xs flex-wrap">
                                                 <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">✅ Confirma → Resolver alarma</span>
                                                 <span className="px-2 py-1 bg-red-100 text-red-700 rounded font-medium">❌ No contesta → Esperar T-2h</span>
                                             </div>
-                                            <p className="text-[10px] text-orange-600 font-semibold mt-1.5">Riesgo: ALTO</p>
+                                            <p className="text-xs text-orange-600 font-semibold mt-1.5">Riesgo: ALTO</p>
                                         </div>
                                     </div>
 
@@ -330,7 +330,7 @@ export default function NoShowControlNuevo() {
                                                 <li>• Slot de mesa: <span className="font-semibold text-green-600">LIBERADO</span> (disponible para otros)</li>
                                                 <li>• Reserva: <span className="font-semibold">NO se elimina</span> (queda en historial)</li>
                                             </ul>
-                                            <p className="text-[10px] text-gray-500 mt-1.5 italic">Si el cliente aparece después, se resuelve manualmente</p>
+                                            <p className="text-xs text-gray-500 mt-1.5 italic">Si el cliente aparece después, se resuelve manualmente</p>
                                         </div>
                                     </div>
                                 </div>
@@ -429,7 +429,7 @@ export default function NoShowControlNuevo() {
                                         <h3 className="font-bold text-red-900 text-xs">⚠️ Urgencia Temporal</h3>
                                     </div>
                                     <p className="text-xs text-gray-700 mb-1 font-semibold">0-50 puntos según proximidad sin confirmar</p>
-                                    <div className="space-y-0.5 text-[10px] text-gray-700 font-medium">
+                                    <div className="space-y-0.5 text-xs text-gray-700 font-medium">
                                         <p>• &lt;2h 15min sin confirmar → <span className="text-red-700 font-bold">+50pts 🔴</span></p>
                                         <p>• &lt;4h sin confirmar → <span className="text-orange-700 font-bold">+35pts ⚠️</span></p>
                                         <p>• &lt;24h sin confirmar → <span className="text-yellow-700 font-bold">+15pts</span></p>
@@ -438,65 +438,65 @@ export default function NoShowControlNuevo() {
                             </div>
 
                             {/* Clasificación con Ejemplos */}
-                            <div className="mt-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-6 border-2 border-gray-300">
-                                <h3 className="font-bold text-gray-900 mb-4 text-lg">Clasificación de Riesgo con Ejemplos:</h3>
+                            <div className="mt-3 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 border border-gray-300">
+                                <h3 className="text-xs font-bold text-gray-900 mb-2">Clasificación de Riesgo con Ejemplos:</h3>
                                 
-                                <div className="space-y-6">
+                                <div className="space-y-3">
                                     {/* RIESGO ALTO */}
-                                    <div className="bg-white rounded-lg p-5 border-2 border-red-300 shadow-sm">
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <span className="w-28 px-4 py-2 bg-red-100 text-red-700 rounded-lg font-bold text-center text-base">🔴 ALTO</span>
-                                            <span className="text-gray-700 font-semibold text-base">≥80 puntos → Llamada URGENTE obligatoria</span>
+                                    <div className="bg-white rounded-lg p-2 border border-red-300 shadow-sm">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold text-xs">🔴 ALTO</span>
+                                            <span className="text-gray-700 font-semibold text-xs">≥80 puntos → Llamada URGENTE obligatoria</span>
                                         </div>
-                                        <div className="ml-32 bg-red-50 rounded-lg p-4 border border-red-200">
-                                            <p className="font-bold text-red-900 mb-2 text-base">Ejemplo: Lucía (hoy a las 19:00)</p>
-                                            <ul className="text-sm text-gray-700 space-y-1">
+                                        <div className="ml-16 bg-red-50 rounded-lg p-2 border border-red-200">
+                                            <p className="font-bold text-red-900 mb-1 text-xs">Ejemplo: Lucía (hoy a las 19:00)</p>
+                                            <ul className="text-xs text-gray-700 space-y-0.5">
                                                 <li>• Historial: 20% no-shows → <span className="font-semibold text-red-600">+20 pts</span></li>
                                                 <li>• Horario: Cena tardía (19h) → <span className="font-semibold text-red-600">+15 pts</span></li>
                                                 <li>• <strong>⚠️ URGENCIA: &lt;2h 15min sin confirmar</strong> → <span className="font-semibold text-red-700">+50 pts</span></li>
                                                 <li>• NO respondió WhatsApp 24h → <span className="font-semibold text-orange-600">+20 pts (dinámico)</span></li>
                                             </ul>
-                                            <p className="mt-3 pt-3 border-t border-red-300 font-bold text-red-700 text-base">
+                                            <p className="mt-2 pt-2 border-t border-red-300 font-bold text-red-700 text-xs">
                                                 TOTAL: 105 puntos → 🚨 ¡LLAMAR AHORA MISMO!
                                             </p>
                                         </div>
                                     </div>
 
                                     {/* RIESGO MEDIO */}
-                                    <div className="bg-white rounded-lg p-5 border-2 border-yellow-300 shadow-sm">
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <span className="w-28 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-center text-base">🟡 MEDIO</span>
-                                            <span className="text-gray-700 font-semibold text-base">40-79 puntos → Monitorear de cerca</span>
+                                    <div className="bg-white rounded-lg p-2 border border-yellow-300 shadow-sm">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-lg font-bold text-xs">🟡 MEDIO</span>
+                                            <span className="text-gray-700 font-semibold text-xs">40-79 puntos → Monitorear de cerca</span>
                                         </div>
-                                        <div className="ml-32 bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                                            <p className="font-bold text-yellow-900 mb-2 text-base">Ejemplo: María López</p>
-                                            <ul className="text-sm text-gray-700 space-y-1">
+                                        <div className="ml-16 bg-yellow-50 rounded-lg p-2 border border-yellow-200">
+                                            <p className="font-bold text-yellow-900 mb-1 text-xs">Ejemplo: María López</p>
+                                            <ul className="text-xs text-gray-700 space-y-0.5">
                                                 <li>• Historial: 15% no-shows → <span className="font-semibold text-yellow-600">+20 pts</span></li>
                                                 <li>• Horario: Reserva a las 22h → <span className="font-semibold text-yellow-600">+15 pts</span></li>
                                                 <li>• Canal: Reserva por teléfono → <span className="font-semibold text-yellow-600">+10 pts</span></li>
                                                 <li>• Menos de 24h sin confirmar → <span className="font-semibold text-yellow-600">+15 pts</span></li>
                                             </ul>
-                                            <p className="mt-3 pt-3 border-t border-yellow-300 font-bold text-yellow-700 text-base">
+                                            <p className="mt-2 pt-2 border-t border-yellow-300 font-bold text-yellow-700 text-xs">
                                                 TOTAL: 60 puntos → Enviar WhatsApp recordatorio 4h antes
                                             </p>
                                         </div>
                                     </div>
 
                                     {/* RIESGO BAJO */}
-                                    <div className="bg-white rounded-lg p-5 border-2 border-green-300 shadow-sm">
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <span className="w-28 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-bold text-center text-base">🟢 BAJO</span>
-                                            <span className="text-gray-700 font-semibold text-base">&lt;40 puntos → Recordatorio estándar (24 horas antes)</span>
+                                    <div className="bg-white rounded-lg p-2 border border-green-300 shadow-sm">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-lg font-bold text-xs">🟢 BAJO</span>
+                                            <span className="text-gray-700 font-semibold text-xs">&lt;40 puntos → Recordatorio estándar (24 horas antes)</span>
                                         </div>
-                                        <div className="ml-32 bg-green-50 rounded-lg p-4 border border-green-200">
-                                            <p className="font-bold text-green-900 mb-2 text-base">Ejemplo: Ana Martínez</p>
-                                            <ul className="text-sm text-gray-700 space-y-1">
+                                        <div className="ml-16 bg-green-50 rounded-lg p-2 border border-green-200">
+                                            <p className="font-bold text-green-900 mb-1 text-xs">Ejemplo: Ana Martínez</p>
+                                            <ul className="text-xs text-gray-700 space-y-0.5">
                                                 <li>• Historial: 0% no-shows (cliente fiable) → <span className="font-semibold text-green-600">0 pts</span></li>
                                                 <li>• Última visita: Hace 1 mes → <span className="font-semibold text-green-600">0 pts</span></li>
                                                 <li>• Grupo: 2 personas → <span className="font-semibold text-green-600">0 pts</span></li>
                                                 <li>• Horario: 20h (normal) → <span className="font-semibold text-green-600">0 pts</span></li>
                                             </ul>
-                                            <p className="mt-3 pt-3 border-t border-green-300 font-bold text-green-700 text-base">
+                                            <p className="mt-2 pt-2 border-t border-green-300 font-bold text-green-700 text-xs">
                                                 TOTAL: 0 puntos → Solo recordatorio amigable 24 horas antes ✅
                                             </p>
                                         </div>
@@ -504,28 +504,28 @@ export default function NoShowControlNuevo() {
                                 </div>
 
                                 {/* Nota explicativa */}
-                                <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                    <p className="text-sm text-blue-900 mb-2">
+                                <div className="mt-3 bg-blue-50 rounded-lg p-2 border border-blue-200">
+                                    <p className="text-xs text-blue-900 mb-1.5">
                                         <span className="font-bold">💡 Cómo funciona:</span> El sistema calcula un <strong>Score Base</strong> sumando 7 factores estáticos (hasta 135 puntos). Luego aplica <strong>Ajustes Dinámicos</strong> según las confirmaciones del cliente (±50 puntos). El Score Final determina automáticamente qué acción tomar y cuándo.
                                     </p>
-                                    <p className="text-sm text-blue-800 bg-blue-100 rounded p-2 mt-2">
+                                    <p className="text-xs text-blue-800 bg-blue-100 rounded p-1.5 mt-1.5">
                                         <span className="font-bold">📊 Lógica de puntos:</span> <strong className="text-red-700">Rojo = SUMA puntos</strong> (sube riesgo) • <strong className="text-green-700">Verde = RESTA puntos</strong> (baja riesgo)
                                     </p>
-                                    <div className="mt-3 pt-3 border-t border-blue-200">
-                                        <p className="text-sm text-blue-900 font-bold mb-2">
+                                    <div className="mt-2 pt-2 border-t border-blue-200">
+                                        <p className="text-xs text-blue-900 font-bold mb-1.5">
                                             🔄 Sistema Dinámico - El riesgo se ajusta en tiempo real:
                                         </p>
-                                        <ul className="mt-2 space-y-2 text-sm text-blue-900">
-                                            <li className="bg-green-50 border border-green-200 rounded p-2">
+                                        <ul className="mt-1.5 space-y-1 text-xs text-blue-900">
+                                            <li className="bg-green-50 border border-green-200 rounded p-1.5">
                                                 ✅ <strong>Cliente confirma rápido</strong> (&lt;1h después del mensaje) → <strong className="text-green-700">-30 puntos</strong> (baja riesgo mucho)
                                             </li>
-                                            <li className="bg-green-50 border border-green-200 rounded p-2">
+                                            <li className="bg-green-50 border border-green-200 rounded p-1.5">
                                                 ✅ <strong>Cliente confirma a las 4h</strong> → <strong className="text-green-700">-20 puntos</strong> (doble confirmación, baja riesgo)
                                             </li>
-                                            <li className="bg-red-50 border border-red-200 rounded p-2">
+                                            <li className="bg-red-50 border border-red-200 rounded p-1.5">
                                                 ⚠️ <strong>Cliente NO responde a las 24h</strong> → <strong className="text-orange-700">+20 puntos</strong> (sube riesgo)
                                             </li>
-                                            <li className="bg-red-50 border border-red-200 rounded p-2">
+                                            <li className="bg-red-50 border border-red-200 rounded p-1.5">
                                                 🔴 <strong>Cliente NO responde a las 4h</strong> → <strong className="text-red-700">+30 puntos</strong> (sube riesgo mucho)
                                             </li>
                                         </ul>

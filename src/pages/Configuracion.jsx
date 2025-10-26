@@ -52,23 +52,23 @@ const ToggleSwitch = ({ enabled, onChange, label }) => {
 
 const SettingSection = ({ title, description, icon, children }) => {
     return (
-        <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-            <div className="border-b border-gray-100 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="border-b border-gray-100 p-3">
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                            {icon}
+                        <div className="p-1.5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                            {React.cloneElement(icon, { className: "w-4 h-4 text-white" })}
                         </div>
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-900">
+                            <h3 className="text-xs font-semibold text-gray-900">
                                 {title}
                             </h3>
-                            <p className="text-sm text-gray-600">{description}</p>
+                            <p className="text-[10px] text-gray-600">{description}</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div className="p-6">
+            <div className="p-3">
                 {children}
             </div>
         </div>
@@ -203,27 +203,27 @@ const Configuracion = () => {
         {
             id: "general",
             label: "General",
-            icon: <Building2 className="w-5 h-5" />,
+            icon: <Building2 className="w-4 h-4" />,
         },
         {
             id: "agent",
             label: "Agente IA",
-            icon: <Bot className="w-5 h-5" />,
+            icon: <Bot className="w-4 h-4" />,
         },
         {
             id: "channels",
             label: "Canales",
-            icon: <MessageSquare className="w-5 h-5" />,
+            icon: <MessageSquare className="w-4 h-4" />,
         },
         {
             id: "notifications",
             label: "Notificaciones",
-            icon: <Bell className="w-5 h-5" />,
+            icon: <Bell className="w-4 h-4" />,
         },
         {
             id: "documentos",
             label: "Documentos",
-            icon: <FileText className="w-5 h-5" />,
+            icon: <FileText className="w-4 h-4" />,
         }
     ];
 
@@ -733,70 +733,74 @@ const Configuracion = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-[85%] mx-auto px-4 py-4">
-                <div className="mb-8 text-center">
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                        <SettingsIcon className="w-5 h-5 text-purple-600" />
-                        <h1 className="text-xl font-bold text-gray-900">Configuración</h1>
+                <div className="mb-3 p-3 bg-white rounded-xl shadow-sm border">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg p-2 shadow-md">
+                            <SettingsIcon className="w-5 h-5 text-white" />
                     </div>
-                    <p className="text-gray-600 max-w-2xl mx-auto">
+                        <div>
+                            <h1 className="text-sm font-bold text-gray-900">Configuración</h1>
+                            <p className="text-xs text-gray-600">
                         Centro de control para tu restaurante. Configura canales de comunicación y notificaciones.
                     </p>
-                </div>
-
-                {/* Tabs estilo moderno (como CRM) */}
-                <div className="mb-8">
-                    <div className="flex gap-3 overflow-x-auto pb-2">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`
-                                    px-8 py-4 rounded-xl font-semibold text-base whitespace-nowrap 
-                                    flex items-center gap-2 transition-all duration-200 shadow-sm
-                                    ${activeTab === tab.id
-                                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-blue-700 shadow-lg scale-105"
-                                        : "bg-white text-gray-700 border-2 border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300"
-                                    }
-                                `}
-                            >
-                                {tab.icon}
-                                {tab.label}
-                            </button>
-                        ))}
+                        </div>
                     </div>
                 </div>
 
-                <div className="space-y-8">
+                {/* Tabs - Homogeneizados */}
+                <div className="bg-white rounded-xl shadow-sm border p-1 mb-3">
+                    <div className="flex gap-1 overflow-x-auto">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                className={`
+                                    px-6 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap 
+                                    flex items-center gap-2 transition-all
+                                    ${activeTab === tab.id
+                                        ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md"
+                                        : "text-gray-600 hover:bg-gray-100"
+                                    }
+                                `}
+                                >
+                                    {tab.icon}
+                                    {tab.label}
+                                </button>
+                            ))}
+                    </div>
+                </div>
+
+                <div className="space-y-3">
                     {activeTab === "general" && (
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             <SettingSection
                                 title="Información General"
                                 description="Configuración básica de tu restaurante"
                                 icon={<Building2 />}
                             >
-                                <div className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
                                                 Nombre del restaurante
                                             </label>
                                             <input
                                                 type="text"
                                                 value={settings.name}
                                                 onChange={(e) => setSettings(prev => ({ ...prev, name: e.target.value }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="Nombre de tu restaurante"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
                                                 Tipo de cocina
                                             </label>
                                             <select
                                                 value={settings.cuisine_type}
                                                 onChange={(e) => setSettings(prev => ({ ...prev, cuisine_type: e.target.value }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             >
                                                 <option value="">Selecciona el tipo</option>
                                                 <option value="Mediterránea">Mediterránea</option>
@@ -818,47 +822,47 @@ const Configuracion = () => {
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
                                                 Email de contacto
                                             </label>
                                             <input
                                                 type="email"
                                                 value={settings.email}
                                                 onChange={(e) => setSettings(prev => ({ ...prev, email: e.target.value }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="contacto@restaurante.com"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
                                                 Nombre del contacto
                                             </label>
                                             <input
                                                 type="text"
                                                 value={settings.contact_name || ""}
                                                 onChange={(e) => setSettings(prev => ({ ...prev, contact_name: e.target.value }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="Tu nombre"
                                             />
                                             <p className="text-xs text-gray-500 mt-1">¿Cómo quieres que te llame el sistema?</p>
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
                                                 Sitio web
                                             </label>
                                             <input
                                                 type="url"
                                                 value={settings.website}
                                                 onChange={(e) => setSettings(prev => ({ ...prev, website: e.target.value }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="https://www.turestaurante.com"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
                                                 Teléfono persona de contacto (emergencias)
                                             </label>
                                             <input
@@ -874,53 +878,53 @@ const Configuracion = () => {
                                         </div>
 
                                         <div className="col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
                                                 Descripción del restaurante
                                             </label>
                                             <textarea
                                                 value={settings.description}
                                                 onChange={(e) => setSettings(prev => ({ ...prev, description: e.target.value }))}
                                                 rows="3"
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="Describe tu restaurante, especialidades, ambiente..."
                                             />
                                         </div>
 
                                         <div className="col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
                                                 Dirección completa
                                             </label>
                                             <input
                                                 type="text"
                                                 value={settings.address}
                                                 onChange={(e) => setSettings(prev => ({ ...prev, address: e.target.value }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="Calle Mayor 123, Madrid"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
                                                 Ciudad
                                             </label>
                                             <input
                                                 type="text"
                                                 value={settings.city}
                                                 onChange={(e) => setSettings(prev => ({ ...prev, city: e.target.value }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="Madrid"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
                                                 Código postal
                                             </label>
                                             <input
                                                 type="text"
                                                 value={settings.postal_code}
                                                 onChange={(e) => setSettings(prev => ({ ...prev, postal_code: e.target.value }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="28001"
                                             />
                                         </div>
@@ -947,13 +951,13 @@ const Configuracion = () => {
                     )}
 
                     {activeTab === "agent" && (
-                        <div className="space-y-6">
+                        <div className="space-y-2">
                             <SettingSection
                                 title="Configuración del Agente IA"
                                 description="Control centralizado de tu asistente virtual"
                                 icon={<Bot />}
                             >
-                                <div className="space-y-6">
+                                <div className="space-y-2">
                                     {/* Tarjeta de perfil profesional */}
                                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                                         <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-[400px_1fr] gap-0">
@@ -969,7 +973,7 @@ const Configuracion = () => {
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         ) : (
-                                                            <div className="flex flex-col items-center gap-4 text-white p-8">
+                                                            <div className="flex flex-col items-center gap-2 text-white p-8">
                                                                 <Bot className="w-32 h-32 opacity-60" />
                                                                 <p className="text-base font-medium text-center">
                                                                     Sube la foto de tu empleado virtual
@@ -1086,24 +1090,24 @@ const Configuracion = () => {
                                             </div>
 
                                             {/* COLUMNA DERECHA: Configuración */}
-                                            <div className="p-4 md:p-8 flex flex-col gap-4 md:gap-6">
+                                            <div className="p-4 md:p-8 flex flex-col gap-2 md:gap-6">
                                                 {/* Información del empleado */}
-                                                <div className="bg-white p-4 rounded-xl border-2 border-gray-200">
-                                                    <div className="space-y-3">
-                                                        <div className="flex items-center gap-2 text-lg">
+                                                <div className="bg-white p-2 rounded-lg border border-gray-200">
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center gap-2 text-sm">
                                                             <span className="font-bold text-gray-900">
                                                                 {settings.agent?.name}
                                                             </span>
                                                         </div>
-                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                        <div className="flex items-center gap-2 text-xs text-gray-600">
                                                             <span>📋</span>
                                                             <span>{settings.agent?.role}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                        <div className="flex items-center gap-2 text-xs text-gray-600">
                                                             <span>📅</span>
                                                             <span>En plantilla desde: {new Date(settings.agent?.hired_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                        <div className="flex items-center gap-2 text-xs text-gray-600">
                                                             <span>⏰</span>
                                                             <span>Turno: 24/7</span>
                                                         </div>
@@ -1112,7 +1116,7 @@ const Configuracion = () => {
 
                                                 {/* Nombre del Agente */}
                                                 <div>
-                                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
                                                         Nombre
                                                     </label>
                                                     <input
@@ -1125,14 +1129,14 @@ const Configuracion = () => {
                                                                 name: e.target.value
                                                             }
                                                         }))}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                         placeholder="Sofia"
                                                     />
                                                 </div>
 
                                                 {/* Puesto/Rol */}
                                                 <div>
-                                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
                                                         Puesto
                                                     </label>
                                                     <input
@@ -1145,20 +1149,20 @@ const Configuracion = () => {
                                                                 role: e.target.value
                                                             }
                                                         }))}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                        className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                         placeholder="Agente de Reservas"
                                                     />
-                                                    <p className="text-xs text-gray-500 mt-1">
+                                                    <p className="text-[10px] text-gray-500 mt-0.5">
                                                         Ej: Agente de Reservas, Recepcionista Virtual, etc.
                                                     </p>
                                                 </div>
 
                                                 {/* Género de la voz */}
                                                 <div>
-                                                    <label className="block text-base font-bold text-gray-900 mb-3">
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
                                                         Género de la voz telefónica
                                                     </label>
-                                                    <div className="grid grid-cols-2 gap-3">
+                                                    <div className="grid grid-cols-2 gap-2">
                                                         <button
                                                             type="button"
                                                             onClick={() => setSettings(prev => ({
@@ -1168,9 +1172,9 @@ const Configuracion = () => {
                                                                     gender: "female"
                                                                 }
                                                             }))}
-                                                            className={`px-6 py-4 rounded-xl border-2 transition-all text-base font-semibold ${
+                                                            className={`px-3 py-2 rounded-lg border transition-all text-xs font-medium ${
                                                                 settings.agent?.gender === "female"
-                                                                    ? "border-purple-500 bg-purple-50 text-purple-700 shadow-md"
+                                                                    ? "border-purple-500 bg-purple-50 text-purple-700 shadow-sm"
                                                                     : "border-gray-300 bg-white text-gray-700 hover:border-purple-300"
                                                             }`}
                                                         >
@@ -1185,28 +1189,28 @@ const Configuracion = () => {
                                                                     gender: "male"
                                                                 }
                                                             }))}
-                                                            className={`px-6 py-4 rounded-xl border-2 transition-all text-base font-semibold ${
+                                                            className={`px-3 py-2 rounded-lg border transition-all text-xs font-medium ${
                                                                 settings.agent?.gender === "male"
-                                                                    ? "border-blue-500 bg-blue-50 text-blue-700 shadow-md"
+                                                                    ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm"
                                                                     : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"
                                                             }`}
                                                         >
                                                             👨 Masculino
                                                         </button>
                                                     </div>
-                                                    <p className="text-sm text-gray-600 mt-2">
+                                                    <p className="text-[10px] text-gray-600 mt-0.5">
                                                         Define qué voz usará en llamadas
                                                     </p>
                                                 </div>
 
                                                 {/* Estado activo/inactivo */}
-                                                <div className="bg-white p-4 rounded-xl border-2 border-gray-200">
+                                                <div className="bg-white p-2 rounded-lg border border-gray-200">
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <p className="font-bold text-gray-900 text-base">
+                                                            <p className="font-semibold text-gray-900 text-xs">
                                                                 Estado del agente
                                                             </p>
-                                                            <p className="text-sm text-gray-600 mt-1">
+                                                            <p className="text-[10px] text-gray-600 mt-0.5">
                                                                 {settings.agent?.enabled ? "✅ Activo - Atendiendo 24/7" : "❌ Desactivado"}
                                                             </p>
                                                         </div>
@@ -1300,18 +1304,18 @@ const Configuracion = () => {
                             description="Gestión de canales de comunicación con clientes"
                             icon={<MessageSquare />}
                         >
-                            <div className="space-y-6">
+                            <div className="space-y-2">
                                 {/* INFORMACIÓN DEL RESTAURANTE */}
                                 {/* Aviso ANTES de todo */}
-                                <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-6 shadow-sm">
-                                    <div className="flex items-start gap-3">
-                                        <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                                <div className="bg-amber-50 border border-amber-300 rounded-lg p-2 mb-2">
+                                    <div className="flex items-start gap-2">
+                                        <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                                         <div className="flex-1">
-                                            <h5 className="font-bold text-gray-900 mb-2">⚠️ IMPORTANTE: Necesitarás DOS números diferentes</h5>
-                                            <div className="space-y-2 text-sm text-gray-700">
+                                            <h5 className="font-semibold text-xs text-gray-900 mb-1">⚠️ IMPORTANTE: Necesitarás DOS números diferentes</h5>
+                                            <div className="space-y-0.5 text-[10px] text-gray-700">
                                                 <p><strong>1️⃣ Número para canales IA:</strong> Se dedicará 100% a la inteligencia artificial.</p>
                                                 <p><strong>2️⃣ Número de emergencia:</strong> Tu móvil personal o del encargado. Para recibir alertas urgentes.</p>
-                                                <p className="text-xs text-amber-700 font-medium mt-2">
+                                                <p className="text-[10px] text-amber-700 font-medium mt-1">
                                                     💡 Si no tienes un número dedicado para los canales, ya conseguiremos uno.
                                                 </p>
                                             </div>
@@ -1320,19 +1324,19 @@ const Configuracion = () => {
                                 </div>
 
                                 {/* LOS DOS NÚMEROS JUNTOS */}
-                                <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-6 shadow-sm">
-                                    <h4 className="text-sm font-bold text-purple-900 uppercase mb-5 flex items-center gap-2">
-                                        <Phone className="w-5 h-5" />
+                                <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 border border-purple-200 rounded-lg p-2 shadow-sm">
+                                    <h4 className="text-xs font-semibold text-purple-900 uppercase mb-2 flex items-center gap-1.5">
+                                        <Phone className="w-3.5 h-3.5" />
                                         📞 NÚMEROS DE TELÉFONO
                                     </h4>
-                                    <p className="text-sm text-gray-700 mb-6">
+                                    <p className="text-[10px] text-gray-700 mb-2">
                                         Estos números se usarán automáticamente en <strong>todos los canales</strong> (WhatsApp, VAPI, Instagram, Facebook, etc.)
                                     </p>
                                     
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {/* Número 1: Canales IA */}
-                                        <div className="bg-white rounded-lg p-4 border-2 border-blue-300">
-                                            <label className="block text-sm font-bold text-blue-900 mb-2">
+                                        <div className="bg-white rounded-lg p-2 border border-blue-300">
+                                            <label className="block text-xs font-semibold text-blue-900 mb-1">
                                                 1️⃣ Número dedicado para canales IA *
                                             </label>
                                             <input
@@ -1345,17 +1349,17 @@ const Configuracion = () => {
                                                         voice: { ...prev.channels?.voice, phone_number: e.target.value }
                                                     }
                                                 }))}
-                                                className="w-full px-4 py-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-base"
+                                                className="w-full px-2 py-1.5 text-xs border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
                                                 placeholder="+34 600 000 000"
                                             />
-                                            <p className="text-xs text-gray-600 mt-2">
+                                            <p className="text-[10px] text-gray-600 mt-1">
                                                 📱 Este número lo verán tus clientes al interactuar con la IA (dedicado 100% a IA, no lo uses para llamadas normales)
                                             </p>
                                         </div>
 
                                         {/* Número 2: Emergencia */}
-                                        <div className="bg-white rounded-lg p-4 border-2 border-red-300">
-                                            <label className="block text-sm font-bold text-red-900 mb-2">
+                                        <div className="bg-white rounded-lg p-2 border border-red-300">
+                                            <label className="block text-xs font-semibold text-red-900 mb-1">
                                                 2️⃣ Número de emergencia (humano) *
                                             </label>
                                             <input
@@ -1368,30 +1372,30 @@ const Configuracion = () => {
                                                         whatsapp: { ...prev.channels?.whatsapp, emergency_phone: e.target.value }
                                                     }
                                                 }))}
-                                                className="w-full px-4 py-3 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-base"
+                                                className="w-full px-2 py-1.5 text-xs border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono"
                                                 placeholder="+34 600 000 000"
                                             />
-                                            <p className="text-xs text-gray-600 mt-2">
+                                            <p className="text-[10px] text-gray-600 mt-1">
                                                 🆘 Número del encargado para recibir alertas urgentes cuando la IA necesite ayuda (debe ser diferente al número de canales)
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="border-t border-gray-300 pt-6">
-                                    <h4 className="text-sm font-bold text-gray-700 uppercase mb-4">🤖 Canales de comunicación IA</h4>
+                                <div className="border-t border-gray-300 pt-2">
+                                    <h4 className="text-xs font-semibold text-gray-700 uppercase mb-2">🤖 Canales de comunicación IA</h4>
                                 </div>
 
                                 {/* VAPI - Llamadas IA */}
-                                <div className="bg-white p-5 rounded-xl border-2 border-gray-200 hover:border-purple-300 transition-colors shadow-sm">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-start gap-3 flex-1">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <Bot className="w-5 h-5 text-white" />
+                                <div className="bg-white p-2 rounded-lg border border-gray-200 hover:border-purple-300 transition-colors">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="flex items-start gap-2 flex-1">
+                                            <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                <Bot className="w-4 h-4 text-white" />
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <h4 className="font-semibold text-gray-900">VAPI - Llamadas IA</h4>
+                                                    <h4 className="font-semibold text-xs text-gray-900">VAPI - Llamadas IA</h4>
                                                     <button
                                                         type="button"
                                                         onClick={() => setShowHelpVAPI(v => !v)}
@@ -1400,7 +1404,7 @@ const Configuracion = () => {
                                                         <HelpCircle className="w-4 h-4" />
                                                     </button>
                                                 </div>
-                                                <p className="text-sm text-gray-600 mt-0.5">Asistente telefónico inteligente</p>
+                                                <p className="text-[10px] text-gray-600 mt-0.5">Asistente telefónico inteligente</p>
                                             </div>
                                         </div>
                                         <ToggleSwitch
@@ -1428,7 +1432,7 @@ const Configuracion = () => {
                                     {settings.channels?.vapi?.enabled && (
                                         <div className="grid grid-cols-1 gap-3 mt-3">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">API Key de VAPI</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">API Key de VAPI</label>
                                                 <div className="relative">
                                                     <input
                                                         type={showVAPIKey ? "text" : "password"}
@@ -1470,7 +1474,7 @@ const Configuracion = () => {
                                                 <label htmlFor="vapi-same-number" className="text-sm font-medium text-gray-700">Usar el mismo número de llamadas</label>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Número para el asistente (voz)</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Número para el asistente (voz)</label>
                                                 <input
                                                     type="text"
                                                     value={(settings.channels?.vapi?.use_same_phone ? settings.channels?.voice?.phone_number : settings.channels?.vapi?.voice_number) || ""}
@@ -1491,15 +1495,15 @@ const Configuracion = () => {
                                 </div>
 
                                 {/* WhatsApp Business */}
-                                <div className="bg-white p-5 rounded-xl border-2 border-gray-200 hover:border-green-300 transition-colors shadow-sm">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-start gap-3 flex-1">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <MessageSquare className="w-5 h-5 text-white" />
+                                <div className="bg-white p-2 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="flex items-start gap-2 flex-1">
+                                            <div className="w-7 h-7 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                <MessageSquare className="w-4 h-4 text-white" />
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <h4 className="font-semibold text-gray-900">WhatsApp Business</h4>
+                                                    <h4 className="font-semibold text-xs text-gray-900">WhatsApp Business</h4>
                                                     <button
                                                         type="button"
                                                         onClick={() => setShowHelpWA(v => !v)}
@@ -1508,7 +1512,7 @@ const Configuracion = () => {
                                                         <HelpCircle className="w-4 h-4" />
                                                     </button>
                                                 </div>
-                                                <p className="text-sm text-gray-600 mt-0.5">Canal principal de comunicación</p>
+                                                <p className="text-[10px] text-gray-600 mt-0.5">Canal principal de comunicación</p>
                                             </div>
                                         </div>
                                         <ToggleSwitch
@@ -1523,9 +1527,9 @@ const Configuracion = () => {
                                         />
                                     </div>
                                     {showHelpWA && (
-                                        <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-gray-700">
-                                            <p className="font-medium mb-1">¿Dónde consigo esto?</p>
-                                            <ol className="list-decimal ml-5 space-y-1 text-xs">
+                                        <div className="mb-2 p-2 rounded-lg bg-green-50 border border-green-200 text-[10px] text-gray-700">
+                                            <p className="font-medium mb-0.5">¿Dónde consigo esto?</p>
+                                            <ol className="list-decimal ml-3 space-y-0.5 text-[10px]">
                                                 <li>Indica el número que ya usas con tus clientes.</li>
                                                 <li>Proporciona tu API Token de WhatsApp Business API.</li>
                                                 <li>Cuando activemos WhatsApp Business API te pediremos un código SMS/llamada.</li>
@@ -1534,9 +1538,9 @@ const Configuracion = () => {
                                         </div>
                                     )}
                                     {settings.channels?.whatsapp?.enabled && (
-                                        <div className="grid grid-cols-1 gap-3 mt-3">
+                                        <div className="grid grid-cols-1 gap-2 mt-2">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">API Token / Access Token</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">API Token / Access Token</label>
                                                 <div className="relative">
                                                     <input
                                                         type={showWAToken ? "text" : "password"}
@@ -1562,7 +1566,7 @@ const Configuracion = () => {
                                                 <p className="text-xs text-gray-500 mt-1">Token de acceso de WhatsApp Business API</p>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Business Account ID (WABA ID)</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Business Account ID (WABA ID)</label>
                                                 <input
                                                     type="text"
                                                     value={settings.channels?.whatsapp?.business_account_id || ""}
@@ -1595,7 +1599,7 @@ const Configuracion = () => {
                                                 <label htmlFor="wa-same-number" className="text-sm font-medium text-gray-700">Usar el mismo número de llamadas</label>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Número de teléfono para WhatsApp</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Número de teléfono para WhatsApp</label>
                                                 <input
                                                     type="text"
                                                     value={(settings.channels?.whatsapp?.use_same_phone ? settings.channels?.voice?.phone_number : settings.channels?.whatsapp?.phone_number) || ""}
@@ -1617,15 +1621,15 @@ const Configuracion = () => {
                                 </div>
 
                                 {/* Instagram */}
-                                <div className="bg-white p-5 rounded-xl border-2 border-gray-200 hover:border-pink-300 transition-colors shadow-sm">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-start gap-3 flex-1">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <Instagram className="w-5 h-5 text-white" />
+                                <div className="bg-white p-2 rounded-lg border border-gray-200 hover:border-pink-300 transition-colors">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="flex items-start gap-2 flex-1">
+                                            <div className="w-7 h-7 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                <Instagram className="w-4 h-4 text-white" />
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <h4 className="font-semibold text-gray-900">Instagram</h4>
+                                                    <h4 className="font-semibold text-xs text-gray-900">Instagram</h4>
                                                     <button
                                                         type="button"
                                                         onClick={() => setShowHelpIG(v => !v)}
@@ -1634,7 +1638,7 @@ const Configuracion = () => {
                                                         <HelpCircle className="w-4 h-4" />
                                                     </button>
                                                 </div>
-                                                <p className="text-sm text-gray-600 mt-0.5">Mensajes directos automáticos</p>
+                                                <p className="text-[10px] text-gray-600 mt-0.5">Mensajes directos automáticos</p>
                                             </div>
                                         </div>
                                         <ToggleSwitch
@@ -1663,7 +1667,7 @@ const Configuracion = () => {
                                         <div className="grid grid-cols-1 gap-3 mt-3">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Usuario o URL de Instagram</label>
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Usuario o URL de Instagram</label>
                                                     <input
                                                         type="text"
                                                         value={settings.channels?.instagram?.handle || ""}
@@ -1679,7 +1683,7 @@ const Configuracion = () => {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Email para invitarnos como administradores</label>
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Email para invitarnos como administradores</label>
                                                     <input
                                                         type="email"
                                                         value={settings.channels?.instagram?.invite_email || ""}
@@ -1696,7 +1700,7 @@ const Configuracion = () => {
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Access Token (Instagram Graph API)</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Access Token (Instagram Graph API)</label>
                                                 <div className="relative">
                                                     <input
                                                         type={showIGToken ? "text" : "password"}
@@ -1722,7 +1726,7 @@ const Configuracion = () => {
                                                 <p className="text-xs text-gray-500 mt-1">Token de acceso de Instagram Graph API</p>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Instagram Business Account ID</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Instagram Business Account ID</label>
                                                 <input
                                                     type="text"
                                                     value={settings.channels?.instagram?.business_account_id || ""}
@@ -1789,7 +1793,7 @@ const Configuracion = () => {
                                         <div className="grid grid-cols-1 gap-3 mt-3">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">URL de la página</label>
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">URL de la página</label>
                                                     <input
                                                         type="url"
                                                         value={settings.channels?.facebook?.page_url || ""}
@@ -1805,7 +1809,7 @@ const Configuracion = () => {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Email para añadirnos como administradores</label>
+                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Email para añadirnos como administradores</label>
                                                     <input
                                                         type="email"
                                                         value={settings.channels?.facebook?.invite_email || ""}
@@ -1822,7 +1826,7 @@ const Configuracion = () => {
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Page Access Token</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Page Access Token</label>
                                                 <div className="relative">
                                                     <input
                                                         type={showFBToken ? "text" : "password"}
@@ -1848,7 +1852,7 @@ const Configuracion = () => {
                                                 <p className="text-xs text-gray-500 mt-1">Token de acceso de tu página de Facebook</p>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Page ID</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Page ID</label>
                                                 <input
                                                     type="text"
                                                     value={settings.channels?.facebook?.page_id || ""}
@@ -1894,7 +1898,7 @@ const Configuracion = () => {
                                     {settings.channels?.webchat?.enabled !== false && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Dominio del sitio</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Dominio del sitio</label>
                                                 <input
                                                     type="text"
                                                     value={settings.channels?.webchat?.site_domain || ""}
@@ -1910,7 +1914,7 @@ const Configuracion = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Widget Key (opcional)</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Widget Key (opcional)</label>
                                                 <input
                                                     type="text"
                                                     value={settings.channels?.webchat?.widget_key || ""}
@@ -1953,17 +1957,17 @@ const Configuracion = () => {
                             description="Configuración completa de alertas y notificaciones automáticas"
                             icon={<Bell />}
                         >
-                            <div className="space-y-6">
-                                <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
-                                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                                        <Calendar className="w-5 h-5 text-blue-600" />
+                            <div className="space-y-2">
+                                <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
+                                    <h4 className="font-semibold text-xs text-gray-900 mb-2 flex items-center gap-1.5">
+                                        <Calendar className="w-3.5 h-3.5 text-blue-600" />
                                         Notificaciones de Reservas
                                     </h4>
-                                    <div className="space-y-4">
+                                    <div className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <h5 className="font-medium text-gray-900">Nueva reserva confirmada</h5>
-                                                <p className="text-sm text-gray-600">Notificar cuando se confirme una nueva reserva</p>
+                                                <h5 className="font-medium text-xs text-gray-900">Nueva reserva confirmada</h5>
+                                                <p className="text-[10px] text-gray-600">Notificar cuando se confirme una nueva reserva</p>
                                             </div>
                                             <ToggleSwitch
                                                 enabled={settings.notifications?.new_reservation ?? false}
@@ -1978,8 +1982,8 @@ const Configuracion = () => {
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <h5 className="font-medium text-gray-900">Reserva cancelada</h5>
-                                                <p className="text-sm text-gray-600">Alerta cuando se cancele una reserva</p>
+                                                <h5 className="font-medium text-xs text-gray-900">Reserva cancelada</h5>
+                                                <p className="text-[10px] text-gray-600">Alerta cuando se cancele una reserva</p>
                                             </div>
                                             <ToggleSwitch
                                                 enabled={settings.notifications?.cancelled_reservation ?? false}
@@ -1993,9 +1997,9 @@ const Configuracion = () => {
                                             />
                                         </div>
                                         {/* Destinatarios y horario silencioso */}
-                                        <div className="space-y-4 pt-2">
+                                        <div className="space-y-2 pt-1">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">📧 Emails para notificaciones de reservas</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">📧 Emails para notificaciones de reservas</label>
                                                 <input
                                                     type="text"
                                                     value={(settings.notifications?.reservation_emails || []).join(", ")}
@@ -2006,13 +2010,13 @@ const Configuracion = () => {
                                                             reservation_emails: e.target.value.split(',').map(x => x.trim()).filter(Boolean)
                                                         }
                                                     }))}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                     placeholder="reservas@restaurante.com, gerente@restaurante.com"
                                                 />
-                                                <p className="text-xs text-gray-500 mt-1">Para nueva reserva, cancelada y modificada</p>
+                                                <p className="text-[10px] text-gray-500 mt-0.5">Para nueva reserva, cancelada y modificada</p>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Horario silencioso (inicio)</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Horario silencioso (inicio)</label>
                                                 <input
                                                     type="time"
                                                     value={settings.notifications?.quiet_hours?.start || ""}
@@ -2023,11 +2027,11 @@ const Configuracion = () => {
                                                             quiet_hours: { ...prev.notifications?.quiet_hours, start: e.target.value }
                                                         }
                                                     }))}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Horario silencioso (fin)</label>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Horario silencioso (fin)</label>
                                                 <input
                                                     type="time"
                                                     value={settings.notifications?.quiet_hours?.end || ""}
@@ -2038,14 +2042,14 @@ const Configuracion = () => {
                                                             quiet_hours: { ...prev.notifications?.quiet_hours, end: e.target.value }
                                                         }
                                                     }))}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 />
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <h5 className="font-medium text-gray-900">Reserva modificada</h5>
-                                                <p className="text-sm text-gray-600">Cambios de hora, mesa o comensales</p>
+                                                <h5 className="font-medium text-xs text-gray-900">Reserva modificada</h5>
+                                                <p className="text-[10px] text-gray-600">Cambios de hora, mesa o comensales</p>
                                             </div>
                                             <ToggleSwitch
                                                 enabled={settings.notifications?.reservation_modified ?? false}
@@ -2062,15 +2066,15 @@ const Configuracion = () => {
                                 </div>
 
 
-                                <div className="bg-green-50 p-6 rounded-xl border border-green-200">
-                                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                                        <AlertCircle className="w-5 h-5 text-green-600" />
+                                <div className="bg-green-50 p-2 rounded-lg border border-green-200">
+                                    <h4 className="font-semibold text-xs text-gray-900 mb-2 flex items-center gap-1.5">
+                                        <AlertCircle className="w-3.5 h-3.5 text-green-600" />
                                         Notificaciones del Sistema
                                     </h4>
-                                    <div className="space-y-4">
+                                    <div className="space-y-2">
                                         {/* Emails para notificaciones del sistema */}
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">⚙️ Emails para notificaciones del sistema</label>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">⚙️ Emails para notificaciones del sistema</label>
                                             <input
                                                 type="text"
                                                 value={(settings.notifications?.system_emails || []).join(", ")}
@@ -2081,15 +2085,15 @@ const Configuracion = () => {
                                                         system_emails: e.target.value.split(',').map(x => x.trim()).filter(Boolean)
                                                     }
                                                 }))}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                                 placeholder="admin@restaurante.com, soporte@restaurante.com"
                                             />
-                                            <p className="text-xs text-gray-500 mt-1">Para errores del sistema, agente offline e integraciones</p>
+                                            <p className="text-[10px] text-gray-500 mt-0.5">Para errores del sistema, agente offline e integraciones</p>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <h5 className="font-medium text-gray-900">Agente IA desconectado</h5>
-                                                <p className="text-sm text-gray-600">Alerta si el agente IA deja de funcionar</p>
+                                                <h5 className="font-medium text-xs text-gray-900">Agente IA desconectado</h5>
+                                                <p className="text-[10px] text-gray-600">Alerta si el agente IA deja de funcionar</p>
                                             </div>
                                             <ToggleSwitch
                                                 enabled={settings.notifications?.agent_offline ?? false}
@@ -2104,8 +2108,8 @@ const Configuracion = () => {
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <h5 className="font-medium text-gray-900">Errores de integración</h5>
-                                                <p className="text-sm text-gray-600">Notificar errores en canales o integraciones</p>
+                                                <h5 className="font-medium text-xs text-gray-900">Errores de integración</h5>
+                                                <p className="text-[10px] text-gray-600">Notificar errores en canales o integraciones</p>
                                             </div>
                                             <ToggleSwitch
                                                 enabled={settings.notifications?.integration_errors ?? false}
@@ -2120,16 +2124,16 @@ const Configuracion = () => {
                                         </div>
                                         
                                         {/* Nueva sección: Errores del Sistema */}
-                                        <div className="border-t border-green-200 pt-4 mt-4">
-                                            <h5 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                                                <AlertTriangle className="w-4 h-4 text-red-500" />
+                                        <div className="border-t border-green-200 pt-2 mt-2">
+                                            <h5 className="font-semibold text-xs text-gray-900 mb-1 flex items-center gap-1.5">
+                                                <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
                                                 Errores del Sistema
                                             </h5>
-                                            <div className="space-y-3 ml-6">
+                                            <div className="space-y-2 ml-4">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <h6 className="font-medium text-gray-800">Fallo crítico al guardar</h6>
-                                                        <p className="text-xs text-gray-600">Reservas, configuración o datos de cliente no se guardan</p>
+                                                        <h6 className="font-medium text-xs text-gray-800">Fallo crítico al guardar</h6>
+                                                        <p className="text-[10px] text-gray-600">Reservas, configuración o datos de cliente no se guardan</p>
                                                     </div>
                                                     <ToggleSwitch
                                                         enabled={settings.notifications?.system_save_errors ?? true}
@@ -2144,8 +2148,8 @@ const Configuracion = () => {
                                                 </div>
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <h6 className="font-medium text-gray-800">Problema de conexión</h6>
-                                                        <p className="text-xs text-gray-600">Fallos de red, autenticación o timeouts</p>
+                                                        <h6 className="font-medium text-xs text-gray-800">Problema de conexión</h6>
+                                                        <p className="text-[10px] text-gray-600">Fallos de red, autenticación o timeouts</p>
                                                     </div>
                                                     <ToggleSwitch
                                                         enabled={settings.notifications?.system_connection_errors ?? true}
@@ -2160,8 +2164,8 @@ const Configuracion = () => {
                                                 </div>
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <h6 className="font-medium text-gray-800">Conflicto de reservas</h6>
-                                                        <p className="text-xs text-gray-600">Mesa doble-asignada u horarios solapados</p>
+                                                        <h6 className="font-medium text-xs text-gray-800">Conflicto de reservas</h6>
+                                                        <p className="text-[10px] text-gray-600">Mesa doble-asignada u horarios solapados</p>
                                                     </div>
                                                     <ToggleSwitch
                                                         enabled={settings.notifications?.system_reservation_conflicts ?? true}
@@ -2214,10 +2218,10 @@ const Configuracion = () => {
                     )}
 
                     {activeTab === "documentos" && (
-                        <div className="space-y-6">
+                        <div className="space-y-2">
                             {/* Info destacada */}
                             <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-300 rounded-xl p-6 shadow-sm">
-                                <div className="flex gap-4">
+                                <div className="flex gap-2">
                                     <div className="flex-shrink-0">
                                         <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
                                             <AlertCircle className="w-7 h-7 text-white" />
